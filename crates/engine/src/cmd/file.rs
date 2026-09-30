@@ -22,7 +22,15 @@ pub fn specs() -> Vec<CommandSpec> {
         cmd!("document.save", "Save Document", [], None, "{path?} native .drawcraft (default: the document's path) → {path}", has_doc, save),
         cmd!(query "document.serialize", "Serialize Document", [], None, "{format: drawcraft|svg|pdf|png} → {dataBase64 | text}", has_doc, serialize),
         cmd!("document.export", "Export Document", [], None, "{format: svg|png|pdf|drawcraft, path, scale?: 1, artboard?: 0}", has_doc, export),
-        cmd!("document.exportForScreens", "Export for Screens", ["File", "Export"], None, "{folder, artboards?: [index…] (default all), formats?: [{format: png|jpg|webp|svg|pdf, scale?: 1, suffix?: \"@2x\"}], prefix?} → {files: [...]}", has_doc, export_for_screens),
+        cmd!(
+            "document.exportForScreens",
+            "Export for Screens",
+            ["File", "Export"],
+            None,
+            "{folder, artboards?: [index…] (default all), formats?: [{format: png|jpg|webp|svg|pdf, scale?: 1, suffix?: \"@2x\"}], prefix?} → {files: [...]}",
+            has_doc,
+            export_for_screens
+        ),
         cmd!(query "command.batch", "Batch", [], None, "{label?, commands: [{command, params}]} run several commands as ONE undo step; stops at the first error and rolls back", has_doc, batch),
     ]
 }
@@ -158,7 +166,9 @@ fn export_for_screens(s: &mut Session, p: &Value) -> Result<Value> {
             .map(|f| {
                 let fmt = str_param(f, "format").unwrap_or("png").to_string();
                 let sc = f64_or(f, "scale", 1.0);
-                let suffix = str_param(f, "suffix").map(str::to_string).unwrap_or_else(|| if (sc - 1.0).abs() < 1e-9 { String::new() } else { format!("@{sc}x") });
+                let suffix = str_param(f, "suffix")
+                    .map(str::to_string)
+                    .unwrap_or_else(|| if (sc - 1.0).abs() < 1e-9 { String::new() } else { format!("@{sc}x") });
                 (fmt, sc, suffix)
             })
             .collect(),
@@ -168,7 +178,8 @@ fn export_for_screens(s: &mut Session, p: &Value) -> Result<Value> {
     std::fs::create_dir_all(&folder).map_err(|e| EngineError::Other(format!("{folder}: {e}")))?;
     let mut files = vec![];
     for b in boards {
-        let name: String = s.doc()?.doc.artboards[b].name.chars().map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '-' }).collect();
+        let name: String =
+            s.doc()?.doc.artboards[b].name.chars().map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '-' }).collect();
         for (fmt, sc, suffix) in &formats {
             let bytes = encode(s, fmt, *sc, b)?;
             let ext = if fmt == "jpeg" { "jpg" } else { fmt.as_str() };

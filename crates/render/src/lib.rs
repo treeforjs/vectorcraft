@@ -6,7 +6,9 @@
 //! gradients, images and text (via `drawcraft-text` glyph outlines).
 #![forbid(unsafe_code)]
 
+mod brush_fx;
 mod fx;
+mod live;
 mod paint;
 
 use std::collections::HashMap;
@@ -19,6 +21,7 @@ use vello_cpu::peniko::{self, BlendMode, Compose, Mix};
 use vello_cpu::{Pixmap, RenderContext, Resources};
 
 pub use drawcraft_effects as effects;
+pub use live::expand_live;
 pub use vello_cpu;
 
 /// Rendering options.
@@ -132,6 +135,10 @@ pub struct Renderer {
     images: HashMap<String, Arc<Pixmap>>,
     /// Statistics of the last frame.
     pub stats: FrameStats,
+    /// Brush art per brushed stroke.
+    brushes: brush_fx::BrushCache,
+    /// Evaluated blends/envelopes and tessellated meshes.
+    live: live::LiveCache,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -170,6 +177,8 @@ impl Renderer {
             resources: Resources::new(),
             images: HashMap::new(),
             stats: FrameStats::default(),
+            brushes: Default::default(),
+            live: live::LiveCache::default(),
         }
     }
 
@@ -245,7 +254,7 @@ impl Renderer {
     /// Render a single node (thumbnails, previews) fitted into `size`×`size` pixels.
     pub fn render_thumbnail(&mut self, doc: &Document, id: NodeId, size: u32) -> Option<Rendered> {
         let n = doc.node(id)?;
-        let b = fx::cull_bounds(n)?;
+        let b = brush_fx::cull_bounds(n)?;
         let s = (size as f64 - 2.0) / b.width().max(b.height()).max(1e-6);
         let view = Affine::translate((size as f64 / 2.0, size as f64 / 2.0)) * Affine::scale(s) * Affine::translate(-b.center().to_vec2());
         let w = size.clamp(1, u16::MAX as u32) as u16;
@@ -277,7 +286,7 @@ impl Renderer {
                 }
                 acc
             }
-            _ => fx::cull_bounds(a),
+            _ => brush_fx::cull_bounds(a),
         };
         self.geom.insert(key, GeomEntry { node: a.clone(), bounds: b, path: None, stamp: self.stamp });
         b
@@ -342,6 +351,9 @@ impl Renderer {
             self.draw_text_geom(ctx, f, a, t, &g);
             self.stats.drawn += 1;
             return;
+        }
+        if drawcraft_doc::live::is_live(a) {
+            return self.draw_live(ctx, f, a);
         }
         self.draw_node(ctx, f, a, true);
     }
@@ -416,11 +428,12 @@ impl Renderer {
             NodeKind::Image(im) => self.draw_image(ctx, f, im),
             NodeKind::SymbolInstance { symbol, xf } => {
                 if let Some(sym) = f.doc.symbols.iter().find(|s| &s.name == symbol) {
-                    let mut art = (*sym.art).clone();
+                    let mut art = brush_fx::instance_art(&sym.art, n);
                     art.transform(*xf, false);
                     self.draw_node(ctx, f, &art, true);
                 }
             }
+            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) => self.draw_live_node(ctx, f, n),
         }
         self.stats.drawn += 1;
         for _ in 0..layers {
@@ -469,6 +482,9 @@ impl Renderer {
                 }
                 AppearanceItem::Stroke(st) => {
                     if !st.visible || st.paint.is_none() || st.width <= 0.0 {
+                        continue;
+                    }
+                    if st.brush.is_some() && self.draw_brush(ctx, f, n, bp, st) {
                         continue;
                     }
                     self.draw_stroke(ctx, f, bp, rule, st, bounds);

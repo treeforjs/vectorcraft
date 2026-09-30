@@ -186,7 +186,9 @@ fn row(
     let th = egui::Rect::from_min_size(egui::pos2(x, r.top() + 2.0), vec2(22.0, 22.0));
     ui.painter().rect_filled(th, 0.0, Color32::WHITE);
     ui.painter().rect_stroke(th, 0.0, Stroke::new(1.0, Color32::BLACK), StrokeKind::Outside);
-    thumb(ui, n, th);
+    if !real_thumb(ui, doc, n, th) {
+        thumb(ui, n, th);
+    }
     x += 26.0;
     // Name.
     let name = n.display_name();
@@ -288,7 +290,44 @@ fn row(
     }
 }
 
-/// Tiny vector thumbnail painted with egui (fast, no raster).
+/// A real rendered thumbnail, cached by node identity (unchanged nodes keep their `Arc`
+/// allocation, so the address is a free change detector). Only rendered for visible rows.
+fn real_thumb(ui: &Ui, doc: &drawcraft_doc::Document, n: &Node, r: egui::Rect) -> bool {
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+    thread_local! {
+        static RENDERER: RefCell<drawcraft_render::Renderer> = RefCell::new(drawcraft_render::Renderer::new());
+        static CACHE: RefCell<HashMap<(usize, u64), egui::TextureHandle>> = RefCell::new(HashMap::new());
+    }
+    if !ui.is_rect_visible(r) {
+        return true;
+    }
+    let key = (n as *const Node as usize, n.id.0);
+    let ppp = ui.ctx().pixels_per_point();
+    let px = (r.width() * ppp).round() as u32;
+    let tex = CACHE.with(|c| c.borrow().get(&key).cloned()).or_else(|| {
+        let img = RENDERER.with(|rr| rr.borrow_mut().render_thumbnail(doc, n.id, px.max(8)))?;
+        let color = egui::ColorImage::from_rgba_premultiplied([img.width as usize, img.height as usize], &img.pixels);
+        let tex = ui.ctx().load_texture(format!("layer-thumb-{}", n.id.0), color, egui::TextureOptions::LINEAR);
+        CACHE.with(|c| {
+            let mut c = c.borrow_mut();
+            if c.len() > 2000 {
+                c.clear();
+            }
+            c.insert(key, tex.clone());
+        });
+        Some(tex)
+    });
+    match tex {
+        Some(t) => {
+            ui.painter().image(t.id(), r, egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)), Color32::WHITE);
+            true
+        }
+        None => false,
+    }
+}
+
+/// Tiny vector thumbnail painted with egui (fallback when rendering isn't possible).
 fn thumb(ui: &Ui, n: &Node, r: egui::Rect) {
     let Some(b) = n.visual_bounds() else { return };
     let s = ((r.width() - 3.0) as f64 / b.width().max(b.height()).max(1e-6)) as f32;

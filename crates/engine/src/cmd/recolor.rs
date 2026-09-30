@@ -11,7 +11,15 @@ use super::*;
 pub fn specs() -> Vec<CommandSpec> {
     vec![
         cmd!(query "recolor.colors", "Artwork Colors", [], None, "{} → {colors: [{hex, count}]} unique colours used by the selection (fills, strokes, gradient stops, text)", has_selection, colors),
-        cmd!("recolor.apply", "Recolor Artwork", ["Edit", "Edit Colors"], None, "{map: {\"#rrggbb\": \"#rrggbb\", …}} replace colours across the selection (gradients and text included)", has_selection, apply),
+        cmd!(
+            "recolor.apply",
+            "Recolor Artwork",
+            ["Edit", "Edit Colors"],
+            None,
+            "{map: {\"#rrggbb\": \"#rrggbb\", …}} replace colours across the selection (gradients and text included)",
+            has_selection,
+            apply
+        ),
     ]
 }
 

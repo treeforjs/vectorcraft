@@ -486,6 +486,10 @@ impl Writer<'_> {
                 out.push((self.path_d(&p, self.xf), FillRule::NonZero));
             }
             NodeKind::Text(_) | NodeKind::SymbolInstance { .. } => {}
+            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) => {
+                let g = drawcraft_doc::live::expand_deep(n, None);
+                self.clip_shapes(&g, out);
+            }
         }
     }
 
@@ -579,6 +583,11 @@ impl Writer<'_> {
                 self.depth -= 1;
                 self.line("</g>");
                 self.xf = saved;
+            }
+            // Live blends/envelopes/meshes export their evaluated (expanded) form.
+            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) => {
+                let g = drawcraft_doc::live::expand_deep(n, None);
+                self.node(&g);
             }
         }
     }

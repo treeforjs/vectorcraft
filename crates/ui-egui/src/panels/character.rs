@@ -1,8 +1,11 @@
 //! Character panel: font family / style, size, leading, kerning, tracking, vertical and horizontal
 //! scale, baseline shift, character rotation and the caps / underline / strikethrough toggles.
 
-use drawcraft_doc::{CharStyle, NodeKind, Unit};
-use egui::{Ui, vec2};
+use std::sync::{Mutex, OnceLock};
+
+use drawcraft_doc::{CharStyle, NodeId, NodeKind, Unit};
+use drawcraft_tools::{Mods, ToolKey};
+use egui::{Key, Ui, vec2};
 use serde_json::{Value, json};
 
 use super::{first_selected, pstate, set_pstate};
@@ -14,7 +17,14 @@ pub const SIZE_PRESETS: [f64; 16] = [6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 14.0,
 pub const TRACKING_PRESETS: [f64; 13] = [-100.0, -75.0, -50.0, -25.0, -10.0, -5.0, 0.0, 5.0, 10.0, 25.0, 50.0, 75.0, 100.0];
 pub const SCALE_PRESETS: [f64; 8] = [25.0, 50.0, 75.0, 90.0, 100.0, 110.0, 125.0, 150.0];
 
+/// The character style shown by the panel: the selected range's (or the caret's) while the Type
+/// tool edits text, else the first selected text object's first run.
 pub(crate) fn text_style(app: &DrawcraftApp) -> Option<(CharStyle, drawcraft_doc::ParaStyle)> {
+    if let Some((id, a, b)) = text_editing(app)
+        && let Some(NodeKind::Text(t)) = app.session.active().and_then(|d| d.doc.node(id)).map(|n| &n.kind)
+    {
+        return Some((drawcraft_text::edit::insertion_style(&t.runs, a, b), t.para.clone()));
+    }
     let n = first_selected(app)?;
     match &n.kind {
         NodeKind::Text(t) => Some((t.first_style(), t.para.clone())),
@@ -23,10 +33,190 @@ pub(crate) fn text_style(app: &DrawcraftApp) -> Option<(CharStyle, drawcraft_doc
 }
 
 fn style(app: &mut DrawcraftApp, p: Value) {
-    app.run("text.setStyle", p).ok();
+    char_cmd(app, "text.setStyle", p);
 }
 fn format(app: &mut DrawcraftApp, p: Value) {
-    app.run("text.setFormat", p).ok();
+    char_cmd(app, "text.setFormat", p);
+}
+
+/// Apply character attributes: to the selected range while the Type tool edits text (the whole
+/// object when nothing is selected), else to the selected text objects.
+fn char_cmd(app: &mut DrawcraftApp, cmd: &str, p: Value) {
+    let Some((id, a, b)) = text_editing(app) else {
+        app.run(cmd, p).ok();
+        return;
+    };
+    end_typing(app);
+    let mut q = p;
+    q["id"] = json!(id.0);
+    if b > a {
+        q["start"] = json!(a);
+        q["end"] = json!(b);
+    }
+    app.run("text.setRangeStyle", q).ok();
+}
+
+// ---------- Type tool editing glue (selection, clipboard, keys) ----------
+
+/// The text object the Type tool is editing and its selection (clamped to the text).
+pub(crate) fn text_editing(app: &DrawcraftApp) -> Option<(NodeId, usize, usize)> {
+    let o = app.session.tool_options();
+    let id = NodeId(o.get("editing")?.as_u64()?);
+    let len = match &app.session.active()?.doc.node(id)?.kind {
+        NodeKind::Text(t) => t.plain_text().len(),
+        _ => return None,
+    };
+    let g = |k: &str| o.get(k).and_then(Value::as_u64).map_or(0, |v| (v as usize).min(len));
+    Some((id, g("start"), g("end")))
+}
+
+/// Close the Type tool's typing session (one undo step) before another command edits the text.
+pub(crate) fn end_typing(app: &mut DrawcraftApp) {
+    if app.session.tool_options().get("typing").and_then(Value::as_bool) == Some(true) {
+        app.session.set_tool_option("commitTyping", &json!(true));
+        app.session.commit_interaction().ok();
+        app.sync_views();
+    }
+}
+
+static CTX: OnceLock<egui::Context> = OnceLock::new();
+/// Plain text of the last text copied inside the Type tool (paste from the native menu, which
+/// can't read the system clipboard).
+static CLIP: Mutex<String> = Mutex::new(String::new());
+
+fn text_copy(app: &mut DrawcraftApp) -> bool {
+    let Some((id, a, b)) = text_editing(app) else { return false };
+    if a == b {
+        return false;
+    }
+    let Ok(r) = app.session.execute("text.getRange", &json!({"id": id.0, "start": a, "end": b})) else { return false };
+    app.session.set_tool_option("copy", &r["runs"]);
+    let text = r["text"].as_str().unwrap_or("").to_string();
+    if let Some(ctx) = CTX.get() {
+        ctx.copy_text(text.clone());
+    }
+    *CLIP.lock().unwrap_or_else(|e| e.into_inner()) = text;
+    true
+}
+
+fn text_key(app: &mut DrawcraftApp, k: ToolKey, m: Mods) {
+    let v = app.view_info();
+    if let Err(e) = app.session.tool_key(k, m, v) {
+        app.status(e.to_string());
+    }
+}
+
+fn text_paste(app: &mut DrawcraftApp, s: Option<String>) {
+    let s = s.unwrap_or_else(|| CLIP.lock().unwrap_or_else(|e| e.into_inner()).clone());
+    if !s.is_empty() {
+        let v = app.view_info();
+        if let Err(e) = app.session.tool_text(&s, v) {
+            app.status(e.to_string());
+        }
+    }
+}
+
+/// Edit-menu commands while the Type tool edits text act on the text (Cut/Copy/Paste/Select
+/// All/Clear). `None` = not intercepted.
+pub(crate) fn intercept_text_command(app: &mut DrawcraftApp, id: &str) -> Option<Result<Value, String>> {
+    if !app.session.tool_wants_text() {
+        return None;
+    }
+    match id {
+        "edit.copy" => {
+            text_copy(app);
+        }
+        "edit.cut" => {
+            if text_copy(app) {
+                text_key(app, ToolKey::Delete, Mods::default());
+            }
+        }
+        "edit.paste" | "edit.pasteWithoutFormatting" => text_paste(app, None),
+        "select.all" => app.session.set_tool_option("selectAll", &json!(true)),
+        "edit.clear" => text_key(app, ToolKey::Delete, Mods::default()),
+        _ => return None,
+    }
+    app.sync_views();
+    Some(Ok(Value::Null))
+}
+
+enum TextInput {
+    Key(ToolKey, Mods),
+    Copy,
+    Cut,
+    Paste(Option<String>),
+    SelectAll,
+}
+
+/// Route editing keys (with modifiers), clipboard events and Cmd+A/C/X/V to the Type tool.
+pub(crate) fn route_type_input(app: &mut DrawcraftApp, ctx: &egui::Context) {
+    CTX.get_or_init(|| ctx.clone());
+    let mut todo = vec![];
+    ctx.input_mut(|i| {
+        i.events.retain(|e| match e {
+            egui::Event::Copy => {
+                todo.push(TextInput::Copy);
+                false
+            }
+            egui::Event::Cut => {
+                todo.push(TextInput::Cut);
+                false
+            }
+            egui::Event::Paste(s) => {
+                todo.push(TextInput::Paste(Some(s.clone())));
+                false
+            }
+            egui::Event::Key { key, pressed, modifiers: m, .. } => {
+                let mods = Mods { shift: m.shift, alt: m.alt, cmd: m.command, ctrl: m.ctrl && !m.command, space: false };
+                let tk = match key {
+                    Key::ArrowLeft => Some(ToolKey::Left),
+                    Key::ArrowRight => Some(ToolKey::Right),
+                    Key::ArrowUp => Some(ToolKey::Up),
+                    Key::ArrowDown => Some(ToolKey::Down),
+                    Key::Home => Some(ToolKey::Home),
+                    Key::End => Some(ToolKey::End),
+                    Key::Backspace => Some(ToolKey::Backspace),
+                    Key::Delete => Some(ToolKey::Delete),
+                    Key::Tab if !m.command => Some(ToolKey::Tab),
+                    _ => None,
+                };
+                if let Some(tk) = tk {
+                    if *pressed {
+                        todo.push(TextInput::Key(tk, mods));
+                    }
+                    return false;
+                }
+                if m.command && !m.shift && !m.alt && matches!(key, Key::A | Key::C | Key::X | Key::V) {
+                    if *pressed {
+                        todo.push(match key {
+                            Key::A => TextInput::SelectAll,
+                            Key::C => TextInput::Copy,
+                            Key::X => TextInput::Cut,
+                            _ => TextInput::Paste(None),
+                        });
+                    }
+                    return false;
+                }
+                true
+            }
+            _ => true,
+        })
+    });
+    for t in todo {
+        match t {
+            TextInput::Key(k, m) => text_key(app, k, m),
+            TextInput::Copy => {
+                text_copy(app);
+            }
+            TextInput::Cut => {
+                if text_copy(app) {
+                    text_key(app, ToolKey::Delete, Mods::default());
+                }
+            }
+            TextInput::Paste(s) => text_paste(app, s),
+            TextInput::SelectAll => app.session.set_tool_option("selectAll", &json!(true)),
+        }
+    }
 }
 
 /// A compact labelled cell: short glyph label + spinner field.
@@ -205,6 +395,11 @@ pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
         menu_item(ui, l, false, l == "Fractional Widths");
     }
     ui.separator();
+    #[cfg(not(target_arch = "wasm32"))]
+    if menu_item(ui, "Show System Fonts", true, drawcraft_text::FontDb::global().families().len() > 4) {
+        let n = drawcraft_text::FontDb::global().load_system_fonts();
+        app.ui.status = format!("{n} system font faces available");
+    }
     if menu_item(ui, "Reset Panel", has, false) {
         style(app, json!({"tracking": 0, "leading": "auto"}));
         format(

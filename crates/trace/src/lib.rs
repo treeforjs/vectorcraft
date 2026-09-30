@@ -74,6 +74,14 @@ impl Raster {
         }
         Ok(Self { width: w, height: h, rgba: img.into_raw() })
     }
+    /// Encode as PNG.
+    pub fn encode_png(&self) -> Vec<u8> {
+        let mut out = Vec::new();
+        if let Some(img) = image::RgbaImage::from_raw(self.width, self.height, self.rgba.clone()) {
+            let _ = img.write_to(&mut std::io::Cursor::new(&mut out), image::ImageFormat::Png);
+        }
+        out
+    }
     pub fn pixel(&self, x: u32, y: u32) -> [u8; 4] {
         let i = (y as usize * self.width as usize + x as usize) * 4;
         [self.rgba[i], self.rgba[i + 1], self.rgba[i + 2], self.rgba[i + 3]]

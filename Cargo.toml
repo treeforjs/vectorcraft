@@ -16,6 +16,7 @@ drawcraft-geom = { path = "crates/geom" }
 drawcraft-color = { path = "crates/color" }
 drawcraft-doc = { path = "crates/doc" }
 drawcraft-pathops = { path = "crates/pathops" }
+drawcraft-brush = { path = "crates/brush" }
 drawcraft-trace = { path = "crates/trace" }
 drawcraft-text = { path = "crates/text" }
 drawcraft-effects = { path = "crates/effects" }

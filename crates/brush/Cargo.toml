@@ -12,7 +12,6 @@ workspace = true
 drawcraft-geom = { workspace = true }
 drawcraft-color = { workspace = true }
 drawcraft-doc = { workspace = true }
-drawcraft-pathops = { workspace = true }
 kurbo = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

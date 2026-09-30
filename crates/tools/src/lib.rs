@@ -8,13 +8,16 @@
 #![forbid(unsafe_code)]
 
 pub mod bbox;
+pub mod builder;
 pub mod catalog;
 pub mod direct;
 pub mod draw2;
 pub mod guides;
+pub mod meshblend;
 pub mod pen;
 pub mod select;
 pub mod shape;
+pub mod symbolism;
 pub mod text;
 pub mod xform;
 
@@ -97,6 +100,8 @@ pub enum ToolKey {
     BracketLeft,
     BracketRight,
     Tab,
+    Home,
+    End,
 }
 
 /// What a tool asks the engine to do.
@@ -170,6 +175,8 @@ pub enum Overlay {
     Label { p: Point, text: String, color: [u8; 3] },
     /// Measurement pill near the cursor (grey box with white text).
     Measure { p: Point, text: String },
+    /// Translucent filled quad (text selection highlight), RGBA.
+    Highlight { quad: [Point; 4], color: [u8; 4] },
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -241,10 +248,13 @@ pub fn create(id: &str) -> Box<dyn Tool> {
         "directSelection" => Box::new(direct::DirectSelectionTool::new(false)),
         "groupSelection" => Box::new(direct::DirectSelectionTool::new(true)),
         "pen" => Box::new(pen::PenTool::default()),
-        "type" => Box::new(text::TypeTool::default()),
+        "type" | "areaType" | "typeOnPath" => Box::new(text::TypeTool::new(id)),
         "rectangle" | "roundedRectangle" | "ellipse" | "polygon" | "star" | "lineSegment" => Box::new(shape::ShapeTool::new(id)),
-        other => draw2::create(other)
+        other => symbolism::create(other)
+            .or_else(|| builder::create(other))
+            .or_else(|| draw2::create(other))
             .or_else(|| xform::create(other))
+            .or_else(|| meshblend::create(other))
             .unwrap_or_else(|| Box::new(NoopTool(tool_info(other).map(|t| t.id).unwrap_or("selection")))),
     }
 }

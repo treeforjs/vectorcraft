@@ -23,7 +23,17 @@ pub fn quantize(img: &Raster, params: &TraceParams) -> Quantized {
     match params.mode {
         Mode::BlackAndWhite => {
             let t = params.threshold;
-            let labels = px.map(|p| if p[3] < 128 { TRANSPARENT } else if luma(p) < t { 1 } else { 0 }).collect();
+            let labels = px
+                .map(|p| {
+                    if p[3] < 128 {
+                        TRANSPARENT
+                    } else if luma(p) < t {
+                        1
+                    } else {
+                        0
+                    }
+                })
+                .collect();
             Quantized { labels, palette: vec![[255, 255, 255], [0, 0, 0]] }
         }
         Mode::Grayscale => {
@@ -231,8 +241,8 @@ fn kmeans_rgb(used: &[(usize, [f64; 3], f64)], k: usize) -> Vec<[f64; 3]> {
             let mut s = [0.0; 3];
             let mut w = 0.0;
             for &i in b {
-                for ch in 0..3 {
-                    s[ch] += used[i].1[ch] * used[i].2;
+                for (acc, v) in s.iter_mut().zip(used[i].1) {
+                    *acc += v * used[i].2;
                 }
                 w += used[i].2;
             }

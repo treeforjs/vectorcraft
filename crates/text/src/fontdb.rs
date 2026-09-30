@@ -48,6 +48,10 @@ pub struct FontFace {
     pub(crate) ascent: f64,
     /// Descender in font units (positive = down).
     pub(crate) descent: f64,
+    /// Cap height and x height in font units (estimated from the ascent when the font has no OS/2
+    /// values).
+    pub(crate) cap_height: f64,
+    pub(crate) x_height: f64,
     pub(crate) shaper: harfrust::ShaperData,
 }
 
@@ -206,6 +210,8 @@ fn make_face(bytes: FontBytes, index: u32, family: String, style: String) -> Opt
         upem: m.units_per_em.max(1) as f64,
         ascent: m.ascent as f64,
         descent: -(m.descent as f64),
+        cap_height: m.cap_height.map(|v| v as f64).filter(|v| *v > 0.0).unwrap_or(m.ascent as f64 * 0.72),
+        x_height: m.x_height.map(|v| v as f64).filter(|v| *v > 0.0).unwrap_or(m.ascent as f64 * 0.5),
         shaper,
         bytes,
         index,
@@ -495,7 +501,8 @@ impl FontDb {
                 continue;
             }
             let Ok(data) = std::fs::read(&p) else { continue };
-            let hit = enumerate_faces(&data).iter().any(|(i, _, _)| skrifa::FontRef::from_index(&data, *i).is_ok_and(|f| f.charmap().map(c).is_some()));
+            let hit =
+                enumerate_faces(&data).iter().any(|(i, _, _)| skrifa::FontRef::from_index(&data, *i).is_ok_and(|f| f.charmap().map(c).is_some()));
             if hit && self.add_font(data) > 0 && covered(self) {
                 return true;
             }

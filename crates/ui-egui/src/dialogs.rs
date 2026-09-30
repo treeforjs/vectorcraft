@@ -132,7 +132,12 @@ pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
         return app.run("recolor.apply", json!({"map": map}));
     }
     if d.kind == "exportForScreens" {
-        let boards: Vec<usize> = d.fields.get("boards").and_then(Value::as_array).map(|a| a.iter().enumerate().filter(|(_, b)| b.as_bool() == Some(true)).map(|(i, _)| i).collect()).unwrap_or_default();
+        let boards: Vec<usize> = d
+            .fields
+            .get("boards")
+            .and_then(Value::as_array)
+            .map(|a| a.iter().enumerate().filter(|(_, b)| b.as_bool() == Some(true)).map(|(i, _)| i).collect())
+            .unwrap_or_default();
         let params = json!({"folder": d.str("folder"), "artboards": boards, "formats": d.fields.get("formats").cloned().unwrap_or(json!([])), "prefix": d.str("prefix")});
         app.ui.dialog = None;
         let r = app.run("document.exportForScreens", params);
@@ -431,7 +436,8 @@ fn new_document(ui: &mut egui::Ui, d: &mut Dialog) {
 fn export_for_screens_ui(app: &mut DrawcraftApp, ui: &mut egui::Ui, d: &mut Dialog) {
     let t = Tokens::get(ui.ctx());
     let names: Vec<String> = app.session.active().map(|s| s.doc.artboards.iter().map(|a| a.name.clone()).collect()).unwrap_or_default();
-    let mut boards: Vec<bool> = d.fields.get("boards").and_then(Value::as_array).map(|a| a.iter().map(|b| b.as_bool().unwrap_or(false)).collect()).unwrap_or_default();
+    let mut boards: Vec<bool> =
+        d.fields.get("boards").and_then(Value::as_array).map(|a| a.iter().map(|b| b.as_bool().unwrap_or(false)).collect()).unwrap_or_default();
     boards.resize(names.len(), true);
     ui.horizontal_top(|ui| {
         ui.vertical(|ui| {
@@ -454,7 +460,12 @@ fn export_for_screens_ui(app: &mut DrawcraftApp, ui: &mut egui::Ui, d: &mut Dial
                                 let sz = tex.size_vec2();
                                 let s = (46.0 / sz.x.max(sz.y)).min(1.0);
                                 let ir = egui::Rect::from_center_size(r.center(), sz * s);
-                                ui.painter().image(tex.id(), ir, egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)), egui::Color32::WHITE);
+                                ui.painter().image(
+                                    tex.id(),
+                                    ir,
+                                    egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+                                    egui::Color32::WHITE,
+                                );
                             }
                             None => {
                                 ui.painter().rect_filled(r, 2.0, egui::Color32::WHITE);

@@ -74,6 +74,7 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("pathfinder", "Pathfinder", "dc-pathfinder"),
     ("character", "Character", "type"),
     ("paragraph", "Paragraph", "pilcrow"),
+    ("glyphs", "Glyphs", "text-cursor-input"),
     ("history", "History", "history"),
     ("actions", "Actions", "dc-actions"),
     ("info", "Info", "info"),
@@ -88,7 +89,7 @@ pub const ICON_PANEL_GROUPS: &[&[&str]] = &[
     &["appearance", "graphicStyles"],
     &["artboards"],
     &["transform", "align", "pathfinder"],
-    &["character", "paragraph"],
+    &["character", "paragraph", "glyphs"],
     &["history", "actions", "info", "navigator"],
 ];
 

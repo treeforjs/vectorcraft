@@ -779,6 +779,10 @@ fn draw_overlays(p: &egui::Painter, xf: &Xf, overlays: &[Overlay], t: &Tokens) {
                 let sp = xf.to_screen(*pt) + vec2(8.0, -14.0);
                 p.text(sp, egui::Align2::LEFT_TOP, text, egui::FontId::proportional(11.0), c32(*color));
             }
+            Overlay::Highlight { quad, color } => {
+                let c = Color32::from_rgba_unmultiplied(color[0], color[1], color[2], color[3]);
+                p.add(Shape::convex_polygon(quad.iter().map(|q| xf.to_screen(*q)).collect(), c, Stroke::NONE));
+            }
             Overlay::Measure { p: pt, text } => {
                 let sp = xf.to_screen(*pt) + vec2(14.0, 14.0);
                 let galley = p.layout(text.clone(), egui::FontId::proportional(11.0), Color32::WHITE, 200.0);

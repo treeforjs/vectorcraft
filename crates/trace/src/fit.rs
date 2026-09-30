@@ -1,6 +1,6 @@
 //! Loop → polygon → Bézier curves.
 
-use drawcraft_geom::{AnchorKind, PathData, Point, SubPath};
+use drawcraft_geom::{AnchorKind, CubicBez, ParamCurve, PathData, Point, SubPath};
 use drawcraft_pathops::{SimplifyOptions, simplify_with};
 
 use crate::contour::Loop;
@@ -32,8 +32,8 @@ fn rdp(pts: &[Point], a: usize, b: usize, tol: f64, keep: &mut [bool]) {
         }
         let (pa, pb) = (pts[a], pts[b % pts.len()]);
         let mut best = (0.0, a);
-        for i in a + 1..b {
-            let d = seg_dist(pts[i], pa, pb);
+        for (i, &q) in pts.iter().enumerate().take(b).skip(a + 1) {
+            let d = seg_dist(q, pa, pb);
             if d > best.0 {
                 best = (d, i);
             }
@@ -48,7 +48,12 @@ fn rdp(pts: &[Point], a: usize, b: usize, tol: f64, keep: &mut [bool]) {
 
 /// The polygon approximating a closed loop of pixel-corner vertices within `tol`.
 pub(crate) fn polygon(loop_pts: &[(i32, i32)], tol: f64) -> Vec<Point> {
-    let pts: Vec<Point> = loop_pts.iter().map(|&(x, y)| Point::new(x as f64, y as f64)).collect();
+    let raw: Vec<Point> = loop_pts.iter().map(|&(x, y)| Point::new(x as f64, y as f64)).collect();
+    if raw.len() < 4 {
+        return raw;
+    }
+    let pts = dejag(loop_pts);
+    let pts = if pts.len() < 3 { raw.clone() } else { pts };
     let n = pts.len();
     if n < 4 {
         return pts;
@@ -70,6 +75,42 @@ pub(crate) fn polygon(loop_pts: &[(i32, i32)], tol: f64) -> Vec<Point> {
             out.remove(0);
         }
     }
+    if out.len() < 3 { raw } else { out }
+}
+
+/// Replace pixel-staircase jogs by their midpoints.
+///
+/// A unit-length edge whose two ends turn in opposite directions (an S-shaped step) is a jog of
+/// a staircase approximating a sloped line or curve: its midpoint lies on the ideal boundary, its
+/// end vertices don't. Vertices not adjacent to any jog (true corners, e.g. of rectangles, or the
+/// U-turns at the end of one-pixel-wide lines) are kept.
+fn dejag(v: &[(i32, i32)]) -> Vec<Point> {
+    let n = v.len();
+    let edge = |i: usize| {
+        let (a, b) = (v[i % n], v[(i + 1) % n]);
+        (b.0 - a.0, b.1 - a.1)
+    };
+    // Turn sign at vertex i (between edge i-1 and edge i).
+    let turn = |i: usize| {
+        let (a, b) = (edge((i + n - 1) % n), edge(i));
+        (a.0 as i64 * b.1 as i64 - a.1 as i64 * b.0 as i64).signum()
+    };
+    let jog: Vec<bool> = (0..n)
+        .map(|i| {
+            let (dx, dy) = edge(i);
+            dx.abs() + dy.abs() == 1 && turn(i) * turn(i + 1) < 0
+        })
+        .collect();
+    let mut out = Vec::with_capacity(n);
+    for i in 0..n {
+        if !jog[i] && !jog[(i + n - 1) % n] {
+            out.push(Point::new(v[i].0 as f64, v[i].1 as f64));
+        }
+        if jog[i] {
+            let (a, b) = (v[i], v[(i + 1) % n]);
+            out.push(Point::new((a.0 + b.0) as f64 / 2.0, (a.1 + b.1) as f64 / 2.0));
+        }
+    }
     out
 }
 
@@ -87,12 +128,12 @@ pub(crate) fn fit_loop(l: &Loop, o: &FitOptions) -> Option<SubPath> {
         return None;
     }
     if o.snap_lines {
-        snap_to_lines(&mut sp, o.fit_tol.max(0.75));
+        snap_to_lines(&mut sp, (o.fit_tol * 2.0).max(1.5));
     }
     Some(sp)
 }
 
-/// Retract the handles of curves whose control points lie within `tol` of their chord.
+/// Retract the handles of curves that stay within `tol` of their chord.
 fn snap_to_lines(sp: &mut SubPath, tol: f64) {
     let n = sp.anchors.len();
     for i in 0..sp.segment_count() {
@@ -101,7 +142,8 @@ fn snap_to_lines(sp: &mut SubPath, tol: f64) {
         if !a.has_out() && !b.has_in() {
             continue;
         }
-        if seg_dist(a.h_out, a.p, b.p) <= tol && seg_dist(b.h_in, a.p, b.p) <= tol {
+        let c = CubicBez::new(a.p, a.h_out, b.h_in, b.p);
+        if (1..8).all(|k| seg_dist(c.eval(k as f64 / 8.0), a.p, b.p) <= tol) {
             sp.anchors[i].h_out = a.p;
             sp.anchors[j].h_in = b.p;
         }

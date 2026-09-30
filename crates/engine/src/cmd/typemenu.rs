@@ -2,7 +2,7 @@
 //! Options, Fill with Placeholder Text, Insert Special/Whitespace/Break characters) and the text
 //! commands of the Edit menu (Find and Replace, Find Next, Paste without Formatting).
 
-use drawcraft_doc::{CharStyle, Document, NodeId, NodeKind, TextKind, TextRun};
+use drawcraft_doc::{CharStyle, Document, Justify, NodeId, NodeKind, TextKind, TextRun};
 use drawcraft_geom::{Affine, Rect, shapes};
 use serde_json::{Value, json};
 
@@ -291,7 +291,14 @@ fn to_area(s: &mut Session, p: &Value) -> Result<Value> {
             let size = t.first_style().size;
             // A little slack on the right so the text doesn't rewrap.
             let top = lay.lines.first().map(|l| l.baseline - l.ascent).unwrap_or(b.y0).min(b.y0);
-            let frame = Rect::new(b.x0, top, b.x1 + size * 0.5, b.y1.max(top + 1.0));
+            let slack = size * 0.5;
+            // Slack goes where the alignment leaves room, so the text doesn't move or rewrap.
+            let (sl, sr) = match t.para.justify {
+                Justify::Center | Justify::JustifyCenter => (slack * 0.5, slack * 0.5),
+                Justify::Right | Justify::JustifyRight => (slack, 0.0),
+                _ => (0.0, slack),
+            };
+            let frame = Rect::new(b.x0 - sl, top, b.x1 + sr, b.y1.max(top + 1.0));
             t.kind = TextKind::Area { frame: shapes::rectangle(frame) };
             refresh_bounds(t);
         }
@@ -336,8 +343,18 @@ fn to_point(s: &mut Session, p: &Value) -> Result<Value> {
                     t.runs[ri].text.insert(bi, '\n');
                 }
             }
+            // The point origin sits where the alignment anchors the first line.
+            let (x0, x1) = lay
+                .lines
+                .first()
+                .map_or((fb.x0, fb.x1), |l| (l.avail.0 - t.para.left_indent - t.para.first_line_indent, l.avail.1 + t.para.right_indent));
+            let ox = match t.para.justify {
+                Justify::Center | Justify::JustifyCenter => (x0 + x1) * 0.5,
+                Justify::Right | Justify::JustifyRight => x1,
+                _ => x0,
+            };
             t.kind = TextKind::Point;
-            t.xf *= Affine::translate((fb.x0, baseline));
+            t.xf *= Affine::translate((ox, baseline));
             refresh_bounds(t);
         }
         Ok(())

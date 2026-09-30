@@ -409,14 +409,22 @@ impl Session {
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
+mod tests_brushsym;
+#[cfg(test)]
+mod tests_build;
+#[cfg(test)]
 mod tests_draw2;
 #[cfg(test)]
 mod tests_file;
+#[cfg(test)]
+mod tests_live;
 #[cfg(test)]
 mod tests_menucmds;
 #[cfg(test)]
 mod tests_panelcmds;
 #[cfg(test)]
 mod tests_pathops;
+#[cfg(test)]
+mod tests_textedit;
 #[cfg(test)]
 mod tests_xform;

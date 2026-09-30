@@ -206,15 +206,27 @@ pub fn next_word(s: &str, i: usize) -> usize {
 /// The word (or run of spaces / single punctuation) at `i` (double-click selection).
 pub fn word_at(s: &str, i: usize) -> Range<usize> {
     let i = floor_char(s, i);
-    let cur = s[i..].chars().next().or_else(|| s[..i].chars().next_back());
-    let Some(c) = cur else { return i..i };
-    let class = |c: char| if is_word_char(c) { 0 } else if c.is_whitespace() && c != '\n' { 1 } else { 2 };
+    let (next, prev) = (s[i..].chars().next(), s[..i].chars().next_back());
+    // At a word's end, the word wins over the following space or punctuation.
+    let (c, at) = match (next, prev) {
+        (Some(n), Some(p)) if !is_word_char(n) && is_word_char(p) => (p, i - p.len_utf8()),
+        (Some(n), _) => (n, i),
+        (None, Some(p)) => (p, i - p.len_utf8()),
+        (None, None) => return i..i,
+    };
+    let class = |c: char| {
+        if is_word_char(c) {
+            0
+        } else if c.is_whitespace() && c != '\n' {
+            1
+        } else {
+            2
+        }
+    };
     let k = class(c);
     if k == 2 {
-        let a = if s[i..].starts_with(c) { i } else { i - c.len_utf8() };
-        return a..a + c.len_utf8();
+        return at..at + c.len_utf8();
     }
-    let at = if s[i..].chars().next().is_some_and(|d| class(d) == k) { i } else { i - c.len_utf8() };
     let mut a = at;
     for (p, d) in s[..at].char_indices().rev() {
         if class(d) != k {

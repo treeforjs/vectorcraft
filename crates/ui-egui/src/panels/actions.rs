@@ -28,8 +28,14 @@ pub fn default_sets() -> Vec<ActionSet> {
         name: "Default Actions".into(),
         actions: vec![
             Action { name: "Duplicate and Offset 10 pt".into(), steps: vec![step("object.move", json!({"dx": 10, "dy": 10, "copy": true}))] },
-            Action { name: "Unite and Simplify".into(), steps: vec![step("object.pathfinder.unite", json!({})), step("object.path.simplify", json!({"tolerance": 0.5}))] },
-            Action { name: "Center on Artboard".into(), steps: vec![step("object.align", json!({"horizontal": "center", "vertical": "center", "to": "artboard"}))] },
+            Action {
+                name: "Unite and Simplify".into(),
+                steps: vec![step("object.pathfinder.unite", json!({})), step("object.path.simplify", json!({"tolerance": 0.5}))],
+            },
+            Action {
+                name: "Center on Artboard".into(),
+                steps: vec![step("object.align", json!({"horizontal": "center", "vertical": "center", "to": "artboard"}))],
+            },
             Action { name: "Outline Text".into(), steps: vec![step("type.createOutlines", json!({}))] },
             Action { name: "Rotate 90° CW".into(), steps: vec![step("object.rotate", json!({"angle": -90}))] },
             Action { name: "Reflect Horizontal".into(), steps: vec![step("object.reflect", json!({"axis": "vertical"}))] },
@@ -60,8 +66,20 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut egui::Ui) {
                 } else if resp.hovered() {
                     ui.painter().rect_filled(r, 0.0, t.hover);
                 }
-                ui.painter().text(r.left_center() + egui::vec2(18.0, 0.0), egui::Align2::LEFT_CENTER, &a.name, egui::FontId::proportional(12.5), t.text_strong);
-                ui.painter().text(r.right_center() - egui::vec2(6.0, 0.0), egui::Align2::RIGHT_CENTER, format!("{} step{}", a.steps.len(), if a.steps.len() == 1 { "" } else { "s" }), egui::FontId::proportional(11.0), t.text_dim);
+                ui.painter().text(
+                    r.left_center() + egui::vec2(18.0, 0.0),
+                    egui::Align2::LEFT_CENTER,
+                    &a.name,
+                    egui::FontId::proportional(12.5),
+                    t.text_strong,
+                );
+                ui.painter().text(
+                    r.right_center() - egui::vec2(6.0, 0.0),
+                    egui::Align2::RIGHT_CENTER,
+                    format!("{} step{}", a.steps.len(), if a.steps.len() == 1 { "" } else { "s" }),
+                    egui::FontId::proportional(11.0),
+                    t.text_dim,
+                );
                 if resp.clicked() {
                     selected = Some((si, ai));
                 }

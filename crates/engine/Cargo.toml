@@ -16,6 +16,8 @@ drawcraft-tools = { workspace = true }
 drawcraft-text = { workspace = true }
 drawcraft-render = { workspace = true }
 drawcraft-pathops = { workspace = true }
+drawcraft-brush = { workspace = true }
+drawcraft-trace = { workspace = true }
 drawcraft-svg = { workspace = true }
 drawcraft-format = { workspace = true }
 drawcraft-pdf = { workspace = true }

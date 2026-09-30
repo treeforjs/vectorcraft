@@ -376,6 +376,13 @@ impl Exporter<'_> {
                     self.node(s, &art, page, true);
                 }
             }
+            // Live blends/envelopes/meshes export their evaluated (expanded) form.
+            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) => {
+                let g = drawcraft_doc::live::expand_deep(n, None);
+                for c in g.children().into_iter().flatten() {
+                    self.node(s, c, page, false);
+                }
+            }
         }
         for _ in 0..pushes {
             s.pop();

@@ -228,7 +228,9 @@ pub fn lerp_appearance(a: &Appearance, b: &Appearance, t: f64) -> Appearance {
     let tf = t as f32;
     let mut out = if t < 0.5 { a.clone() } else { b.clone() };
     let same = a.items.len() == b.items.len()
-        && a.items.iter().zip(&b.items).all(|(x, y)| matches!((x, y), (AppearanceItem::Fill(_), AppearanceItem::Fill(_)) | (AppearanceItem::Stroke(_), AppearanceItem::Stroke(_))));
+        && a.items.iter().zip(&b.items).all(|(x, y)| {
+            matches!((x, y), (AppearanceItem::Fill(_), AppearanceItem::Fill(_)) | (AppearanceItem::Stroke(_), AppearanceItem::Stroke(_)))
+        });
     if same {
         for (i, it) in out.items.iter_mut().enumerate() {
             match (it, &a.items[i], &b.items[i]) {
@@ -370,7 +372,10 @@ pub fn lerp_node(a: &Node, b: &Node, t: f64) -> Node {
                     let c = ba.center().lerp(bb.center(), t);
                     let sx = if bn.width() > 1e-9 { w / bn.width() } else { 1.0 };
                     let sy = if bn.height() > 1e-9 { h / bn.height() } else { 1.0 };
-                    n.transform(Affine::translate(c.to_vec2()) * Affine::scale_non_uniform(sx, sy) * Affine::translate(-bn.center().to_vec2()), false);
+                    n.transform(
+                        Affine::translate(c.to_vec2()) * Affine::scale_non_uniform(sx, sy) * Affine::translate(-bn.center().to_vec2()),
+                        false,
+                    );
                 }
                 if let NodeKind::Path { live, .. } = &mut n.kind {
                     *live = None;
@@ -684,11 +689,7 @@ fn flatten_subpath(sp: &SubPath, tol: f64) -> Vec<Point> {
     sp.to_bezpath_into(&mut bp);
     let mut pts: Vec<Point> = Vec::new();
     drawcraft_geom::kurbo::flatten(bp.iter(), tol, |el| match el {
-        drawcraft_geom::PathEl::MoveTo(p) | drawcraft_geom::PathEl::LineTo(p) => {
-            if pts.last().is_none_or(|q| q.distance(p) > 1e-9) {
-                pts.push(p)
-            }
-        }
+        drawcraft_geom::PathEl::MoveTo(p) | drawcraft_geom::PathEl::LineTo(p) if pts.last().is_none_or(|q| q.distance(p) > 1e-9) => pts.push(p),
         _ => {}
     });
     pts
@@ -753,10 +754,12 @@ impl Coons {
             return Some(Self::rect(r));
         }
         // Orient clockwise in y-down (TL → TR → BR → BL).
-        let area: f64 = (0..poly.len()).map(|i| {
-            let (p, q) = (poly[i], poly[(i + 1) % poly.len()]);
-            p.x * q.y - q.x * p.y
-        }).sum();
+        let area: f64 = (0..poly.len())
+            .map(|i| {
+                let (p, q) = (poly[i], poly[(i + 1) % poly.len()]);
+                p.x * q.y - q.x * p.y
+            })
+            .sum();
         if area < 0.0 {
             poly.reverse();
         }
@@ -831,7 +834,11 @@ impl GradientMesh {
                 let d_v = (s(u, (v + eps).min(1.0)) - s(u, (v - eps).max(0.0))) / ((v + eps).min(1.0) - (v - eps).max(0.0));
                 let hu = d_u * (du / 3.0);
                 let hv = d_v * (dv / 3.0);
-                points.push(MeshPoint { p, color: color(u, v), opacity: 1.0, handles: [hu, -hu, hv, -hv] });
+                // Outward handles on the border are unused: keep them at the point.
+                let z = Vec2::ZERO;
+                let handles =
+                    [if c < cols { hu } else { z }, if c > 0 { -hu } else { z }, if r < rows { hv } else { z }, if r > 0 { -hv } else { z }];
+                points.push(MeshPoint { p, color: color(u, v), opacity: 1.0, handles });
             }
         }
         Self { rows, cols, points }
@@ -880,7 +887,8 @@ impl GradientMesh {
 
     /// Bilinear colour and opacity of patch (r, c) at local (u, v).
     pub fn color_at(&self, r: usize, c: usize, u: f64, v: f64) -> (Color, f32) {
-        let q = [&self.points[self.idx(r, c)], &self.points[self.idx(r, c + 1)], &self.points[self.idx(r + 1, c)], &self.points[self.idx(r + 1, c + 1)]];
+        let q =
+            [&self.points[self.idx(r, c)], &self.points[self.idx(r, c + 1)], &self.points[self.idx(r + 1, c)], &self.points[self.idx(r + 1, c + 1)]];
         let w = [(1.0 - u) * (1.0 - v), u * (1.0 - v), (1.0 - u) * v, u * v];
         let mut rgb = [0.0f32; 3];
         let mut op = 0.0f32;
@@ -1485,7 +1493,8 @@ mod tests {
 
     #[test]
     fn mesh_insert_and_remove_lines() {
-        let mut m = GradientMesh::for_path(&shapes::rectangle(Rect::new(0.0, 0.0, 100.0, 100.0)), 1, 1, Color::BLACK, MeshAppearance::Flat, 0.0).unwrap();
+        let mut m =
+            GradientMesh::for_path(&shapes::rectangle(Rect::new(0.0, 0.0, 100.0, 100.0)), 1, 1, Color::BLACK, MeshAppearance::Flat, 0.0).unwrap();
         let i = m.add_lines_at(Point::new(30.0, 60.0)).unwrap();
         assert_eq!((m.rows, m.cols), (2, 2));
         assert!(m.points[i].p.distance(Point::new(30.0, 60.0)) < 0.5, "{:?}", m.points[i].p);

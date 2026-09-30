@@ -14,7 +14,13 @@ fn is_vowel(c: char) -> bool {
 /// Consonant pairs that stay together at the start of a syllable ("gra-phy", "tea-cher").
 fn onset_pair(a: char, b: char) -> bool {
     let (a, b) = (a.to_ascii_lowercase(), b.to_ascii_lowercase());
-    matches!((a, b), ('c' | 's' | 't' | 'p' | 'w' | 'g', 'h') | ('b' | 'c' | 'd' | 'f' | 'g' | 'k' | 'p' | 't', 'r') | ('b' | 'c' | 'f' | 'g' | 'k' | 'p' | 's', 'l') | ('q', 'u'))
+    matches!(
+        (a, b),
+        ('c' | 's' | 't' | 'p' | 'w' | 'g', 'h')
+            | ('b' | 'c' | 'd' | 'f' | 'g' | 'k' | 'p' | 't', 'r')
+            | ('b' | 'c' | 'f' | 'g' | 'k' | 'p' | 's', 'l')
+            | ('q', 'u')
+    )
 }
 
 /// Allowed hyphenation points in `word`, as char indices (a hyphen goes *before* the char).

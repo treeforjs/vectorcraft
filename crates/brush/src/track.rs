@@ -99,8 +99,20 @@ impl Track {
     /// Incoming and outgoing unit directions at vertex `i`.
     pub fn in_out(&self, i: usize) -> (Vec2, Vec2) {
         let n = self.segments();
-        let inc = if i > 0 { self.dirs[i - 1] } else if self.closed { self.dirs[n - 1] } else { self.dirs[0] };
-        let out = if i < n { self.dirs[i] } else if self.closed { self.dirs[0] } else { self.dirs[n - 1] };
+        let inc = if i > 0 {
+            self.dirs[i - 1]
+        } else if self.closed {
+            self.dirs[n - 1]
+        } else {
+            self.dirs[0]
+        };
+        let out = if i < n {
+            self.dirs[i]
+        } else if self.closed {
+            self.dirs[0]
+        } else {
+            self.dirs[n - 1]
+        };
         (inc, out)
     }
 
@@ -148,7 +160,7 @@ impl Track {
 pub fn tracks(bp: &BezPath, tol: f64) -> Vec<Track> {
     let mut out = vec![];
     let mut cur: Vec<Point> = vec![];
-    let mut flush = |cur: &mut Vec<Point>, closed: bool, out: &mut Vec<Track>| {
+    let flush = |cur: &mut Vec<Point>, closed: bool, out: &mut Vec<Track>| {
         if let Some(t) = Track::new(std::mem::take(cur), closed) {
             out.push(t);
         }

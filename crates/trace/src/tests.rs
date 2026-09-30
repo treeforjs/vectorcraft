@@ -245,9 +245,7 @@ fn params_json_roundtrip_and_partial() {
 #[test]
 fn decode_png() {
     let img = disc(32, 16.0, 16.0, 10.0);
-    let buf = image::RgbaImage::from_raw(32, 32, img.rgba.clone()).unwrap();
-    let mut bytes = Vec::new();
-    buf.write_to(&mut std::io::Cursor::new(&mut bytes), image::ImageFormat::Png).unwrap();
+    let bytes = img.encode_png();
     let r = Raster::decode(&bytes).unwrap();
     assert_eq!(r, img);
     assert!(Raster::decode(b"not an image").is_err());

@@ -11,6 +11,7 @@ pub mod brushes;
 pub mod character;
 pub mod color;
 pub mod color_guide;
+pub mod glyphs;
 pub mod gradient;
 pub mod graphic_styles;
 pub mod history;
@@ -65,6 +66,7 @@ pub fn show_icon_panel(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "gradient" => gradient::show(app, ui),
         "character" => character::show(app, ui),
         "paragraph" => paragraph::show(app, ui),
+        "glyphs" => glyphs::show(app, ui),
         "navigator" => navigator::show(app, ui),
         "brushes" => brushes::show(app, ui),
         "symbols" => symbols::show(app, ui),
@@ -93,6 +95,7 @@ pub fn panel_menu_items(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "gradient" => gradient::menu(app, ui),
         "character" => character::menu(app, ui),
         "paragraph" => paragraph::menu(app, ui),
+        "glyphs" => glyphs::menu(app, ui),
         "navigator" => navigator::menu(app, ui),
         "brushes" => brushes::menu(app, ui),
         "symbols" => symbols::menu(app, ui),

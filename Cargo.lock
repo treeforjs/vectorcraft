@@ -844,7 +844,6 @@ dependencies = [
  "drawcraft-color",
  "drawcraft-doc",
  "drawcraft-geom",
- "drawcraft-pathops",
  "kurbo 0.13.1",
  "serde",
  "serde_json",
@@ -898,6 +897,7 @@ dependencies = [
 name = "drawcraft-engine"
 version = "0.1.0"
 dependencies = [
+ "drawcraft-brush",
  "drawcraft-color",
  "drawcraft-doc",
  "drawcraft-format",
@@ -909,6 +909,7 @@ dependencies = [
  "drawcraft-testkit",
  "drawcraft-text",
  "drawcraft-tools",
+ "drawcraft-trace",
  "kurbo 0.13.1",
  "log",
  "proptest",
@@ -993,6 +994,7 @@ dependencies = [
 name = "drawcraft-render"
 version = "0.1.0"
 dependencies = [
+ "drawcraft-brush",
  "drawcraft-color",
  "drawcraft-doc",
  "drawcraft-effects",
@@ -1059,6 +1061,7 @@ dependencies = [
  "drawcraft-color",
  "drawcraft-doc",
  "drawcraft-geom",
+ "drawcraft-pathops",
  "drawcraft-text",
  "kurbo 0.13.1",
  "serde",

@@ -35,6 +35,9 @@ pub(crate) struct SGlyph {
     pub ascent: f64,
     pub descent: f64,
     pub leading: f64,
+    /// Cap height and x height in points.
+    pub cap: f64,
+    pub xh: f64,
     /// First source character of the cluster.
     pub ch: char,
 }
@@ -84,6 +87,13 @@ pub(crate) fn style_metrics(db: &FontDb, st: &CharStyle) -> (f64, f64, f64) {
     let k = st.size / face.upem;
     let vs = st.v_scale / 100.0;
     (face.ascent * k * vs, face.descent * k * vs, st.effective_leading())
+}
+
+/// Cap height and x height (points) of a style's resolved face.
+pub(crate) fn cap_x_heights(db: &FontDb, st: &CharStyle) -> (f64, f64) {
+    let face = db.face(&st.font_family, &st.font_style);
+    let k = st.size / face.upem * st.v_scale / 100.0;
+    (face.cap_height * k, face.x_height * k)
 }
 
 /// Shape `text[range]`, where `runs` gives each run's byte range in `text` and style.
@@ -149,6 +159,8 @@ fn shape_segment(text: &str, range: Range<usize>, run: usize, st: &CharStyle, fa
     let ascent = face.ascent * k * vs;
     let descent = face.descent * k * vs;
     let leading = st.effective_leading();
+    let cap = face.cap_height * k * vs;
+    let xh = face.x_height * k * vs;
     let first_char = |byte: usize| text[byte..].chars().next().unwrap_or(' ');
 
     let mut raw: Vec<(u32, u32, i32, i32, i32)> = Vec::with_capacity(seg.len()); // gid, cluster, xadv, xoff, yoff
@@ -218,6 +230,8 @@ fn shape_segment(text: &str, range: Range<usize>, run: usize, st: &CharStyle, fa
             ascent,
             descent,
             leading,
+            cap,
+            xh,
             ch,
         });
     }

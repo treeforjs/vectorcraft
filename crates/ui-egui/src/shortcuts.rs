@@ -96,13 +96,8 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
         for t in texts {
             let _ = app.session.tool_text(&t, view);
         }
-        for (k, tk) in
-            [(Key::Backspace, ToolKey::Backspace), (Key::Delete, ToolKey::Delete), (Key::ArrowLeft, ToolKey::Left), (Key::ArrowRight, ToolKey::Right)]
-        {
-            if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, k)) {
-                let _ = app.session.tool_key(tk, Mods::default(), view);
-            }
-        }
+        // Editing keys with modifiers, clipboard and Cmd+A.
+        crate::panels::character::route_type_input(app, ctx);
         // Enter was already delivered above as ToolKey::Enter (newline).
         let fire = all_shortcuts()
             .into_iter()

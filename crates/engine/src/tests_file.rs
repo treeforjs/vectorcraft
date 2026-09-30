@@ -133,7 +133,11 @@ fn recolor_maps_fills_strokes_gradients() {
     let mut s = session();
     s.execute("paint.setFill", &json!({"color": "#ff0000"})).unwrap();
     let a = s.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap()["id"].as_u64().unwrap();
-    s.execute("paint.setFill", &json!({"gradient": {"kind": "linear", "stops": [{"offset": 0, "color": "#ff0000"}, {"offset": 1, "color": "#0000ff"}]}})).unwrap();
+    s.execute(
+        "paint.setFill",
+        &json!({"gradient": {"kind": "linear", "stops": [{"offset": 0, "color": "#ff0000"}, {"offset": 1, "color": "#0000ff"}]}}),
+    )
+    .unwrap();
     s.execute("select.all", &json!({})).unwrap();
     let c = s.execute("recolor.colors", &json!({})).unwrap();
     let hexes: Vec<&str> = c["colors"].as_array().unwrap().iter().map(|v| v["hex"].as_str().unwrap()).collect();

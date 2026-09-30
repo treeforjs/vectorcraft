@@ -36,10 +36,6 @@ impl Nib {
         let den = ((self.a * du).powi(2) + (self.b * dv).powi(2)).sqrt().max(1e-12);
         (self.u * (self.a * self.a * du) + self.v * (self.b * self.b * dv)) / den
     }
-    /// Half the swept width across direction `n` (unit).
-    pub fn half_width(&self, n: Vec2) -> f64 {
-        ((self.a * self.u.dot(n)).powi(2) + (self.b * self.v.dot(n)).powi(2)).sqrt()
-    }
 }
 
 /// Unit vector at `angle` radians from `base` towards its left normal.
@@ -150,7 +146,10 @@ pub(crate) fn bristle(b: &Bristle, bp: &BezPath, weight: f64, paint: &Paint, nam
     let size = b.size.max(0.1) * weight;
     let strands = (3.0 + b.density.clamp(1.0, 100.0) / 100.0 * 13.0).round() as usize;
     let thick = (size * b.thickness.clamp(1.0, 100.0) / 100.0 * 0.45).max(0.15);
-    let flat = matches!(b.shape, BristleShape::FlatPoint | BristleShape::FlatBlunt | BristleShape::FlatCurve | BristleShape::FlatAngle | BristleShape::FlatFan);
+    let flat = matches!(
+        b.shape,
+        BristleShape::FlatPoint | BristleShape::FlatBlunt | BristleShape::FlatCurve | BristleShape::FlatAngle | BristleShape::FlatFan
+    );
     let wobble = (100.0 - b.stiffness.clamp(1.0, 100.0)) / 100.0;
     let ragged = b.length.clamp(25.0, 300.0) / 100.0;
     let opacity = (b.opacity.clamp(1.0, 100.0) / 100.0) as f32;

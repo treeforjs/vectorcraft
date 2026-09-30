@@ -100,6 +100,9 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
 
 /// Handle a UI command. `None` = not a UI command (the engine handles it).
 pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Result<Value, String>> {
+    if let Some(r) = crate::panels::character::intercept_text_command(app, id) {
+        return Some(r);
+    }
     let s = |k: &str| p.get(k).and_then(Value::as_str).map(str::to_string);
     let flag = |b: &mut bool| {
         *b = !*b;
@@ -602,7 +605,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Expand Appearance", "effect.expandAppearance"),
                 c("Crop Image", "object.cropImage"),
                 cp("Rasterize…", "object.rasterize", json!({"ppi": 72, "background": "transparent"})),
-                todo("Create Gradient Mesh…"),
+                cp("Create Gradient Mesh…", "object.mesh.create", json!({"rows": 4, "cols": 4, "appearance": "flat", "highlight": 100})),
                 todo("Create Object Mosaic…"),
                 c("Create Trim Marks", "object.createTrimMarks"),
                 todo("Flatten Transparency…"),
@@ -643,7 +646,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         Sep,
                         c("Expand", "object.blend.expand"),
                         Sep,
-                        todo("Replace Spine"),
+                        c("Replace Spine", "object.blend.replaceSpine"),
                         c("Reverse Spine", "object.blend.reverseSpine"),
                         c("Reverse Front to Back", "object.blend.reverseFrontToBack"),
                     ],
@@ -651,18 +654,43 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 sub(
                     "Envelope Distort",
                     vec![
-                        todos("Make with Warp…", "Cmd+Alt+Shift+W"),
-                        todos("Make with Mesh…", "Cmd+Alt+M"),
-                        todos("Make with Top Object", "Cmd+Alt+C"),
+                        cp(
+                            "Make with Warp…",
+                            "object.envelope.makeWithWarp",
+                            json!({"style": "arc", "bend": 50, "h": 0, "v": 0, "horizontal": true}),
+                        ),
+                        cp("Make with Mesh…", "object.envelope.makeWithMesh", json!({"rows": 4, "cols": 4})),
+                        c("Make with Top Object", "object.envelope.makeWithTopObject"),
                         Sep,
-                        todo("Release"),
-                        todo("Envelope Options…"),
-                        todo("Expand"),
+                        c("Release", "object.envelope.release"),
+                        cp("Envelope Options…", "object.envelope.options", json!({"fidelity": 50})),
+                        c("Expand", "object.envelope.expand"),
+                        Sep,
+                        c("Edit Contents", "object.envelope.editContents"),
                     ],
                 ),
                 sub("Perspective", vec![todo("Attach to Active Plane"), todo("Release with Perspective")]),
-                sub("Live Paint", vec![todos("Make", "Cmd+Alt+X"), todo("Merge"), todo("Release"), Sep, todo("Gap Options…"), Sep, todo("Expand")]),
-                sub("Image Trace", vec![todo("Make"), todo("Make and Expand"), todo("Release"), todo("Expand")]),
+                sub(
+                    "Live Paint",
+                    vec![
+                        c("Make", "livePaint.make"),
+                        c("Merge", "livePaint.merge"),
+                        c("Release", "livePaint.release"),
+                        Sep,
+                        todo("Gap Options…"),
+                        Sep,
+                        c("Expand", "livePaint.expand"),
+                    ],
+                ),
+                sub(
+                    "Image Trace",
+                    vec![
+                        cp("Make…", "imageTrace.make", json!({"preset": "Black and White Logo"})),
+                        cp("Make and Expand…", "imageTrace.makeAndExpand", json!({"preset": "6 Colors"})),
+                        c("Release", "imageTrace.release"),
+                        c("Expand", "imageTrace.expand"),
+                    ],
+                ),
                 sub("Text Wrap", vec![todo("Make"), todo("Release"), todo("Text Wrap Options…")]),
                 Sep,
                 sub("Clipping Mask", vec![c("Make", "object.clippingMask.make"), c("Release", "object.clippingMask.release"), todo("Edit Contents")]),

@@ -307,8 +307,8 @@ fn blend_make_release_options() {
     let g = id_of(&s.execute("object.blend.make", &json!({"steps": 3})).unwrap());
     assert_eq!(undo_len(&s), n + 1);
     let gn = node(&s, g);
-    assert_eq!(gn.name.as_deref(), Some("Blend"));
-    let ch = gn.children().unwrap().clone();
+    assert!(matches!(gn.kind, NodeKind::Blend { .. }), "live blend");
+    let ch = drawcraft_doc::live::expand_live(&gn);
     assert_eq!(ch.len(), 5);
     // Middle step: halfway in position, size and colour.
     let mid = &ch[2];
@@ -318,7 +318,7 @@ fn blend_make_release_options() {
     assert!((c[0] - 0.5).abs() < 1e-3);
     // Options: 1 step.
     s.execute("object.blend.options", &json!({"steps": 1})).unwrap();
-    assert_eq!(node(&s, g).children().unwrap().len(), 3);
+    assert_eq!(drawcraft_doc::live::expand_live(&node(&s, g)).len(), 3);
     // Release: keys only, back in the layer.
     let r = s.execute("object.blend.release", &json!({})).unwrap();
     assert_eq!(r["ids"].as_array().unwrap().len(), 2);
@@ -338,7 +338,7 @@ fn blend_expand_and_reverse() {
     s.execute("object.blend.reverseSpine", &json!({})).unwrap();
     assert!(close(bounds(&s, a).x0, 100.0));
     s.execute("object.blend.expand", &json!({})).unwrap();
-    assert!(node(&s, g).name.is_none());
+    assert!(matches!(node(&s, g).kind, NodeKind::Group { .. }));
     assert!(s.execute("object.blend.release", &json!({})).is_err(), "no longer a blend");
 }
 

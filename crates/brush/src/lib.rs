@@ -25,6 +25,7 @@ use serde::{Deserialize, Serialize};
 
 pub use colorize::{colorize, tint_node};
 pub use defaults::defaults;
+pub use serde_json;
 
 /// Key of the brush library in `Document::unknown`.
 pub const DOC_KEY: &str = "brushes";
@@ -39,6 +40,8 @@ pub struct Brush {
     pub kind: BrushKind,
 }
 
+// Brushes are few and long-lived; boxing the art-carrying variants buys nothing.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum BrushKind {
@@ -419,16 +422,7 @@ pub fn expand(doc: &Document, n: &Node) -> Option<Node> {
         base.id = NodeId(0);
         children.push(Arc::new(base));
     }
-    for mut p in pieces {
-        if let NodeKind::Path { path, .. } = &mut p.kind
-            && p.appearance.stroke().is_none()
-            && let Ok(clean) = drawcraft_pathops::try_normalize(path, drawcraft_geom::FillRule::NonZero)
-            && !clean.is_empty()
-        {
-            *path = clean;
-        }
-        children.push(Arc::new(p));
-    }
+    children.extend(pieces.into_iter().map(Arc::new));
     let mut g = Node::group(NodeId(0), children);
     g.opacity = n.opacity;
     g.blend = n.blend;

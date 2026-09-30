@@ -20,8 +20,17 @@ pub const ALIGNMENTS: [(Justify, &str, &str, &str); 7] = [
     (Justify::JustifyAll, "dc-para-justify-all", "Justify all lines", "justifyAll"),
 ];
 
+/// Paragraph attributes apply to the whole text object (ending a Type tool typing session first).
 fn format(app: &mut DrawcraftApp, p: Value) {
-    app.run("text.setFormat", p).ok();
+    para_cmd(app, "text.setFormat", p);
+}
+
+fn para_cmd(app: &mut DrawcraftApp, cmd: &str, mut p: Value) {
+    if let Some((id, _, _)) = super::character::text_editing(app) {
+        super::character::end_typing(app);
+        p["ids"] = json!([id.0]);
+    }
+    app.run(cmd, p).ok();
 }
 
 pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
@@ -34,7 +43,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         ui.spacing_mut().item_spacing.x = 3.0;
         for (j, icon, tip, id) in ALIGNMENTS {
             if widgets::icon_button(ui, icon, tip, para.justify == j, 28.0).clicked() {
-                app.run("text.setStyle", json!({"justify": id})).ok();
+                para_cmd(app, "text.setStyle", json!({"justify": id}));
             }
         }
     });
@@ -91,7 +100,7 @@ pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
     menu_item(ui, "Every-line Composer", false, true);
     ui.separator();
     if menu_item(ui, "Reset Panel", has, false) {
-        app.run("text.setStyle", json!({"justify": "left"})).ok();
+        para_cmd(app, "text.setStyle", json!({"justify": "left"}));
         format(app, json!({"leftIndent": 0, "rightIndent": 0, "firstLineIndent": 0, "spaceBefore": 0, "spaceAfter": 0, "hyphenate": false}));
     }
 }

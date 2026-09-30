@@ -49,7 +49,7 @@ fn warp_path(p: &PathData, f: &dyn Fn(Point) -> Point, flat_tol: f64, max_du: f6
     let mut cur: Vec<Point> = vec![];
     let mut els = vec![];
     kurbo::flatten(bp.iter(), flat_tol.max(1e-4), |e| els.push(e));
-    let mut finish = |cur: &mut Vec<Point>, closed: bool, subs: &mut Vec<SubPath>| {
+    let finish = |cur: &mut Vec<Point>, closed: bool, subs: &mut Vec<SubPath>| {
         let pts = std::mem::take(cur);
         if pts.len() < 2 {
             return;
@@ -260,7 +260,10 @@ pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node>
             corner_half = corner_half.max(bb.width() * k / 2.0);
             let bis = a + b;
             let bis = if bis.hypot() < 1e-9 { a } else { bis / bis.hypot() };
-            let xf = Affine::translate(t.verts[i].to_vec2()) * Affine::rotate(bis.y.atan2(bis.x)) * Affine::scale(k) * Affine::translate(-bb.center().to_vec2());
+            let xf = Affine::translate(t.verts[i].to_vec2())
+                * Affine::rotate(bis.y.atan2(bis.x))
+                * Affine::scale(k)
+                * Affine::translate(-bb.center().to_vec2());
             let mut n = art.clone();
             n.transform(xf, true);
             out.push(n);
@@ -289,7 +292,8 @@ pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node>
             if cb && corner_tiles {
                 b -= corner_half;
             }
-            if !t.closed && ri == 0
+            if !t.closed
+                && ri == 0
                 && let Some(st) = &start
             {
                 let w = st.1.width() * k;
@@ -298,7 +302,8 @@ pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node>
                     a += w;
                 }
             }
-            if !t.closed && ri + 1 == nruns
+            if !t.closed
+                && ri + 1 == nruns
                 && let Some(en) = &end
             {
                 let w = en.1.width() * k;
@@ -344,9 +349,4 @@ pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node>
         }
     }
     out
-}
-
-/// Arc length of the first track of `bp` (tests, previews).
-pub fn path_length(bp: &BezPath) -> f64 {
-    tracks(bp, 0.05).iter().map(|t| t.len()).sum()
 }

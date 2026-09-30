@@ -33,7 +33,13 @@ struct Node {
 /// `cands` are the break opportunities in increasing order (the paragraph end is added).
 /// `justify_last`: the last line is justified too (Justify All). Returns `(end, hyphen)` per line,
 /// or `None` if no set of breaks fits within `tolerance` (maximum stretch ratio).
-pub(crate) fn compose(g: &[SGlyph], width: &dyn Fn(usize) -> f64, cands: &[Breakpoint], justify_last: bool, tolerance: f64) -> Option<Vec<(usize, bool)>> {
+pub(crate) fn compose(
+    g: &[SGlyph],
+    width: &dyn Fn(usize) -> f64,
+    cands: &[Breakpoint],
+    justify_last: bool,
+    tolerance: f64,
+) -> Option<Vec<(usize, bool)>> {
     let n = g.len();
     if n == 0 {
         return Some(vec![]);
