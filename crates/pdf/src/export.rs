@@ -197,6 +197,32 @@ fn rects_overlap(a: Rect, b: Rect) -> bool {
 }
 
 impl Exporter<'_> {
+    /// A colour for the page: in CMYK documents RGB colours are separated into DeviceCMYK through
+    /// the active colour settings, so the file carries press values.
+    fn col(&mut self, c: &Color) -> krilla::color::Color {
+        if self.doc.color_mode == drawcraft_doc::ColorMode::Cmyk && matches!(c, Color::Rgb { .. }) {
+            let cms = drawcraft_color::cms::active();
+            let [cc, m, y, k] = cms.to_cmyk(c, cms.settings().intent);
+            return cmyk::Color::new(q(cc), q(m), q(y), q(k)).into();
+        }
+        color(c)
+    }
+
+    /// A solid paint, as a Separation colour space when it's linked to a spot swatch (the
+    /// swatch's CMYK equivalent is the alternate space).
+    fn solid(&mut self, c: &Color, swatch: Option<&str>) -> krilla::color::Color {
+        use krilla::color::separation::{Color as SepColor, SeparationColorant, SeparationSpace};
+        let spot = swatch.and_then(|n| self.doc.swatches.iter().find(|s| s.spot && s.name == n)).and_then(|s| s.paint.color().map(|sc| (s.name.clone(), sc)));
+        let Some((name, sc)) = spot else { return self.col(c) };
+        let cms = drawcraft_color::cms::active();
+        let intent = cms.settings().intent;
+        let full = cms.to_cmyk(&sc, intent);
+        let total: f32 = full.iter().sum();
+        let tint = if total <= 1e-4 { 1.0 } else { (cms.to_cmyk(c, intent).iter().sum::<f32>() / total).clamp(0.0, 1.0) };
+        let alt = krilla::color::RegularColor::Cmyk(cmyk::Color::new(q(full[0]), q(full[1]), q(full[2]), q(full[3])));
+        SepColor::new(q(tint), SeparationSpace::new(SeparationColorant::Custom(name), alt)).into()
+    }
+
     fn warn(&mut self, w: impl Into<String>) {
         let w = w.into();
         if !self.warnings.contains(&w) {
@@ -208,7 +234,7 @@ impl Exporter<'_> {
     fn paint(&mut self, p: &Paint, bounds: Rect) -> Option<krilla::paint::Paint> {
         match p {
             Paint::None => None,
-            Paint::Solid { color: c, .. } => Some(color(c).into()),
+            Paint::Solid { color: c, swatch } => Some(self.solid(c, swatch.as_deref()).into()),
             Paint::Gradient(g) => {
                 let geom = g.resolve(bounds);
                 let mut stops: Vec<Stop> = Vec::new();
@@ -216,7 +242,7 @@ impl Exporter<'_> {
                 for (o, c, a) in g.gradient.expanded_stops() {
                     let o = o.clamp(last, 1.0);
                     last = o;
-                    stops.push(Stop { offset: norm(o), color: color(&c), opacity: norm(a) });
+                    stops.push(Stop { offset: norm(o), color: self.col(&c), opacity: norm(a) });
                 }
                 if stops.is_empty() {
                     return None;

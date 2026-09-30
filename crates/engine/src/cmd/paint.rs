@@ -76,6 +76,10 @@ pub(crate) fn paint_from(s: &Session, p: &Value) -> Result<Option<Paint>> {
     }
     if let Some(name) = str_param(p, "swatch") {
         let st = s.doc()?;
+        // A pattern definition works as its swatch even without a swatch entry.
+        if st.doc.swatch(name).is_none() && st.doc.pattern(name).is_some() {
+            return Ok(Some(drawcraft_doc::pattern::pattern_paint(name)));
+        }
         let sw = st.doc.swatch(name).ok_or_else(|| EngineError::Other(format!("no swatch `{name}`")))?;
         let mut paint = sw.paint.clone();
         if sw.global

@@ -42,7 +42,10 @@ pub fn intern(s: &str) -> &'static str {
 
 /// Mirror `ui.shortcut_overrides` into the global store (cheap when unchanged).
 pub fn sync(ui: &UiState) {
-    let same = store().read().map(|m| m.len() == ui.shortcut_overrides.len() && m.iter().all(|(k, v)| ui.shortcut_overrides.get(k).map(String::as_str) == Some(*v))).unwrap_or(false);
+    let same = store()
+        .read()
+        .map(|m| m.len() == ui.shortcut_overrides.len() && m.iter().all(|(k, v)| ui.shortcut_overrides.get(k).map(String::as_str) == Some(*v)))
+        .unwrap_or(false);
     if !same {
         if let Ok(mut m) = store().write() {
             *m = ui.shortcut_overrides.iter().map(|(k, v)| (k.clone(), intern(v))).collect();
@@ -358,7 +361,9 @@ pub fn run_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Result
                     .collect(),
             ))
         }
-        "shortcuts.conflicts" => Ok(json!(all_conflicts(&app.ui.shortcut_overrides).into_iter().map(|(c, k)| json!({"shortcut": c, "ids": k})).collect::<Vec<_>>())),
+        "shortcuts.conflicts" => {
+            Ok(json!(all_conflicts(&app.ui.shortcut_overrides).into_iter().map(|(c, k)| json!({"shortcut": c, "ids": k})).collect::<Vec<_>>()))
+        }
         "shortcuts.reset" => {
             app.ui.shortcut_overrides.clear();
             app.ui.shortcut_set = PRESETS[0].into();
@@ -518,18 +523,30 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
             let scroll_to = d.fields.remove("__scrollTo").and_then(|v| v.as_str().map(str::to_string));
             egui::Frame::NONE.fill(t.input).stroke(egui::Stroke::new(1.0, t.input_border)).inner_margin(egui::Margin::same(4)).show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    ui.add_sized([360.0, 16.0], egui::Label::new(egui::RichText::new(if tools { "Tool" } else { "Command" }).color(t.text_dim).size(11.0)));
+                    ui.allocate_ui_with_layout(egui::vec2(360.0, 16.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        ui.set_min_width(360.0);
+                        ui.label(egui::RichText::new(if tools { "Tool" } else { "Command" }).color(t.text_dim).size(11.0));
+                    });
                     ui.label(egui::RichText::new("Shortcut").color(t.text_dim).size(11.0));
                 });
                 egui::ScrollArea::vertical().max_height(360.0).auto_shrink([false, false]).show(ui, |ui| {
                     for e in entries().iter().filter(|e| e.is_tool == tools) {
                         let sc = effective_in(&ov, &e.key);
-                        if !q.is_empty() && !(e.label.to_lowercase().contains(&q) || e.group.to_lowercase().contains(&q) || sc.as_deref().is_some_and(|s| s.to_lowercase().contains(&q))) {
+                        if !q.is_empty()
+                            && !(e.label.to_lowercase().contains(&q)
+                                || e.group.to_lowercase().contains(&q)
+                                || sc.as_deref().is_some_and(|s| s.to_lowercase().contains(&q)))
+                        {
                             continue;
                         }
                         let row = ui.horizontal(|ui| {
                             let name = if e.is_tool || e.group.is_empty() { e.label.clone() } else { format!("{} › {}", e.group, e.label) };
-                            let r = ui.add_sized([360.0, 20.0], egui::Button::selectable(selected == e.key, egui::RichText::new(name).color(t.text)).truncate());
+                            let r = ui
+                                .allocate_ui_with_layout(egui::vec2(360.0, 20.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                                    ui.set_min_width(360.0);
+                                    ui.add(egui::Button::selectable(selected == e.key, egui::RichText::new(name).color(t.text)).truncate())
+                                })
+                                .inner;
                             if r.clicked() {
                                 d.fields.insert("__selected".into(), json!(e.key));
                             }
@@ -540,7 +557,9 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
                             };
                             let changed = ov.contains_key(&e.key);
                             let txt = egui::RichText::new(label).color(if changed { t.accent } else { t.text });
-                            let b = ui.add_sized([150.0, 20.0], egui::Button::new(txt).selected(rec == e.key)).on_hover_text("Click, then press the new shortcut (Esc cancels)");
+                            let b = ui
+                                .add_sized([150.0, 20.0], egui::Button::new(txt).selected(rec == e.key))
+                                .on_hover_text("Click, then press the new shortcut (Esc cancels)");
                             if b.clicked() {
                                 d.fields.insert("__recording".into(), json!(e.key));
                                 d.fields.insert("__selected".into(), json!(e.key));

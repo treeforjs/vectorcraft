@@ -120,19 +120,24 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
             ui.add_space(12.0);
             ui.horizontal_top(|ui| {
                 // Category list.
-                egui::Frame::NONE.fill(t.panel_darker).corner_radius(egui::CornerRadius::same(4)).inner_margin(egui::Margin::same(6)).show(ui, |ui| {
-                    ui.set_width(196.0);
-                    ui.set_min_height(430.0);
-                    ui.spacing_mut().item_spacing.y = 1.0;
-                    for c in PREF_CATEGORIES {
-                        let sel = *c == cat;
-                        let text = egui::RichText::new(*c).size(12.5).color(if sel { t.text_strong } else { t.text });
-                        let r = ui.add_sized([ui.available_width(), 24.0], egui::Button::selectable(sel, text).frame_when_inactive(false));
-                        if r.clicked() {
-                            d.fields.insert("__category".into(), json!(c));
-                        }
-                    }
-                });
+                egui::Frame::NONE.fill(t.panel_darker).corner_radius(egui::CornerRadius::same(4)).inner_margin(egui::Margin::same(6)).show(
+                    ui,
+                    |ui| {
+                        ui.set_width(196.0);
+                        ui.set_min_height(430.0);
+                        ui.vertical(|ui| {
+                            ui.spacing_mut().item_spacing.y = 1.0;
+                            for c in PREF_CATEGORIES {
+                                let sel = *c == cat;
+                                let text = egui::RichText::new(*c).size(12.5).color(if sel { t.text_strong } else { t.text });
+                                let b = egui::Button::selectable(sel, text).frame_when_inactive(false).min_size(egui::vec2(184.0, 24.0));
+                                if ui.add(b).clicked() {
+                                    d.fields.insert("__category".into(), json!(c));
+                                }
+                            }
+                        });
+                    },
+                );
                 ui.add_space(14.0);
                 // Fields.
                 ui.vertical(|ui| {
@@ -146,7 +151,10 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
             });
             ui.add_space(14.0);
             ui.horizontal(|ui| {
-                if widgets::secondary_button(ui, "Reset Preferences").on_hover_text("Restore every preference to its default (applied on OK)").clicked() {
+                if widgets::secondary_button(ui, "Reset Preferences")
+                    .on_hover_text("Restore every preference to its default (applied on OK)")
+                    .clicked()
+                {
                     reset = true;
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -280,7 +288,10 @@ fn bool_row(ui: &mut egui::Ui, d: &mut Dialog, key: &str, label: &str) {
 fn labeled(ui: &mut egui::Ui, label: &str, add: impl FnOnce(&mut egui::Ui)) {
     let t = Tokens::get(ui.ctx());
     ui.horizontal(|ui| {
-        ui.add_sized([210.0, 22.0], egui::Label::new(egui::RichText::new(format!("{label}:")).color(t.text)).truncate());
+        ui.allocate_ui_with_layout(egui::vec2(210.0, 22.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            ui.set_min_width(210.0);
+            ui.add(egui::Label::new(egui::RichText::new(format!("{label}:")).color(t.text)).truncate());
+        });
         add(ui);
     });
 }

@@ -91,7 +91,11 @@ impl Session {
     }
 
     pub fn overlays(&mut self, view: ViewInfo) -> Vec<Overlay> {
-        self.with_tool_cx(view, |t, cx| t.overlays(cx))
+        let mut v = self.with_tool_cx(view, |t, cx| t.overlays(cx));
+        if let Some(d) = self.active() {
+            v.splice(0..0, drawcraft_tools::distort::perspective::grid_overlays(&d.doc, 1.0 / view.zoom.max(1e-9), self.tool.id()));
+        }
+        v
     }
 
     pub fn cursor(&mut self, p: Point, mods: Mods, view: ViewInfo) -> Cursor {

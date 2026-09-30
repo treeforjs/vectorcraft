@@ -53,7 +53,12 @@ fn set_rejects_out_of_range_and_wrong_types() {
 #[test]
 fn set_normalizes_strings_labels_and_colours() {
     let mut s = Session::new();
-    let r = s.execute("prefs.set", &json!({"values": {"uiBrightness": "Medium Light", "gridColor": "ABCDEF", "keyboardIncrement": "2.5 pt", "scaleStrokes": "false"}})).unwrap();
+    let r = s
+        .execute(
+            "prefs.set",
+            &json!({"values": {"uiBrightness": "Medium Light", "gridColor": "ABCDEF", "keyboardIncrement": "2.5 pt", "scaleStrokes": "false"}}),
+        )
+        .unwrap();
     assert_eq!(r["uiBrightness"], json!("mediumLight"));
     assert_eq!(s.prefs.grid_color, "#abcdef");
     assert_eq!(s.prefs.keyboard_increment, 2.5);

@@ -166,7 +166,8 @@ pub fn marquee(doc: &Document, r: Rect, scope: Option<NodeId>, leaves: bool) -> 
             .layers
             .iter()
             .filter(|l| l.visible && !l.locked && doc.pattern_edit.as_ref().is_none_or(|e| e.layer == l.id))
-            .flat_map(|l| l.children().into_iter().flatten()).collect(),
+            .flat_map(|l| l.children().into_iter().flatten())
+            .collect(),
     };
     fn touches(n: &Node, r: Rect) -> bool {
         match &n.kind {

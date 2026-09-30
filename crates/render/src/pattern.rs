@@ -69,7 +69,8 @@ fn rasterize(r: &mut Renderer, doc: &Document, def: &PatternDef, region: Rect, w
     let px_rect = Rect::new(0.0, 0.0, w as f64, h as f64);
     for o in def.offsets_covering(region) {
         let v = view * def.instance_xf(o);
-        let frame = Frame { doc, view: v, visible: v.inverse().transform_rect_bbox(px_rect), px: 1.0 / v.determinant().abs().sqrt().max(1e-12), opts: &opts };
+        let frame =
+            Frame { doc, view: v, visible: v.inverse().transform_rect_bbox(px_rect), px: 1.0 / v.determinant().abs().sqrt().max(1e-12), opts: &opts };
         for a in &def.art {
             r.draw_arc(&mut ctx, &frame, a);
         }
@@ -122,7 +123,11 @@ pub(crate) fn set_pattern_paint(ctx: &mut RenderContext, name: &str, xf: Affine,
     let scale = raster_scale(s, (pw, ph));
     let params = (def.tile, def.tile_type, def.overlap);
     let hit = CACHE.with(|c| {
-        c.borrow().tiles.get(name).filter(|e| e.scale == scale && e.params == params && same_art(&e.art, &def.art)).map(|e| (e.pixmap.clone(), e.sx, e.sy))
+        c.borrow()
+            .tiles
+            .get(name)
+            .filter(|e| e.scale == scale && e.params == params && same_art(&e.art, &def.art))
+            .map(|e| (e.pixmap.clone(), e.sx, e.sy))
     });
     let (pm, sx, sy) = match hit {
         Some(h) => h,
@@ -204,7 +209,11 @@ mod tests {
     /// A 20×20 tile with a red 10×10 square in its top-left corner.
     fn doc_with_pattern(tt: TileType) -> Document {
         let mut d = Document::new(200.0, 200.0);
-        let red = Node::path(NodeId(900), shapes::rectangle(Rect::new(0.0, 0.0, 10.0, 10.0)), Appearance::basic(Paint::solid(Color::rgb(1.0, 0.0, 0.0)), Paint::None, 0.0));
+        let red = Node::path(
+            NodeId(900),
+            shapes::rectangle(Rect::new(0.0, 0.0, 10.0, 10.0)),
+            Appearance::basic(Paint::solid(Color::rgb(1.0, 0.0, 0.0)), Paint::None, 0.0),
+        );
         let mut def = PatternDef::new("Checks", vec![Arc::new(red)]);
         def.tile = Rect::new(0.0, 0.0, 20.0, 20.0);
         def.tile_type = tt;
@@ -319,7 +328,11 @@ mod tests {
     #[test]
     fn repeat_renders_instances() {
         let mut d = Document::new(200.0, 200.0);
-        let sq = Node::path(NodeId(50), shapes::rectangle(Rect::new(0.0, 0.0, 10.0, 10.0)), Appearance::basic(Paint::solid(Color::BLACK), Paint::None, 0.0));
+        let sq = Node::path(
+            NodeId(50),
+            shapes::rectangle(Rect::new(0.0, 0.0, 10.0, 10.0)),
+            Appearance::basic(Paint::solid(Color::BLACK), Paint::None, 0.0),
+        );
         let id = d.alloc_id();
         let l = d.layers[0].id;
         d.insert(Some(l), 0, Node::new(id, NodeKind::Repeat(RepeatSpec::grid(vec![Arc::new(sq)], 10.0, 10.0)))).unwrap();

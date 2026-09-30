@@ -63,6 +63,7 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("swatches", "Swatches", "swatch-book"),
     ("brushes", "Brushes", "paintbrush"),
     ("symbols", "Symbols", "spray-can"),
+    ("patternOptions", "Pattern Options", "grid-3x3"),
     ("stroke", "Stroke", "dc-stroke"),
     ("gradient", "Gradient", "dc-gradient"),
     ("transparency", "Transparency", "dc-transparency"),
@@ -79,12 +80,13 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("actions", "Actions", "dc-actions"),
     ("info", "Info", "info"),
     ("navigator", "Navigator", "map"),
+    ("separations", "Separations Preview", "printer"),
 ];
 
 /// Groups of icon panels separated by dividers in the collapsed column.
 pub const ICON_PANEL_GROUPS: &[&[&str]] = &[
     &["color", "colorGuide"],
-    &["swatches", "brushes", "symbols"],
+    &["swatches", "brushes", "symbols", "patternOptions"],
     &["stroke", "gradient", "transparency"],
     &["appearance", "graphicStyles"],
     &["artboards"],

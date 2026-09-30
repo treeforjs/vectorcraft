@@ -3,7 +3,9 @@
 mod brushsym;
 mod buildcmds;
 mod colorcmds;
+pub mod colormgmt;
 mod create;
+pub(crate) mod distortcmds;
 mod docmenu;
 mod draw2;
 mod edit;
@@ -14,6 +16,7 @@ mod live;
 pub(crate) mod menucmds;
 mod object;
 mod paint;
+mod patterncmds;
 mod panelcmds;
 mod path;
 mod pathops;
@@ -138,13 +141,16 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(menucmds::specs());
         v.extend(live::specs());
         v.extend(colorcmds::specs());
+        v.extend(colormgmt::specs());
         v.extend(typemenu::specs());
         v.extend(textedit::specs());
         v.extend(docmenu::specs());
         v.extend(panelcmds::specs());
         v.extend(buildcmds::specs());
         v.extend(brushsym::specs());
+        v.extend(patterncmds::specs());
         v.extend(prefscmds::specs());
+        v.extend(distortcmds::specs());
         v
     })
 }

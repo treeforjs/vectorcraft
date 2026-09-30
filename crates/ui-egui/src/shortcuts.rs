@@ -82,7 +82,9 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
         if !typing && ctx.input(|i| i.key_pressed(k)) {
             let _ = app.session.tool_key(tk, Mods::default(), view);
             if k == Key::Escape && !busy {
-                if app.session.active().is_some_and(|d| d.isolation.is_some()) {
+                if app.session.active().is_some_and(|d| d.doc.pattern_edit.is_some()) {
+                    let _ = app.run("object.pattern.done", json!({}));
+                } else if app.session.active().is_some_and(|d| d.isolation.is_some()) {
                     let _ = app.run("object.exitIsolation", json!({}));
                 } else if app.ui.flyout.is_some() {
                     app.ui.flyout = None;

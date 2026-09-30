@@ -10,8 +10,9 @@ mod brush_fx;
 mod fx;
 mod live;
 mod paint;
-pub mod proof;
 mod pattern;
+pub mod proof;
+mod width;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -26,6 +27,7 @@ pub use drawcraft_effects as effects;
 pub use live::expand_live;
 pub use pattern::render_pattern_swatch;
 pub use vello_cpu;
+pub use width::width_outline;
 
 /// Rendering options.
 #[derive(Clone, Debug)]
@@ -560,7 +562,12 @@ impl Renderer {
         }
         if paint::set_paint(ctx, &st.paint, bounds.inflate(st.width / 2.0, st.width / 2.0), f.doc) {
             self.fold_alpha(ctx, &st.paint);
-            ctx.stroke_path(bp);
+            if let Some(o) = width::outline_for(bp, st, f.px * 0.25) {
+                ctx.set_fill_rule(peniko::Fill::NonZero);
+                ctx.fill_path(&o);
+            } else {
+                ctx.stroke_path(bp);
+            }
         }
         if inside {
             ctx.pop_layer();

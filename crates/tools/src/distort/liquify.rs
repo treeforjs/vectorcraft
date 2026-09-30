@@ -589,10 +589,11 @@ mod tests {
         let near = |pd: &PathData| pd.anchors().filter(|(_, _, an)| an.p.distance(c) < 50.0).map(|(_, _, an)| an.p.x).fold(f64::MIN, f64::max);
         assert!(near(&a) <= 200.0 + 1e-9);
         let mut b = square();
-        apply_stroke(&mut b, &[c, c, c], &prm(LiquifyKind::Bloat), 1);
-        assert!(b.bounds().unwrap().x1 > 200.5);
-        // Bloat pushes the edge point at the brush centre along the normal (x only).
-        assert!(b.anchors().any(|(_, _, an)| (an.p.y - 100.0).abs() < 1e-6 && an.p.x > 200.5));
+        // A brush just inside the right edge bulges it outward; the far edges stay put.
+        apply_stroke(&mut b, &[Point::new(180.0, 100.0); 3], &prm(LiquifyKind::Bloat), 1);
+        let bb = b.bounds().unwrap();
+        assert!(bb.x1 > 205.0, "{bb:?}");
+        assert_eq!((bb.x0, bb.y0, bb.y1), (0.0, 0.0, 200.0));
     }
 
     #[test]

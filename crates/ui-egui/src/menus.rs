@@ -186,6 +186,12 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
             crate::prefs_dialog::open(app, s("category").as_deref());
             Ok(Value::Null)
         }
+        // Edit → Color Settings… / Assign Profile… (no params): show the colour-management panel.
+        "edit.colorSettings" | "edit.assignProfile" if p.as_object().is_none_or(|o| o.is_empty()) => {
+            app.ui.open_panel = Some("separations".into());
+            app.ui.dock = true;
+            app.session.execute(id, p).map_err(|e| e.to_string())
+        }
         "view.outline" => flag(&mut app.ui.view.outline),
         "view.pixelPreview" => flag(&mut app.ui.view.pixel_preview),
         "view.edges" => flag(&mut app.ui.view.edges),
@@ -382,7 +388,10 @@ pub fn checked(app: &DrawcraftApp, id: &str, p: &Value) -> Option<bool> {
         }
         "window.workspace" => p.get("name").and_then(Value::as_str) == Some(app.ui.workspace.as_str()),
         "window.brightness" => p.get("brightness").and_then(Value::as_str).and_then(Brightness::parse) == Some(app.ui.brightness),
-        "file.documentColorMode" => {
+        "view.proofColors" => drawcraft_render::proof::view().proof_colors,
+        "view.overprintPreview" => drawcraft_render::proof::view().overprint,
+        "view.proofSetup" => p.get("target").and_then(Value::as_str) == Some(drawcraft_render::proof::view().setup.target.id().as_str()),
+        "file.documentColorMode" | "object.convertDocumentColorMode" => {
             let cmyk = app.session.active().is_some_and(|d| d.doc.color_mode == drawcraft_engine::doc::ColorMode::Cmyk);
             p.get("mode").and_then(Value::as_str) == Some(if cmyk { "cmyk" } else { "rgb" })
         }
@@ -493,8 +502,8 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 sub(
                     "Document Color Mode",
                     vec![
-                        cp("CMYK Color", "file.documentColorMode", json!({"mode": "cmyk"})),
-                        cp("RGB Color", "file.documentColorMode", json!({"mode": "rgb"})),
+                        cp("CMYK Color", "object.convertDocumentColorMode", json!({"mode": "cmyk"})),
+                        cp("RGB Color", "object.convertDocumentColorMode", json!({"mode": "rgb"})),
                     ],
                 ),
                 c("File Info…", "file.info"),
@@ -534,7 +543,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         c("Convert to Grayscale", "edit.colors.toGrayscale"),
                         c("Convert to RGB", "edit.colors.toRGB"),
                         c("Invert Colors", "edit.colors.invert"),
-                        todo("Overprint Black…"),
+                        c("Overprint Black…", "edit.colors.overprintBlack"),
                         cp("Saturate…", "edit.colors.saturate", json!({"intensity": 20})),
                     ],
                 ),
@@ -543,10 +552,10 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 todo("Transparency Flattener Presets…"),
                 todo("Print Presets…"),
                 todo("Adobe PDF Presets…"),
-                todo("Perspective Grid Presets…"),
+                cp("Perspective Grid Presets…", "perspective.grid.preset", json!({"kind": 2})),
                 Sep,
-                todos("Color Settings…", "Cmd+Shift+K"),
-                todo("Assign Profile…"),
+                c("Color Settings…", "edit.colorSettings"),
+                c("Assign Profile…", "edit.assignProfile"),
                 Sep,
                 c("Keyboard Shortcuts…", "edit.keyboardShortcuts"),
                 c("Preferences…", "edit.preferences"),
@@ -644,8 +653,18 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                     ],
                 ),
                 sub("Shape", vec![c("Convert to Shape", "object.shape.convertToShape"), c("Expand Shape", "object.expandShape")]),
-                sub("Pattern", vec![todo("Make"), todo("Edit Pattern"), todo("Tile Edge Color…")]),
-                sub("Repeat", vec![todo("Radial"), todo("Grid"), todo("Mirror"), Sep, todo("Release"), todo("Options…")]),
+                sub("Pattern", vec![c("Make", "object.pattern.make"), c("Edit Pattern", "object.pattern.edit"), todo("Tile Edge Color…")]),
+                sub(
+                    "Repeat",
+                    vec![
+                        c("Radial", "object.repeat.radial"),
+                        c("Grid", "object.repeat.grid"),
+                        c("Mirror", "object.repeat.mirror"),
+                        Sep,
+                        c("Release", "object.repeat.release"),
+                        c("Options…", "object.repeat.options"),
+                    ],
+                ),
                 sub(
                     "Blend",
                     vec![
@@ -679,7 +698,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         c("Edit Contents", "object.envelope.editContents"),
                     ],
                 ),
-                sub("Perspective", vec![todo("Attach to Active Plane"), todo("Release with Perspective")]),
+                sub("Perspective", vec![c("Attach to Active Plane", "perspective.attach"), c("Release with Perspective", "perspective.release")]),
                 sub(
                     "Live Paint",
                     vec![
@@ -833,7 +852,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
             "View",
             vec![
                 c("Outline", "view.outline"),
-                todos("Overprint Preview", "Cmd+Alt+Shift+Y"),
+                c("Overprint Preview", "view.overprintPreview"),
                 c("Pixel Preview", "view.pixelPreview"),
                 todo("Trim View"),
                 c("Presentation Mode", "view.presentation"),
@@ -849,13 +868,16 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 sub(
                     "Proof Setup",
                     vec![
-                        todo("Working CMYK"),
-                        todo("Internet Standard RGB (sRGB)"),
-                        todo("Color blindness – Protanopia-type"),
-                        todo("Color blindness – Deuteranopia-type"),
+                        cp("Working CMYK", "view.proofSetup", json!({"target": "workingCmyk", "proof": true})),
+                        cp("Legacy Macintosh RGB (Gamma 1.8)", "view.proofSetup", json!({"target": "legacyMacRgb", "proof": true})),
+                        cp("Internet Standard RGB (sRGB)", "view.proofSetup", json!({"target": "srgb", "proof": true})),
+                        cp("Monitor RGB", "view.proofSetup", json!({"target": "monitorRgb", "proof": true})),
+                        cp("Color blindness – Protanopia-type", "view.proofSetup", json!({"target": "protanopia", "proof": true})),
+                        cp("Color blindness – Deuteranopia-type", "view.proofSetup", json!({"target": "deuteranopia", "proof": true})),
+                        cp("Customize…", "window.panel", json!({"panel": "separations"})),
                     ],
                 ),
-                todo("Proof Colors"),
+                c("Proof Colors", "view.proofColors"),
                 Sep,
                 c("Zoom In", "view.zoomIn"),
                 c("Zoom Out", "view.zoomOut"),
@@ -887,7 +909,17 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                     ],
                 ),
                 c("Smart Guides", "view.smartGuides"),
-                sub("Perspective Grid", vec![todos("Show Grid", "Cmd+Shift+I"), todo("Define Grid…")]),
+                sub(
+                    "Perspective Grid",
+                    vec![
+                        c("Show Grid", "perspective.grid.show"),
+                        Sep,
+                        cp("One Point Perspective", "perspective.grid.preset", json!({"kind": 1})),
+                        cp("Two Point Perspective", "perspective.grid.preset", json!({"kind": 2})),
+                        cp("Three Point Perspective", "perspective.grid.preset", json!({"kind": 3})),
+                        cp("Define Grid…", "perspective.grid.set", json!({"kind": 2, "cell": 20, "distance": 300})),
+                    ],
+                ),
                 c("Show Grid", "view.grid"),
                 c("Snap to Grid", "view.snapToGrid"),
                 todo("Snap to Pixel"),
@@ -931,9 +963,9 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 todo("Magic Wand"),
                 panel("Navigator", "navigator"),
                 panel("Pathfinder", "pathfinder"),
-                todo("Pattern Options"),
+                panel("Pattern Options", "patternOptions"),
                 panel("Properties", "properties"),
-                todo("Separations Preview"),
+                panel("Separations Preview", "separations"),
                 panel("Stroke", "stroke"),
                 todo("SVG Interactivity"),
                 panel("Swatches", "swatches"),
@@ -1070,8 +1102,18 @@ pub fn invoke(app: &mut DrawcraftApp, id: &str, p: Value) {
         app.ui.dialog = Some(crate::state::Dialog::new(kind, fields));
         return;
     }
+    // Repeat Options: a dialog with the selected repeat's current values.
+    if id == "object.repeat.options"
+        && p.as_object().is_none_or(|o| o.is_empty())
+        && let Some(fields) = crate::panels::pattern_options::repeat_fields(app)
+    {
+        let _ = app.run("ui.paramDialog", json!({"command": id, "label": "Repeat Options", "params": fields}));
+        return;
+    }
     if let Err(e) = app.run(id, p) {
         app.status(e);
+    } else if matches!(id, "object.pattern.make" | "object.pattern.edit") {
+        app.ui.open_panel = Some("patternOptions".into());
     }
 }
 

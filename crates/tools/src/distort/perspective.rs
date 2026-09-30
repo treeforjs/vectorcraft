@@ -295,7 +295,7 @@ impl PerspectiveGrid {
     /// `b` to the plane rectangle whose opposite corners project to `b`'s top-left and
     /// bottom-right, then the plane homography projects it (so a drawn rectangle keeps the two
     /// corners the user dragged between).
-    pub fn attach_map(&self, plane: Plane, b: Rect) -> Option<impl Fn(Point) -> Option<Point>> {
+    pub fn attach_map(&self, plane: Plane, b: Rect) -> Option<impl Fn(Point) -> Option<Point> + use<>> {
         let h = self.homography(plane)?;
         let hi = h.inverse()?;
         let a = hi.apply(Point::new(b.x0, b.y0))?;
@@ -308,7 +308,7 @@ impl PerspectiveGrid {
     }
 
     /// The map that slides art lying on `plane` by the plane-space offset between `from` and `to`.
-    pub fn move_map(&self, plane: Plane, from: Point, to: Point) -> Option<impl Fn(Point) -> Option<Point>> {
+    pub fn move_map(&self, plane: Plane, from: Point, to: Point) -> Option<impl Fn(Point) -> Option<Point> + use<>> {
         let h = self.homography(plane)?;
         let hi = h.inverse()?;
         let d = hi.apply(to)? - hi.apply(from)?;

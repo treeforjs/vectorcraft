@@ -198,6 +198,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
             * Affine::scale(v.zoom * ppp as f64)
             * Affine::translate(-v.center.to_vec2());
         let opts = drawcraft_render::RenderOptions { outline: app.ui.view.outline, background: None, artboards: false, ..Default::default() };
+        let opts = drawcraft_render::RenderOptions { proof: drawcraft_render::proof::active_proof(), overprint_preview: drawcraft_render::proof::overprint_preview_on(), ..opts };
         // Light documents render synchronously (no lag vs overlays); heavy ones go to the worker.
         let heavy = app.canvas.last_ms > 8.0 && app.canvas.texture.is_some();
         match (&mut app.canvas.worker, heavy) {

@@ -603,6 +603,8 @@ impl Session {
             st.doc = it.doc.clone();
             st.selection = it.selection.clone();
         }
+        let rw = cmd::distortcmds::perspective_rewrite(self, cmd, params);
+        let (cmd, params) = rw.as_ref().map_or((cmd, params), |(c, p)| (c.as_str(), p));
         let r = self.execute(cmd, params);
         let st = self.doc_mut()?;
         if let Some(it) = &mut st.interaction {
@@ -658,7 +660,11 @@ mod tests;
 #[cfg(test)]
 mod tests_brushsym;
 #[cfg(test)]
+mod tests_colormgmt;
+#[cfg(test)]
 mod tests_build;
+#[cfg(test)]
+mod tests_distort;
 #[cfg(test)]
 mod tests_draw2;
 #[cfg(test)]
@@ -673,6 +679,8 @@ mod tests_panelcmds;
 mod tests_prefs;
 #[cfg(test)]
 mod tests_pathops;
+#[cfg(test)]
+mod tests_pattern;
 #[cfg(test)]
 mod tests_textedit;
 #[cfg(test)]

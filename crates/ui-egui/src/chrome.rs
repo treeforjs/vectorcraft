@@ -231,8 +231,13 @@ pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
     if let Some(st) = app.session.active()
         && let Some(iso) = st.isolation
     {
-        let crumbs: Vec<String> =
+        let mut crumbs: Vec<String> =
             st.doc.ancestry(iso).unwrap_or_default().iter().filter_map(|id| st.doc.node(*id)).map(|n| n.display_name()).collect();
+        // Pattern editing mode: the pattern's name, and Save a Copy / Done / Cancel at the right.
+        let pattern_edit = st.doc.pattern_edit.as_ref().map(|e| e.pattern.clone());
+        if let Some(pn) = &pattern_edit {
+            crumbs.push(pn.clone());
+        }
         let (bar, _) = ui.allocate_exact_size(vec2(ui.available_width(), 24.0), Sense::hover());
         ui.painter().rect_filled(bar, 0.0, t.panel);
         let back = egui::Rect::from_min_size(bar.min + vec2(6.0, 3.0), vec2(18.0, 18.0));
@@ -245,8 +250,30 @@ pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
             egui::FontId::proportional(12.0),
             t.text,
         );
+        let mut pattern_cmd = None;
+        if pattern_edit.is_some() {
+            let mut x = bar.right() - 6.0;
+            for (label, cmd) in [("Cancel", "object.pattern.cancel"), ("Done", "object.pattern.done"), ("Save a Copy", "object.pattern.saveCopy")] {
+                let w = 12.0 + 7.0 * label.len() as f32;
+                let r = egui::Rect::from_min_max(egui::pos2(x - w, bar.top() + 3.0), egui::pos2(x, bar.bottom() - 3.0));
+                let resp = ui.interact(r, ui.id().with(("pat-bar", cmd)), Sense::click());
+                ui.painter().rect_filled(r, 3.0, if resp.hovered() { t.hover } else { t.panel });
+                ui.painter().rect_stroke(r, 3.0, Stroke::new(1.0, t.button_border), egui::StrokeKind::Inside);
+                ui.painter().text(r.center(), egui::Align2::CENTER_CENTER, label, egui::FontId::proportional(12.0), t.text);
+                if resp.clicked() {
+                    pattern_cmd = Some(cmd);
+                }
+                x -= w + 6.0;
+            }
+        }
         if bresp.clicked() {
-            app.run("object.exitIsolation", json!({})).ok();
+            pattern_cmd = pattern_cmd.or(pattern_edit.as_ref().map(|_| "object.pattern.done"));
+            if pattern_cmd.is_none() {
+                app.run("object.exitIsolation", json!({})).ok();
+            }
+        }
+        if let Some(cmd) = pattern_cmd {
+            app.run(cmd, json!({})).ok();
         }
     }
 }

@@ -13,9 +13,16 @@ use crate::Prefs;
 pub enum PrefKind {
     Bool,
     /// A number in `min..=max` shown with `unit` ("pt", "px", "°", "%", "min", "").
-    Num { min: f64, max: f64, unit: &'static str },
+    Num {
+        min: f64,
+        max: f64,
+        unit: &'static str,
+    },
     /// A whole number in `min..=max`.
-    Int { min: i64, max: i64 },
+    Int {
+        min: i64,
+        max: i64,
+    },
     /// One of (value, label).
     Choice(&'static [(&'static str, &'static str)]),
     /// `#rrggbb`.
@@ -119,7 +126,13 @@ pub const PREF_SPECS: &[PrefSpec] = &[
         "Handles",
         choice(&[("solid", "Solid"), ("hollow", "Hollow"), ("large", "Large")])
     ),
-    p!("highlightAnchorsOnHover", "Selection & Anchor Display", "Anchor Points, Handle, and Bounding Box Display", "Highlight anchors on mouse over", bool),
+    p!(
+        "highlightAnchorsOnHover",
+        "Selection & Anchor Display",
+        "Anchor Points, Handle, and Bounding Box Display",
+        "Highlight anchors on mouse over",
+        bool
+    ),
     p!(
         "showHandlesMultipleAnchors",
         "Selection & Anchor Display",
@@ -127,7 +140,13 @@ pub const PREF_SPECS: &[PrefSpec] = &[
         "Show handles when multiple anchors are selected",
         bool
     ),
-    p!("hideCornerWidgetAbove", "Selection & Anchor Display", "Anchor Points, Handle, and Bounding Box Display", "Hide Corner Widget for angles greater than", num(0.0, 180.0, "°")),
+    p!(
+        "hideCornerWidgetAbove",
+        "Selection & Anchor Display",
+        "Anchor Points, Handle, and Bounding Box Display",
+        "Hide Corner Widget for angles greater than",
+        num(0.0, 180.0, "°")
+    ),
     p!("penRubberBand", "Selection & Anchor Display", "Enable Rubber Band for", "Pen Tool", bool),
     p!("curvatureRubberBand", "Selection & Anchor Display", "Enable Rubber Band for", "Curvature Tool", bool),
     // Type
@@ -251,8 +270,20 @@ pub const PREF_SPECS: &[PrefSpec] = &[
     p!("copyAsSvg", "Clipboard Handling", "On Copy", "Include SVG Code", bool),
     p!("copyAsPdf", "Clipboard Handling", "On Copy", "PDF", bool),
     p!("copyAicb", "Clipboard Handling", "On Copy", "AICB (no transparency support)", bool),
-    p!("aicbMode", "Clipboard Handling", "On Copy", "AICB", choice(&[("preservePaths", "Preserve Paths"), ("preserveAppearance", "Preserve Appearance and Overprints")])),
-    p!("pasteTextFormatting", "Clipboard Handling", "On Paste", "When pasting text", choice(&[("keep", "Keep Formatting"), ("plain", "Keep Plain Text")])),
+    p!(
+        "aicbMode",
+        "Clipboard Handling",
+        "On Copy",
+        "AICB",
+        choice(&[("preservePaths", "Preserve Paths"), ("preserveAppearance", "Preserve Appearance and Overprints")])
+    ),
+    p!(
+        "pasteTextFormatting",
+        "Clipboard Handling",
+        "On Paste",
+        "When pasting text",
+        choice(&[("keep", "Keep Formatting"), ("plain", "Keep Plain Text")])
+    ),
     // Appearance of Black
     p!("blackOnScreen", "Appearance of Black", "", "On Screen", choice(BLACK)),
     p!("blackOutput", "Appearance of Black", "", "Printing / Exporting", choice(BLACK_OUT)),
@@ -269,7 +300,8 @@ pub fn spec(key: &str) -> Option<&'static PrefSpec> {
 /// "true"/"false"; choices by value or label (case-insensitive).
 pub fn validate(key: &str, v: &Value) -> std::result::Result<Value, String> {
     let sp = spec(key).ok_or_else(|| format!("unknown preference `{key}`"))?;
-    let num = || v.as_f64().or_else(|| v.as_str().and_then(|s| s.trim().trim_end_matches(|c: char| c.is_alphabetic() || c == '°').trim().parse().ok()));
+    let num =
+        || v.as_f64().or_else(|| v.as_str().and_then(|s| s.trim().trim_end_matches(|c: char| c.is_alphabetic() || c == '°').trim().parse().ok()));
     match sp.kind {
         PrefKind::Bool => match v {
             Value::Bool(b) => Ok(json!(b)),

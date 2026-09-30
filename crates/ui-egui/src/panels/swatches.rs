@@ -130,6 +130,44 @@ fn apply(app: &mut DrawcraftApp, ui: &Ui, e: &Entry) {
     }
 }
 
+/// A pattern swatch drawn as a rendered tile (cached by the definition's identity and size).
+fn pattern_thumb(app: &DrawcraftApp, ui: &Ui, r: Rect, paint: &Paint) {
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+    type Key = (String, Vec<usize>, String, u32);
+    thread_local! {
+        static CACHE: RefCell<HashMap<Key, Option<egui::TextureHandle>>> = RefCell::new(HashMap::new());
+    }
+    let Paint::Pattern { pattern, .. } = paint else { return };
+    let Some(st) = app.session.active() else { return };
+    let Some(def) = st.doc.pattern(pattern) else { return };
+    let px = (r.width() * ui.ctx().pixels_per_point()).round().max(4.0) as u32;
+    let key = (
+        pattern.clone(),
+        def.art.iter().map(|a| std::sync::Arc::as_ptr(a) as usize).collect(),
+        format!("{:?}{:?}{:?}", def.tile, def.tile_type, def.overlap),
+        px,
+    );
+    let tex = CACHE.with(|c| c.borrow().get(&key).cloned()).unwrap_or_else(|| {
+        let tex = drawcraft_render::render_pattern_swatch(&st.doc, pattern, px).map(|img| {
+            let color = egui::ColorImage::from_rgba_premultiplied([img.width as usize, img.height as usize], &img.pixels);
+            ui.ctx().load_texture(format!("pattern-swatch-{pattern}-{px}"), color, egui::TextureOptions::LINEAR)
+        });
+        CACHE.with(|c| {
+            let mut c = c.borrow_mut();
+            if c.len() > 256 {
+                c.clear();
+            }
+            c.insert(key, tex.clone());
+        });
+        tex
+    });
+    if let Some(tex) = tex {
+        ui.painter().rect_filled(r, 0.0, egui::Color32::WHITE);
+        ui.painter().image(tex.id(), r, Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), egui::Color32::WHITE);
+    }
+}
+
 fn draw_registration(ui: &Ui, r: Rect) {
     let t = Tokens::get(ui.ctx());
     ui.painter().rect_filled(r, 0.0, egui::Color32::WHITE);
@@ -184,6 +222,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     let sel = selected_name(ui).or(active_swatch);
     let (tile, pitch) = view.tile();
     let mut clicked: Option<Entry> = None;
+    let mut edit_pattern: Option<String> = None;
     widgets::list_box(ui, |ui| {
         egui::ScrollArea::vertical().id_salt("swatch-scroll").max_height(if view == View::LargeThumb { 200.0 } else { 150.0 }).show(ui, |ui| {
             ui.set_width(ui.available_width());
@@ -204,7 +243,10 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
                     let chip = Rect::from_min_size(r.left_center() + vec2(4.0, -tile / 2.0), vec2(tile, tile));
                     match e {
                         Entry::Registration => draw_registration(ui, chip),
-                        Entry::Swatch { paint, .. } => swatch_tile(ui, chip, paint, false, false),
+                        Entry::Swatch { paint, .. } => {
+                            swatch_tile(ui, chip, paint, false, false);
+                            pattern_thumb(app, ui, chip, paint);
+                        }
                         Entry::Folder(_) => draw_folder(ui, chip),
                     }
                     ui.painter().text(
@@ -265,6 +307,12 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
                             Entry::Registration => draw_registration(ui, cell),
                             Entry::Swatch { paint, global, .. } => {
                                 swatch_tile(ui, cell, paint, sel.as_deref() == Some(name.as_str()), resp.hovered());
+                                pattern_thumb(app, ui, cell.shrink(1.0), paint);
+                                if resp.double_clicked()
+                                    && let Paint::Pattern { pattern, .. } = paint
+                                {
+                                    edit_pattern = Some(pattern.clone());
+                                }
                                 if *global {
                                     let k = cell.shrink(1.0);
                                     ui.painter().add(egui::Shape::convex_polygon(
@@ -284,6 +332,10 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
             }
         });
     });
+    if let Some(name) = edit_pattern {
+        app.run("object.pattern.edit", json!({"name": name})).ok();
+        app.ui.open_panel = Some("patternOptions".into());
+    }
     if let Some(e) = clicked {
         let name = match &e {
             Entry::Registration => REGISTRATION.to_string(),

@@ -1,0 +1,508 @@
+//! Colour management: Edit → Color Settings / Assign Profile, document colour mode conversion
+//! through the CMS, gamut checks, View → Proof Setup / Proof Colors / Overprint Preview, the
+//! Separations Preview panel, Overprint Black and spot swatches.
+//!
+//! Colour settings and the proof view are process-wide (`drawcraft_color::cms::active`,
+//! `drawcraft_render::proof::view`). A document's assigned profiles are stored in
+//! `Document.unknown["colorProfiles"]` (`{rgb?, cmyk?}`) and become active when assigned.
+
+use std::collections::BTreeMap;
+
+use drawcraft_color::cms::{self, ColorSettings, Intent, Model, ProofTarget};
+use drawcraft_color::{Color, Paint};
+use drawcraft_doc::ColorMode;
+use drawcraft_render::proof::{self, OVERPRINT_KEY};
+use serde_json::{Value, json};
+
+use super::*;
+
+/// `Document.unknown` key for the assigned profiles.
+pub const PROFILES_KEY: &str = "colorProfiles";
+
+pub fn specs() -> Vec<CommandSpec> {
+    vec![
+        cmd!(
+            "edit.colorSettings",
+            "Color Settings…",
+            ["Edit"],
+            Some("Cmd+Shift+K"),
+            "{rgb?: profile, cmyk?: profile, intent?: \"perceptual\"|\"relative\"|\"saturation\"|\"absolute\", bpc?: bool} set the working spaces → {rgb, cmyk, intent, bpc, profiles: [{name, kind, builtin}]}",
+            always,
+            color_settings
+        ),
+        cmd!(
+            "color.loadProfile",
+            "Load Color Profile…",
+            [],
+            None,
+            "{path: .icc/.icm file} register an ICC profile (native only) → {name, kind}",
+            always,
+            load_profile
+        ),
+        cmd!(
+            "edit.assignProfile",
+            "Assign Profile…",
+            ["Edit"],
+            None,
+            "{rgb?: profile|null, cmyk?: profile|null} tag the document with profiles (colour numbers are kept) → {rgb, cmyk}",
+            has_doc,
+            assign_profile
+        ),
+        cmd!(
+            "object.convertDocumentColorMode",
+            "Convert Document Color Mode",
+            ["File", "Document Color Mode"],
+            None,
+            "{mode: \"cmyk\"|\"rgb\", intent?} set the document colour mode and convert every colour (art, symbols, swatches; swatch links kept) through the colour settings → {changed}",
+            has_doc,
+            convert_mode
+        ),
+        cmd!(
+            query "color.convert",
+            "Convert Color",
+            [],
+            None,
+            "{color, to: \"rgb\"|\"cmyk\"|\"gray\"|\"lab\", intent?} → {model, values, hex, lab: [L,a,b], outOfGamut, deltaE}",
+            always,
+            convert_color
+        ),
+        cmd!(
+            query "color.gamutCheck",
+            "Gamut Warning",
+            [],
+            None,
+            "{ids?, colors?: [color]} colours that can't be printed in the working CMYK (selection, or the whole document when nothing is selected) → {checked, outOfGamut: [{hex, deltaE, count}]}",
+            always,
+            gamut_check
+        ),
+        cmd!(
+            query "view.proofSetup",
+            "Proof Setup",
+            ["View", "Proof Setup"],
+            None,
+            "{target?: \"workingCmyk\"|\"cmyk:<profile>\"|\"legacyMacRgb\"|\"srgb\"|\"monitorRgb\"|\"protanopia\"|\"deuteranopia\", intent?, simulatePaper?, proof?: bool (also turn Proof Colors on)} → proof state",
+            always,
+            proof_setup
+        ),
+        cmd!(query "view.proofColors", "Proof Colors", ["View"], None, "{on?: bool (default: toggle)} → proof state", always, |s, p| {
+            toggle_view(s, p, |v, on| v.proof_colors = on.unwrap_or(!v.proof_colors))
+        }),
+        cmd!(
+            query "view.overprintPreview",
+            "Overprint Preview",
+            ["View"],
+            Some("Cmd+Alt+Shift+Y"),
+            "{on?: bool (default: toggle)} → proof state",
+            always,
+            |s, p| toggle_view(s, p, |v, on| v.overprint = on.unwrap_or(!v.overprint))
+        ),
+        cmd!(
+            query "view.separationsPreview",
+            "Separations Preview",
+            [],
+            None,
+            "{on?: bool, plates?: [names], toggle?: plate, only?: plate} Separations Preview: show the chosen plates (one plate = greyscale ink coverage) → {on, plates: [{name, spot, visible, rgb}]}",
+            always,
+            separations
+        ),
+        cmd!(query "color.plates", "Plates", [], None, "{} → {on, plates: [{name, spot, visible, rgb}]}", always, |s, _| Ok(plates_json(s))),
+        cmd!(
+            "edit.colors.overprintBlack",
+            "Overprint Black…",
+            ["Edit", "Edit Colors"],
+            None,
+            "{remove?: false, percentage?: 100, ids?} mark (or unmark) objects whose fill or stroke is black-only ink ≥ percentage as overprinting (Overprint Preview, separations) → {changed}",
+            has_doc,
+            overprint_black
+        ),
+        cmd!(
+            "swatch.setSpot",
+            "Spot Color",
+            [],
+            None,
+            "{name, spot?: true} make a swatch a spot colour (prints on its own plate; spot swatches are global) → {name, spot}",
+            has_doc,
+            set_spot
+        ),
+    ]
+}
+
+fn intent_param(p: &Value, cmd: &str) -> Result<Option<Intent>> {
+    match str_param(p, "intent") {
+        None => Ok(None),
+        Some(i) => Intent::parse(i).map(Some).ok_or_else(|| bad(cmd, format!("unknown intent `{i}`"))),
+    }
+}
+
+fn settings_json(st: &ColorSettings) -> Value {
+    json!({
+        "rgb": st.rgb,
+        "cmyk": st.cmyk,
+        "intent": st.intent.id(),
+        "bpc": st.bpc,
+        "profiles": cms::profiles().iter().map(|p| json!({"name": p.name, "kind": p.kind, "builtin": p.builtin})).collect::<Vec<_>>(),
+    })
+}
+
+/// Colour settings/proof changes don't edit the document, but the canvas must redraw: bump the
+/// revisions without marking documents dirty.
+fn touch_all(s: &mut Session) {
+    for d in &mut s.docs {
+        let clean = d.revision == d.saved_revision;
+        d.revision += 1;
+        if clean {
+            d.saved_revision = d.revision;
+        }
+    }
+}
+
+fn color_settings(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "edit.colorSettings";
+    let mut st = cms::active_settings();
+    let before = st.clone();
+    if let Some(v) = str_param(p, "rgb") {
+        st.rgb = v.to_string();
+    }
+    if let Some(v) = str_param(p, "cmyk") {
+        st.cmyk = v.to_string();
+    }
+    if let Some(i) = intent_param(p, C)? {
+        st.intent = i;
+    }
+    st.bpc = bool_or(p, "bpc", st.bpc);
+    if st != before {
+        cms::set_active(&st).map_err(|e| bad(C, e.to_string()))?;
+        touch_all(s);
+    }
+    Ok(settings_json(&st))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn load_profile(_: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "color.loadProfile";
+    let path = str_param(p, "path").ok_or_else(|| bad(C, "missing `path`"))?;
+    let info = cms::load_icc_file(std::path::Path::new(path)).map_err(|e| bad(C, e.to_string()))?;
+    Ok(json!({"name": info.name, "kind": info.kind}))
+}
+
+#[cfg(target_arch = "wasm32")]
+fn load_profile(_: &mut Session, _: &Value) -> Result<Value> {
+    Err(bad("color.loadProfile", "loading profiles from disk isn't available in the browser"))
+}
+
+/// The document's assigned profiles (`None` = working space).
+pub fn doc_profiles(d: &drawcraft_doc::Document) -> (Option<String>, Option<String>) {
+    let o = d.unknown.get(PROFILES_KEY);
+    let get = |k: &str| o.and_then(|o| o.get(k)).and_then(Value::as_str).map(str::to_string);
+    (get("rgb"), get("cmyk"))
+}
+
+fn assign_profile(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "edit.assignProfile";
+    let (mut rgb, mut cmyk) = doc_profiles(&s.doc()?.doc);
+    let known = cms::profiles();
+    let pick = |key: &str, cur: &mut Option<String>, kind: cms::ProfileKind| -> Result<bool> {
+        match p.get(key) {
+            None => Ok(false),
+            Some(Value::Null) => Ok(cur.take().is_some()),
+            Some(Value::String(n)) => {
+                if !known.iter().any(|k| &k.name == n && k.kind == kind) {
+                    return Err(bad(C, format!("unknown {key} profile `{n}`")));
+                }
+                let changed = cur.as_deref() != Some(n.as_str());
+                *cur = Some(n.clone());
+                Ok(changed)
+            }
+            Some(_) => Err(bad(C, format!("`{key}` must be a profile name or null"))),
+        }
+    };
+    let changed = pick("rgb", &mut rgb, cms::ProfileKind::Rgb)? | pick("cmyk", &mut cmyk, cms::ProfileKind::Cmyk)?;
+    if changed {
+        let (r, c) = (rgb.clone(), cmyk.clone());
+        s.edit("Assign Profile", |d, _| {
+            if r.is_none() && c.is_none() {
+                d.unknown.remove(PROFILES_KEY);
+            } else {
+                d.unknown.insert(PROFILES_KEY.into(), json!({"rgb": r, "cmyk": c}));
+            }
+            Ok(())
+        })?;
+        let mut st = cms::active_settings();
+        if let Some(r) = &rgb {
+            st.rgb = r.clone();
+        }
+        if let Some(c) = &cmyk {
+            st.cmyk = c.clone();
+        }
+        cms::set_active(&st).map_err(|e| bad(C, e.to_string()))?;
+        touch_all(s);
+    }
+    Ok(json!({"rgb": rgb, "cmyk": cmyk}))
+}
+
+fn convert_mode(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "object.convertDocumentColorMode";
+    let mode = match str_param(p, "mode").map(str::to_ascii_lowercase).as_deref() {
+        Some("cmyk") => ColorMode::Cmyk,
+        Some("rgb") => ColorMode::Rgb,
+        _ => return Err(bad(C, "mode must be \"cmyk\" or \"rgb\"")),
+    };
+    let c = cms::active();
+    let intent = intent_param(p, C)?.unwrap_or(c.settings().intent);
+    let model = if mode == ColorMode::Cmyk { Model::Cmyk } else { Model::Rgb };
+    // Greys stay greys (they print on the black plate in either mode).
+    let conv = |col: &Color| if matches!(col, Color::Gray { .. }) { *col } else { c.convert(col, model, intent) };
+    let mut changed = 0usize;
+    s.edit("Document Color Mode", |d, _| {
+        d.color_mode = mode;
+        proof::map_document_colors(d, &mut |col, _| {
+            let n = conv(col);
+            if n != *col {
+                changed += 1;
+            }
+            n
+        });
+        for sw in &mut d.swatches {
+            match &mut sw.paint {
+                Paint::Solid { color, .. } => *color = conv(color),
+                Paint::Gradient(g) => {
+                    for st in &mut g.gradient.stops {
+                        st.color = conv(&st.color);
+                    }
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    })?;
+    Ok(json!({ "changed": changed }))
+}
+
+fn values(c: &Color) -> Vec<f32> {
+    match *c {
+        Color::Rgb { r, g, b } => vec![r, g, b],
+        Color::Cmyk { c, m, y, k } => vec![c, m, y, k],
+        Color::Gray { k } => vec![k],
+    }
+}
+
+fn convert_color(_: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "color.convert";
+    let col = p.get("color").and_then(color_value).ok_or_else(|| bad(C, "missing or invalid `color`"))?;
+    let c = cms::active();
+    let intent = intent_param(p, C)?.unwrap_or(c.settings().intent);
+    let lab = c.lab(&col);
+    let (model, vals) = match str_param(p, "to").unwrap_or("rgb") {
+        "rgb" => ("rgb", values(&c.convert(&col, Model::Rgb, intent))),
+        "cmyk" => ("cmyk", values(&c.convert(&col, Model::Cmyk, intent))),
+        "gray" | "grayscale" => ("gray", values(&c.convert(&col, Model::Gray, intent))),
+        "lab" => ("lab", vec![lab.l, lab.a, lab.b]),
+        other => return Err(bad(C, format!("unknown model `{other}`"))),
+    };
+    let de = c.gamut_error(&col);
+    Ok(json!({
+        "model": model,
+        "values": vals,
+        "hex": col.to_hex(),
+        "lab": [lab.l, lab.a, lab.b],
+        "outOfGamut": de > cms::GAMUT_THRESHOLD,
+        "deltaE": de,
+    }))
+}
+
+fn gamut_check(s: &mut Session, p: &Value) -> Result<Value> {
+    let mut cols: Vec<Color> = vec![];
+    if let Some(a) = p.get("colors").and_then(Value::as_array) {
+        cols.extend(a.iter().filter_map(color_value));
+    } else {
+        let st = s.doc()?;
+        let ids = targets(s, p)?;
+        let mut collect = |n: &drawcraft_doc::Node| {
+            let mut n = n.clone();
+            proof::map_node_colors(&mut n, &mut |c, _| {
+                cols.push(*c);
+                *c
+            });
+        };
+        if ids.is_empty() {
+            for l in &st.doc.layers {
+                collect(l);
+            }
+        } else {
+            for id in ids {
+                if let Some(n) = st.doc.node(id) {
+                    collect(n);
+                }
+            }
+        }
+    }
+    let c = cms::active();
+    let mut out: BTreeMap<String, (f32, usize)> = BTreeMap::new();
+    for col in &cols {
+        let de = c.gamut_error(col);
+        if de > cms::GAMUT_THRESHOLD {
+            out.entry(col.to_hex()).or_insert((de, 0)).1 += 1;
+        }
+    }
+    Ok(json!({
+        "checked": cols.len(),
+        "outOfGamut": out.iter().map(|(h, (de, n))| json!({"hex": h, "deltaE": de, "count": n})).collect::<Vec<_>>(),
+    }))
+}
+
+fn view_json(v: &proof::ProofView) -> Value {
+    json!({
+        "target": v.setup.target.id(),
+        "intent": v.setup.intent.id(),
+        "simulatePaper": v.setup.simulate_paper,
+        "proofColors": v.proof_colors,
+        "overprintPreview": v.overprint,
+        "separations": v.separations,
+    })
+}
+
+fn proof_setup(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "view.proofSetup";
+    let mut v = proof::view();
+    if let Some(t) = str_param(p, "target") {
+        let t = ProofTarget::parse(t).ok_or_else(|| bad(C, format!("unknown proof target `{t}`")))?;
+        if let ProofTarget::Cmyk(name) = &t
+            && !cms::profiles().iter().any(|k| &k.name == name && k.kind == cms::ProfileKind::Cmyk)
+        {
+            return Err(bad(C, format!("unknown CMYK profile `{name}`")));
+        }
+        v.setup.target = t;
+    }
+    if let Some(i) = intent_param(p, C)? {
+        v.setup.intent = i;
+    }
+    v.setup.simulate_paper = bool_or(p, "simulatePaper", v.setup.simulate_paper);
+    if let Some(on) = p.get("proof").and_then(Value::as_bool) {
+        v.proof_colors = on;
+    }
+    proof::set_view(v.clone());
+    touch_all(s);
+    Ok(view_json(&v))
+}
+
+fn toggle_view(s: &mut Session, p: &Value, f: impl FnOnce(&mut proof::ProofView, Option<bool>)) -> Result<Value> {
+    let mut v = proof::view();
+    f(&mut v, p.get("on").and_then(Value::as_bool));
+    proof::set_view(v.clone());
+    touch_all(s);
+    Ok(view_json(&v))
+}
+
+fn plates_json(s: &Session) -> Value {
+    let v = proof::view();
+    let plates = s.active().map(|d| proof::plates(&d.doc)).unwrap_or_default();
+    json!({
+        "on": v.separations.is_some(),
+        "plates": plates.iter().map(|pl| json!({
+            "name": pl.name,
+            "spot": pl.spot,
+            "visible": v.separations.as_ref().is_none_or(|vis| vis.contains(&pl.name)),
+            "rgb": pl.rgb,
+        })).collect::<Vec<_>>(),
+    })
+}
+
+fn separations(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "view.separationsPreview";
+    let mut v = proof::view();
+    let all: Vec<String> = s.active().map(|d| proof::plates(&d.doc).into_iter().map(|p| p.name).collect()).unwrap_or_else(|| cms::PROCESS_PLATES.iter().map(|s| s.to_string()).collect());
+    let check = |n: &str| if all.iter().any(|a| a == n) { Ok(n.to_string()) } else { Err(bad(C, format!("unknown plate `{n}`"))) };
+    if let Some(on) = p.get("on").and_then(Value::as_bool) {
+        v.separations = if on { Some(v.separations.take().unwrap_or_else(|| all.clone())) } else { None };
+    }
+    if let Some(a) = p.get("plates").and_then(Value::as_array) {
+        v.separations = Some(a.iter().filter_map(Value::as_str).map(check).collect::<Result<Vec<_>>>()?);
+    }
+    if let Some(n) = str_param(p, "only") {
+        v.separations = Some(vec![check(n)?]);
+    }
+    if let Some(n) = str_param(p, "toggle") {
+        let n = check(n)?;
+        let vis = v.separations.get_or_insert_with(|| all.clone());
+        if let Some(i) = vis.iter().position(|x| *x == n) {
+            vis.remove(i);
+        } else {
+            vis.push(n);
+        }
+    }
+    proof::set_view(v);
+    touch_all(s);
+    Ok(plates_json(s))
+}
+
+fn overprint_black(s: &mut Session, p: &Value) -> Result<Value> {
+    let remove = bool_or(p, "remove", false);
+    let pct = (f64_or(p, "percentage", 100.0) / 100.0).clamp(0.0, 1.0) as f32;
+    let ids = targets(s, p)?;
+    let doc = &s.doc()?.doc;
+    let black_only = |c: &Color| match *c {
+        Color::Cmyk { c, m, y, k } => k >= pct - 0.005 && c <= 0.005 && m <= 0.005 && y <= 0.005,
+        Color::Gray { k } => k >= pct - 0.005,
+        Color::Rgb { .. } => false,
+    };
+    let mut hits: Vec<u64> = vec![];
+    for id in &ids {
+        if let Some(n) = doc.node(*id) {
+            n.walk(&mut |m: &drawcraft_doc::Node| {
+                let bl = m.appearance.items.iter().any(|it| match it {
+                    drawcraft_doc::AppearanceItem::Fill(l) => l.paint.color().is_some_and(|c| black_only(&c)),
+                    drawcraft_doc::AppearanceItem::Stroke(l) => l.paint.color().is_some_and(|c| black_only(&c)),
+                });
+                if bl {
+                    hits.push(m.id.0);
+                }
+            });
+        }
+    }
+    let mut list: Vec<u64> = proof::overprint_ids(doc).into_iter().map(|i| i.0).collect();
+    let before = list.clone();
+    if remove {
+        list.retain(|i| !hits.contains(i));
+    } else {
+        for h in &hits {
+            if !list.contains(h) {
+                list.push(*h);
+            }
+        }
+    }
+    let changed = if remove { before.len() - list.len() } else { list.len() - before.len() };
+    if changed > 0 {
+        s.edit("Overprint Black", |d, _| {
+            if list.is_empty() {
+                d.unknown.remove(OVERPRINT_KEY);
+            } else {
+                d.unknown.insert(OVERPRINT_KEY.into(), json!(list));
+            }
+            Ok(())
+        })?;
+    }
+    Ok(json!({ "changed": changed }))
+}
+
+fn set_spot(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "swatch.setSpot";
+    let name = str_param(p, "name").ok_or_else(|| bad(C, "missing `name`"))?.to_string();
+    let spot = bool_or(p, "spot", true);
+    let sw = s.doc()?.doc.swatches.iter().find(|w| w.name == name).ok_or_else(|| bad(C, format!("no swatch `{name}`")))?;
+    if !matches!(sw.paint, Paint::Solid { .. }) {
+        return Err(bad(C, "only solid-colour swatches can be spot colours"));
+    }
+    if sw.spot != spot {
+        let n = name.clone();
+        s.edit("Swatch Options", |d, _| {
+            if let Some(w) = d.swatches.iter_mut().find(|w| w.name == n) {
+                w.spot = spot;
+                if spot {
+                    w.global = true;
+                }
+            }
+            Ok(())
+        })?;
+    }
+    Ok(json!({"name": name, "spot": spot}))
+}

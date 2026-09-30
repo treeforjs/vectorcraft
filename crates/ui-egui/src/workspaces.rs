@@ -139,7 +139,11 @@ pub fn apply(ui: &mut UiState, w: &Workspace) {
 
 /// A workspace by name (user workspaces shadow nothing: names are unique across both lists).
 pub fn find(ui: &UiState, name: &str) -> Option<Workspace> {
-    ui.custom_workspaces.iter().find(|w| w.name.eq_ignore_ascii_case(name)).cloned().or_else(|| builtins().into_iter().find(|w| w.name.eq_ignore_ascii_case(name)))
+    ui.custom_workspaces
+        .iter()
+        .find(|w| w.name.eq_ignore_ascii_case(name))
+        .cloned()
+        .or_else(|| builtins().into_iter().find(|w| w.name.eq_ignore_ascii_case(name)))
 }
 
 /// Every workspace name: built-ins then user workspaces.
@@ -199,7 +203,10 @@ fn names_store() -> &'static RwLock<Vec<&'static str>> {
 
 /// Mirror the user workspace names for the (static) menu tree.
 pub fn sync(ui: &UiState) {
-    let same = names_store().read().map(|v| v.len() == ui.custom_workspaces.len() && v.iter().zip(&ui.custom_workspaces).all(|(a, b)| *a == b.name)).unwrap_or(true);
+    let same = names_store()
+        .read()
+        .map(|v| v.len() == ui.custom_workspaces.len() && v.iter().zip(&ui.custom_workspaces).all(|(a, b)| *a == b.name))
+        .unwrap_or(true);
     if !same {
         if let Ok(mut v) = names_store().write() {
             *v = ui.custom_workspaces.iter().map(|w| crate::shortcut_editor::intern(&w.name)).collect();
@@ -211,7 +218,8 @@ pub fn sync(ui: &UiState) {
 /// Window → Workspace submenu items.
 pub fn menu_items() -> Vec<crate::menus::Item> {
     use crate::menus::Item;
-    let mut v: Vec<Item> = builtins().into_iter().map(|w| Item::Cmd(crate::shortcut_editor::intern(&w.name), "window.workspace", json!({"name": w.name}))).collect();
+    let mut v: Vec<Item> =
+        builtins().into_iter().map(|w| Item::Cmd(crate::shortcut_editor::intern(&w.name), "window.workspace", json!({"name": w.name}))).collect();
     let custom = names_store().read().map(|v| v.clone()).unwrap_or_default();
     if !custom.is_empty() {
         v.push(Item::Sep);
@@ -413,11 +421,13 @@ mod tests {
     #[test]
     fn apply_classic_then_reset_to_essentials_keeps_brightness() {
         let mut ui = UiState { brightness: crate::theme::Brightness::Light, ..Default::default() };
-        apply(&mut ui, &find(&ui, "Essentials Classic").unwrap());
+        let w = find(&ui, "Essentials Classic").unwrap();
+        apply(&mut ui, &w);
         assert!(ui.control_bar && ui.view.rulers && ui.toolbar_advanced);
         assert_eq!(ui.open_panel.as_deref(), Some("color"));
         assert_eq!(ui.workspace, "Essentials Classic");
-        apply(&mut ui, &find(&ui, "essentials").unwrap());
+        let w = find(&ui, "essentials").unwrap();
+        apply(&mut ui, &w);
         assert!(!ui.control_bar && !ui.view.rulers);
         assert_eq!(ui.brightness, crate::theme::Brightness::Light);
     }
@@ -429,9 +439,11 @@ mod tests {
         ui.dock_tab = DockTab::Layers;
         ui.open_panel = Some("stroke".into());
         save_as(&mut ui, "Mine").unwrap();
-        apply(&mut ui, &find(&ui, ESSENTIALS).unwrap());
+        let w = find(&ui, ESSENTIALS).unwrap();
+        apply(&mut ui, &w);
         assert!(!ui.control_bar);
-        apply(&mut ui, &find(&ui, "Mine").unwrap());
+        let w = find(&ui, "Mine").unwrap();
+        apply(&mut ui, &w);
         assert!(ui.control_bar && ui.dock_tab == DockTab::Layers && ui.open_panel.as_deref() == Some("stroke"));
         // Survives the UiState JSON round trip.
         let back: UiState = serde_json::from_value(serde_json::to_value(&ui).unwrap()).unwrap();

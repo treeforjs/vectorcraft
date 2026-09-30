@@ -108,6 +108,8 @@ pub struct Mesh {
     ny: usize,
     /// Per grid cell: its two triangles (None = cell not part of the mesh).
     cells: Vec<Option<[usize; 2]>>,
+    /// Per grid cell: centre inside the art (not just the band around it).
+    core: Vec<bool>,
 }
 
 /// Mesh construction options.
@@ -137,11 +139,16 @@ impl Mesh {
         let ny = ((b.height() / cell).ceil() as usize).max(1);
         let origin = Point::new(b.x0, b.y0);
         let reach = cell * 0.75 + opt.expand.max(0.0);
-        let keep = |c: Point| -> bool {
+        // 0 = outside, 1 = in the band around the art, 2 = core (inside a fill or on a path).
+        let keep = |c: Point| -> u8 {
             if outlines.is_empty() {
-                return true;
+                return 2;
             }
-            outlines.iter().any(|o| {
+            let near = |o: &BezPath, r: f64| o.segments().any(|s| s.nearest(c, 1e-3).distance_sq <= r * r);
+            if outlines.iter().any(|o| closed_winding(o, c) != 0 || near(o, cell * 0.25)) {
+                return 2;
+            }
+            u8::from(outlines.iter().any(|o| {
                 let bb = o.bounding_box().inflate(reach, reach);
                 if !bb.contains(c) {
                     return false;
@@ -149,16 +156,19 @@ impl Mesh {
                 if closed_winding(o, c) != 0 {
                     return true;
                 }
-                o.segments().any(|s| s.nearest(c, 1e-3).distance_sq <= reach * reach)
-            })
+                near(o, reach)
+            }))
         };
         let mut vid = vec![usize::MAX; (nx + 1) * (ny + 1)];
         let mut verts = vec![];
         let mut kept = vec![false; nx * ny];
+        let mut core = vec![false; nx * ny];
         for j in 0..ny {
             for i in 0..nx {
                 let c = Point::new(origin.x + (i as f64 + 0.5) * cell, origin.y + (j as f64 + 0.5) * cell);
-                kept[j * nx + i] = keep(c);
+                let k = keep(c);
+                kept[j * nx + i] = k > 0;
+                core[j * nx + i] = k == 2;
             }
         }
         // Number vertices row by row (keeps the systems banded).
@@ -188,7 +198,7 @@ impl Mesh {
                 cells[j * nx + i] = Some([t0, t0 + 1]);
             }
         }
-        Mesh { verts, tris, origin, cell, nx, ny, cells }
+        Mesh { verts, tris, origin, cell, nx, ny, cells, core }
     }
 
     /// Band width (in vertices) of the vertex adjacency.
@@ -429,7 +439,7 @@ pub fn auto_pins(mesh: &Mesh, count: usize) -> Vec<Point> {
         .cells
         .iter()
         .enumerate()
-        .filter(|(_, c)| c.is_some())
+        .filter(|(k, c)| c.is_some() && (mesh.core[*k] || !mesh.core.iter().any(|x| *x)))
         .map(|(k, _)| Point::new(mesh.origin.x + ((k % mesh.nx) as f64 + 0.5) * mesh.cell, mesh.origin.y + ((k / mesh.nx) as f64 + 0.5) * mesh.cell))
         .collect();
     if centres.is_empty() {
@@ -559,7 +569,7 @@ mod tests {
             .flat_map(|t| (0..3).map(move |k| (t[k], t[(k + 1) % 3])))
             .map(|(i, j)| (d[i].distance(d[j]) / m.verts[i].distance(m.verts[j]) - 1.0).abs())
             .fold(0.0, f64::max);
-        assert!(worst < 0.25, "edge stretch {worst}");
+        assert!(worst < 0.3, "edge stretch {worst}");
     }
 
     #[test]

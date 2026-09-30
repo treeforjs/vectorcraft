@@ -20,7 +20,9 @@ pub mod layers;
 pub mod navigator;
 pub mod paragraph;
 pub mod pathfinder;
+pub mod pattern_options;
 pub mod properties;
+pub mod separations;
 pub mod stroke;
 pub mod swatches;
 pub mod symbols;
@@ -62,6 +64,7 @@ pub fn show_icon_panel(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "history" => history::show(app, ui),
         "actions" => actions::show(app, ui),
         "info" => info::show(app, ui),
+        "separations" => separations::show(app, ui),
         "artboards" => artboards::show(app, ui),
         "gradient" => gradient::show(app, ui),
         "character" => character::show(app, ui),
@@ -70,6 +73,7 @@ pub fn show_icon_panel(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "navigator" => navigator::show(app, ui),
         "brushes" => brushes::show(app, ui),
         "symbols" => symbols::show(app, ui),
+        "patternOptions" => pattern_options::show(app, ui),
         _ => {
             dim_label(ui, "This panel is on the roadmap (see the parity plan).");
         }
@@ -91,6 +95,7 @@ pub fn panel_menu_items(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "transform" => transform::menu(app, ui),
         "history" => history::menu(app, ui),
         "info" => info::menu(app, ui),
+        "separations" => separations::menu(app, ui),
         "artboards" => artboards::menu(app, ui),
         "gradient" => gradient::menu(app, ui),
         "character" => character::menu(app, ui),
@@ -99,6 +104,7 @@ pub fn panel_menu_items(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "navigator" => navigator::menu(app, ui),
         "brushes" => brushes::menu(app, ui),
         "symbols" => symbols::menu(app, ui),
+        "patternOptions" => pattern_options::menu(app, ui),
         _ => {
             ui.add_enabled(false, egui::Button::new("No options").frame(false));
         }
