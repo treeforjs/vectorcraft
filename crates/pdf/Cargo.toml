@@ -1,0 +1,15 @@
+[package]
+name = "drawcraft-pdf"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "DrawCraft PDF export and import"
+
+[lints]
+workspace = true
+
+[dependencies]
+drawcraft-geom = { workspace = true }
+drawcraft-doc = { workspace = true }
+kurbo = { workspace = true }
+thiserror = { workspace = true }

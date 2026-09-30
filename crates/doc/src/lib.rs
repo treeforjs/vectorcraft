@@ -1,0 +1,656 @@
+//! DrawCraft document model: artboards, layers and objects, appearance, swatches (pure data + serde).
+//!
+//! Documents are persistent trees: children are `Arc<Node>`, and edits go through
+//! [`Document::node_mut`], which clones only the nodes on the path from the root to the edited node.
+//! Keeping the previous `Document` value around is therefore a cheap undo snapshot.
+#![forbid(unsafe_code)]
+
+pub mod appearance;
+pub mod hit;
+pub mod node;
+pub mod selection;
+pub mod text;
+
+use std::collections::BTreeMap;
+use std::sync::Arc;
+
+pub use appearance::{Appearance, AppearanceItem, Arrowhead, Dash, Effect, FillLayer, LineCap, LineJoin, StrokeAlign, StrokeLayer, WidthProfile};
+pub use drawcraft_color as color;
+pub use drawcraft_geom as geom;
+pub use hit::{Hit, HitKind};
+pub use node::{ImageObject, LAYER_COLORS, LayerColor, LiveShape, Node, NodeId, NodeKind};
+pub use selection::{AnchorRef, Selection};
+pub use text::{CharStyle, Justify, ParaStyle, TextKind, TextObject, TextRun};
+
+use drawcraft_color::{Swatch, SwatchGroup};
+use drawcraft_geom::{Point, Rect};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, thiserror::Error, PartialEq)]
+pub enum DocError {
+    #[error("no such object {0}")]
+    NoNode(NodeId),
+    #[error("object {0} cannot have children")]
+    NotContainer(NodeId),
+    #[error("{0}")]
+    Invalid(String),
+}
+
+/// Measurement units (display only; the model is always in points).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Unit {
+    #[default]
+    Points,
+    Picas,
+    Inches,
+    Millimeters,
+    Centimeters,
+    Pixels,
+    FeetInches,
+    Meters,
+    Yards,
+    Feet,
+}
+
+impl Unit {
+    pub const ALL: [Unit; 10] = [
+        Unit::Points,
+        Unit::Picas,
+        Unit::Inches,
+        Unit::Millimeters,
+        Unit::Centimeters,
+        Unit::Pixels,
+        Unit::FeetInches,
+        Unit::Meters,
+        Unit::Yards,
+        Unit::Feet,
+    ];
+    /// Points per unit.
+    pub fn points(self) -> f64 {
+        match self {
+            Unit::Points | Unit::Pixels => 1.0,
+            Unit::Picas => 12.0,
+            Unit::Inches => 72.0,
+            Unit::Millimeters => 72.0 / 25.4,
+            Unit::Centimeters => 72.0 / 2.54,
+            Unit::Meters => 72.0 / 0.0254,
+            Unit::Yards => 72.0 * 36.0,
+            Unit::Feet | Unit::FeetInches => 72.0 * 12.0,
+        }
+    }
+    pub fn suffix(self) -> &'static str {
+        match self {
+            Unit::Points => "pt",
+            Unit::Picas => "p",
+            Unit::Inches => "in",
+            Unit::Millimeters => "mm",
+            Unit::Centimeters => "cm",
+            Unit::Pixels => "px",
+            Unit::FeetInches | Unit::Feet => "ft",
+            Unit::Meters => "m",
+            Unit::Yards => "yd",
+        }
+    }
+    pub fn label(self) -> &'static str {
+        match self {
+            Unit::Points => "Points",
+            Unit::Picas => "Picas",
+            Unit::Inches => "Inches",
+            Unit::Millimeters => "Millimeters",
+            Unit::Centimeters => "Centimeters",
+            Unit::Pixels => "Pixels",
+            Unit::FeetInches => "Feet & Inches",
+            Unit::Meters => "Meters",
+            Unit::Yards => "Yards",
+            Unit::Feet => "Feet",
+        }
+    }
+    pub fn from_pt(self, v: f64) -> f64 {
+        v / self.points()
+    }
+    pub fn to_pt(self, v: f64) -> f64 {
+        v * self.points()
+    }
+    /// Format a point value in this unit the way fields show it (e.g. `12.5 pt`, `3 in`).
+    pub fn format(self, pt: f64) -> String {
+        let v = self.from_pt(pt);
+        let s = format!("{:.3}", v);
+        let s = s.trim_end_matches('0').trim_end_matches('.');
+        let s = if s == "-0" { "0" } else { s };
+        format!("{s} {}", self.suffix())
+    }
+    /// Parse `12`, `12pt`, `1in`, `3 mm`, `2p6` (picas+points), simple `+ - * /` arithmetic.
+    pub fn parse(self, s: &str) -> Option<f64> {
+        parse_measure(s, self)
+    }
+}
+
+fn parse_measure(s: &str, default: Unit) -> Option<f64> {
+    let s = s.trim();
+    // Simple arithmetic on the right (Illustrator fields accept "10+5", "100/2", "3in*2").
+    for op in ['+', '-', '*', '/'] {
+        if let Some(i) = s[1.min(s.len())..].rfind(op).map(|i| i + 1.min(s.len())) {
+            let (l, r) = (&s[..i], &s[i + 1..]);
+            if l.trim().is_empty() {
+                continue;
+            }
+            let a = parse_measure(l, default)?;
+            return match op {
+                '+' => Some(a + parse_measure(r, default)?),
+                '-' => Some(a - parse_measure(r, default)?),
+                '*' => Some(a * r.trim().parse::<f64>().ok()?),
+                _ => {
+                    let d = r.trim().parse::<f64>().ok()?;
+                    if d == 0.0 { None } else { Some(a / d) }
+                }
+            };
+        }
+    }
+    if let Some((p, pt)) = s.split_once('p')
+        && !p.is_empty()
+        && p.trim().parse::<f64>().is_ok()
+        && (pt.is_empty() || pt.trim().parse::<f64>().is_ok())
+        && !s.ends_with("pt")
+        && !s.ends_with("px")
+    {
+        return Some(p.trim().parse::<f64>().ok()? * 12.0 + pt.trim().parse::<f64>().unwrap_or(0.0));
+    }
+    let num_end = s.find(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-')).unwrap_or(s.len());
+    let v: f64 = s[..num_end].trim().parse().ok()?;
+    let unit = match s[num_end..].trim() {
+        "" => default,
+        "pt" => Unit::Points,
+        "px" => Unit::Pixels,
+        "in" | "\"" => Unit::Inches,
+        "mm" => Unit::Millimeters,
+        "cm" => Unit::Centimeters,
+        "m" => Unit::Meters,
+        "ft" | "'" => Unit::Feet,
+        "yd" => Unit::Yards,
+        "pc" => Unit::Picas,
+        _ => return None,
+    };
+    Some(unit.to_pt(v))
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ColorMode {
+    #[default]
+    Rgb,
+    Cmyk,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Artboard {
+    pub id: u32,
+    pub name: String,
+    /// Artboard rectangle in document points.
+    pub rect: Rect,
+    #[serde(default)]
+    pub show_center_mark: bool,
+    #[serde(default)]
+    pub show_cross_hairs: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Guide {
+    /// true = vertical guide at `pos` (x), false = horizontal at `pos` (y).
+    pub vertical: bool,
+    pub pos: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct GridPrefs {
+    pub spacing: f64,
+    pub subdivisions: u32,
+}
+
+impl Default for GridPrefs {
+    fn default() -> Self {
+        Self { spacing: 72.0, subdivisions: 8 }
+    }
+}
+
+/// A named graphic style (Graphic Styles panel).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct GraphicStyle {
+    pub name: String,
+    pub appearance: Appearance,
+}
+
+/// A symbol definition.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Symbol {
+    pub name: String,
+    pub art: Arc<Node>,
+}
+
+/// Encoded image bytes (PNG/JPEG/WebP…) shared by image objects.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ImageBlob {
+    pub mime: String,
+    #[serde(skip)]
+    pub bytes: Arc<Vec<u8>>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Document {
+    pub version: u32,
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub units: Unit,
+    #[serde(default)]
+    pub color_mode: ColorMode,
+    pub artboards: Vec<Artboard>,
+    /// Top-level layers, bottom first.
+    pub layers: Vec<Arc<Node>>,
+    #[serde(default)]
+    pub swatches: Vec<Swatch>,
+    #[serde(default)]
+    pub swatch_groups: Vec<SwatchGroup>,
+    #[serde(default)]
+    pub graphic_styles: Vec<GraphicStyle>,
+    #[serde(default)]
+    pub symbols: Vec<Symbol>,
+    #[serde(default)]
+    pub guides: Vec<Guide>,
+    #[serde(default)]
+    pub grid: GridPrefs,
+    #[serde(default = "ppi72")]
+    pub raster_effects_ppi: f64,
+    #[serde(default)]
+    pub images: BTreeMap<String, ImageBlob>,
+    next_id: u64,
+    /// Foreign data preserved on round-trip.
+    #[serde(default, skip_serializing_if = "serde_json::Map::is_empty")]
+    pub unknown: serde_json::Map<String, serde_json::Value>,
+}
+
+fn ppi72() -> f64 {
+    72.0
+}
+
+pub const FORMAT_VERSION: u32 = 1;
+
+impl Document {
+    /// A new document with one artboard of `size` and one layer ("Layer 1").
+    pub fn new(width: f64, height: f64) -> Self {
+        let (swatches, swatch_groups) = drawcraft_color::default_swatches();
+        let mut d = Self {
+            version: FORMAT_VERSION,
+            title: "Untitled-1".into(),
+            units: Unit::Points,
+            color_mode: ColorMode::Rgb,
+            artboards: vec![Artboard {
+                id: 1,
+                name: "Artboard 1".into(),
+                rect: Rect::new(0.0, 0.0, width, height),
+                show_center_mark: false,
+                show_cross_hairs: false,
+            }],
+            layers: vec![],
+            swatches,
+            swatch_groups,
+            graphic_styles: default_graphic_styles(),
+            symbols: vec![],
+            guides: vec![],
+            grid: GridPrefs::default(),
+            raster_effects_ppi: 72.0,
+            images: BTreeMap::new(),
+            next_id: 1,
+            unknown: Default::default(),
+        };
+        let id = d.alloc_id();
+        d.layers.push(Arc::new(Node::layer(id, "Layer 1", LayerColor::Preset(0))));
+        d
+    }
+
+    /// Allocate a fresh node id.
+    pub fn alloc_id(&mut self) -> NodeId {
+        let id = NodeId(self.next_id);
+        self.next_id += 1;
+        id
+    }
+    pub fn peek_next_id(&self) -> u64 {
+        self.next_id
+    }
+    /// Ensure `next_id` is above every id in the tree (after deserializing foreign data).
+    pub fn fix_next_id(&mut self) {
+        let mut max = 0;
+        for l in &self.layers {
+            l.walk(&mut |n| max = max.max(n.id.0));
+        }
+        self.next_id = self.next_id.max(max + 1);
+    }
+
+    /// Find a node anywhere in the tree.
+    pub fn node(&self, id: NodeId) -> Option<&Node> {
+        fn find(nodes: &[Arc<Node>], id: NodeId) -> Option<&Node> {
+            for n in nodes {
+                if n.id == id {
+                    return Some(n);
+                }
+                if let Some(ch) = n.children()
+                    && let Some(f) = find(ch, id)
+                {
+                    return Some(f);
+                }
+            }
+            None
+        }
+        find(&self.layers, id)
+    }
+
+    /// Index path from the top-level layer list to `id` (e.g. `[0, 3, 1]`).
+    pub fn index_path(&self, id: NodeId) -> Option<Vec<usize>> {
+        fn find(nodes: &[Arc<Node>], id: NodeId, path: &mut Vec<usize>) -> bool {
+            for (i, n) in nodes.iter().enumerate() {
+                path.push(i);
+                if n.id == id {
+                    return true;
+                }
+                if let Some(ch) = n.children()
+                    && find(ch, id, path)
+                {
+                    return true;
+                }
+                path.pop();
+            }
+            false
+        }
+        let mut p = vec![];
+        find(&self.layers, id, &mut p).then_some(p)
+    }
+
+    /// Ids from the top-level layer down to `id` inclusive.
+    pub fn ancestry(&self, id: NodeId) -> Option<Vec<NodeId>> {
+        let path = self.index_path(id)?;
+        let mut out = Vec::with_capacity(path.len());
+        let mut nodes = &self.layers;
+        for &i in &path {
+            let n = &nodes[i];
+            out.push(n.id);
+            if let Some(ch) = n.children() {
+                nodes = ch;
+            }
+        }
+        Some(out)
+    }
+
+    pub fn parent_of(&self, id: NodeId) -> Option<NodeId> {
+        let a = self.ancestry(id)?;
+        (a.len() >= 2).then(|| a[a.len() - 2])
+    }
+
+    /// The top-level layer that contains `id`.
+    pub fn layer_of(&self, id: NodeId) -> Option<NodeId> {
+        self.ancestry(id).and_then(|a| a.first().copied())
+    }
+
+    /// Mutable access to a node; clones the Arc path (copy-on-write).
+    pub fn node_mut(&mut self, id: NodeId) -> Option<&mut Node> {
+        let path = self.index_path(id)?;
+        let mut cur: &mut Arc<Node> = &mut self.layers[path[0]];
+        for &i in &path[1..] {
+            cur = &mut Arc::make_mut(cur).children_mut()?[i];
+        }
+        Some(Arc::make_mut(cur))
+    }
+
+    /// Children list of a container (or the top-level layer list for `None`).
+    pub fn children_mut(&mut self, parent: Option<NodeId>) -> Result<&mut Vec<Arc<Node>>, DocError> {
+        match parent {
+            None => Ok(&mut self.layers),
+            Some(p) => self.node_mut(p).ok_or(DocError::NoNode(p))?.children_mut().ok_or(DocError::NotContainer(p)),
+        }
+    }
+    pub fn children(&self, parent: Option<NodeId>) -> Option<&Vec<Arc<Node>>> {
+        match parent {
+            None => Some(&self.layers),
+            Some(p) => self.node(p)?.children(),
+        }
+    }
+
+    /// Insert `node` into `parent` at `index` (clamped; `usize::MAX` = top).
+    pub fn insert(&mut self, parent: Option<NodeId>, index: usize, node: Node) -> Result<NodeId, DocError> {
+        let id = node.id;
+        let ch = self.children_mut(parent)?;
+        let i = index.min(ch.len());
+        ch.insert(i, Arc::new(node));
+        Ok(id)
+    }
+
+    /// Remove a node and return it.
+    pub fn remove(&mut self, id: NodeId) -> Result<Arc<Node>, DocError> {
+        let parent = self.parent_of(id);
+        let path = self.index_path(id).ok_or(DocError::NoNode(id))?;
+        let idx = *path.last().unwrap();
+        let ch = self.children_mut(parent)?;
+        Ok(ch.remove(idx))
+    }
+
+    /// Move a node to `parent` at `index` (index measured after removal).
+    pub fn move_node(&mut self, id: NodeId, parent: Option<NodeId>, index: usize) -> Result<(), DocError> {
+        if let Some(p) = parent
+            && self.ancestry(p).is_some_and(|a| a.contains(&id))
+        {
+            return Err(DocError::Invalid("cannot move an object into itself".into()));
+        }
+        let n = self.remove(id)?;
+        let ch = self.children_mut(parent)?;
+        let i = index.min(ch.len());
+        ch.insert(i, n);
+        Ok(())
+    }
+
+    /// Position of `id` within its parent: (parent, index, sibling count).
+    pub fn position(&self, id: NodeId) -> Option<(Option<NodeId>, usize, usize)> {
+        let parent = self.parent_of(id);
+        let idx = *self.index_path(id)?.last()?;
+        let n = self.children(parent)?.len();
+        Some((parent, idx, n))
+    }
+
+    /// Default target layer: the topmost visible, unlocked layer.
+    pub fn default_layer(&self) -> Option<NodeId> {
+        self.layers.iter().rev().find(|l| l.visible && !l.locked).or(self.layers.last()).map(|l| l.id)
+    }
+
+    /// Add a new top-level layer above all others.
+    pub fn add_layer(&mut self, name: Option<&str>) -> NodeId {
+        let id = self.alloc_id();
+        let n = self.layers.len();
+        let name = name.map(str::to_string).unwrap_or_else(|| self.next_layer_name());
+        self.layers.push(Arc::new(Node::layer(id, &name, LayerColor::Preset((n % LAYER_COLORS.len()) as u8))));
+        id
+    }
+    pub fn next_layer_name(&self) -> String {
+        let mut i = self.layers.len() + 1;
+        loop {
+            let name = format!("Layer {i}");
+            if !self.layers.iter().any(|l| l.name.as_deref() == Some(&name)) {
+                return name;
+            }
+            i += 1;
+        }
+    }
+
+    /// Visit every node depth first in paint order (bottom to top).
+    pub fn walk<'a>(&'a self, mut f: impl FnMut(&'a Node)) {
+        for l in &self.layers {
+            l.walk(&mut f);
+        }
+    }
+    pub fn node_count(&self) -> usize {
+        self.layers.iter().map(|l| l.count()).sum()
+    }
+    /// Is the node (and every ancestor) visible and unlocked?
+    pub fn is_editable(&self, id: NodeId) -> bool {
+        self.ancestry(id).is_some_and(|a| a.iter().all(|i| self.node(*i).is_some_and(|n| n.visible && !n.locked)))
+    }
+    pub fn is_visible(&self, id: NodeId) -> bool {
+        self.ancestry(id).is_some_and(|a| a.iter().all(|i| self.node(*i).is_some_and(|n| n.visible)))
+    }
+    /// Colour of the layer containing `id` (selection highlight colour).
+    pub fn layer_color(&self, id: NodeId) -> [u8; 3] {
+        let l = self.layer_of(id).and_then(|l| self.node(l));
+        match l.map(|n| &n.kind) {
+            Some(NodeKind::Layer { color, .. }) => color.rgb(),
+            _ => LAYER_COLORS[0].1,
+        }
+    }
+    /// Union of the geometric bounds of `ids`.
+    pub fn bounds_of(&self, ids: &[NodeId], visual: bool) -> Option<Rect> {
+        ids.iter()
+            .filter_map(|id| self.node(*id))
+            .fold(None, |acc, n| drawcraft_geom::union_opt(acc, if visual { n.visual_bounds() } else { n.geometric_bounds() }))
+    }
+    /// Bounds of all art.
+    pub fn art_bounds(&self) -> Option<Rect> {
+        self.layers.iter().fold(None, |acc, l| drawcraft_geom::union_opt(acc, l.visual_bounds()))
+    }
+    /// Artboard index containing point `p` (topmost = last).
+    pub fn artboard_at(&self, p: Point) -> Option<usize> {
+        self.artboards.iter().rposition(|a| a.rect.contains(p))
+    }
+    pub fn next_artboard_id(&self) -> u32 {
+        self.artboards.iter().map(|a| a.id).max().unwrap_or(0) + 1
+    }
+    pub fn swatch(&self, name: &str) -> Option<&Swatch> {
+        self.swatches.iter().chain(self.swatch_groups.iter().flat_map(|g| g.swatches.iter())).find(|s| s.name == name)
+    }
+    /// Deep-clone `node` with fresh ids for it and all descendants.
+    pub fn reid(&mut self, node: &Node) -> Node {
+        let mut n = node.clone();
+        n.id = self.alloc_id();
+        if let Some(ch) = n.children_mut() {
+            let old: Vec<Arc<Node>> = std::mem::take(ch);
+            let fresh: Vec<Arc<Node>> = old.iter().map(|c| Arc::new(self.reid(c))).collect();
+            *n.children_mut().unwrap() = fresh;
+        }
+        n
+    }
+}
+
+fn default_graphic_styles() -> Vec<GraphicStyle> {
+    use drawcraft_color::{Color, Paint};
+    vec![
+        GraphicStyle { name: "Default Graphic Style".into(), appearance: Appearance::default_art() },
+        GraphicStyle { name: "Black Outline".into(), appearance: Appearance::basic(Paint::None, Paint::solid(Color::BLACK), 1.0) },
+        GraphicStyle {
+            name: "Heavy Ink".into(),
+            appearance: Appearance::basic(Paint::solid(Color::from_hex("#1b1464").unwrap()), Paint::solid(Color::BLACK), 4.0),
+        },
+        GraphicStyle {
+            name: "Sunshine".into(),
+            appearance: Appearance::basic(Paint::solid(Color::from_hex("#fbb03b").unwrap()), Paint::solid(Color::from_hex("#f15a24").unwrap()), 2.0),
+        },
+    ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use drawcraft_geom::shapes;
+
+    fn doc_with_rects() -> (Document, NodeId, NodeId) {
+        let mut d = Document::new(612.0, 792.0);
+        let layer = d.layers[0].id;
+        let a = d.alloc_id();
+        d.insert(Some(layer), usize::MAX, Node::path(a, shapes::rectangle(Rect::new(0.0, 0.0, 10.0, 10.0)), Appearance::default_art())).unwrap();
+        let b = d.alloc_id();
+        d.insert(Some(layer), usize::MAX, Node::path(b, shapes::rectangle(Rect::new(20.0, 0.0, 30.0, 10.0)), Appearance::default_art())).unwrap();
+        (d, a, b)
+    }
+
+    #[test]
+    fn new_document_has_layer_and_artboard() {
+        let d = Document::new(612.0, 792.0);
+        assert_eq!(d.layers.len(), 1);
+        assert_eq!(d.layers[0].display_name(), "Layer 1");
+        assert_eq!(d.artboards[0].rect, Rect::new(0.0, 0.0, 612.0, 792.0));
+    }
+
+    #[test]
+    fn find_and_paths() {
+        let (d, a, b) = doc_with_rects();
+        assert_eq!(d.index_path(b), Some(vec![0, 1]));
+        assert_eq!(d.parent_of(a), Some(d.layers[0].id));
+        assert_eq!(d.layer_of(b), Some(d.layers[0].id));
+        assert!(d.node(NodeId(999)).is_none());
+        assert_eq!(d.node_count(), 3);
+    }
+
+    #[test]
+    fn copy_on_write_shares_untouched() {
+        let (d, a, b) = doc_with_rects();
+        let mut e = d.clone();
+        e.node_mut(a).unwrap().name = Some("A".into());
+        // b's Arc is shared between both versions; a's is not.
+        let lb = &d.layers[0].children().unwrap()[1];
+        let eb = &e.layers[0].children().unwrap()[1];
+        assert!(Arc::ptr_eq(lb, eb));
+        assert_eq!(d.node(a).unwrap().name, None);
+        assert_eq!(e.node(a).unwrap().name.as_deref(), Some("A"));
+        let _ = b;
+    }
+
+    #[test]
+    fn move_and_remove() {
+        let (mut d, a, b) = doc_with_rects();
+        let layer = d.layers[0].id;
+        d.move_node(a, Some(layer), usize::MAX).unwrap();
+        assert_eq!(d.index_path(a), Some(vec![0, 1]));
+        assert_eq!(d.index_path(b), Some(vec![0, 0]));
+        let r = d.remove(a).unwrap();
+        assert_eq!(r.id, a);
+        assert!(d.node(a).is_none());
+        assert!(d.move_node(layer, Some(layer), 0).is_err());
+    }
+
+    #[test]
+    fn layers_and_names() {
+        let mut d = Document::new(100.0, 100.0);
+        let l2 = d.add_layer(None);
+        assert_eq!(d.node(l2).unwrap().display_name(), "Layer 2");
+        assert_eq!(d.default_layer(), Some(l2));
+        assert_eq!(d.layer_color(l2), LAYER_COLORS[1].1);
+    }
+
+    #[test]
+    fn serde_roundtrip() {
+        let (d, _, _) = doc_with_rects();
+        let s = serde_json::to_string(&d).unwrap();
+        let back: Document = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.node_count(), d.node_count());
+        assert_eq!(back.peek_next_id(), d.peek_next_id());
+    }
+
+    #[test]
+    fn reid_gives_fresh_ids() {
+        let (mut d, a, b) = doc_with_rects();
+        let g = d.alloc_id();
+        let na = (*d.remove(a).unwrap()).clone();
+        let nb = (*d.remove(b).unwrap()).clone();
+        let group = Node::group(g, vec![Arc::new(na), Arc::new(nb)]);
+        let copy = d.reid(&group);
+        assert_ne!(copy.id, g);
+        let ids: Vec<NodeId> = copy.children().unwrap().iter().map(|c| c.id).collect();
+        assert!(!ids.contains(&a) && !ids.contains(&b));
+    }
+
+    #[test]
+    fn units() {
+        assert_eq!(Unit::Inches.parse("1"), Some(72.0));
+        assert_eq!(Unit::Points.parse("1in"), Some(72.0));
+        assert_eq!(Unit::Points.parse("10 mm").map(|v| (v * 1000.0).round()), Some(28346.0));
+        assert_eq!(Unit::Points.parse("2p6"), Some(30.0));
+        assert_eq!(Unit::Points.parse("10+5"), Some(15.0));
+        assert_eq!(Unit::Points.parse("100/4"), Some(25.0));
+        assert_eq!(Unit::Points.parse("-5"), Some(-5.0));
+        assert_eq!(Unit::Points.parse("abc"), None);
+        assert_eq!(Unit::Points.format(12.5), "12.5 pt");
+        assert_eq!(Unit::Inches.format(144.0), "2 in");
+    }
+}

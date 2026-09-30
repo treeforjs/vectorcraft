@@ -1,0 +1,18 @@
+[package]
+name = "drawcraft-tools"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "DrawCraft tool state machines: pointer events in, commands and overlays out"
+
+[lints]
+workspace = true
+
+[dependencies]
+drawcraft-geom = { workspace = true }
+drawcraft-color = { workspace = true }
+drawcraft-doc = { workspace = true }
+drawcraft-text = { workspace = true }
+kurbo = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

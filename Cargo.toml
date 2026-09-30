@@ -1,0 +1,71 @@
+[workspace]
+resolver = "3"
+members = ["crates/*", "apps/*", "xtask"]
+default-members = ["crates/*", "apps/drawcraft", "apps/drawcraft-cli", "xtask"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+rust-version = "1.90"
+repository = "https://github.com/storytold/drawcraft"
+
+[workspace.dependencies]
+# internal
+drawcraft-geom = { path = "crates/geom" }
+drawcraft-color = { path = "crates/color" }
+drawcraft-doc = { path = "crates/doc" }
+drawcraft-pathops = { path = "crates/pathops" }
+drawcraft-text = { path = "crates/text" }
+drawcraft-effects = { path = "crates/effects" }
+drawcraft-render = { path = "crates/render" }
+drawcraft-svg = { path = "crates/svg" }
+drawcraft-pdf = { path = "crates/pdf" }
+drawcraft-format = { path = "crates/format" }
+drawcraft-tools = { path = "crates/tools" }
+drawcraft-engine = { path = "crates/engine" }
+drawcraft-ui-egui = { path = "crates/ui-egui" }
+drawcraft-mcp = { path = "crates/mcp" }
+drawcraft-testkit = { path = "crates/testkit" }
+
+# foundation
+kurbo = { version = "0.13", features = ["serde"] }
+peniko = "0.6"
+thiserror = "2"
+serde = { version = "1", features = ["derive", "rc"] }
+serde_json = "1"
+log = "0.4"
+proptest = "1"
+
+# rendering / formats
+vello_cpu = "0.2"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif"] }
+usvg = "0.48"
+krilla = "0.8"
+skrifa = "0.47"
+harfrust = "0.13"
+linesweeper = "0.4"
+
+# ui
+egui = "0.36"
+egui_extras = { version = "0.36", default-features = false, features = ["svg"] }
+eframe = { version = "0.36", default-features = false }
+egui_kittest = "0.36"
+rfd = "0.17"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

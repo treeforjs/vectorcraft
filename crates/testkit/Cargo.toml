@@ -1,0 +1,13 @@
+[package]
+name = "drawcraft-testkit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "DrawCraft test helpers"
+
+[lints]
+workspace = true
+
+[dependencies]
+drawcraft-geom = { workspace = true }
+drawcraft-doc = { workspace = true }

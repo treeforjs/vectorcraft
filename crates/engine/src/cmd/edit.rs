@@ -1,0 +1,283 @@
+//! File (document-level) and Edit commands, plus document queries.
+
+use std::sync::Arc;
+
+use drawcraft_doc::{Document, Node, NodeId, Unit};
+use drawcraft_geom::{Affine, Vec2};
+use serde_json::{Value, json};
+
+use super::*;
+use crate::{EngineError, inspect};
+
+pub fn specs() -> Vec<CommandSpec> {
+    vec![
+        cmd!(
+            "file.new",
+            "New…",
+            ["File"],
+            Some("Cmd+N"),
+            "{width?: pt=612, height?: pt=792, units?: \"Points\"|\"Inches\"|\"Millimeters\"|\"Pixels\"…, title?, artboards?: n, colorMode?: \"rgb\"|\"cmyk\"}",
+            always,
+            file_new
+        ),
+        cmd!("file.close", "Close", ["File"], Some("Cmd+W"), "{index?}", has_doc, file_close),
+        cmd!("document.activate", "Activate Document", [], None, "{index}", always, doc_activate),
+        cmd!(query "document.inspect", "Inspect Document", [], None, "{} → layer tree, artboards, selection, history", has_doc, |s, _| Ok(inspect::document(s))),
+        cmd!(query "document.node", "Inspect Object", [], None, "{id} → full object JSON", has_doc, doc_node),
+        cmd!(query "document.json", "Document JSON", [], None, "{} → complete document model", has_doc, |s, _| Ok(serde_json::to_value(&*s.doc()?.doc).unwrap_or(Value::Null))),
+        cmd!(
+            "document.setUnits",
+            "Units",
+            ["File", "Document Setup"],
+            None,
+            "{units: \"Points\"|\"Picas\"|\"Inches\"|\"Millimeters\"|\"Centimeters\"|\"Pixels\"}",
+            has_doc,
+            set_units
+        ),
+        cmd!("edit.undo", "Undo", ["Edit"], Some("Cmd+Z"), "{}", can_undo, undo),
+        cmd!("edit.redo", "Redo", ["Edit"], Some("Cmd+Shift+Z"), "{}", can_redo, redo),
+        cmd!("edit.cut", "Cut", ["Edit"], Some("Cmd+X"), "{}", has_selection, cut),
+        cmd!("edit.copy", "Copy", ["Edit"], Some("Cmd+C"), "{}", has_selection, copy),
+        cmd!("edit.paste", "Paste", ["Edit"], Some("Cmd+V"), "{dx?, dy?}", has_clipboard, |s, p| paste(s, p, PasteMode::Offset)),
+        cmd!("edit.pasteInFront", "Paste in Front", ["Edit"], Some("Cmd+F"), "{}", has_clipboard, |s, p| paste(s, p, PasteMode::Front)),
+        cmd!("edit.pasteInBack", "Paste in Back", ["Edit"], Some("Cmd+B"), "{}", has_clipboard, |s, p| paste(s, p, PasteMode::Back)),
+        cmd!("edit.pasteInPlace", "Paste in Place", ["Edit"], Some("Cmd+Shift+V"), "{}", has_clipboard, |s, p| paste(s, p, PasteMode::InPlace)),
+        cmd!("edit.pasteOnAllArtboards", "Paste on All Artboards", ["Edit"], Some("Cmd+Alt+Shift+V"), "{}", has_clipboard, |s, p| paste(
+            s,
+            p,
+            PasteMode::AllArtboards
+        )),
+        cmd!("edit.clear", "Clear", ["Edit"], Some("Delete"), "{ids?}", has_selection, clear),
+        cmd!("edit.duplicate", "Duplicate", [], None, "{dx?, dy?} duplicate the selection in place (offset optional)", has_selection, duplicate),
+    ]
+}
+
+fn file_new(s: &mut Session, p: &Value) -> Result<Value> {
+    let w = f64_or(p, "width", 612.0);
+    let h = f64_or(p, "height", 792.0);
+    if !(w > 0.0 && h > 0.0) || w > 16383.0 * 10.0 || h > 16383.0 * 10.0 {
+        return Err(bad("file.new", "width/height must be positive and within the canvas"));
+    }
+    let mut d = Document::new(w, h);
+    d.title = str_param(p, "title").map(str::to_string).unwrap_or_else(|| s.next_untitled());
+    if let Some(u) = str_param(p, "units") {
+        d.units = parse_unit(u).ok_or_else(|| bad("file.new", format!("unknown units `{u}`")))?;
+    }
+    if str_param(p, "colorMode").is_some_and(|m| m.eq_ignore_ascii_case("cmyk")) {
+        d.color_mode = drawcraft_doc::ColorMode::Cmyk;
+    }
+    let n = p.get("artboards").and_then(Value::as_u64).unwrap_or(1).clamp(1, 1000) as usize;
+    for i in 1..n {
+        let r = drawcraft_geom::Rect::new(0.0, 0.0, w, h) + Vec2::new(i as f64 * (w + 20.0), 0.0);
+        d.artboards.push(drawcraft_doc::Artboard {
+            id: (i + 1) as u32,
+            name: format!("Artboard {}", i + 1),
+            rect: r,
+            show_center_mark: false,
+            show_cross_hairs: false,
+        });
+    }
+    let i = s.add_document(d, None);
+    Ok(json!({ "index": i }))
+}
+
+pub(crate) fn parse_unit(u: &str) -> Option<Unit> {
+    let n = u.to_ascii_lowercase();
+    Unit::ALL.into_iter().find(|x| x.label().to_ascii_lowercase() == n || x.suffix() == n)
+}
+
+fn file_close(s: &mut Session, p: &Value) -> Result<Value> {
+    let i = p.get("index").and_then(Value::as_u64).map(|v| v as usize).or(s.active_index()).ok_or(EngineError::NoDocument)?;
+    if !s.close_document(i) {
+        return Err(bad("file.close", "no such document"));
+    }
+    ok()
+}
+
+fn doc_activate(s: &mut Session, p: &Value) -> Result<Value> {
+    let i = p.get("index").and_then(Value::as_u64).ok_or_else(|| bad("document.activate", "missing index"))? as usize;
+    if s.set_active(i) { ok() } else { Err(bad("document.activate", "no such document")) }
+}
+
+fn doc_node(s: &mut Session, p: &Value) -> Result<Value> {
+    let id = id_param(p, "id").ok_or_else(|| bad("document.node", "missing id"))?;
+    let n = s.doc()?.doc.node(id).ok_or(EngineError::NoNode(id))?;
+    Ok(serde_json::to_value(n).unwrap_or(Value::Null))
+}
+
+fn set_units(s: &mut Session, p: &Value) -> Result<Value> {
+    let u = str_param(p, "units").and_then(parse_unit).ok_or_else(|| bad("document.setUnits", "unknown units"))?;
+    s.edit("Document Setup", |d, _| {
+        d.units = u;
+        Ok(())
+    })?;
+    ok()
+}
+
+fn undo(s: &mut Session, _: &Value) -> Result<Value> {
+    s.cancel_interaction()?;
+    let st = s.doc_mut()?;
+    let e = st.history.undo.pop().ok_or_else(|| EngineError::Other("nothing to undo".into()))?;
+    let label = e.label.clone();
+    st.history.redo.push(crate::HistoryEntry {
+        label: e.label,
+        doc: std::mem::replace(&mut st.doc, e.doc),
+        selection: std::mem::replace(&mut st.selection, e.selection),
+    });
+    st.revision += 1;
+    st.selection.prune(&st.doc);
+    Ok(json!({ "undone": label }))
+}
+
+fn redo(s: &mut Session, _: &Value) -> Result<Value> {
+    let st = s.doc_mut()?;
+    let e = st.history.redo.pop().ok_or_else(|| EngineError::Other("nothing to redo".into()))?;
+    let label = e.label.clone();
+    st.history.undo.push(crate::HistoryEntry {
+        label: e.label,
+        doc: std::mem::replace(&mut st.doc, e.doc),
+        selection: std::mem::replace(&mut st.selection, e.selection),
+    });
+    st.revision += 1;
+    st.selection.prune(&st.doc);
+    Ok(json!({ "redone": label }))
+}
+
+/// Selected top-level objects in paint order, dropping any whose ancestor is also selected.
+pub(crate) fn selected_roots(s: &Session) -> Result<Vec<NodeId>> {
+    let st = s.doc()?;
+    let sel = st.selection.in_paint_order(&st.doc);
+    Ok(sel
+        .iter()
+        .copied()
+        .filter(|id| {
+            let anc = st.doc.ancestry(*id).unwrap_or_default();
+            !anc[..anc.len().saturating_sub(1)].iter().any(|a| sel.contains(a))
+        })
+        .filter(|id| st.doc.node(*id).is_some_and(|n| !n.is_layer()))
+        .collect())
+}
+
+fn copy(s: &mut Session, _: &Value) -> Result<Value> {
+    let roots = selected_roots(s)?;
+    let st = s.doc()?;
+    let nodes: Vec<Node> = roots.iter().filter_map(|id| st.doc.node(*id).cloned()).collect();
+    let n = nodes.len();
+    s.clipboard = nodes;
+    Ok(json!({ "copied": n }))
+}
+
+fn cut(s: &mut Session, p: &Value) -> Result<Value> {
+    copy(s, p)?;
+    clear(s, &json!({}))
+}
+
+fn clear(s: &mut Session, p: &Value) -> Result<Value> {
+    // Direct-selected anchors: delete those anchors instead of whole objects.
+    if ids_param(p, "ids").is_none() && !s.doc()?.selection.anchors.is_empty() {
+        return super::path::delete_anchors(s, p);
+    }
+    let ids = match ids_param(p, "ids") {
+        Some(v) => v,
+        None => selected_roots(s)?,
+    };
+    s.edit("Clear", |d, sel| {
+        for id in &ids {
+            if d.node(*id).is_some_and(|n| n.is_layer()) {
+                continue;
+            }
+            let _ = d.remove(*id);
+        }
+        sel.clear();
+        Ok(())
+    })?;
+    ok()
+}
+
+enum PasteMode {
+    Offset,
+    Front,
+    Back,
+    InPlace,
+    AllArtboards,
+}
+
+fn paste(s: &mut Session, p: &Value, mode: PasteMode) -> Result<Value> {
+    let clip = s.clipboard.clone();
+    let off = s.prefs.paste_offset;
+    let st = s.doc()?;
+    let parent = st.insertion_parent();
+    // Front/back: relative to the selection (top-most / bottom-most selected object).
+    let anchor = match mode {
+        PasteMode::Front | PasteMode::Back => {
+            let order = st.selection.in_paint_order(&st.doc);
+            let a = if matches!(mode, PasteMode::Front) { order.last() } else { order.first() };
+            a.and_then(|id| st.doc.position(*id))
+        }
+        _ => None,
+    };
+    let artboards: Vec<drawcraft_geom::Rect> = st.doc.artboards.iter().map(|a| a.rect).collect();
+    let dx = f64_or(p, "dx", off);
+    let dy = f64_or(p, "dy", off);
+    let label = match mode {
+        PasteMode::Front => "Paste in Front",
+        PasteMode::Back => "Paste in Back",
+        PasteMode::InPlace => "Paste in Place",
+        PasteMode::AllArtboards => "Paste on All Artboards",
+        PasteMode::Offset => "Paste",
+    };
+    let ids = s.edit(label, |d, sel| {
+        let mut new_ids = vec![];
+        let placements: Vec<Affine> = match mode {
+            PasteMode::Offset => vec![Affine::translate((dx, dy))],
+            PasteMode::AllArtboards => {
+                let src = d.artboards.first().map(|a| a.rect.origin()).unwrap_or_default();
+                artboards.iter().map(|r| Affine::translate(r.origin() - src)).collect()
+            }
+            _ => vec![Affine::IDENTITY],
+        };
+        for xf in placements {
+            for (k, n) in clip.iter().enumerate() {
+                let mut c = d.reid(n);
+                if xf != Affine::IDENTITY {
+                    c.transform(xf, false);
+                }
+                let (par, idx) = match anchor {
+                    Some((par, i, _)) => (par, if matches!(mode, PasteMode::Front) { i + 1 + k } else { i + k }),
+                    None => (parent, usize::MAX),
+                };
+                new_ids.push(d.insert(par, idx, c)?);
+            }
+        }
+        sel.set(new_ids.iter().copied());
+        Ok(new_ids)
+    })?;
+    Ok(json!({ "ids": ids.iter().map(|i| i.0).collect::<Vec<_>>() }))
+}
+
+fn duplicate(s: &mut Session, p: &Value) -> Result<Value> {
+    let roots = selected_roots(s)?;
+    let dx = f64_or(p, "dx", 0.0);
+    let dy = f64_or(p, "dy", 0.0);
+    let ids = s.edit("Duplicate", |d, sel| duplicate_in(d, sel, &roots, Affine::translate((dx, dy))))?;
+    Ok(json!({ "ids": ids.iter().map(|i| i.0).collect::<Vec<_>>() }))
+}
+
+/// Duplicate `roots` directly above each original, transform the copies, select them.
+pub(crate) fn duplicate_in(d: &mut Document, sel: &mut drawcraft_doc::Selection, roots: &[NodeId], xf: Affine) -> Result<Vec<NodeId>> {
+    let mut out = vec![];
+    for id in roots {
+        let Some((par, idx, _)) = d.position(*id) else { continue };
+        let Some(n) = d.node(*id).cloned() else { continue };
+        let mut c = d.reid(&n);
+        c.transform(xf, true);
+        out.push(d.insert(par, idx + 1, c)?);
+    }
+    sel.set(out.iter().copied());
+    Ok(out)
+}
+
+#[allow(dead_code)]
+pub(crate) fn arc_nodes(v: Vec<Node>) -> Vec<Arc<Node>> {
+    v.into_iter().map(Arc::new).collect()
+}

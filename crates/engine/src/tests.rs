@@ -1,0 +1,307 @@
+use serde_json::json;
+
+use super::*;
+use drawcraft_tools::{PointerEvent, PointerKind};
+
+fn session() -> Session {
+    let mut s = Session::new();
+    s.execute("file.new", &json!({"width": 800, "height": 600})).unwrap();
+    s
+}
+
+fn rect(s: &mut Session, x: f64, y: f64, w: f64, h: f64) -> NodeId {
+    let r = s.execute("shape.rectangle", &json!({"x": x, "y": y, "width": w, "height": h})).unwrap();
+    NodeId(r["id"].as_u64().unwrap())
+}
+
+#[test]
+fn create_and_undo_redo() {
+    let mut s = session();
+    let a = rect(&mut s, 10.0, 10.0, 100.0, 50.0);
+    assert!(s.doc().unwrap().doc.node(a).is_some());
+    assert_eq!(s.doc().unwrap().selection.objects, vec![a]);
+    s.execute("edit.undo", &json!({})).unwrap();
+    assert!(s.doc().unwrap().doc.node(a).is_none());
+    s.execute("edit.redo", &json!({})).unwrap();
+    assert!(s.doc().unwrap().doc.node(a).is_some());
+    assert!(s.execute("edit.redo", &json!({})).is_err());
+}
+
+#[test]
+fn unknown_and_disabled() {
+    let mut s = Session::new();
+    assert!(matches!(s.execute("nope", &json!({})), Err(EngineError::UnknownCommand(_))));
+    assert!(matches!(s.execute("object.group", &json!({})), Err(EngineError::Disabled(..))));
+}
+
+#[test]
+fn group_ungroup() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    let b = rect(&mut s, 20.0, 0.0, 10.0, 10.0);
+    s.execute("select.set", &json!({"ids": [a.0, b.0]})).unwrap();
+    let g = NodeId(s.execute("object.group", &json!({})).unwrap()["id"].as_u64().unwrap());
+    let d = &s.doc().unwrap().doc;
+    assert_eq!(d.parent_of(a), Some(g));
+    assert_eq!(d.node(g).unwrap().children().unwrap().len(), 2);
+    s.execute("object.ungroup", &json!({})).unwrap();
+    let d = &s.doc().unwrap().doc;
+    assert!(d.node(g).is_none());
+    assert_eq!(d.parent_of(a), d.layers.first().map(|l| l.id));
+    assert_eq!(s.doc().unwrap().selection.len(), 2);
+}
+
+#[test]
+fn arrange_order() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    let b = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    let c = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    s.execute("select.set", &json!({"ids": [a.0]})).unwrap();
+    s.execute("object.arrange.bringToFront", &json!({})).unwrap();
+    let order = |s: &Session| s.doc().unwrap().doc.layers[0].children().unwrap().iter().map(|n| n.id).collect::<Vec<_>>();
+    assert_eq!(order(&s), vec![b, c, a]);
+    s.execute("object.arrange.sendBackward", &json!({})).unwrap();
+    assert_eq!(order(&s), vec![b, a, c]);
+    s.execute("object.arrange.sendToBack", &json!({})).unwrap();
+    assert_eq!(order(&s), vec![a, b, c]);
+    s.execute("object.arrange.bringForward", &json!({})).unwrap();
+    assert_eq!(order(&s), vec![b, a, c]);
+}
+
+#[test]
+fn transform_and_again() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    s.execute("object.move", &json!({"dx": 5, "dy": 0})).unwrap();
+    s.execute("object.transformAgain", &json!({})).unwrap();
+    let b = s.doc().unwrap().doc.node(a).unwrap().geometric_bounds().unwrap();
+    assert_eq!(b.x0, 10.0);
+    s.execute("object.move", &json!({"dx": 0, "dy": 20, "copy": true})).unwrap();
+    assert_eq!(s.doc().unwrap().doc.layers[0].children().unwrap().len(), 2);
+}
+
+#[test]
+fn rotate_and_scale() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 20.0, 10.0);
+    s.execute("object.rotate", &json!({"angle": 90})).unwrap();
+    let b = s.doc().unwrap().doc.node(a).unwrap().geometric_bounds().unwrap();
+    assert!((b.width() - 10.0).abs() < 1e-9 && (b.height() - 20.0).abs() < 1e-9);
+    s.execute("object.scale", &json!({"sx": 200})).unwrap();
+    let b = s.doc().unwrap().doc.node(a).unwrap().geometric_bounds().unwrap();
+    assert!((b.width() - 20.0).abs() < 1e-9);
+    // stroke scaled with the object
+    assert_eq!(s.doc().unwrap().doc.node(a).unwrap().appearance.stroke_width(), 2.0);
+}
+
+#[test]
+fn copy_paste_front_back() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    let _b = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    s.execute("select.set", &json!({"ids": [a.0]})).unwrap();
+    s.execute("edit.copy", &json!({})).unwrap();
+    let r = s.execute("edit.pasteInFront", &json!({})).unwrap();
+    let c = NodeId(r["ids"][0].as_u64().unwrap());
+    let d = &s.doc().unwrap().doc;
+    assert_eq!(d.index_path(c).unwrap()[1], 1);
+    s.execute("edit.paste", &json!({})).unwrap();
+    assert_eq!(s.doc().unwrap().doc.layers[0].children().unwrap().len(), 4);
+    s.execute("edit.cut", &json!({})).unwrap();
+    assert_eq!(s.doc().unwrap().doc.layers[0].children().unwrap().len(), 3);
+}
+
+#[test]
+fn fill_and_stroke_commands() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    s.execute("paint.setFill", &json!({"color": "#ff0000"})).unwrap();
+    s.execute("stroke.set", &json!({"weight": 4, "cap": "round", "dash": [3, 2]})).unwrap();
+    let n = s.doc().unwrap().doc.node(a).unwrap().clone();
+    assert_eq!(n.appearance.fill_paint().color().unwrap().to_hex(), "#ff0000");
+    let st = n.appearance.stroke().unwrap();
+    assert_eq!(st.width, 4.0);
+    assert_eq!(st.cap, drawcraft_doc::LineCap::Round);
+    assert_eq!(st.dash.as_ref().unwrap().pattern, vec![3.0, 2.0]);
+    s.execute("paint.swap", &json!({})).unwrap();
+    assert_eq!(s.doc().unwrap().doc.node(a).unwrap().appearance.stroke_paint().color().unwrap().to_hex(), "#ff0000");
+    s.execute("paint.setFill", &json!({"swatch": "Cyan"})).unwrap();
+    s.execute("paint.setFill", &json!({"gradient": {"kind": "radial"}})).unwrap();
+}
+
+#[test]
+fn select_same_fill() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    s.execute("paint.setFill", &json!({"color": "#00ff00"})).unwrap();
+    let b = rect(&mut s, 20.0, 0.0, 10.0, 10.0);
+    let _c = {
+        s.execute("paint.setFill", &json!({"color": "#0000ff"})).unwrap();
+        rect(&mut s, 40.0, 0.0, 10.0, 10.0)
+    };
+    // Setting a fill also recolours the current selection (b), so b and c are blue, a green.
+    s.execute("select.set", &json!({"ids": [b.0]})).unwrap();
+    let r = s.execute("select.same.fillColor", &json!({})).unwrap();
+    assert_eq!(r["count"], 2);
+    assert!(!s.doc().unwrap().selection.contains(a));
+}
+
+#[test]
+fn layers_and_lock_hide() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    let l2 = NodeId(s.execute("layer.new", &json!({"name": "Ink"})).unwrap()["id"].as_u64().unwrap());
+    let b = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    assert_eq!(s.doc().unwrap().doc.layer_of(b), Some(l2));
+    s.execute("select.set", &json!({"ids": [a.0]})).unwrap();
+    s.execute("object.lock", &json!({})).unwrap();
+    s.execute("select.all", &json!({})).unwrap();
+    assert_eq!(s.doc().unwrap().selection.objects, vec![b]);
+    s.execute("object.unlockAll", &json!({})).unwrap();
+    s.execute("object.hide", &json!({})).unwrap();
+    s.execute("object.showAll", &json!({})).unwrap();
+    assert!(s.doc().unwrap().doc.node(a).unwrap().visible);
+    s.execute("layer.delete", &json!({"id": l2.0})).unwrap();
+    assert!(s.doc().unwrap().doc.node(b).is_none());
+}
+
+#[test]
+fn clipping_and_compound() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 100.0, 100.0);
+    let b = rect(&mut s, 25.0, 25.0, 50.0, 50.0);
+    s.execute("select.set", &json!({"ids": [a.0, b.0]})).unwrap();
+    let c = s.execute("object.compoundPath.make", &json!({})).unwrap()["id"].as_u64().unwrap();
+    assert_eq!(s.doc().unwrap().doc.node(NodeId(c)).unwrap().kind_label(), "Compound Path");
+    s.execute("object.compoundPath.release", &json!({})).unwrap();
+    assert_eq!(s.doc().unwrap().selection.len(), 2);
+    let g = s.execute("object.clippingMask.make", &json!({})).unwrap()["id"].as_u64().unwrap();
+    assert_eq!(s.doc().unwrap().doc.node(NodeId(g)).unwrap().kind_label(), "Clip Group");
+}
+
+#[test]
+fn align_left() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    let b = rect(&mut s, 50.0, 30.0, 10.0, 10.0);
+    s.execute("select.set", &json!({"ids": [a.0, b.0]})).unwrap();
+    s.execute("object.align", &json!({"horizontal": "left"})).unwrap();
+    assert_eq!(s.doc().unwrap().doc.node(b).unwrap().geometric_bounds().unwrap().x0, 0.0);
+}
+
+#[test]
+fn selection_tool_drag_is_one_undo_step() {
+    let mut s = session();
+    let a = rect(&mut s, 100.0, 100.0, 100.0, 100.0);
+    let undo_before = s.doc().unwrap().history.undo.len();
+    let v = ViewInfo::default();
+    s.select_tool("selection", v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Down, 150.0, 150.0), v).unwrap();
+    for x in [155.0, 160.0, 170.0, 180.0] {
+        s.pointer(&PointerEvent::new(PointerKind::Drag, x, 150.0), v).unwrap();
+    }
+    s.pointer(&PointerEvent::new(PointerKind::Up, 180.0, 150.0), v).unwrap();
+    let b = s.doc().unwrap().doc.node(a).unwrap().geometric_bounds().unwrap();
+    assert_eq!(b.x0, 130.0);
+    assert_eq!(s.doc().unwrap().history.undo.len(), undo_before + 1);
+    assert_eq!(s.journal.last().unwrap().0, "object.transform");
+    s.execute("edit.undo", &json!({})).unwrap();
+    assert_eq!(s.doc().unwrap().doc.node(a).unwrap().geometric_bounds().unwrap().x0, 100.0);
+}
+
+#[test]
+fn rectangle_tool_draws() {
+    let mut s = session();
+    let v = ViewInfo::default();
+    s.select_tool("rectangle", v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Down, 10.0, 10.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Drag, 60.0, 40.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Drag, 110.0, 60.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Up, 110.0, 60.0), v).unwrap();
+    let d = &s.doc().unwrap().doc;
+    assert_eq!(d.layers[0].children().unwrap().len(), 1);
+    let b = d.layers[0].children().unwrap()[0].geometric_bounds().unwrap();
+    assert_eq!((b.width(), b.height()), (100.0, 50.0));
+    assert_eq!(s.doc().unwrap().history.undo.len(), 1);
+}
+
+#[test]
+fn pen_tool_draws_closed_path() {
+    let mut s = session();
+    let v = ViewInfo::default();
+    s.select_tool("pen", v).unwrap();
+    for (x, y) in [(10.0, 10.0), (100.0, 10.0), (100.0, 100.0)] {
+        s.pointer(&PointerEvent::new(PointerKind::Down, x, y), v).unwrap();
+        s.pointer(&PointerEvent::new(PointerKind::Up, x, y), v).unwrap();
+    }
+    s.pointer(&PointerEvent::new(PointerKind::Down, 10.0, 10.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Up, 10.0, 10.0), v).unwrap();
+    let d = &s.doc().unwrap().doc;
+    let n = &d.layers[0].children().unwrap()[0];
+    let p = n.path_data().unwrap();
+    assert_eq!(p.anchor_count(), 3);
+    assert!(p.is_closed());
+}
+
+#[test]
+fn direct_selection_moves_one_anchor() {
+    let mut s = session();
+    let a = rect(&mut s, 100.0, 100.0, 100.0, 100.0);
+    s.execute("select.none", &json!({})).unwrap();
+    let v = ViewInfo::default();
+    s.select_tool("directSelection", v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Down, 100.0, 100.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Drag, 90.0, 90.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Up, 90.0, 90.0), v).unwrap();
+    let p = s.doc().unwrap().doc.node(a).unwrap().path_data().unwrap().clone();
+    assert_eq!(p.subpaths[0].anchors[0].p, drawcraft_geom::Point::new(90.0, 90.0));
+    assert_eq!(p.subpaths[0].anchors[1].p, drawcraft_geom::Point::new(200.0, 100.0));
+}
+
+#[test]
+fn text_create_has_bounds() {
+    let mut s = session();
+    let r = s.execute("text.create", &json!({"x": 10, "y": 50, "text": "Hello DrawCraft", "size": 24})).unwrap();
+    let n = s.doc().unwrap().doc.node(NodeId(r["id"].as_u64().unwrap())).unwrap().clone();
+    let b = n.geometric_bounds().unwrap();
+    assert!(b.width() > 100.0, "{b:?}");
+}
+
+#[test]
+fn inspect_lists_everything() {
+    let mut s = session();
+    rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    let v = s.execute("document.inspect", &json!({})).unwrap();
+    assert_eq!(v["layers"][0]["children"][0]["kind"], "Rectangle");
+    assert!(s.commands().len() > 100);
+}
+
+#[test]
+fn every_command_has_unique_id_and_doc() {
+    let mut ids: Vec<&str> = command_specs().iter().map(|c| c.id).collect();
+    let n = ids.len();
+    ids.sort();
+    ids.dedup();
+    assert_eq!(ids.len(), n);
+    assert!(command_specs().iter().all(|c| !c.params.is_empty() && !c.label.is_empty()));
+}
+
+#[test]
+fn every_command_survives_empty_params() {
+    // Robustness: no command may panic on {} (with and without a selection).
+    for sel in [false, true] {
+        for c in command_specs() {
+            let mut s = session();
+            let a = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+            rect(&mut s, 20.0, 0.0, 10.0, 10.0);
+            s.execute("edit.copy", &json!({})).ok();
+            if sel {
+                s.execute("select.all", &json!({})).unwrap();
+            } else {
+                s.execute("select.set", &json!({"ids": [a.0]})).unwrap();
+            }
+            let _ = s.execute(c.id, &json!({}));
+        }
+    }
+}

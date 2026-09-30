@@ -1,0 +1,25 @@
+[package]
+name = "drawcraft-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "DrawCraft engine: sessions, history, selection, the command registry"
+
+[lints]
+workspace = true
+
+[dependencies]
+drawcraft-geom = { workspace = true }
+drawcraft-color = { workspace = true }
+drawcraft-doc = { workspace = true }
+drawcraft-tools = { workspace = true }
+drawcraft-text = { workspace = true }
+drawcraft-render = { workspace = true }
+drawcraft-pathops = { workspace = true }
+drawcraft-svg = { workspace = true }
+drawcraft-format = { workspace = true }
+kurbo = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }

@@ -1,0 +1,20 @@
+[package]
+name = "drawcraft-doc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "DrawCraft document model: artboards, layers, objects, appearance (pure data + serde)"
+
+[lints]
+workspace = true
+
+[dependencies]
+drawcraft-geom = { workspace = true }
+drawcraft-color = { workspace = true }
+kurbo = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

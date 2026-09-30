@@ -1,0 +1,18 @@
+[package]
+name = "drawcraft-render"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "DrawCraft renderer: document to pixels (vello_cpu backend)"
+
+[lints]
+workspace = true
+
+[dependencies]
+drawcraft-geom = { workspace = true }
+drawcraft-color = { workspace = true }
+drawcraft-doc = { workspace = true }
+drawcraft-text = { workspace = true }
+vello_cpu = { workspace = true }
+image = { workspace = true }
+log = { workspace = true }
