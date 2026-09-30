@@ -324,17 +324,15 @@ fn image_doc(s: &mut Session) -> NodeId {
 fn add_image(s: &mut Session, r: &drawcraft_trace::Raster, xf: Affine) -> NodeId {
     let png = r.encode_png();
     let (w, h) = (r.width, r.height);
-    let id = s
-        .edit("img", |d, sel| {
-            d.images.insert("img1".into(), ImageBlob { mime: "image/png".into(), bytes: Arc::new(png) });
-            let id = d.alloc_id();
-            let l = d.default_layer();
-            d.insert(l, 0, Node::new(id, NodeKind::Image(ImageObject { key: "img1".into(), width: w, height: h, xf, link: None })))?;
-            sel.set([id]);
-            Ok(id)
-        })
-        .unwrap();
-    id
+    s.edit("img", |d, sel| {
+        d.images.insert("img1".into(), ImageBlob { mime: "image/png".into(), bytes: Arc::new(png) });
+        let id = d.alloc_id();
+        let l = d.default_layer();
+        d.insert(l, 0, Node::new(id, NodeKind::Image(ImageObject { key: "img1".into(), width: w, height: h, xf, link: None })))?;
+        sel.set([id]);
+        Ok(id)
+    })
+    .unwrap()
 }
 
 fn traced_paths(n: &Node) -> Vec<Arc<Node>> {
