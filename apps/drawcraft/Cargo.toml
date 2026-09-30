@@ -4,8 +4,18 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish = false
+default-run = "drawcraft"
 
 [lints]
 workspace = true
 
 [dependencies]
+drawcraft-engine = { workspace = true }
+drawcraft-ui-egui = { workspace = true }
+eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit", "wayland", "x11"] }
+egui = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rfd = { workspace = true }

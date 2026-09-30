@@ -1,0 +1,213 @@
+//! Serializable UI state (read and driven by the control channel).
+
+use drawcraft_geom::Point;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use crate::theme::Brightness;
+
+/// Per-document view (camera).
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct View {
+    /// Screen points per document point (1.0 = 100%).
+    pub zoom: f64,
+    /// Document point at the centre of the canvas.
+    pub center: Point,
+    /// False until the view was fitted to the artboard on first display.
+    pub fitted: bool,
+    /// View rotation in degrees (Rotate View tool).
+    pub rotation: f64,
+}
+
+impl Default for View {
+    fn default() -> Self {
+        Self { zoom: 1.0, center: Point::new(306.0, 396.0), fitted: false, rotation: 0.0 }
+    }
+}
+
+/// Illustrator's preset zoom stops, in percent.
+pub const ZOOM_STOPS: [f64; 26] = [
+    3.13, 4.17, 6.25, 8.33, 12.5, 16.67, 25.0, 33.33, 50.0, 66.67, 100.0, 150.0, 200.0, 300.0, 400.0, 600.0, 800.0, 1200.0, 1600.0, 2400.0, 3200.0, 4800.0, 6400.0, 12800.0, 25600.0, 64000.0,
+];
+
+pub fn next_zoom(z: f64, up: bool) -> f64 {
+    let pct = z * 100.0;
+    let stop = if up { ZOOM_STOPS.iter().find(|s| **s > pct + 0.01).copied().unwrap_or(64000.0) } else { ZOOM_STOPS.iter().rev().find(|s| **s < pct - 0.01).copied().unwrap_or(3.13) };
+    stop / 100.0
+}
+
+/// Format like Illustrator's tab/zoom field: up to 2 decimals, no trailing zeros.
+pub fn zoom_label(z: f64) -> String {
+    let s = format!("{:.2}", z * 100.0);
+    let s = s.trim_end_matches('0').trim_end_matches('.');
+    format!("{s}%")
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DockTab {
+    #[default]
+    Properties,
+    Layers,
+    Libraries,
+}
+
+/// Panels that live as collapsed icons in the dock (Essentials Classic).
+pub const ICON_PANELS: &[(&str, &str, &str)] = &[
+    ("color", "Color", "palette"),
+    ("colorGuide", "Color Guide", "dc-color-guide"),
+    ("swatches", "Swatches", "swatch-book"),
+    ("brushes", "Brushes", "paintbrush"),
+    ("symbols", "Symbols", "spray-can"),
+    ("stroke", "Stroke", "dc-stroke"),
+    ("gradient", "Gradient", "dc-gradient"),
+    ("transparency", "Transparency", "dc-transparency"),
+    ("appearance", "Appearance", "dc-appearance"),
+    ("graphicStyles", "Graphic Styles", "dc-graphic-styles"),
+    ("artboards", "Artboards", "dc-artboards"),
+    ("transform", "Transform", "dc-transform-panel"),
+    ("align", "Align", "dc-align"),
+    ("pathfinder", "Pathfinder", "dc-pathfinder"),
+    ("character", "Character", "type"),
+    ("paragraph", "Paragraph", "pilcrow"),
+    ("history", "History", "history"),
+    ("info", "Info", "info"),
+    ("navigator", "Navigator", "map"),
+];
+
+/// Groups of icon panels separated by dividers in the collapsed column.
+pub const ICON_PANEL_GROUPS: &[&[&str]] = &[
+    &["color", "colorGuide"],
+    &["swatches", "brushes", "symbols"],
+    &["stroke", "gradient", "transparency"],
+    &["appearance", "graphicStyles"],
+    &["artboards"],
+    &["transform", "align", "pathfinder"],
+    &["character", "paragraph"],
+    &["history", "info", "navigator"],
+];
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ViewFlags {
+    pub rulers: bool,
+    pub grid: bool,
+    pub guides: bool,
+    pub smart_guides: bool,
+    pub bounding_box: bool,
+    pub outline: bool,
+    pub pixel_preview: bool,
+    pub snap_to_grid: bool,
+    pub snap_to_point: bool,
+    pub artboards: bool,
+    pub transparency_grid: bool,
+    pub edges: bool,
+}
+
+impl Default for ViewFlags {
+    fn default() -> Self {
+        Self { rulers: true, grid: false, guides: true, smart_guides: true, bounding_box: true, outline: false, pixel_preview: false, snap_to_grid: false, snap_to_point: true, artboards: true, transparency_grid: false, edges: true }
+    }
+}
+
+/// An open modal dialog. `fields` are string-valued so agents can set them uniformly.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Dialog {
+    pub kind: String,
+    pub fields: serde_json::Map<String, Value>,
+}
+
+impl Dialog {
+    pub fn new(kind: &str, fields: Value) -> Self {
+        Self { kind: kind.to_string(), fields: fields.as_object().cloned().unwrap_or_default() }
+    }
+    pub fn f64(&self, k: &str, d: f64) -> f64 {
+        match self.fields.get(k) {
+            Some(Value::Number(n)) => n.as_f64().unwrap_or(d),
+            Some(Value::String(s)) => drawcraft_doc::Unit::Points.parse(s).unwrap_or(d),
+            _ => d,
+        }
+    }
+    pub fn str(&self, k: &str) -> String {
+        match self.fields.get(k) {
+            Some(Value::String(s)) => s.clone(),
+            Some(v) => v.to_string(),
+            None => String::new(),
+        }
+    }
+    pub fn bool(&self, k: &str) -> bool {
+        self.fields.get(k).and_then(Value::as_bool).unwrap_or(false)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct UiState {
+    pub brightness: Brightness,
+    pub dock_tab: DockTab,
+    /// Icon panel currently popped out of the collapsed column.
+    pub open_panel: Option<String>,
+    pub control_bar: bool,
+    pub toolbar: bool,
+    pub toolbar_double: bool,
+    pub status_bar: bool,
+    pub dock: bool,
+    pub view: ViewFlags,
+    pub dialog: Option<Dialog>,
+    /// Toolbar group whose flyout is open.
+    pub flyout: Option<usize>,
+    /// Last tool shown for each toolbar group (flyout selection sticks).
+    pub group_tool: Vec<String>,
+    pub status: String,
+    pub palette_open: bool,
+    pub palette_query: String,
+    /// Screen mode: 0 normal, 1 full screen with menu, 2 full screen, 3 presentation.
+    pub screen_mode: u8,
+    /// Draw Normal / Behind / Inside.
+    pub draw_mode: u8,
+    pub about: bool,
+}
+
+impl Default for UiState {
+    fn default() -> Self {
+        Self {
+            brightness: Brightness::Dark,
+            dock_tab: DockTab::Properties,
+            open_panel: None,
+            control_bar: true,
+            toolbar: true,
+            toolbar_double: false,
+            status_bar: true,
+            dock: true,
+            view: ViewFlags::default(),
+            dialog: None,
+            flyout: None,
+            group_tool: drawcraft_tools::TOOL_GROUPS.iter().map(|g| g[0].id.to_string()).collect(),
+            status: String::new(),
+            palette_open: false,
+            palette_query: String::new(),
+            screen_mode: 0,
+            draw_mode: 0,
+            about: false,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn zoom_steps() {
+        assert_eq!(next_zoom(1.0, true), 1.5);
+        assert_eq!(next_zoom(1.0, false), 0.6667);
+        assert_eq!(next_zoom(640.0, true), 640.0);
+        assert_eq!(zoom_label(0.6667), "66.67%");
+        assert_eq!(zoom_label(1.0), "100%");
+        assert_eq!(zoom_label(0.125), "12.5%");
+    }
+
+    #[test]
+    fn dialog_fields() {
+        let d = Dialog::new("rectangle", serde_json::json!({"width": "1in", "height": 50}));
+        assert_eq!(d.f64("width", 0.0), 72.0);
+        assert_eq!(d.f64("height", 0.0), 50.0);
+    }
+}

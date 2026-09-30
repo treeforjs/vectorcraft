@@ -1,0 +1,265 @@
+//! Modal dialogs. Fields live in `UiState::dialog` (string/number JSON) so agents can fill them
+//! through `ui.dialog.set` and press OK with `ui.dialog.confirm`.
+
+use serde_json::{Value, json};
+
+use crate::state::Dialog;
+use crate::theme::{self, Tokens};
+use crate::{DrawcraftApp, widgets};
+
+/// A click with a shape tool opens its size dialog.
+pub fn open_tool_dialog(app: &mut DrawcraftApp, kind: &str, p: Value) {
+    let x = p.get("x").and_then(Value::as_f64).unwrap_or(0.0);
+    let y = p.get("y").and_then(Value::as_f64).unwrap_or(0.0);
+    let d = match kind {
+        "rectangle" | "ellipse" => Dialog::new(kind, json!({"x": x, "y": y, "width": "100 pt", "height": "100 pt"})),
+        "roundedRectangle" => Dialog::new(kind, json!({"x": x, "y": y, "width": "100 pt", "height": "100 pt", "radius": "12 pt"})),
+        "polygon" => Dialog::new(kind, json!({"x": x, "y": y, "radius": "50 pt", "sides": 6})),
+        "star" => Dialog::new(kind, json!({"x": x, "y": y, "radius1": "50 pt", "radius2": "25 pt", "points": 5})),
+        "lineSegment" => Dialog::new(kind, json!({"x": x, "y": y, "length": "100 pt", "angle": 0})),
+        _ => return,
+    };
+    app.ui.dialog = Some(d);
+}
+
+fn title(kind: &str) -> &'static str {
+    match kind {
+        "newDocument" => "New Document",
+        "rectangle" => "Rectangle",
+        "roundedRectangle" => "Rounded Rectangle",
+        "ellipse" => "Ellipse",
+        "polygon" => "Polygon",
+        "star" => "Star",
+        "lineSegment" => "Line Segment Tool Options",
+        "move" => "Move",
+        "rotate" => "Rotate",
+        "scale" => "Scale",
+        "reflect" => "Reflect",
+        "shear" => "Shear",
+        "average" => "Average",
+        "offsetPath" => "Offset Path",
+        "simplify" => "Simplify",
+        "splitIntoGrid" => "Split Into Grid",
+        "documentSetup" => "Document Setup",
+        "preferences" => "Preferences",
+        "allTools" => "All Tools",
+        _ => "Dialog",
+    }
+}
+
+/// Apply the open dialog (OK).
+pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
+    let Some(d) = app.ui.dialog.clone() else { return Err("no dialog open".into()) };
+    let copy = d.bool("copy");
+    let r = match d.kind.as_str() {
+        "newDocument" => {
+            let r = app.run("file.new", json!({"width": d.f64("width", 612.0), "height": d.f64("height", 792.0), "units": d.str("units"), "title": d.str("name"), "artboards": d.f64("artboards", 1.0), "colorMode": d.str("colorMode").to_lowercase()}));
+            if r.is_ok() {
+                app.ui.dialog = None;
+            }
+            return r;
+        }
+        "rectangle" | "roundedRectangle" => app.run("shape.rectangle", json!({"x": d.f64("x", 0.0), "y": d.f64("y", 0.0), "width": d.f64("width", 100.0), "height": d.f64("height", 100.0), "radius": d.f64("radius", 0.0)})),
+        "ellipse" => app.run("shape.ellipse", json!({"x": d.f64("x", 0.0), "y": d.f64("y", 0.0), "width": d.f64("width", 100.0), "height": d.f64("height", 100.0)})),
+        "polygon" => app.run("shape.polygon", json!({"cx": d.f64("x", 0.0), "cy": d.f64("y", 0.0), "radius": d.f64("radius", 50.0), "sides": d.f64("sides", 6.0) as u64})),
+        "star" => app.run("shape.star", json!({"cx": d.f64("x", 0.0), "cy": d.f64("y", 0.0), "radius1": d.f64("radius1", 50.0), "radius2": d.f64("radius2", 25.0), "points": d.f64("points", 5.0) as u64})),
+        "lineSegment" => {
+            let (x, y, l, a) = (d.f64("x", 0.0), d.f64("y", 0.0), d.f64("length", 100.0), d.f64("angle", 0.0).to_radians());
+            app.run("shape.line", json!({"x1": x, "y1": y, "x2": x + l * a.cos(), "y2": y - l * a.sin()}))
+        }
+        "move" => app.run("object.move", json!({"dx": d.f64("dx", 0.0), "dy": d.f64("dy", 0.0), "copy": copy})),
+        "rotate" => app.run("object.rotate", json!({"angle": d.f64("angle", 0.0), "copy": copy})),
+        "scale" => {
+            let sx = d.f64("sx", 100.0);
+            let sy = if d.bool("uniform") { sx } else { d.f64("sy", 100.0) };
+            app.run("object.scale", json!({"sx": sx, "sy": sy, "copy": copy}))
+        }
+        "reflect" => app.run("object.reflect", json!({"axis": d.str("axis"), "copy": copy})),
+        "shear" => app.run("object.shear", json!({"angle": d.f64("angle", 0.0), "axis": d.str("axis"), "copy": copy})),
+        "average" => app.run("path.average", json!({"axis": d.str("axis")})),
+        "offsetPath" => app.run("object.path.offsetPath", json!({"offset": d.f64("offset", 10.0), "joins": d.str("joins"), "miterLimit": d.f64("miterLimit", 4.0)})),
+        "simplify" => app.run("object.path.simplify", json!({"tolerance": d.f64("tolerance", 1.0)})),
+        "splitIntoGrid" => app.run("object.path.splitIntoGrid", json!({"rows": d.f64("rows", 2.0), "columns": d.f64("columns", 2.0), "gutter": d.f64("gutter", 12.0)})),
+        "documentSetup" => app.run("document.setUnits", json!({"units": d.str("units")})),
+        "preferences" => {
+            app.session.prefs.keyboard_increment = d.f64("keyboardIncrement", 1.0).max(0.001);
+            app.session.prefs.scale_strokes = d.bool("scaleStrokes");
+            Ok(Value::Null)
+        }
+        _ => Ok(Value::Null),
+    };
+    app.ui.dialog = None;
+    r
+}
+
+fn field(ui: &mut egui::Ui, d: &mut Dialog, key: &str, label: &str) {
+    let t = Tokens::get(ui.ctx());
+    ui.label(egui::RichText::new(label).color(t.text_dim));
+    let mut s = d.str(key);
+    let r = egui::Frame::NONE.fill(t.input).stroke(egui::Stroke::new(1.0, t.input_border)).corner_radius(egui::CornerRadius::same(3)).inner_margin(egui::Margin::symmetric(6, 3)).show(ui, |ui| ui.add(egui::TextEdit::singleline(&mut s).frame(egui::Frame::NONE).desired_width(120.0)));
+    if r.inner.changed() {
+        d.fields.insert(key.into(), Value::String(s));
+    }
+    ui.end_row();
+}
+
+fn check(ui: &mut egui::Ui, d: &mut Dialog, key: &str, label: &str) {
+    let mut b = d.bool(key);
+    if ui.checkbox(&mut b, label).changed() {
+        d.fields.insert(key.into(), Value::Bool(b));
+    }
+}
+
+pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
+    if app.ui.about {
+        let mut open = true;
+        egui::Window::new("About DrawCraft").collapsible(false).resizable(false).open(&mut open).anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
+            ui.label(egui::RichText::new("DrawCraft").font(theme::semibold(22.0)));
+            ui.label(format!("Version {} — open-source vector illustration in pure Rust.", env!("CARGO_PKG_VERSION")));
+            ui.label("MIT OR Apache-2.0. Fonts: Source Sans 3, Inter, JetBrains Mono (OFL). Icons: Lucide (ISC) + DrawCraft.");
+        });
+        app.ui.about = open;
+    }
+    let Some(mut d) = app.ui.dialog.clone() else { return };
+    let t = Tokens::get(ctx);
+    let mut ok = false;
+    let mut cancel = false;
+    egui::Area::new(egui::Id::new("modal-dim")).order(egui::Order::Middle).fixed_pos(egui::pos2(0.0, 0.0)).show(ctx, |ui| {
+        ui.painter().rect_filled(ctx.content_rect(), 0.0, egui::Color32::from_black_alpha(90));
+        ui.allocate_rect(ctx.content_rect(), egui::Sense::click());
+    });
+    egui::Window::new(title(&d.kind))
+        .id(egui::Id::new("dialog"))
+        .order(egui::Order::Foreground)
+        .collapsible(false)
+        .resizable(false)
+        .title_bar(false)
+        .anchor(egui::Align2::CENTER_CENTER, [0.0, -40.0])
+        .frame(egui::Frame::window(&ctx.global_style()).fill(t.panel).inner_margin(egui::Margin::same(22)))
+        .show(ctx, |ui| {
+            ui.set_min_width(if d.kind == "newDocument" { 560.0 } else { 320.0 });
+            ui.label(egui::RichText::new(title(&d.kind)).font(theme::semibold(16.0)).color(t.text));
+            ui.add_space(12.0);
+            match d.kind.as_str() {
+                "newDocument" => new_document(ui, &mut d),
+                "allTools" => {
+                    for g in drawcraft_tools::TOOL_GROUPS {
+                        ui.horizontal_wrapped(|ui| {
+                            for tool in g.iter() {
+                                if ui.button(tool.label.trim_end_matches(" Tool")).clicked() {
+                                    app.select_tool(tool.id);
+                                    cancel = true;
+                                }
+                            }
+                        });
+                    }
+                }
+                _ => {
+                    egui::Grid::new("dlg").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
+                        let keys: Vec<(String, Value)> = d.fields.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+                        for (k, v) in keys {
+                            if k == "x" || k == "y" || v.is_boolean() {
+                                continue;
+                            }
+                            field(ui, &mut d, &k, &humanize(&k));
+                        }
+                    });
+                    if matches!(d.kind.as_str(), "move" | "rotate" | "scale" | "reflect" | "shear") {
+                        ui.add_space(6.0);
+                        if d.kind == "scale" {
+                            check(ui, &mut d, "uniform", "Uniform");
+                        }
+                        check(ui, &mut d, "copy", "Copy (make a transformed copy)");
+                    }
+                    if d.kind == "preferences" {
+                        check(ui, &mut d, "scaleStrokes", "Scale Strokes & Effects");
+                    }
+                }
+            }
+            ui.add_space(16.0);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let label = if d.kind == "newDocument" { "Create" } else { "OK" };
+                if d.kind != "allTools" && widgets::primary_button(ui, label).clicked() {
+                    ok = true;
+                }
+                ui.add_space(8.0);
+                if widgets::secondary_button(ui, if d.kind == "allTools" { "Close" } else { "Cancel" }).clicked() {
+                    cancel = true;
+                }
+            });
+        });
+    if ctx.input(|i| i.key_pressed(egui::Key::Enter)) && d.kind != "allTools" {
+        ok = true;
+    }
+    app.ui.dialog = Some(d);
+    if cancel {
+        app.ui.dialog = None;
+    } else if ok && let Err(e) = confirm(app) {
+        app.status(e);
+    }
+}
+
+fn humanize(k: &str) -> String {
+    let mut s = String::new();
+    for (i, c) in k.chars().enumerate() {
+        if i == 0 {
+            s.extend(c.to_uppercase());
+        } else if c.is_uppercase() {
+            s.push(' ');
+            s.push(c);
+        } else {
+            s.push(c);
+        }
+    }
+    match s.as_str() {
+        "Dx" => "Horizontal".into(),
+        "Dy" => "Vertical".into(),
+        "Sx" => "Horizontal %".into(),
+        "Sy" => "Vertical %".into(),
+        "Radius1" => "Radius 1".into(),
+        "Radius2" => "Radius 2".into(),
+        _ => format!("{s}:"),
+    }
+}
+
+fn new_document(ui: &mut egui::Ui, d: &mut Dialog) {
+    let t = Tokens::get(ui.ctx());
+    let presets: [(&str, &str, &str, &str); 8] = [
+        ("Letter", "612 pt", "792 pt", "Points"),
+        ("Legal", "612 pt", "1008 pt", "Points"),
+        ("Tabloid", "792 pt", "1224 pt", "Points"),
+        ("A4", "595.28 pt", "841.89 pt", "Points"),
+        ("A3", "841.89 pt", "1190.55 pt", "Points"),
+        ("Web 1920", "1920 px", "1080 px", "Pixels"),
+        ("iPhone", "390 px", "844 px", "Pixels"),
+        ("Square Post", "1080 px", "1080 px", "Pixels"),
+    ];
+    ui.horizontal(|ui| {
+        ui.vertical(|ui| {
+            ui.set_width(300.0);
+            ui.label(egui::RichText::new("Presets").color(t.text_dim));
+            ui.horizontal_wrapped(|ui| {
+                for (name, w, h, u) in presets {
+                    let sel = d.str("preset") == name;
+                    if ui.selectable_label(sel, name).clicked() {
+                        d.fields.insert("preset".into(), json!(name));
+                        d.fields.insert("width".into(), json!(w));
+                        d.fields.insert("height".into(), json!(h));
+                        d.fields.insert("units".into(), json!(u));
+                    }
+                }
+            });
+        });
+        ui.separator();
+        ui.vertical(|ui| {
+            ui.label(egui::RichText::new("Preset Details").font(theme::semibold(12.5)));
+            egui::Grid::new("newdoc").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
+                field(ui, d, "name", "Name:");
+                field(ui, d, "width", "Width:");
+                field(ui, d, "height", "Height:");
+                field(ui, d, "artboards", "Artboards:");
+                field(ui, d, "colorMode", "Color Mode:");
+            });
+        });
+    });
+}

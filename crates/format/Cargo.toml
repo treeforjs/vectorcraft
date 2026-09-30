@@ -3,7 +3,7 @@ name = "drawcraft-format"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DrawCraft native .drawcraft format"
+description = "DrawCraft native .drawcraft format (versioned JSON, embedded images)"
 
 [lints]
 workspace = true
@@ -13,3 +13,6 @@ drawcraft-doc = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
+drawcraft-geom = { workspace = true }
