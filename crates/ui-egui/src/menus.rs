@@ -144,6 +144,15 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
             }
         }
         "file.export.svg" => io::export(app, "svg", s("path"), 1.0).map(|p| json!({"path": p})),
+        "file.exportForScreens" if p.get("path").is_none() && p.get("scale").is_none() => {
+            let n = app.session.active().map(|d| d.doc.artboards.len()).unwrap_or(0);
+            let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
+            app.ui.dialog = Some(crate::state::Dialog::new(
+                "exportForScreens",
+                json!({"boards": vec![true; n], "formats": [{"format": "png", "scale": 1, "suffix": ""}, {"format": "png", "scale": 2, "suffix": "@2x"}], "folder": format!("{home}/Desktop/DrawCraft Export"), "prefix": ""}),
+            ));
+            Ok(Value::Null)
+        }
         "file.export.png" | "file.exportForScreens" => {
             io::export(app, "png", s("path"), p.get("scale").and_then(Value::as_f64).unwrap_or(1.0)).map(|p| json!({"path": p}))
         }
@@ -864,7 +873,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Tools", "window.toolbar"),
                 sub("Toolbars", vec![c("Advanced", "window.toolbarAdvanced"), c("Single / Double Column", "window.toolbarColumns")]),
                 Sep,
-                todo("Actions"),
+                panel("Actions", "actions"),
                 panel("Align", "align"),
                 panel("Appearance", "appearance"),
                 panel("Artboards", "artboards"),

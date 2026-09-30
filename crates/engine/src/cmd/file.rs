@@ -22,6 +22,7 @@ pub fn specs() -> Vec<CommandSpec> {
         cmd!("document.save", "Save Document", [], None, "{path?} native .drawcraft (default: the document's path) → {path}", has_doc, save),
         cmd!(query "document.serialize", "Serialize Document", [], None, "{format: drawcraft|svg|pdf|png} → {dataBase64 | text}", has_doc, serialize),
         cmd!("document.export", "Export Document", [], None, "{format: svg|png|pdf|drawcraft, path, scale?: 1, artboard?: 0}", has_doc, export),
+        cmd!("document.exportForScreens", "Export for Screens", ["File", "Export"], None, "{folder, artboards?: [index…] (default all), formats?: [{format: png|jpg|webp|svg|pdf, scale?: 1, suffix?: \"@2x\"}], prefix?} → {files: [...]}", has_doc, export_for_screens),
         cmd!(query "command.batch", "Batch", [], None, "{label?, commands: [{command, params}]} run several commands as ONE undo step; stops at the first error and rolls back", has_doc, batch),
     ]
 }
@@ -81,9 +82,14 @@ pub(crate) fn encode(s: &Session, format: &str, scale: f64, artboard: usize) -> 
         "drawcraft" => drawcraft_format::save(doc, true),
         "svg" => drawcraft_svg::export(doc, &drawcraft_svg::ExportOptions { artboard: Some(artboard), ..Default::default() }).into_bytes(),
         "pdf" => drawcraft_pdf::export(doc, &drawcraft_pdf::PdfOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?,
-        "png" => {
+        "png" | "jpg" | "jpeg" | "webp" => {
             let r = doc.artboards.get(artboard).map(|a| a.rect).ok_or_else(|| EngineError::Other("no such artboard".into()))?;
-            drawcraft_render::Renderer::new().render_region(doc, r, scale.clamp(0.01, 64.0), false).to_png()
+            let img = drawcraft_render::Renderer::new().render_region(doc, r, scale.clamp(0.01, 64.0), format != "png" && format != "webp");
+            match format {
+                "png" => img.to_png(),
+                "webp" => img.to_webp(),
+                _ => img.to_jpeg(90),
+            }
         }
         other => return Err(EngineError::Other(format!("unknown format `{other}`"))),
     })
@@ -137,4 +143,39 @@ fn batch(s: &mut Session, p: &Value) -> Result<Value> {
     }
     s.commit_interaction()?;
     Ok(json!({ "results": results }))
+}
+
+fn export_for_screens(s: &mut Session, p: &Value) -> Result<Value> {
+    let folder = str_param(p, "folder").ok_or_else(|| bad("document.exportForScreens", "missing folder"))?.to_string();
+    let n = s.doc()?.doc.artboards.len();
+    let boards: Vec<usize> = match p.get("artboards").and_then(Value::as_array) {
+        Some(a) => a.iter().filter_map(Value::as_u64).map(|v| v as usize).filter(|i| *i < n).collect(),
+        None => (0..n).collect(),
+    };
+    let formats: Vec<(String, f64, String)> = match p.get("formats").and_then(Value::as_array) {
+        Some(a) => a
+            .iter()
+            .map(|f| {
+                let fmt = str_param(f, "format").unwrap_or("png").to_string();
+                let sc = f64_or(f, "scale", 1.0);
+                let suffix = str_param(f, "suffix").map(str::to_string).unwrap_or_else(|| if (sc - 1.0).abs() < 1e-9 { String::new() } else { format!("@{sc}x") });
+                (fmt, sc, suffix)
+            })
+            .collect(),
+        None => vec![("png".into(), 1.0, String::new())],
+    };
+    let prefix = str_param(p, "prefix").unwrap_or("").to_string();
+    std::fs::create_dir_all(&folder).map_err(|e| EngineError::Other(format!("{folder}: {e}")))?;
+    let mut files = vec![];
+    for b in boards {
+        let name: String = s.doc()?.doc.artboards[b].name.chars().map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '-' }).collect();
+        for (fmt, sc, suffix) in &formats {
+            let bytes = encode(s, fmt, *sc, b)?;
+            let ext = if fmt == "jpeg" { "jpg" } else { fmt.as_str() };
+            let path = format!("{folder}/{prefix}{name}{suffix}.{ext}");
+            std::fs::write(&path, &bytes).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
+            files.push(path);
+        }
+    }
+    Ok(json!({ "files": files }))
 }

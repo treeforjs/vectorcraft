@@ -109,3 +109,21 @@ fn draw_behind_and_inside() {
     s.execute("view.drawMode", &json!({"mode": "normal"})).unwrap();
     assert!(s.draw_inside.is_none());
 }
+
+#[test]
+fn export_for_screens_writes_every_combination() {
+    let mut s = Session::new();
+    s.execute("file.new", &json!({"width": 100, "height": 80, "artboards": 2})).unwrap();
+    s.execute("shape.rectangle", &json!({"x": 10, "y": 10, "width": 50, "height": 40})).unwrap();
+    let dir = std::env::temp_dir().join(format!("dc-efs-{}", std::process::id()));
+    let r = s
+        .execute("document.exportForScreens", &json!({"folder": dir.to_string_lossy(), "formats": [{"format": "png", "scale": 1}, {"format": "png", "scale": 2}, {"format": "jpg"}, {"format": "svg"}, {"format": "webp"}]}))
+        .unwrap();
+    let files = r["files"].as_array().unwrap();
+    assert_eq!(files.len(), 10);
+    for f in files {
+        assert!(std::fs::metadata(f.as_str().unwrap()).unwrap().len() > 50, "{f}");
+    }
+    assert!(files.iter().any(|f| f.as_str().unwrap().ends_with("Artboard-2@2x.png")));
+    let _ = std::fs::remove_dir_all(dir);
+}

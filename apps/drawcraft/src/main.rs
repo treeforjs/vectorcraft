@@ -37,6 +37,46 @@ impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.0.ui(ui);
     }
+    fn on_exit(&mut self) {
+        save_prefs(&self.0);
+    }
+}
+
+/// Where UI preferences live: ~/Library/Application Support/DrawCraft (macOS),
+/// %APPDATA%\DrawCraft (Windows), $XDG_CONFIG_HOME or ~/.config/drawcraft (Linux).
+fn prefs_path() -> Option<std::path::PathBuf> {
+    let base = if cfg!(target_os = "macos") {
+        std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join("Library/Application Support/DrawCraft"))
+    } else if cfg!(windows) {
+        std::env::var_os("APPDATA").map(|a| std::path::PathBuf::from(a).join("DrawCraft"))
+    } else {
+        std::env::var_os("XDG_CONFIG_HOME").map(std::path::PathBuf::from).or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".config"))).map(|c| c.join("drawcraft"))
+    };
+    base.map(|b| b.join("ui.json"))
+}
+
+fn load_prefs(app: &mut DrawcraftApp) {
+    if std::env::var_os("DRAWCRAFT_NO_PREFS").is_some() {
+        return;
+    }
+    if let Some(p) = prefs_path()
+        && let Ok(bytes) = std::fs::read(&p)
+        && let Ok(ui) = serde_json::from_slice::<drawcraft_ui_egui::UiState>(&bytes)
+    {
+        app.ui = ui.sanitized();
+    }
+}
+
+fn save_prefs(app: &DrawcraftApp) {
+    if std::env::var_os("DRAWCRAFT_NO_PREFS").is_some() {
+        return;
+    }
+    if let Some(p) = prefs_path() {
+        let _ = std::fs::create_dir_all(p.parent().unwrap_or(std::path::Path::new(".")));
+        if let Ok(bytes) = serde_json::to_vec_pretty(&app.ui) {
+            let _ = std::fs::write(p, bytes);
+        }
+    }
 }
 
 fn services() -> Services {
@@ -84,6 +124,7 @@ fn main() -> eframe::Result {
         options,
         Box::new(move |cc| {
             let mut app = DrawcraftApp::new(Session::new(), services());
+            load_prefs(&mut app);
             app.integrated_titlebar = cfg!(target_os = "macos");
             if let Some(port) = control_port {
                 let rx = control_server::start(port, cc.egui_ctx.clone());

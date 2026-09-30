@@ -112,6 +112,7 @@ fn title(kind: &str) -> &'static str {
         "preferences" => "Preferences",
         "artboardOptions" => "Artboard Options",
         "allTools" => "All Tools",
+        "exportForScreens" => "Export for Screens",
         _ => "Dialog",
     }
 }
@@ -120,6 +121,17 @@ fn title(kind: &str) -> &'static str {
 pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
     let Some(d) = app.ui.dialog.clone() else { return Err("no dialog open".into()) };
     let copy = d.bool("copy");
+    if d.kind == "exportForScreens" {
+        let boards: Vec<usize> = d.fields.get("boards").and_then(Value::as_array).map(|a| a.iter().enumerate().filter(|(_, b)| b.as_bool() == Some(true)).map(|(i, _)| i).collect()).unwrap_or_default();
+        let params = json!({"folder": d.str("folder"), "artboards": boards, "formats": d.fields.get("formats").cloned().unwrap_or(json!([])), "prefix": d.str("prefix")});
+        app.ui.dialog = None;
+        let r = app.run("document.exportForScreens", params);
+        if let Ok(v) = &r {
+            let n = v["files"].as_array().map(|a| a.len()).unwrap_or(0);
+            app.status(format!("Exported {n} file(s) to {}", d.str("folder")));
+        }
+        return r;
+    }
     if d.kind == "command" {
         let cmd = d.str("__command");
         let params = effect_params(&d);
@@ -250,6 +262,7 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
             ui.label(egui::RichText::new(heading).font(theme::semibold(16.0)).color(t.text));
             ui.add_space(12.0);
             match d.kind.as_str() {
+                "exportForScreens" => export_for_screens_ui(app, ui, &mut d),
                 "command" => {
                     effect_fields(ui, &mut d);
                 }
@@ -304,7 +317,11 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
             }
             ui.add_space(16.0);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let label = if d.kind == "newDocument" { "Create" } else { "OK" };
+                let label = match d.kind.as_str() {
+                    "newDocument" => "Create",
+                    "exportForScreens" => "Export Artboard",
+                    _ => "OK",
+                };
                 if d.kind != "allTools" && widgets::primary_button(ui, label).clicked() {
                     ok = true;
                 }
@@ -392,4 +409,95 @@ fn new_document(ui: &mut egui::Ui, d: &mut Dialog) {
             });
         });
     });
+}
+
+/// Export for Screens: artboard picker (thumbnails + checkboxes), format/scale rows, destination.
+fn export_for_screens_ui(app: &mut DrawcraftApp, ui: &mut egui::Ui, d: &mut Dialog) {
+    let t = Tokens::get(ui.ctx());
+    let names: Vec<String> = app.session.active().map(|s| s.doc.artboards.iter().map(|a| a.name.clone()).collect()).unwrap_or_default();
+    let mut boards: Vec<bool> = d.fields.get("boards").and_then(Value::as_array).map(|a| a.iter().map(|b| b.as_bool().unwrap_or(false)).collect()).unwrap_or_default();
+    boards.resize(names.len(), true);
+    ui.horizontal_top(|ui| {
+        ui.vertical(|ui| {
+            ui.set_width(260.0);
+            ui.label(egui::RichText::new("Artboards").color(t.text));
+            ui.horizontal(|ui| {
+                if ui.small_button("Select All").clicked() {
+                    boards.iter_mut().for_each(|b| *b = true);
+                }
+                if ui.small_button("Clear").clicked() {
+                    boards.iter_mut().for_each(|b| *b = false);
+                }
+            });
+            egui::ScrollArea::vertical().max_height(320.0).show(ui, |ui| {
+                for (i, name) in names.iter().enumerate() {
+                    ui.horizontal(|ui| {
+                        let (r, _) = ui.allocate_exact_size(egui::vec2(46.0, 46.0), egui::Sense::hover());
+                        ui.painter().rect_filled(r, 2.0, egui::Color32::WHITE);
+                        ui.painter().text(r.center(), egui::Align2::CENTER_CENTER, format!("{}", i + 1), egui::FontId::proportional(12.0), egui::Color32::from_gray(120));
+                        ui.checkbox(&mut boards[i], name);
+                    });
+                }
+            });
+        });
+        ui.separator();
+        ui.vertical(|ui| {
+            ui.set_width(330.0);
+            ui.label(egui::RichText::new("Export to").color(t.text));
+            let mut folder = d.str("folder");
+            if ui.add(egui::TextEdit::singleline(&mut folder).desired_width(320.0)).changed() {
+                d.fields.insert("folder".into(), json!(folder));
+            }
+            ui.add_space(8.0);
+            ui.label(egui::RichText::new("Formats").color(t.text));
+            let mut formats: Vec<Value> = d.fields.get("formats").and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut remove = None;
+            egui::Grid::new("efs-formats").num_columns(4).spacing([8.0, 6.0]).show(ui, |ui| {
+                ui.label(egui::RichText::new("Scale").color(t.text_dim));
+                ui.label(egui::RichText::new("Suffix").color(t.text_dim));
+                ui.label(egui::RichText::new("Format").color(t.text_dim));
+                ui.label("");
+                ui.end_row();
+                for (i, f) in formats.iter_mut().enumerate() {
+                    let mut sc = f["scale"].as_f64().unwrap_or(1.0);
+                    if ui.add(egui::DragValue::new(&mut sc).range(0.1..=10.0).speed(0.5).suffix("x")).changed() {
+                        f["scale"] = json!(sc);
+                    }
+                    let mut suffix = f["suffix"].as_str().unwrap_or("").to_string();
+                    if ui.add(egui::TextEdit::singleline(&mut suffix).desired_width(60.0)).changed() {
+                        f["suffix"] = json!(suffix);
+                    }
+                    let cur = f["format"].as_str().unwrap_or("png").to_string();
+                    egui::ComboBox::from_id_salt(("efs-fmt", i)).selected_text(cur.to_uppercase()).width(70.0).show_ui(ui, |ui| {
+                        for fm in ["png", "jpg", "webp", "svg", "pdf"] {
+                            if ui.selectable_label(cur == fm, fm.to_uppercase()).clicked() {
+                                f["format"] = json!(fm);
+                            }
+                        }
+                    });
+                    if ui.small_button("✕").clicked() {
+                        remove = Some(i);
+                    }
+                    ui.end_row();
+                }
+            });
+            if let Some(i) = remove {
+                formats.remove(i);
+            }
+            if ui.button("+ Add Scale").clicked() {
+                let next = formats.len() as f64 + 1.0;
+                formats.push(json!({"format": "png", "scale": next, "suffix": format!("@{next}x")}));
+            }
+            d.fields.insert("formats".into(), Value::Array(formats));
+            ui.add_space(6.0);
+            ui.horizontal(|ui| {
+                ui.label(egui::RichText::new("Prefix").color(t.text_dim));
+                let mut prefix = d.str("prefix");
+                if ui.add(egui::TextEdit::singleline(&mut prefix).desired_width(120.0)).changed() {
+                    d.fields.insert("prefix".into(), json!(prefix));
+                }
+            });
+        });
+    });
+    d.fields.insert("boards".into(), json!(boards));
 }

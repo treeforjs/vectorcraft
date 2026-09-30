@@ -29,6 +29,7 @@ pub static ICONS: &[(&str, &[u8])] = &[
     ("cloud", include_bytes!("../../../assets/icons/cloud.svg")),
     ("combine", include_bytes!("../../../assets/icons/combine.svg")),
     ("copy", include_bytes!("../../../assets/icons/copy.svg")),
+    ("dc-actions", include_bytes!("../../../assets/icons/dc-actions.svg")),
     ("dc-al-bottom", include_bytes!("../../../assets/icons/dc-al-bottom.svg")),
     ("dc-al-hcenter", include_bytes!("../../../assets/icons/dc-al-hcenter.svg")),
     ("dc-al-left", include_bytes!("../../../assets/icons/dc-al-left.svg")),

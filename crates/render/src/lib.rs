@@ -70,6 +70,29 @@ impl Rendered {
         img.write_to(&mut std::io::Cursor::new(&mut buf), image::ImageFormat::Png).expect("png encode");
         buf
     }
+    /// Encode as JPEG (flattened on white) at `quality` 1..=100.
+    pub fn to_jpeg(&self, quality: u8) -> Vec<u8> {
+        let rgba = self.to_straight();
+        let rgb: Vec<u8> = rgba
+            .chunks_exact(4)
+            .flat_map(|p| {
+                let a = p[3] as u32;
+                let mix = |c: u8| ((c as u32 * a + 255 * (255 - a)) / 255) as u8;
+                [mix(p[0]), mix(p[1]), mix(p[2])]
+            })
+            .collect();
+        let mut buf = Vec::new();
+        let enc = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buf, quality.clamp(1, 100));
+        let _ = image::ImageEncoder::write_image(enc, &rgb, self.width, self.height, image::ExtendedColorType::Rgb8);
+        buf
+    }
+    /// Encode as lossless WebP.
+    pub fn to_webp(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        let enc = image::codecs::webp::WebPEncoder::new_lossless(&mut buf);
+        let _ = image::ImageEncoder::write_image(enc, &self.to_straight(), self.width, self.height, image::ExtendedColorType::Rgba8);
+        buf
+    }
     /// Straight-alpha RGBA at (x, y).
     pub fn pixel(&self, x: u32, y: u32) -> [u8; 4] {
         let i = ((y * self.width + x) * 4) as usize;

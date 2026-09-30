@@ -75,6 +75,7 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("character", "Character", "type"),
     ("paragraph", "Paragraph", "pilcrow"),
     ("history", "History", "history"),
+    ("actions", "Actions", "dc-actions"),
     ("info", "Info", "info"),
     ("navigator", "Navigator", "map"),
 ];
@@ -88,7 +89,7 @@ pub const ICON_PANEL_GROUPS: &[&[&str]] = &[
     &["artboards"],
     &["transform", "align", "pathfinder"],
     &["character", "paragraph"],
-    &["history", "info", "navigator"],
+    &["history", "actions", "info", "navigator"],
 ];
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -157,6 +158,7 @@ impl Dialog {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct UiState {
     pub brightness: Brightness,
     pub dock_tab: DockTab,
@@ -189,6 +191,28 @@ pub struct UiState {
     /// Draw Normal / Behind / Inside.
     pub draw_mode: u8,
     pub about: bool,
+    /// Recorded actions (Actions panel), persisted with the UI preferences.
+    #[serde(default = "crate::panels::actions::default_sets")]
+    pub action_sets: Vec<crate::panels::actions::ActionSet>,
+    /// Recording in progress: (set index, action name, journal length when recording started).
+    #[serde(skip)]
+    pub recording: Option<(usize, String, usize)>,
+}
+
+impl UiState {
+    /// Clear transient state after loading saved preferences.
+    pub fn sanitized(mut self) -> Self {
+        self.dialog = None;
+        self.flyout = None;
+        self.palette_open = false;
+        self.status.clear();
+        self.about = false;
+        self.open_panel = None;
+        if self.group_tool.len() != drawcraft_tools::TOOL_GROUPS.len() {
+            self.group_tool = UiState::default().group_tool;
+        }
+        self
+    }
 }
 
 impl Default for UiState {
@@ -215,6 +239,8 @@ impl Default for UiState {
             screen_mode: 0,
             draw_mode: 0,
             about: false,
+            action_sets: crate::panels::actions::default_sets(),
+            recording: None,
         }
     }
 }

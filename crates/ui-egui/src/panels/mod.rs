@@ -3,6 +3,7 @@
 //!
 //! Every icon panel has a body (`show_icon_panel`) and a panel (≡) menu (`panel_menu`).
 
+pub mod actions;
 pub mod align;
 pub mod appearance;
 pub mod artboards;
@@ -58,6 +59,7 @@ pub fn show_icon_panel(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "pathfinder" => pathfinder::show(app, ui),
         "transform" => transform::show(app, ui),
         "history" => history::show(app, ui),
+        "actions" => actions::show(app, ui),
         "info" => info::show(app, ui),
         "artboards" => artboards::show(app, ui),
         "gradient" => gradient::show(app, ui),
