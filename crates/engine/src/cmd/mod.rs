@@ -5,6 +5,7 @@ mod create;
 mod docmenu;
 mod draw2;
 mod edit;
+mod recolor;
 mod effectcmd;
 mod file;
 mod layer;
@@ -116,6 +117,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
     SPECS.get_or_init(|| {
         let mut v = Vec::new();
         v.extend(edit::specs());
+        v.extend(recolor::specs());
         v.extend(file::specs());
         v.extend(create::specs());
         v.extend(object::specs());

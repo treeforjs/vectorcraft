@@ -7,6 +7,7 @@
 
 pub mod appearance;
 pub mod hit;
+pub mod live;
 pub mod node;
 pub mod selection;
 pub mod text;
@@ -18,6 +19,7 @@ pub use appearance::{Appearance, AppearanceItem, Arrowhead, Dash, Effect, FillLa
 pub use drawcraft_color as color;
 pub use drawcraft_geom as geom;
 pub use hit::{Hit, HitKind};
+pub use live::{BlendOrientation, BlendSpacing, BlendSpec, EnvelopeKind, GradientMesh, MeshPoint};
 pub use node::{ImageObject, LAYER_COLORS, LayerColor, LiveShape, Node, NodeId, NodeKind};
 pub use selection::{AnchorRef, Selection};
 pub use text::{CharStyle, Justify, ParaStyle, TextKind, TextObject, TextRun};

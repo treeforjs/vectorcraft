@@ -130,8 +130,15 @@ fn hit_leaf(n: &Node, p: Point, opt: HitOptions) -> Option<HitKind> {
             }
             (!opt.outline && fill_contains(&bp, *rule, p)).then_some(HitKind::Fill)
         }
-        NodeKind::Text(_) | NodeKind::Image(_) | NodeKind::SymbolInstance { .. } => {
+        NodeKind::Text(_) | NodeKind::Image(_) | NodeKind::SymbolInstance { .. } | NodeKind::Blend { .. } | NodeKind::Envelope { .. } => {
             n.geometric_bounds().filter(|b| b.inflate(opt.tol, opt.tol).contains(p)).map(|_| HitKind::Bounds)
+        }
+        NodeKind::Mesh(m) => {
+            let bp = m.outline().to_bezpath();
+            if stroke_contains(&bp, 0.0, opt.tol, p) {
+                return Some(HitKind::Outline);
+            }
+            (!opt.path_only && fill_contains(&bp, drawcraft_geom::FillRule::NonZero, p)).then_some(HitKind::Fill)
         }
         _ => None,
     }

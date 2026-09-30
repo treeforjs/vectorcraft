@@ -1,0 +1,18 @@
+[package]
+name = "drawcraft-brush"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "DrawCraft brushes: calligraphic, scatter, art, pattern and bristle brush definitions and stroke geometry"
+
+[lints]
+workspace = true
+
+[dependencies]
+drawcraft-geom = { workspace = true }
+drawcraft-color = { workspace = true }
+drawcraft-doc = { workspace = true }
+drawcraft-pathops = { workspace = true }
+kurbo = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

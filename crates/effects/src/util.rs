@@ -1,6 +1,6 @@
 //! Parameter parsing, deterministic noise and path-mapping helpers.
 
-use drawcraft_geom::{Anchor, CubicBez, ParamCurve, PathData, Point, Rect, SubPath, Vec2};
+use drawcraft_geom::{Anchor, CubicBez, ParamCurve, Point, Rect, SubPath, Vec2};
 use serde_json::Value;
 
 /// Number param (also accepts numeric strings such as `"10 pt"`); non-finite → default.
@@ -69,52 +69,8 @@ pub fn seg_cubic(sp: &SubPath, i: usize) -> CubicBez {
     if sp.segment_is_line(i) { CubicBez::new(c.p0, c.p0.lerp(c.p3, 1.0 / 3.0), c.p0.lerp(c.p3, 2.0 / 3.0), c.p3) } else { c }
 }
 
-fn poly_len(c: &CubicBez) -> f64 {
-    c.p0.distance(c.p1) + c.p1.distance(c.p2) + c.p2.distance(c.p3)
-}
-
-/// Map every point of `path` through the non-linear function `f`. Segments are split into pieces
-/// no longer than about `max_piece` (up to 64 per segment) and their control points mapped, which
-/// approximates the image curve to O(h²). Closedness and subpath structure are preserved.
-pub fn map_nonlinear(path: &PathData, max_piece: f64, f: impl Fn(Point) -> Point) -> PathData {
-    let max_piece = max_piece.max(1e-3);
-    let mut subs = Vec::with_capacity(path.subpaths.len());
-    for sp in &path.subpaths {
-        let n = sp.anchors.len();
-        if n == 0 {
-            continue;
-        }
-        let segs = sp.segment_count();
-        let mut res: Vec<Anchor> = Vec::new();
-        let mut pending_in: Option<Point> = None;
-        for i in 0..n {
-            let a = &sp.anchors[i];
-            let h_in = pending_in.take().unwrap_or_else(|| f(a.h_in));
-            res.push(Anchor { p: f(a.p), h_in, h_out: f(a.h_out), kind: a.kind });
-            if i < segs {
-                let c = seg_cubic(sp, i);
-                let k = ((poly_len(&c) / max_piece).ceil() as usize).clamp(1, 64);
-                for j in 0..k {
-                    let sub = c.subsegment((j as f64 / k as f64)..((j + 1) as f64 / k as f64));
-                    res.last_mut().unwrap().h_out = f(sub.p1);
-                    if j + 1 < k {
-                        res.push(Anchor { p: f(sub.p3), h_in: f(sub.p2), h_out: f(sub.p3), kind: Default::default() });
-                    } else {
-                        pending_in = Some(f(sub.p2));
-                    }
-                }
-            }
-        }
-        if let Some(h) = pending_in
-            && sp.closed
-        {
-            res[0].h_in = h;
-        }
-        let anchors = res.into_iter().map(|a| Anchor::with_handles(a.p, a.h_in, a.h_out)).collect();
-        subs.push(SubPath::new(anchors, sp.closed));
-    }
-    PathData::new(subs)
-}
+/// Non-linear path mapping (shared with live envelopes in `drawcraft-doc`).
+pub use drawcraft_doc::live::map_nonlinear;
 
 /// Smooth subpath through `pts` (Catmull-Rom tangents).
 pub fn catmull_rom(pts: &[Point], closed: bool, tension: f64) -> SubPath {

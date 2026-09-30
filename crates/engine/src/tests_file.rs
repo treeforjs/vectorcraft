@@ -127,3 +127,21 @@ fn export_for_screens_writes_every_combination() {
     assert!(files.iter().any(|f| f.as_str().unwrap().ends_with("Artboard-2@2x.png")));
     let _ = std::fs::remove_dir_all(dir);
 }
+
+#[test]
+fn recolor_maps_fills_strokes_gradients() {
+    let mut s = session();
+    s.execute("paint.setFill", &json!({"color": "#ff0000"})).unwrap();
+    let a = s.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap()["id"].as_u64().unwrap();
+    s.execute("paint.setFill", &json!({"gradient": {"kind": "linear", "stops": [{"offset": 0, "color": "#ff0000"}, {"offset": 1, "color": "#0000ff"}]}})).unwrap();
+    s.execute("select.all", &json!({})).unwrap();
+    let c = s.execute("recolor.colors", &json!({})).unwrap();
+    let hexes: Vec<&str> = c["colors"].as_array().unwrap().iter().map(|v| v["hex"].as_str().unwrap()).collect();
+    assert!(hexes.contains(&"#ff0000") && hexes.contains(&"#0000ff") && hexes.contains(&"#000000"));
+    s.execute("recolor.apply", &json!({"map": {"#FF0000": "#00ff00"}})).unwrap();
+    let n = s.doc().unwrap().doc.node(NodeId(a)).unwrap().clone();
+    match n.appearance.fill_paint() {
+        drawcraft_color::Paint::Gradient(g) => assert_eq!(g.gradient.stops[0].color.to_hex(), "#00ff00"),
+        other => panic!("{other:?}"),
+    }
+}

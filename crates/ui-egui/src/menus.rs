@@ -90,6 +90,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("tool.setOption", "Tool Option", "", "{key, value}"),
     ("effect.dialog", "Effect…", "", "{effect: id} open the effect's dialog with live preview"),
     ("ui.paramDialog", "Command Dialog", "", "{command, label?, params} open a parameter dialog for any command"),
+    ("ui.recolorDialog", "Recolor Artwork…", "", "{} open Recolor Artwork (engine: recolor.colors / recolor.apply)"),
     ("effect.applyLast", "Apply Last Effect", "Cmd+Shift+E", "{}"),
     ("file.export.pdf", "Save as PDF…", "", "{path?}"),
     ("help.about", "About DrawCraft", "", "{}"),
@@ -303,6 +304,14 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
                 None => Err(format!("unknown effect `{id}`")),
             }
         }
+        "ui.recolorDialog" => match app.run("recolor.colors", json!({})) {
+            Ok(v) => {
+                let pairs: Vec<Value> = v["colors"].as_array().cloned().unwrap_or_default().iter().map(|c| json!([c["hex"], c["hex"]])).collect();
+                app.ui.dialog = Some(crate::state::Dialog::new("recolor", json!({"pairs": pairs, "preview": true})));
+                Ok(Value::Null)
+            }
+            Err(e) => Err(e),
+        },
         "ui.paramDialog" => {
             let cmd = s("command").unwrap_or_default();
             let mut fields = p.get("params").and_then(Value::as_object).cloned().unwrap_or_default();
@@ -413,7 +422,7 @@ pub fn enabled(app: &DrawcraftApp, id: &str) -> bool {
         | "view.fitAll"
         | "view.actualSize" => app.session.active().is_some(),
         "file.revert" => app.session.active().is_some_and(|d| d.path.is_some() && d.is_dirty()),
-        "effect.dialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
+        "effect.dialog" | "ui.recolorDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "effect.applyLast" => app.last_effect.is_some() && app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "file.export.pdf" => app.session.active().is_some(),
         _ => true,
@@ -503,7 +512,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 sub(
                     "Edit Colors",
                     vec![
-                        todo("Recolor Artwork…"),
+                        c("Recolor Artwork…", "ui.recolorDialog"),
                         cp("Adjust Color Balance…", "edit.colors.adjustBalance", json!({"r": 0, "g": 0, "b": 0})),
                         c("Blend Front to Back", "edit.colors.blendFrontToBack"),
                         c("Blend Horizontally", "edit.colors.blendHorizontally"),

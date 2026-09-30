@@ -7,6 +7,7 @@ use drawcraft_geom::{Affine, FillRule, PathData, Point, Rect, shapes};
 use serde::{Deserialize, Serialize};
 
 use crate::appearance::Appearance;
+use crate::live::{BlendSpec, EnvelopeKind, GradientMesh};
 use crate::text::TextObject;
 
 /// Stable per-document object id. Never reused.
@@ -204,6 +205,26 @@ pub enum NodeKind {
         symbol: String,
         xf: Affine,
     },
+    /// Live blend: the key objects (paint order) plus spacing/orientation/spine; the intermediate
+    /// steps are evaluated on demand (`live::blend_expand`).
+    Blend {
+        children: Vec<Arc<Node>>,
+        #[serde(default)]
+        spec: BlendSpec,
+    },
+    /// Live envelope distortion of `content`.
+    Envelope {
+        content: Vec<Arc<Node>>,
+        kind: EnvelopeKind,
+        /// Envelope Options → Fidelity (0–100).
+        #[serde(default = "crate::live::default_fidelity")]
+        fidelity: f64,
+        /// Edit Contents mode (the content, not the envelope, is edited).
+        #[serde(default)]
+        editing: bool,
+    },
+    /// Gradient mesh.
+    Mesh(GradientMesh),
 }
 
 fn yes() -> bool {
@@ -266,13 +287,21 @@ impl Node {
     }
     pub fn children(&self) -> Option<&Vec<Arc<Node>>> {
         match &self.kind {
-            NodeKind::Layer { children, .. } | NodeKind::Group { children, .. } | NodeKind::Compound { children, .. } => Some(children),
+            NodeKind::Layer { children, .. }
+            | NodeKind::Group { children, .. }
+            | NodeKind::Compound { children, .. }
+            | NodeKind::Blend { children, .. }
+            | NodeKind::Envelope { content: children, .. } => Some(children),
             _ => None,
         }
     }
     pub fn children_mut(&mut self) -> Option<&mut Vec<Arc<Node>>> {
         match &mut self.kind {
-            NodeKind::Layer { children, .. } | NodeKind::Group { children, .. } | NodeKind::Compound { children, .. } => Some(children),
+            NodeKind::Layer { children, .. }
+            | NodeKind::Group { children, .. }
+            | NodeKind::Compound { children, .. }
+            | NodeKind::Blend { children, .. }
+            | NodeKind::Envelope { content: children, .. } => Some(children),
             _ => None,
         }
     }
@@ -295,6 +324,9 @@ impl Node {
             NodeKind::Text(_) => "Text",
             NodeKind::Image(_) => "Image",
             NodeKind::SymbolInstance { .. } => "Symbol",
+            NodeKind::Blend { .. } => "Blend",
+            NodeKind::Envelope { .. } => "Envelope",
+            NodeKind::Mesh(_) => "Mesh",
         }
     }
     /// Name shown in the Layers panel: explicit name or `<Kind>`.
@@ -335,6 +367,12 @@ impl Node {
             NodeKind::Text(t) => t.bounds(),
             NodeKind::Image(im) => Some(im.xf.transform_rect_bbox(Rect::new(0.0, 0.0, im.width as f64, im.height as f64))),
             NodeKind::SymbolInstance { xf, .. } => Some(xf.transform_rect_bbox(Rect::new(-10.0, -10.0, 10.0, 10.0))),
+            NodeKind::Blend { children, spec } => {
+                let b = crate::live::nodes_bounds(children);
+                drawcraft_geom::union_opt(b, spec.spine.as_ref().and_then(|s| s.bounds()))
+            }
+            NodeKind::Envelope { content, kind, .. } => crate::live::envelope_bounds(content, kind),
+            NodeKind::Mesh(m) => m.bounds(),
         }
     }
     /// Visual bounds (includes stroke outset).
@@ -343,6 +381,15 @@ impl Node {
             NodeKind::Group { children, clip: true } => children.first().and_then(|c| c.geometric_bounds()),
             NodeKind::Layer { children, .. } | NodeKind::Group { children, .. } => {
                 children.iter().fold(None, |acc, c| drawcraft_geom::union_opt(acc, c.visual_bounds()))
+            }
+            NodeKind::Blend { children, spec } => {
+                let b = children.iter().fold(None, |acc, c| drawcraft_geom::union_opt(acc, c.visual_bounds()));
+                let o = crate::live::max_outset(children);
+                drawcraft_geom::union_opt(b, spec.spine.as_ref().and_then(|s| s.bounds()).map(|r| r.inflate(o, o)))
+            }
+            NodeKind::Envelope { content, .. } => {
+                let o = crate::live::max_outset(content);
+                self.geometric_bounds().map(|b| b.inflate(o, o))
             }
             _ => {
                 let o = self.appearance.outset();
@@ -375,6 +422,29 @@ impl Node {
             NodeKind::Text(t) => t.transform(a),
             NodeKind::Image(im) => im.xf = a * im.xf,
             NodeKind::SymbolInstance { xf, .. } => *xf = a * *xf,
+            NodeKind::Blend { children, spec } => {
+                for c in children.iter_mut() {
+                    Arc::make_mut(c).transform(a, scale_strokes);
+                }
+                if let Some(s) = &mut spec.spine {
+                    s.transform(a);
+                }
+            }
+            NodeKind::Envelope { content, kind, .. } => {
+                for c in content.iter_mut() {
+                    Arc::make_mut(c).transform(a, scale_strokes);
+                }
+                match kind {
+                    EnvelopeKind::Mesh { points, .. } => {
+                        for p in points.iter_mut() {
+                            *p = a * *p;
+                        }
+                    }
+                    EnvelopeKind::TopObject { path } => path.transform(a),
+                    EnvelopeKind::Warp { .. } => {}
+                }
+            }
+            NodeKind::Mesh(m) => m.transform(a),
         }
     }
     /// Visit this node and all descendants depth first (paint order).

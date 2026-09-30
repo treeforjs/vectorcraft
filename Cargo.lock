@@ -838,6 +838,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "drawcraft-brush"
+version = "0.1.0"
+dependencies = [
+ "drawcraft-color",
+ "drawcraft-doc",
+ "drawcraft-geom",
+ "drawcraft-pathops",
+ "kurbo 0.13.1",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "drawcraft-cli"
 version = "0.1.0"
 dependencies = [
@@ -1050,6 +1063,19 @@ dependencies = [
  "kurbo 0.13.1",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "drawcraft-trace"
+version = "0.1.0"
+dependencies = [
+ "drawcraft-geom",
+ "drawcraft-pathops",
+ "image",
+ "kurbo 0.13.1",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

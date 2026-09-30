@@ -4,10 +4,11 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use drawcraft_doc::CharStyle;
-use harfrust::{Direction, Feature, ShapeOptions, Tag, UnicodeBuffer};
+use harfrust::{Direction, Feature, ShapeOptions, UnicodeBuffer};
 use skrifa::MetadataProvider;
 use skrifa::instance::{LocationRef, Size};
 
+use crate::features::OtFeatures;
 use crate::fontdb::{FontDb, FontFace};
 
 /// A shaped glyph with all character-style effects resolved, in points (y down).
@@ -44,8 +45,33 @@ impl SGlyph {
     }
     /// A line may break after this glyph.
     pub fn break_after(&self) -> bool {
-        self.is_space() || matches!(self.ch, '-' | '\u{2010}' | '\u{2013}' | '\u{2014}' | '/') || is_cjk(self.ch)
+        self.is_space() || matches!(self.ch, '-' | '\u{2010}' | '\u{2013}' | '\u{2014}' | '/' | SOFT_HYPHEN) || is_cjk(self.ch)
     }
+    /// A soft (discretionary) hyphen: invisible unless a line breaks after it.
+    pub fn is_soft_hyphen(&self) -> bool {
+        self.ch == SOFT_HYPHEN
+    }
+    /// Part of a word that may be hyphenated (letters and apostrophes).
+    pub fn is_letter(&self) -> bool {
+        self.ch.is_alphabetic() || matches!(self.ch, '\'' | '’')
+    }
+}
+
+pub(crate) const SOFT_HYPHEN: char = '\u{00AD}';
+
+/// A visible hyphen in the face and size of `g`, placed at the end of `g`'s cluster (zero source
+/// length) for a line broken inside a word.
+pub(crate) fn hyphen_glyph(g: &SGlyph) -> SGlyph {
+    let gid = ['-', '\u{2010}', SOFT_HYPHEN].into_iter().map(|c| g.face.glyph_for(c)).find(|&id| id != 0).unwrap_or(0);
+    let mut h = g.clone();
+    h.gid = gid;
+    h.adv = g.face.advance(gid) * g.sx;
+    h.dx = 0.0;
+    h.dy = 0.0;
+    h.byte = g.byte + g.len;
+    h.len = 0;
+    h.ch = '-';
+    h
 }
 
 fn is_cjk(c: char) -> bool {
@@ -61,7 +87,14 @@ pub(crate) fn style_metrics(db: &FontDb, st: &CharStyle) -> (f64, f64, f64) {
 }
 
 /// Shape `text[range]`, where `runs` gives each run's byte range in `text` and style.
-pub(crate) fn shape_range(db: &FontDb, text: &str, range: Range<usize>, runs: &[(Range<usize>, &CharStyle)], out: &mut Vec<SGlyph>) {
+pub(crate) fn shape_range(
+    db: &FontDb,
+    text: &str,
+    range: Range<usize>,
+    runs: &[(Range<usize>, &CharStyle)],
+    feats: &OtFeatures,
+    out: &mut Vec<SGlyph>,
+) {
     for (ri, (rr, st)) in runs.iter().enumerate() {
         let a = rr.start.max(range.start);
         let b = rr.end.min(range.end);
@@ -89,14 +122,14 @@ pub(crate) fn shape_range(db: &FontDb, text: &str, range: Range<usize>, runs: &[
             // Combining marks stay with their base.
             if face.id() != seg_face.id() && !is_mark(c) {
                 if i > seg_start {
-                    shape_segment(text, seg_start..i, ri, st, &seg_face, out);
+                    shape_segment(text, seg_start..i, ri, st, &seg_face, feats, out);
                 }
                 seg_start = i;
                 seg_face = face;
             }
         }
         if b > seg_start {
-            shape_segment(text, seg_start..b, ri, st, &seg_face, out);
+            shape_segment(text, seg_start..b, ri, st, &seg_face, feats, out);
         }
     }
 }
@@ -105,7 +138,7 @@ fn is_mark(c: char) -> bool {
     matches!(c as u32, 0x0300..=0x036F | 0x1AB0..=0x1AFF | 0x1DC0..=0x1DFF | 0x20D0..=0x20FF | 0xFE20..=0xFE2F | 0x200D | 0xFE00..=0xFE0F)
 }
 
-fn shape_segment(text: &str, range: Range<usize>, run: usize, st: &CharStyle, face: &Arc<FontFace>, out: &mut Vec<SGlyph>) {
+fn shape_segment(text: &str, range: Range<usize>, run: usize, st: &CharStyle, face: &Arc<FontFace>, feats: &OtFeatures, out: &mut Vec<SGlyph>) {
     let seg = &text[range.clone()];
     let size = st.size.max(0.0);
     let k = size / face.upem;
@@ -134,7 +167,7 @@ fn shape_segment(text: &str, range: Range<usize>, run: usize, st: &CharStyle, fa
         }
         buf.set_direction(Direction::LeftToRight);
         buf.guess_segment_properties();
-        let feats: Vec<Feature> = if st.kerning.is_some() { vec![Feature::new(Tag::new(b"kern"), 0, ..)] } else { Vec::new() };
+        let feats: Vec<Feature> = feats.resolve(st);
         let gb = shaper.shape(buf, ShapeOptions::new().features(&feats));
         for (info, pos) in gb.glyph_infos().iter().zip(gb.glyph_positions()) {
             raw.push((info.glyph_id, info.cluster, pos.x_advance, pos.x_offset, pos.y_offset));
@@ -162,8 +195,11 @@ fn shape_segment(text: &str, range: Range<usize>, run: usize, st: &CharStyle, fa
         // Cluster end: the next larger cluster value in the segment, else the segment end.
         let end = raw[gi + 1..].iter().map(|r| r.1 as usize).find(|&c| c > cl).unwrap_or(range.end);
         let last_in_cluster = gi + 1 == n || raw[gi + 1].1 as usize != cl;
+        let ch = first_char(cl);
         let mut adv = xa as f64 * k * hs;
-        if last_in_cluster {
+        if ch == SOFT_HYPHEN {
+            adv = 0.0;
+        } else if last_in_cluster {
             adv += tracking + manual_kern;
         }
         out.push(SGlyph {
@@ -182,7 +218,7 @@ fn shape_segment(text: &str, range: Range<usize>, run: usize, st: &CharStyle, fa
             ascent,
             descent,
             leading,
-            ch: first_char(cl),
+            ch,
         });
     }
 }

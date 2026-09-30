@@ -78,6 +78,33 @@ impl FontFace {
     pub fn covers(&self, c: char) -> bool {
         self.skrifa().is_some_and(|f| f.charmap().map(c).is_some())
     }
+    /// Units per em.
+    pub fn units_per_em(&self) -> f64 {
+        self.upem
+    }
+    /// (ascent, descent) in font units, both positive.
+    pub fn vertical_metrics(&self) -> (f64, f64) {
+        (self.ascent, self.descent)
+    }
+    /// Every mapped character and its glyph id, sorted by code point (the Glyphs panel).
+    pub fn chars(&self) -> Vec<(char, u32)> {
+        let Some(f) = self.skrifa() else { return vec![] };
+        let mut v: Vec<(char, u32)> = f.charmap().mappings().filter_map(|(cp, g)| char::from_u32(cp).map(|c| (c, g.to_u32()))).collect();
+        v.sort_unstable_by_key(|x| x.0);
+        v.dedup_by_key(|x| x.0);
+        v
+    }
+    /// Advance width of glyph `gid` in font units.
+    pub fn advance(&self, gid: u32) -> f64 {
+        self.skrifa()
+            .and_then(|f| f.glyph_metrics(Size::unscaled(), LocationRef::default()).advance_width(GlyphId::new(gid)))
+            .map(|a| a as f64)
+            .unwrap_or(self.upem * 0.5)
+    }
+    /// Glyph id for `c` (0 = .notdef).
+    pub fn glyph_for(&self, c: char) -> u32 {
+        self.skrifa().and_then(|f| f.charmap().map(c)).map(|g| g.to_u32()).unwrap_or(0)
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -94,7 +121,48 @@ pub struct FontDb {
     outlines: Mutex<HashMap<(u32, u32), Arc<BezPath>>>,
     #[cfg(not(target_arch = "wasm32"))]
     catalog: RwLock<Vec<CatalogEntry>>,
+    /// System fallback state: scanned yet, and characters no system font covers.
+    #[cfg(not(target_arch = "wasm32"))]
+    sys: Mutex<SysFallback>,
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+#[derive(Default)]
+struct SysFallback {
+    enabled: bool,
+    scanned: bool,
+    misses: std::collections::HashSet<char>,
+}
+
+/// Families tried (when installed) for characters the loaded fonts lack: CJK, symbols, emoji.
+#[cfg(not(target_arch = "wasm32"))]
+const SYSTEM_FALLBACKS: &[&str] = &[
+    "Helvetica Neue",
+    "Arial",
+    "Segoe UI",
+    "Noto Sans",
+    "DejaVu Sans",
+    "PingFang SC",
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    "Apple SD Gothic Neo",
+    "Heiti SC",
+    "STHeiti",
+    "Microsoft YaHei",
+    "Yu Gothic",
+    "Malgun Gothic",
+    "Noto Sans CJK SC",
+    "Noto Sans CJK JP",
+    "Arial Unicode MS",
+    "Apple Symbols",
+    "Segoe UI Symbol",
+    "Noto Sans Symbols",
+    "Noto Sans Symbols2",
+    "Noto Emoji",
+    "Segoe UI Emoji",
+    "Apple Color Emoji",
+    "Noto Color Emoji",
+];
 
 static NEXT_ID: AtomicU32 = AtomicU32::new(1);
 const OUTLINE_CACHE_MAX: usize = 50_000;
@@ -189,7 +257,20 @@ impl FontDb {
             outlines: Mutex::new(HashMap::new()),
             #[cfg(not(target_arch = "wasm32"))]
             catalog: RwLock::new(Vec::new()),
+            #[cfg(not(target_arch = "wasm32"))]
+            sys: Mutex::new(SysFallback { enabled: true, ..Default::default() }),
         }
+    }
+
+    /// Enable or disable the lazy system-font fallback for characters the loaded fonts lack
+    /// (native only; on by default).
+    pub fn set_system_fallback(&self, on: bool) {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            self.sys.lock().unwrap_or_else(|e| e.into_inner()).enabled = on;
+        }
+        #[cfg(target_arch = "wasm32")]
+        let _ = on;
     }
 
     /// Process-wide database preloaded with the bundled fonts.
@@ -356,16 +437,75 @@ impl FontDb {
             .map(|f| (*f).clone())
     }
 
-    /// First face (fallback family first, then load order) that covers `c`.
+    /// First face (fallback family first, then load order) that covers `c`; on native, system
+    /// fonts are cataloged and loaded lazily the first time no loaded face covers a character.
     pub(crate) fn fallback_for(&self, c: char, exclude: u32) -> Option<Arc<FontFace>> {
+        if let Some(f) = self.loaded_fallback(c, exclude) {
+            return Some(f);
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        if self.system_fallback(c) {
+            return self.loaded_fallback(c, exclude);
+        }
+        None
+    }
+
+    fn loaded_fallback(&self, c: char, exclude: u32) -> Option<Arc<FontFace>> {
         let faces = self.read_faces();
         let mut order: Vec<&Arc<FontFace>> = faces.iter().filter(|f| f.id != exclude).collect();
         order.sort_by_key(|f| (!f.family.eq_ignore_ascii_case(FALLBACK_FAMILY), f.italic, (f.weight - 400.0).abs() as i32));
         order.into_iter().find(|f| f.covers(c)).cloned()
     }
 
+    /// Load a system font covering `c` (preferred fallback families first, then any cataloged
+    /// file under 40 MB). Returns true if one was loaded. Misses are remembered.
+    #[cfg(not(target_arch = "wasm32"))]
+    fn system_fallback(&self, c: char) -> bool {
+        if c.is_control() || c.is_whitespace() {
+            return false;
+        }
+        {
+            let mut sys = self.sys.lock().unwrap_or_else(|e| e.into_inner());
+            if !sys.enabled || sys.misses.contains(&c) {
+                return false;
+            }
+            if !sys.scanned {
+                sys.scanned = true;
+                if self.catalog.read().unwrap_or_else(|e| e.into_inner()).is_empty() {
+                    drop(sys);
+                    self.load_system_fonts();
+                }
+            }
+        }
+        let covered = |db: &FontDb| db.read_faces().iter().any(|f| f.covers(c));
+        let cataloged: Vec<String> = self.catalog.read().unwrap_or_else(|e| e.into_inner()).iter().map(|e| e.family.clone()).collect();
+        for fam in SYSTEM_FALLBACKS {
+            if !self.has_family(fam) && cataloged.iter().any(|f| f.eq_ignore_ascii_case(fam)) {
+                self.load_cataloged(fam);
+                if covered(self) {
+                    return true;
+                }
+            }
+        }
+        let mut paths: Vec<std::path::PathBuf> = self.catalog.read().unwrap_or_else(|e| e.into_inner()).iter().map(|e| e.path.clone()).collect();
+        paths.sort();
+        paths.dedup();
+        for p in paths {
+            if std::fs::metadata(&p).map(|m| m.len() > 40 << 20).unwrap_or(true) {
+                continue;
+            }
+            let Ok(data) = std::fs::read(&p) else { continue };
+            let hit = enumerate_faces(&data).iter().any(|(i, _, _)| skrifa::FontRef::from_index(&data, *i).is_ok_and(|f| f.charmap().map(c).is_some()));
+            if hit && self.add_font(data) > 0 && covered(self) {
+                return true;
+            }
+        }
+        self.sys.lock().unwrap_or_else(|e| e.into_inner()).misses.insert(c);
+        false
+    }
+
     /// Glyph outline in font units, y-down (flipped), cached per (face, glyph).
-    pub(crate) fn outline(&self, face: &FontFace, gid: u32) -> Arc<BezPath> {
+    pub fn outline(&self, face: &FontFace, gid: u32) -> Arc<BezPath> {
         let key = (face.id, gid);
         if let Some(p) = self.outlines.lock().unwrap_or_else(|e| e.into_inner()).get(&key) {
             return p.clone();
