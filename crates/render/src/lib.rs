@@ -10,6 +10,8 @@ mod brush_fx;
 mod fx;
 mod live;
 mod paint;
+pub mod proof;
+mod pattern;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -22,6 +24,7 @@ use vello_cpu::{Pixmap, RenderContext, Resources};
 
 pub use drawcraft_effects as effects;
 pub use live::expand_live;
+pub use pattern::render_pattern_swatch;
 pub use vello_cpu;
 
 /// Rendering options.
@@ -37,11 +40,15 @@ pub struct RenderOptions {
     pub hidden: Vec<NodeId>,
     /// Draw template layers dimmed (50%).
     pub dim_templates: bool,
+    /// Soft proof / separations preview (see [`proof`]).
+    pub proof: Option<proof::ProofSetup>,
+    /// Overprint Preview (see [`proof`] for what overprints).
+    pub overprint_preview: bool,
 }
 
 impl Default for RenderOptions {
     fn default() -> Self {
-        Self { outline: false, background: None, artboards: false, hidden: vec![], dim_templates: true }
+        Self { outline: false, background: None, artboards: false, hidden: vec![], dim_templates: true, proof: None, overprint_preview: false }
     }
 }
 
@@ -185,6 +192,8 @@ impl Renderer {
     /// Render `doc` into a `width`×`height` image using `view` (document → pixel transform).
     pub fn render(&mut self, doc: &Document, width: u32, height: u32, view: Affine, opts: &RenderOptions) -> Rendered {
         let start = now();
+        let prepared = proof::prepare(doc, opts);
+        let doc: &Document = &prepared;
         let w = width.clamp(1, u16::MAX as u32) as u16;
         let h = height.clamp(1, u16::MAX as u32) as u16;
         // Raster filters (drop shadow, glows, blur) need the single-threaded pipeline.
@@ -222,8 +231,10 @@ impl Renderer {
             }
         }
         self.stamp += 1;
-        for layer in &doc.layers {
-            self.draw_arc(&mut ctx, &frame, layer);
+        if !self.draw_pattern_edit(&mut ctx, &frame) {
+            for layer in &doc.layers {
+                self.draw_arc(&mut ctx, &frame, layer);
+            }
         }
         // Drop cache entries not seen for a few frames.
         let g = self.stamp;
@@ -238,8 +249,10 @@ impl Renderer {
         } else {
             self.ctx = Some(ctx);
         }
+        let mut pixels = pm.data_as_u8_slice().to_vec();
+        proof::post(&mut pixels, opts);
         self.stats.micros = now().saturating_sub(start);
-        Rendered { width: w as u32, height: h as u32, pixels: pm.data_as_u8_slice().to_vec() }
+        Rendered { width: w as u32, height: h as u32, pixels }
     }
 
     /// Render one artboard (or any document rect) at `scale` pixels per point, transparent or on white.
@@ -433,7 +446,7 @@ impl Renderer {
                     self.draw_node(ctx, f, &art, true);
                 }
             }
-            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) => self.draw_live_node(ctx, f, n),
+            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) | NodeKind::Repeat(_) => self.draw_live_node(ctx, f, n),
         }
         self.stats.drawn += 1;
         for _ in 0..layers {
@@ -686,14 +699,26 @@ fn painted_items(n: &Node) -> usize {
         .max(if n.appearance.items.iter().any(|i| matches!(i, AppearanceItem::Fill(f) if f.visible && !matches!(f.paint, drawcraft_color::Paint::Solid { .. } | drawcraft_color::Paint::None)) || matches!(i, AppearanceItem::Stroke(s) if s.visible && !matches!(s.paint, drawcraft_color::Paint::Solid { .. } | drawcraft_color::Paint::None))) { 2 } else { 0 })
 }
 
+/// Preferred rasterizer thread count set by the app (Preferences → Performance); negative = automatic.
+static THREADS_OVERRIDE: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);
+
+/// Override the worker-thread count used by renderers created from now on (`None` = automatic).
+pub fn set_default_threads(n: Option<u16>) {
+    THREADS_OVERRIDE.store(n.map_or(-1, i32::from), std::sync::atomic::Ordering::Relaxed);
+}
+
 /// Rasterizer worker threads: 0 on wasm; otherwise up to 4 (vello's sweet spot), leaving a core free.
-fn default_threads() -> u16 {
+pub fn default_threads() -> u16 {
     #[cfg(target_arch = "wasm32")]
     {
         0
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
+        let o = THREADS_OVERRIDE.load(std::sync::atomic::Ordering::Relaxed);
+        if o >= 0 {
+            return o.min(64) as u16;
+        }
         if std::env::var_os("DRAWCRAFT_RENDER_THREADS").is_some() {
             return std::env::var("DRAWCRAFT_RENDER_THREADS").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
         }

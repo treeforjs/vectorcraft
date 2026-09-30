@@ -9,6 +9,7 @@ pub mod appearance;
 pub mod hit;
 pub mod live;
 pub mod node;
+pub mod pattern;
 pub mod selection;
 pub mod text;
 
@@ -20,6 +21,7 @@ pub use drawcraft_color as color;
 pub use drawcraft_geom as geom;
 pub use hit::{Hit, HitKind};
 pub use live::{BlendOrientation, BlendSpacing, BlendSpec, EnvelopeKind, GradientMesh, MeshPoint};
+pub use pattern::{Overlap, PatternDef, PatternEdit, RepeatKind, RepeatSpec, TileType};
 pub use node::{ImageObject, LAYER_COLORS, LayerColor, LiveShape, Node, NodeId, NodeKind};
 pub use selection::{AnchorRef, Selection};
 pub use text::{CharStyle, Justify, ParaStyle, TextKind, TextObject, TextRun};
@@ -263,6 +265,12 @@ pub struct Document {
     pub raster_effects_ppi: f64,
     #[serde(default)]
     pub images: BTreeMap<String, ImageBlob>,
+    /// Pattern swatch definitions (Object → Pattern).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub patterns: Vec<PatternDef>,
+    /// Pattern editing mode, while active.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pattern_edit: Option<PatternEdit>,
     next_id: u64,
     /// Foreign data preserved on round-trip.
     #[serde(default, skip_serializing_if = "serde_json::Map::is_empty")]
@@ -300,6 +308,8 @@ impl Document {
             grid: GridPrefs::default(),
             raster_effects_ppi: 72.0,
             images: BTreeMap::new(),
+            patterns: vec![],
+            pattern_edit: None,
             next_id: 1,
             unknown: Default::default(),
         };
@@ -518,6 +528,12 @@ impl Document {
     }
     pub fn next_artboard_id(&self) -> u32 {
         self.artboards.iter().map(|a| a.id).max().unwrap_or(0) + 1
+    }
+    pub fn pattern(&self, name: &str) -> Option<&PatternDef> {
+        self.patterns.iter().find(|p| p.name == name)
+    }
+    pub fn pattern_mut(&mut self, name: &str) -> Option<&mut PatternDef> {
+        self.patterns.iter_mut().find(|p| p.name == name)
     }
     pub fn swatch(&self, name: &str) -> Option<&Swatch> {
         self.swatches.iter().chain(self.swatch_groups.iter().flat_map(|g| g.swatches.iter())).find(|s| s.name == name)

@@ -321,3 +321,22 @@ fn commands_are_listed_with_params() {
         assert!(cmds.iter().any(|c| c["id"] == id), "{id}");
     }
 }
+
+#[test]
+fn type_tool_state_does_not_leak_across_documents() {
+    let mut s = session();
+    let v = ViewInfo::default();
+    s.select_tool("type", v).unwrap();
+    click(&mut s, 200.0, 200.0);
+    let id = s.doc().unwrap().selection.objects[0];
+    s.tool_text("First", v).unwrap();
+    // A second document whose first object reuses the same id.
+    s.execute("file.new", &json!({"width": 800, "height": 600})).unwrap();
+    let id2 = text(&mut s, "Other");
+    assert!(!s.tool_wants_text(), "switching documents ends the edit");
+    s.tool_text("XYZ", v).unwrap();
+    assert_eq!(obj(&s, id2).plain_text(), "Other");
+    s.set_active(0);
+    assert_eq!(obj(&s, id).plain_text(), "First");
+    assert!(!s.in_interaction());
+}

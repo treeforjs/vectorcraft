@@ -63,6 +63,10 @@ pub fn hit_test(doc: &Document, p: Point, opt: HitOptions) -> Option<Hit> {
         if let NodeKind::Layer { template: true, .. } = layer.kind {
             continue;
         }
+        // Pattern editing mode: only the tile art is editable.
+        if doc.pattern_edit.as_ref().is_some_and(|e| e.layer != layer.id) {
+            continue;
+        }
         chain.push(layer.id);
         if let Some(h) = hit_children(layer, p, opt, &mut chain) {
             return Some(h);
@@ -133,6 +137,7 @@ fn hit_leaf(n: &Node, p: Point, opt: HitOptions) -> Option<HitKind> {
         NodeKind::Text(_) | NodeKind::Image(_) | NodeKind::SymbolInstance { .. } | NodeKind::Blend { .. } | NodeKind::Envelope { .. } => {
             n.geometric_bounds().filter(|b| b.inflate(opt.tol, opt.tol).contains(p)).map(|_| HitKind::Bounds)
         }
+        NodeKind::Repeat(r) => r.expand().iter().find_map(|g| hit_any(g, p, opt)),
         NodeKind::Mesh(m) => {
             let bp = m.outline().to_bezpath();
             if stroke_contains(&bp, 0.0, opt.tol, p) {
@@ -144,12 +149,24 @@ fn hit_leaf(n: &Node, p: Point, opt: HitOptions) -> Option<HitKind> {
     }
 }
 
+/// Hit anywhere in an evaluated subtree (groups recurse; leaves use [`hit_leaf`]).
+fn hit_any(n: &Node, p: Point, opt: HitOptions) -> Option<HitKind> {
+    match &n.kind {
+        NodeKind::Group { children, .. } => children.iter().rev().find_map(|c| hit_any(c, p, opt)),
+        _ => hit_leaf(n, p, opt),
+    }
+}
+
 /// Objects (children of layers, or of `scope` in isolation mode) touched by a marquee rect.
 pub fn marquee(doc: &Document, r: Rect, scope: Option<NodeId>, leaves: bool) -> Vec<NodeId> {
     let mut out = Vec::new();
     let tops: Vec<&std::sync::Arc<Node>> = match scope.and_then(|s| doc.node(s)) {
         Some(s) => s.children().map(|c| c.iter().collect()).unwrap_or_default(),
-        None => doc.layers.iter().filter(|l| l.visible && !l.locked).flat_map(|l| l.children().into_iter().flatten()).collect(),
+        None => doc
+            .layers
+            .iter()
+            .filter(|l| l.visible && !l.locked && doc.pattern_edit.as_ref().is_none_or(|e| e.layer == l.id))
+            .flat_map(|l| l.children().into_iter().flatten()).collect(),
     };
     fn touches(n: &Node, r: Rect) -> bool {
         match &n.kind {

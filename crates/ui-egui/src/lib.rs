@@ -17,12 +17,15 @@ pub mod io;
 pub mod menus;
 pub mod palette;
 pub mod panels;
+pub mod prefs_dialog;
 pub mod render_worker;
+pub mod shortcut_editor;
 pub mod shortcuts;
 pub mod state;
 pub mod theme;
 pub mod toolbar;
 pub mod widgets;
+pub mod workspaces;
 
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
@@ -330,6 +333,8 @@ impl DrawcraftApp {
         }
         self.last_time = now;
         self.sync_views();
+        shortcut_editor::sync(&self.ui);
+        prefs_dialog::apply_runtime(self, ctx);
         self.drain_control(ctx);
         if !self.synthetic.is_empty() {
             ctx.request_repaint();

@@ -281,7 +281,7 @@ impl Exporter<'_> {
                 }
             }
             Paint::Pattern { .. } => {
-                self.warn("pattern fills are exported as mid-grey");
+                self.warn("pattern strokes (and missing patterns) are exported as mid-grey");
                 Some(rgb::Color::new(128, 128, 128).into())
             }
         }
@@ -377,7 +377,7 @@ impl Exporter<'_> {
                 }
             }
             // Live blends/envelopes/meshes export their evaluated (expanded) form.
-            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) => {
+            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) | NodeKind::Repeat(_) => {
                 let g = drawcraft_doc::live::expand_deep(n, None);
                 for c in g.children().into_iter().flatten() {
                     self.node(s, c, page, false);
@@ -400,6 +400,24 @@ impl Exporter<'_> {
                     }
                     if !fl.effects.is_empty() {
                         self.warn("live effects are not exported to PDF yet");
+                    }
+                    // Pattern fills: the tile instances covering the shape, clipped to it.
+                    let doc = self.doc;
+                    if let Paint::Pattern { pattern, xf } = &fl.paint
+                        && let Some(def) = doc.pattern(pattern)
+                    {
+                        s.push_clip_path(&path, &rule(r));
+                        if fl.opacity < 1.0 {
+                            s.push_opacity(norm(fl.opacity));
+                        }
+                        for inst in def.instances_in(*xf, bounds) {
+                            self.node(s, &inst, bounds, true);
+                        }
+                        if fl.opacity < 1.0 {
+                            s.pop();
+                        }
+                        s.pop();
+                        continue;
                     }
                     let Some(paint) = self.paint(&fl.paint, bounds) else { continue };
                     let bl = fl.blend != BlendMode::Normal;

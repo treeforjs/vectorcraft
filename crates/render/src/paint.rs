@@ -13,7 +13,7 @@ fn color(c: &drawcraft_color::Color, alpha: f32) -> peniko::Color {
 }
 
 /// Set the context paint. Returns false if nothing should be drawn.
-pub fn set_paint(ctx: &mut RenderContext, p: &Paint, bounds: Rect, _doc: &Document) -> bool {
+pub fn set_paint(ctx: &mut RenderContext, p: &Paint, bounds: Rect, doc: &Document) -> bool {
     match p {
         Paint::None => false,
         Paint::Solid { color: c, .. } => {
@@ -50,11 +50,7 @@ pub fn set_paint(ctx: &mut RenderContext, p: &Paint, bounds: Rect, _doc: &Docume
             ctx.set_paint(grad);
             true
         }
-        Paint::Pattern { .. } => {
-            // Patterns render as a neutral mid-grey until pattern swatches land (M10.5).
-            ctx.set_paint(peniko::Color::from_rgba8(128, 128, 128, 255));
-            true
-        }
+        Paint::Pattern { pattern, xf } => crate::pattern::set_pattern_paint(ctx, pattern, *xf, doc),
     }
 }
 

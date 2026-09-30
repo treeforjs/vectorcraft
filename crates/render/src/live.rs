@@ -129,7 +129,7 @@ impl Renderer {
     pub(crate) fn draw_live_body(&mut self, ctx: &mut RenderContext, f: &Frame, a: &Arc<Node>, cache: bool) {
         match &a.kind {
             NodeKind::Mesh(m) => self.draw_mesh(ctx, f, a, m, cache),
-            NodeKind::Blend { .. } | NodeKind::Envelope { .. } => {
+            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Repeat(_) => {
                 let items = self.live_expanded(a, cache);
                 for c in items.iter() {
                     self.draw_arc(ctx, f, c);

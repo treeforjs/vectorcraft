@@ -1320,7 +1320,7 @@ fn map_node(n: &Node, f: &dyn Fn(Point) -> Point, piece: f64, outline: Outliner)
             }
         }
         NodeKind::Mesh(m) => m.map(f),
-        NodeKind::Blend { .. } | NodeKind::Envelope { .. } => {
+        NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Repeat(_) => {
             let g = expanded_group(n, outline);
             return map_node(&g, f, piece, outline);
         }
@@ -1373,7 +1373,7 @@ pub fn envelope_bounds(content: &[Arc<Node>], kind: &EnvelopeKind) -> Option<Rec
 
 /// Is this one of the live kinds?
 pub fn is_live(n: &Node) -> bool {
-    matches!(n.kind, NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_))
+    matches!(n.kind, NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) | NodeKind::Repeat(_))
 }
 
 /// Mesh tessellation as filled quad paths (no stroke), `n`×`n` per patch.
@@ -1401,6 +1401,7 @@ pub fn expand_live_with(n: &Node, outline: Outliner) -> Vec<Node> {
         NodeKind::Blend { children, spec } => blend_expand(children, spec),
         NodeKind::Envelope { content, kind, fidelity, .. } => envelope_expand(content, kind, *fidelity, outline),
         NodeKind::Mesh(m) => mesh_quad_nodes(m, 8),
+        NodeKind::Repeat(r) => r.expand(),
         _ => vec![n.clone()],
     }
 }

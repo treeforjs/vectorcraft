@@ -39,13 +39,13 @@ impl Session {
         if self.tool.id() == id {
             return Ok(());
         }
-        let acts = self.with_cx(view, |t, cx| t.deactivate(cx));
+        let acts = self.with_tool_cx(view, |t, cx| t.deactivate(cx));
         self.apply_actions(acts)?;
         self.tool = drawcraft_tools::create(id);
         Ok(())
     }
 
-    fn with_cx<R>(&mut self, view: ViewInfo, f: impl FnOnce(&mut dyn drawcraft_tools::Tool, &ToolContext) -> R) -> R
+    pub(crate) fn with_tool_cx<R>(&mut self, view: ViewInfo, f: impl FnOnce(&mut dyn drawcraft_tools::Tool, &ToolContext) -> R) -> R
     where
         R: Default,
     {
@@ -67,18 +67,18 @@ impl Session {
     /// Feed a pointer event to the active tool. Returns requests for the UI.
     pub fn pointer(&mut self, ev: &PointerEvent, view: ViewInfo) -> Result<Vec<UiRequest>> {
         self.last_view = view;
-        let acts = self.with_cx(view, |t, cx| t.pointer(cx, ev));
+        let acts = self.with_tool_cx(view, |t, cx| t.pointer(cx, ev));
         self.apply_actions(acts)
     }
 
     pub fn tool_key(&mut self, key: ToolKey, mods: Mods, view: ViewInfo) -> Result<Vec<UiRequest>> {
-        let acts = self.with_cx(view, |t, cx| t.key(cx, key, mods));
+        let acts = self.with_tool_cx(view, |t, cx| t.key(cx, key, mods));
         self.apply_actions(acts)
     }
 
     /// Typed text for the active tool (Type tool).
     pub fn tool_text(&mut self, text: &str, view: ViewInfo) -> Result<Vec<UiRequest>> {
-        let acts = self.with_cx(view, |t, cx| t.text_input(cx, text));
+        let acts = self.with_tool_cx(view, |t, cx| t.text_input(cx, text));
         self.apply_actions(acts)
     }
 
@@ -91,11 +91,11 @@ impl Session {
     }
 
     pub fn overlays(&mut self, view: ViewInfo) -> Vec<Overlay> {
-        self.with_cx(view, |t, cx| t.overlays(cx))
+        self.with_tool_cx(view, |t, cx| t.overlays(cx))
     }
 
     pub fn cursor(&mut self, p: Point, mods: Mods, view: ViewInfo) -> Cursor {
-        self.with_cx(view, |t, cx| t.cursor(cx, p, mods))
+        self.with_tool_cx(view, |t, cx| t.cursor(cx, p, mods))
     }
 
     pub fn tool_options(&self) -> Value {
@@ -125,7 +125,7 @@ impl Session {
                 Action::SwitchTool(t) => ui.push(UiRequest::SwitchTool(t)),
                 Action::Notify(what) => {
                     let view = self.last_view;
-                    self.with_cx(view, |t, cx| t.notify(cx, &what));
+                    self.with_tool_cx(view, |t, cx| t.notify(cx, &what));
                 }
             }
         }

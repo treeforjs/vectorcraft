@@ -5,6 +5,7 @@
 #![forbid(unsafe_code)]
 
 pub mod blend;
+pub mod cms;
 pub mod gradient;
 pub mod harmony;
 pub mod swatch;
@@ -47,20 +48,46 @@ impl Color {
         Color::Gray { k }
     }
 
-    /// Display RGB (naive, profile-free conversion; colour management comes later).
+    /// Display (sRGB) colour through the active colour settings ([`cms::active`]): RGB is
+    /// converted from the working RGB space, CMYK through the working CMYK profile (relative
+    /// colorimetric). Grey is ink percentage (0 = white).
     pub fn to_rgb(&self) -> [f32; 3] {
         match *self {
-            Color::Rgb { r, g, b } => [r, g, b],
-            Color::Cmyk { c, m, y, k } => [(1.0 - c) * (1.0 - k), (1.0 - m) * (1.0 - k), (1.0 - y) * (1.0 - k)],
+            Color::Rgb { r, g, b } if cms::rgb_is_srgb() => [r, g, b],
+            Color::Cmyk { c, m, y, k } if cms::cmyk_is_device() => cms::naive_cmyk_to_rgb([c, m, y, k]),
             // Illustrator's Gray is ink percentage: 0 = white, 1 = black.
             Color::Gray { k } => [1.0 - k; 3],
+            _ => cms::active().display_rgb(self),
         }
+    }
+    /// Profile-free display RGB (`(1−c)(1−k)` …), the pre-colour-management formula.
+    pub fn to_rgb_uncalibrated(&self) -> [f32; 3] {
+        match *self {
+            Color::Rgb { r, g, b } => [r, g, b],
+            Color::Cmyk { c, m, y, k } => cms::naive_cmyk_to_rgb([c, m, y, k]),
+            Color::Gray { k } => [1.0 - k; 3],
+        }
+    }
+    /// CIE Lab (D50) through the active colour settings.
+    pub fn to_lab(&self) -> cms::Lab {
+        cms::active().lab(self)
+    }
+    /// Colour-managed CMYK in the working CMYK space with `intent` (see [`Color::to_cmyk`] for the
+    /// profile-free formula).
+    pub fn to_cmyk_managed(&self, intent: cms::Intent) -> [f32; 4] {
+        cms::active().to_cmyk(self, intent)
+    }
+    /// Gamut warning: true when this colour can't be reproduced in the working CMYK space.
+    pub fn out_of_gamut(&self) -> bool {
+        cms::active().out_of_gamut(self)
     }
     pub fn to_rgba8(&self, alpha: f32) -> [u8; 4] {
         let [r, g, b] = self.to_rgb();
         let q = |v: f32| (v.clamp(0.0, 1.0) * 255.0).round() as u8;
         [q(r), q(g), q(b), q(alpha)]
     }
+    /// Profile-free CMYK (`k = 1 − max(r, g, b)` …), kept for exact legacy numbers; colour-managed
+    /// separations use [`Color::to_cmyk_managed`].
     pub fn to_cmyk(&self) -> [f32; 4] {
         match *self {
             Color::Cmyk { c, m, y, k } => [c, m, y, k],
@@ -170,7 +197,15 @@ pub enum Paint {
     Gradient(Box<GradientPaint>),
     Pattern {
         pattern: String,
+        /// Pattern space → document placement (Transform Patterns edits it; identity = tiles
+        /// anchored at the document origin).
+        #[serde(default, skip_serializing_if = "is_identity")]
+        xf: kurbo::Affine,
     },
+}
+
+fn is_identity(a: &kurbo::Affine) -> bool {
+    *a == kurbo::Affine::IDENTITY
 }
 
 impl Paint {
@@ -192,7 +227,7 @@ impl Paint {
             Paint::Solid { color, swatch: Some(n) } => format!("{n} ({})", color.to_hex()),
             Paint::Solid { color, .. } => color.to_hex(),
             Paint::Gradient(g) => format!("{} gradient", g.gradient.kind.label()),
-            Paint::Pattern { pattern } => format!("pattern {pattern}"),
+            Paint::Pattern { pattern, .. } => format!("pattern {pattern}"),
         }
     }
 }
@@ -220,8 +255,12 @@ mod tests {
 
     #[test]
     fn cmyk_conversions() {
-        assert_eq!(Color::cmyk(0.0, 0.0, 0.0, 1.0).to_hex(), "#000000");
-        assert_eq!(Color::cmyk(1.0, 0.0, 0.0, 0.0).to_hex(), "#00ffff");
+        assert_eq!(Color::cmyk(0.0, 0.0, 0.0, 1.0).to_rgb_uncalibrated(), [0.0, 0.0, 0.0]);
+        assert_eq!(Color::cmyk(1.0, 0.0, 0.0, 0.0).to_rgb_uncalibrated(), [0.0, 1.0, 1.0]);
+        // Managed display: paper is white, 100% cyan is a press cyan (not #00ffff).
+        assert_eq!(Color::cmyk(0.0, 0.0, 0.0, 0.0).to_hex(), "#ffffff");
+        let [r, g, b] = Color::cmyk(1.0, 0.0, 0.0, 0.0).to_rgb();
+        assert!(r < 0.2 && g > 0.5 && b > 0.8, "{r} {g} {b}");
         let k = Color::rgb(1.0, 0.0, 0.0).to_cmyk();
         assert_eq!(k, [0.0, 1.0, 1.0, 0.0]);
     }

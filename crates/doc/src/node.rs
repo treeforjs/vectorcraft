@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::appearance::Appearance;
 use crate::live::{BlendSpec, EnvelopeKind, GradientMesh};
+use crate::pattern::RepeatSpec;
 use crate::text::TextObject;
 
 /// Stable per-document object id. Never reused.
@@ -225,6 +226,8 @@ pub enum NodeKind {
     },
     /// Gradient mesh.
     Mesh(GradientMesh),
+    /// Live Repeat (radial / grid / mirror) of source art.
+    Repeat(RepeatSpec),
 }
 
 fn yes() -> bool {
@@ -291,7 +294,8 @@ impl Node {
             | NodeKind::Group { children, .. }
             | NodeKind::Compound { children, .. }
             | NodeKind::Blend { children, .. }
-            | NodeKind::Envelope { content: children, .. } => Some(children),
+            | NodeKind::Envelope { content: children, .. }
+            | NodeKind::Repeat(RepeatSpec { source: children, .. }) => Some(children),
             _ => None,
         }
     }
@@ -301,7 +305,8 @@ impl Node {
             | NodeKind::Group { children, .. }
             | NodeKind::Compound { children, .. }
             | NodeKind::Blend { children, .. }
-            | NodeKind::Envelope { content: children, .. } => Some(children),
+            | NodeKind::Envelope { content: children, .. }
+            | NodeKind::Repeat(RepeatSpec { source: children, .. }) => Some(children),
             _ => None,
         }
     }
@@ -327,6 +332,7 @@ impl Node {
             NodeKind::Blend { .. } => "Blend",
             NodeKind::Envelope { .. } => "Envelope",
             NodeKind::Mesh(_) => "Mesh",
+            NodeKind::Repeat(r) => r.kind.label(),
         }
     }
     /// Name shown in the Layers panel: explicit name or `<Kind>`.
@@ -373,6 +379,7 @@ impl Node {
             }
             NodeKind::Envelope { content, kind, .. } => crate::live::envelope_bounds(content, kind),
             NodeKind::Mesh(m) => m.bounds(),
+            NodeKind::Repeat(r) => r.bounds(),
         }
     }
     /// Visual bounds (includes stroke outset).
@@ -387,7 +394,7 @@ impl Node {
                 let o = crate::live::max_outset(children);
                 drawcraft_geom::union_opt(b, spec.spine.as_ref().and_then(|s| s.bounds()).map(|r| r.inflate(o, o)))
             }
-            NodeKind::Envelope { content, .. } => {
+            NodeKind::Envelope { content, .. } | NodeKind::Repeat(RepeatSpec { source: content, .. }) => {
                 let o = crate::live::max_outset(content);
                 self.geometric_bounds().map(|b| b.inflate(o, o))
             }
@@ -445,6 +452,7 @@ impl Node {
                 }
             }
             NodeKind::Mesh(m) => m.transform(a),
+            NodeKind::Repeat(r) => r.transform(a, scale_strokes),
         }
     }
     /// Visit this node and all descendants depth first (paint order).

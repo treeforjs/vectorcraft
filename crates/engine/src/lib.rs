@@ -154,21 +154,249 @@ pub enum DrawMode {
     Inside,
 }
 
-/// Application preferences that affect commands.
-#[derive(Clone, Debug)]
+/// Application preferences (Edit → Preferences). Every field is reachable through `prefs.get` /
+/// `prefs.set {key, value}` (camelCase keys, validated against [`cmd::prefscmds::PREF_SPECS`]).
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default, rename_all = "camelCase")]
 pub struct Prefs {
+    // General
     /// Arrow-key nudge distance (General → Keyboard Increment), points.
     pub keyboard_increment: f64,
+    pub constrain_angle: f64,
+    pub corner_radius: f64,
+    pub disable_auto_add_delete: bool,
+    pub use_precise_cursors: bool,
+    pub show_tool_tips: bool,
+    pub anti_aliased_artwork: bool,
+    pub select_same_tint_percent: bool,
+    pub show_home_screen: bool,
+    pub use_preview_bounds: bool,
+    pub display_print_size: bool,
+    pub double_click_to_isolate: bool,
+    pub transform_pattern_tiles: bool,
+    pub scale_corners: bool,
     /// Scale Strokes & Effects.
     pub scale_strokes: bool,
+    pub zoom_with_mouse_wheel: bool,
     /// Offset for Paste / duplicate (Illustrator pastes to the view centre; we offset by this).
     pub paste_offset: f64,
-    pub corner_radius: f64,
+    // Selection & Anchor Display
+    pub selection_tolerance: f64,
+    pub object_selection_by_path_only: bool,
+    pub snap_to_point_tolerance: f64,
+    pub ctrl_click_selects_behind: bool,
+    pub zoom_to_selection: bool,
+    pub move_locked_with_artboard: bool,
+    pub anchor_size: u32,
+    pub handle_style: String,
+    pub highlight_anchors_on_hover: bool,
+    pub show_handles_multiple_anchors: bool,
+    pub hide_corner_widget_above: f64,
+    pub pen_rubber_band: bool,
+    pub curvature_rubber_band: bool,
+    // Type
+    pub type_size_increment: f64,
+    pub tracking_increment: f64,
+    pub baseline_shift_increment: f64,
+    pub show_east_asian_options: bool,
+    pub show_indic_options: bool,
+    pub type_selection_by_path_only: bool,
+    pub font_names_in_english: bool,
+    pub auto_size_area_type: bool,
+    pub font_preview: bool,
+    pub font_preview_size: String,
+    pub recent_fonts_count: u32,
+    pub missing_glyph_protection: bool,
+    pub highlight_alternate_glyphs: bool,
+    pub placeholder_text: bool,
+    // Units
+    pub units_general: String,
+    pub units_stroke: String,
+    pub units_type: String,
+    pub units_asian_type: String,
+    pub numbers_without_units_are_points: bool,
+    pub identify_objects_by: String,
+    // Guides & Grid
+    pub guide_color: String,
+    pub guide_style: String,
+    pub grid_color: String,
+    pub grid_style: String,
+    pub gridline_every: f64,
+    pub grid_subdivisions: u32,
+    pub grids_in_back: bool,
+    pub show_pixel_grid: bool,
+    // Smart Guides
+    pub smart_guide_color: String,
+    pub alignment_guides: bool,
+    pub object_highlighting: bool,
+    pub transform_tools_guides: bool,
+    pub construction_guides: bool,
+    pub construction_angles: String,
+    pub anchor_path_labels: bool,
+    pub measurement_labels: bool,
+    pub spacing_guides: bool,
+    pub snapping_tolerance: f64,
+    // Slices
+    pub show_slice_numbers: bool,
+    pub slice_line_color: String,
+    // Hyphenation
+    pub hyphenation_language: String,
+    pub hyphenation_exceptions: String,
+    // Performance & Storage (Plug-ins & Scratch Disks)
+    pub plugins_folder: String,
+    pub scratch_primary: String,
+    pub scratch_secondary: String,
+    // User Interface
+    pub ui_brightness: String,
+    pub canvas_color: String,
+    pub auto_collapse_icon_panels: bool,
+    pub open_documents_as_tabs: bool,
+    pub large_tabs: bool,
+    pub ui_scaling: f64,
+    pub scale_cursor_with_ui: bool,
+    // Performance
+    pub gpu_performance: bool,
+    pub animated_zoom: bool,
+    pub history_states: u32,
+    pub real_time_drawing: bool,
+    /// Rasterizer worker threads; -1 = automatic.
+    pub render_threads: i32,
+    // File Handling
+    pub background_save: bool,
+    pub background_export: bool,
+    pub autosave_recovery: bool,
+    pub autosave_interval: u32,
+    pub recovery_folder: String,
+    pub recovery_off_for_complex: bool,
+    pub recent_files_count: u32,
+    pub low_res_proxy_eps: bool,
+    pub anti_aliased_bitmaps: bool,
+    pub update_links: String,
+    // Clipboard Handling
+    pub copy_as_svg: bool,
+    pub copy_as_pdf: bool,
+    pub copy_aicb: bool,
+    pub aicb_mode: String,
+    pub paste_text_formatting: String,
+    // Appearance of Black
+    pub black_on_screen: String,
+    pub black_output: String,
+    // Devices
+    pub touch_workspace: bool,
+    pub touch_gestures: bool,
 }
 
 impl Default for Prefs {
     fn default() -> Self {
-        Self { keyboard_increment: 1.0, scale_strokes: true, paste_offset: 10.0, corner_radius: 12.0 }
+        let s = |v: &str| v.to_string();
+        Self {
+            keyboard_increment: 1.0,
+            constrain_angle: 0.0,
+            corner_radius: 12.0,
+            disable_auto_add_delete: false,
+            use_precise_cursors: false,
+            show_tool_tips: true,
+            anti_aliased_artwork: true,
+            select_same_tint_percent: false,
+            show_home_screen: true,
+            use_preview_bounds: false,
+            display_print_size: false,
+            double_click_to_isolate: true,
+            transform_pattern_tiles: false,
+            scale_corners: false,
+            scale_strokes: true,
+            zoom_with_mouse_wheel: false,
+            paste_offset: 10.0,
+            selection_tolerance: 3.0,
+            object_selection_by_path_only: false,
+            snap_to_point_tolerance: 2.0,
+            ctrl_click_selects_behind: true,
+            zoom_to_selection: true,
+            move_locked_with_artboard: false,
+            anchor_size: 3,
+            handle_style: s("solid"),
+            highlight_anchors_on_hover: true,
+            show_handles_multiple_anchors: true,
+            hide_corner_widget_above: 177.0,
+            pen_rubber_band: true,
+            curvature_rubber_band: true,
+            type_size_increment: 2.0,
+            tracking_increment: 20.0,
+            baseline_shift_increment: 2.0,
+            show_east_asian_options: false,
+            show_indic_options: false,
+            type_selection_by_path_only: false,
+            font_names_in_english: true,
+            auto_size_area_type: false,
+            font_preview: true,
+            font_preview_size: s("medium"),
+            recent_fonts_count: 10,
+            missing_glyph_protection: true,
+            highlight_alternate_glyphs: true,
+            placeholder_text: true,
+            units_general: s("points"),
+            units_stroke: s("points"),
+            units_type: s("points"),
+            units_asian_type: s("points"),
+            numbers_without_units_are_points: true,
+            identify_objects_by: s("objectName"),
+            guide_color: s("#4affff"),
+            guide_style: s("lines"),
+            grid_color: s("#c8c8c8"),
+            grid_style: s("lines"),
+            gridline_every: 72.0,
+            grid_subdivisions: 8,
+            grids_in_back: true,
+            show_pixel_grid: true,
+            smart_guide_color: s("#ff4af0"),
+            alignment_guides: true,
+            object_highlighting: true,
+            transform_tools_guides: true,
+            construction_guides: true,
+            construction_angles: s("90° & 45° Angles"),
+            anchor_path_labels: true,
+            measurement_labels: true,
+            spacing_guides: true,
+            snapping_tolerance: 4.0,
+            show_slice_numbers: true,
+            slice_line_color: s("#ff3f3f"),
+            hyphenation_language: s("English: USA"),
+            hyphenation_exceptions: String::new(),
+            plugins_folder: String::new(),
+            scratch_primary: s("Startup"),
+            scratch_secondary: s("None"),
+            ui_brightness: s("mediumDark"),
+            canvas_color: s("matchUi"),
+            auto_collapse_icon_panels: false,
+            open_documents_as_tabs: true,
+            large_tabs: false,
+            ui_scaling: 1.0,
+            scale_cursor_with_ui: false,
+            gpu_performance: true,
+            animated_zoom: true,
+            history_states: 500,
+            real_time_drawing: true,
+            render_threads: -1,
+            background_save: true,
+            background_export: true,
+            autosave_recovery: true,
+            autosave_interval: 2,
+            recovery_folder: String::new(),
+            recovery_off_for_complex: false,
+            recent_files_count: 20,
+            low_res_proxy_eps: false,
+            anti_aliased_bitmaps: false,
+            update_links: s("askWhenModified"),
+            copy_as_svg: true,
+            copy_as_pdf: false,
+            copy_aicb: false,
+            aicb_mode: s("preserveAppearance"),
+            paste_text_formatting: s("keep"),
+            black_on_screen: s("accurate"),
+            black_output: s("accurate"),
+            touch_workspace: true,
+            touch_gestures: true,
+        }
     }
 }
 
@@ -240,8 +468,23 @@ impl Session {
     pub fn doc_mut(&mut self) -> Result<&mut DocState> {
         self.active_mut().ok_or(EngineError::NoDocument)
     }
+    /// Finish the tool's pending work in the current document and give it fresh state, so nothing
+    /// (e.g. uncommitted typing) leaks into the document we are switching to.
+    fn reset_tool_for_doc_switch(&mut self) {
+        if self.active.is_none() {
+            return;
+        }
+        let view = self.last_view;
+        let acts = self.with_tool_cx(view, |t, cx| t.deactivate(cx));
+        let _ = self.apply_actions(acts);
+        let _ = self.cancel_interaction();
+        self.tool = drawcraft_tools::create(self.tool.id());
+    }
     pub fn set_active(&mut self, index: usize) -> bool {
         if index < self.docs.len() {
+            if self.active != Some(index) {
+                self.reset_tool_for_doc_switch();
+            }
             self.active = Some(index);
             true
         } else {
@@ -254,7 +497,10 @@ impl Session {
     }
     /// Add a document and make it active.
     pub fn add_document(&mut self, doc: Document, path: Option<String>) -> usize {
-        self.docs.push(DocState::new(doc, path));
+        self.reset_tool_for_doc_switch();
+        let mut st = DocState::new(doc, path);
+        st.history.limit = self.prefs.history_states as usize;
+        self.docs.push(st);
         let i = self.docs.len() - 1;
         self.active = Some(i);
         i
@@ -263,6 +509,7 @@ impl Session {
         if index >= self.docs.len() {
             return false;
         }
+        self.reset_tool_for_doc_switch();
         self.docs.remove(index);
         self.active = if self.docs.is_empty() { None } else { Some(index.min(self.docs.len() - 1)) };
         true
@@ -422,6 +669,8 @@ mod tests_live;
 mod tests_menucmds;
 #[cfg(test)]
 mod tests_panelcmds;
+#[cfg(test)]
+mod tests_prefs;
 #[cfg(test)]
 mod tests_pathops;
 #[cfg(test)]

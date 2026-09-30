@@ -54,7 +54,15 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("file.exportForScreens", "Export for Screens…", "Cmd+Alt+E", "{path?, scale?}"),
     ("file.documentSetup", "Document Setup…", "Cmd+Alt+P", "{}"),
     ("file.newDialog", "New…", "Cmd+N", "{} opens the New Document dialog"),
-    ("edit.preferences", "Preferences…", "Cmd+K", "{}"),
+    ("edit.preferences", "Preferences…", "Cmd+K", "{category?} open Preferences (engine: prefs.get / prefs.set / prefs.list)"),
+    ("edit.keyboardShortcuts", "Keyboard Shortcuts…", "Cmd+Alt+Shift+K", "{}"),
+    ("shortcuts.set", "Set Keyboard Shortcut", "", "{id: command id or tool:<id>, shortcut: \"Cmd+Shift+K\" | \"\" (none) | null (default), force?}"),
+    ("shortcuts.list", "List Keyboard Shortcuts", "", "{query?} → [{id, label, group, shortcut, default, overridden}]"),
+    ("shortcuts.conflicts", "Keyboard Shortcut Conflicts", "", "{} → [{shortcut, ids}]"),
+    ("shortcuts.reset", "Reset Keyboard Shortcuts", "", "{}"),
+    ("shortcuts.preset", "Keyboard Shortcut Set", "", "{name: \"DrawCraft Defaults\" | \"Illustrator Defaults\"}"),
+    ("shortcuts.export", "Export Keyboard Shortcuts…", "", "{path?}"),
+    ("shortcuts.import", "Import Keyboard Shortcuts…", "", "{path? | data?}"),
     ("view.outline", "Outline", "Cmd+Y", "{} toggle Outline/Preview"),
     ("view.pixelPreview", "Pixel Preview", "Cmd+Alt+Y", "{}"),
     ("view.zoomIn", "Zoom In", "Cmd+=", "{}"),
@@ -84,7 +92,13 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("window.dock", "Panels", "Tab", "{} show/hide all panels"),
     ("window.panel", "Show Panel", "", "{panel: id} e.g. layers, swatches, stroke"),
     ("window.brightness", "UI Brightness", "", "{brightness: dark|mediumDark|mediumLight|light}"),
-    ("window.workspace.reset", "Reset Essentials", "", "{}"),
+    ("window.workspace", "Workspace", "", "{name} switch workspace (Essentials, Essentials Classic, Painting, …)"),
+    ("window.workspace.reset", "Reset Essentials", "", "{} reset the current workspace"),
+    ("window.workspace.new", "New Workspace…", "", "{name?} save the current layout"),
+    ("window.workspace.manage", "Manage Workspaces…", "", "{}"),
+    ("window.workspace.delete", "Delete Workspace", "", "{name}"),
+    ("window.workspace.rename", "Rename Workspace", "", "{name, to}"),
+    ("window.workspace.list", "List Workspaces", "", "{}"),
     ("window.newWindow", "New Window", "", "{}"),
     ("tool.select", "Select Tool", "", "{tool: id} (see tools)"),
     ("tool.setOption", "Tool Option", "", "{key, value}"),
@@ -101,6 +115,9 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
 /// Handle a UI command. `None` = not a UI command (the engine handles it).
 pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Result<Value, String>> {
     if let Some(r) = crate::panels::character::intercept_text_command(app, id) {
+        return Some(r);
+    }
+    if let Some(r) = crate::shortcut_editor::run_command(app, id, p).or_else(|| crate::workspaces::run_command(app, id, p)) {
         return Some(r);
     }
     let s = |k: &str| p.get(k).and_then(Value::as_str).map(str::to_string);
@@ -166,10 +183,7 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
             Ok(Value::Null)
         }
         "edit.preferences" => {
-            app.ui.dialog = Some(crate::state::Dialog::new(
-                "preferences",
-                json!({"keyboardIncrement": app.session.prefs.keyboard_increment, "scaleStrokes": app.session.prefs.scale_strokes}),
-            ));
+            crate::prefs_dialog::open(app, s("category").as_deref());
             Ok(Value::Null)
         }
         "view.outline" => flag(&mut app.ui.view.outline),
@@ -269,16 +283,12 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
         "window.brightness" => match s("brightness").as_deref().and_then(Brightness::parse) {
             Some(b) => {
                 app.ui.brightness = b;
+                app.session.prefs.ui_brightness = b.id().into();
                 app.canvas.key = None;
                 Ok(json!(b.id()))
             }
             None => Err("brightness must be dark|mediumDark|mediumLight|light".into()),
         },
-        "window.workspace.reset" => {
-            let b = app.ui.brightness;
-            app.ui = crate::state::UiState { brightness: b, ..Default::default() };
-            Ok(Value::Null)
-        }
         "window.newWindow" => Err("multiple windows land with M11.5".into()),
         "tool.select" => match s("tool") {
             Some(t) if drawcraft_tools::tool_info(&t).is_some() => {
@@ -370,6 +380,7 @@ pub fn checked(app: &DrawcraftApp, id: &str, p: &Value) -> Option<bool> {
                 _ => app.ui.open_panel.as_deref() == Some(panel),
             }
         }
+        "window.workspace" => p.get("name").and_then(Value::as_str) == Some(app.ui.workspace.as_str()),
         "window.brightness" => p.get("brightness").and_then(Value::as_str).and_then(Brightness::parse) == Some(app.ui.brightness),
         "file.documentColorMode" => {
             let cmyk = app.session.active().is_some_and(|d| d.doc.color_mode == drawcraft_engine::doc::ColorMode::Cmyk);
@@ -384,6 +395,7 @@ pub fn dynamic_label(app: &DrawcraftApp, id: &str, label: &str) -> String {
     let v = &app.ui.view;
     match id {
         "view.outline" => if v.outline { "Preview" } else { "Outline" }.into(),
+        "window.workspace.reset" => format!("Reset {}", app.ui.workspace),
         "view.edges" => if v.edges { "Hide Edges" } else { "Show Edges" }.into(),
         "view.artboards" => if v.artboards { "Hide Artboards" } else { "Show Artboards" }.into(),
         "view.rulers" => if v.rulers { "Hide Rulers" } else { "Show Rulers" }.into(),
@@ -398,11 +410,9 @@ pub fn dynamic_label(app: &DrawcraftApp, id: &str, label: &str) -> String {
     }
 }
 
+/// Effective shortcut of a command: the user's override (Edit → Keyboard Shortcuts) or the default.
 pub fn shortcut_of(id: &str) -> Option<&'static str> {
-    if let Some(c) = drawcraft_engine::find_command(id) {
-        return c.shortcut;
-    }
-    UI_COMMANDS.iter().find(|c| c.0 == id).map(|c| c.2).filter(|s| !s.is_empty())
+    crate::shortcut_editor::command_shortcut(id)
 }
 
 /// Is a command currently enabled?
@@ -538,7 +548,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 todos("Color Settings…", "Cmd+Shift+K"),
                 todo("Assign Profile…"),
                 Sep,
-                todos("Keyboard Shortcuts…", "Cmd+Alt+Shift+K"),
+                c("Keyboard Shortcuts…", "edit.keyboardShortcuts"),
                 c("Preferences…", "edit.preferences"),
             ],
         ),
@@ -893,17 +903,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
             vec![
                 c("New Window", "window.newWindow"),
                 sub("Arrange", vec![todo("Cascade"), todo("Tile"), todo("Float in Window"), todo("Consolidate All Windows")]),
-                sub(
-                    "Workspace",
-                    vec![
-                        todo("Essentials"),
-                        todo("Essentials Classic"),
-                        todo("Painting"),
-                        todo("Typography"),
-                        Sep,
-                        c("Reset Essentials", "window.workspace.reset"),
-                    ],
-                ),
+                sub("Workspace", crate::workspaces::menu_items()),
                 Sep,
                 c("Control", "window.control"),
                 c("Contextual Task Bar", "window.taskBar"),

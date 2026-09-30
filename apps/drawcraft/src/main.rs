@@ -68,6 +68,7 @@ fn load_prefs(app: &mut DrawcraftApp) {
     {
         app.ui = ui.sanitized();
     }
+    drawcraft_ui_egui::prefs_dialog::restore(app);
 }
 
 fn save_prefs(app: &DrawcraftApp) {
@@ -76,7 +77,9 @@ fn save_prefs(app: &DrawcraftApp) {
     }
     if let Some(p) = prefs_path() {
         let _ = std::fs::create_dir_all(p.parent().unwrap_or(std::path::Path::new(".")));
-        if let Ok(bytes) = serde_json::to_vec_pretty(&app.ui) {
+        let mut ui = app.ui.clone();
+        ui.engine_prefs = app.session.prefs.to_json();
+        if let Ok(bytes) = serde_json::to_vec_pretty(&ui) {
             let _ = std::fs::write(p, bytes);
         }
     }

@@ -110,6 +110,7 @@ fn title(kind: &str) -> &'static str {
         "splitIntoGrid" => "Split Into Grid",
         "documentSetup" => "Document Setup",
         "preferences" => "Preferences",
+        "shortcuts" => "Keyboard Shortcuts",
         "artboardOptions" => "Artboard Options",
         "allTools" => "All Tools",
         "exportForScreens" => "Export for Screens",
@@ -121,6 +122,12 @@ fn title(kind: &str) -> &'static str {
 /// Apply the open dialog (OK).
 pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
     let Some(d) = app.ui.dialog.clone() else { return Err("no dialog open".into()) };
+    match d.kind.as_str() {
+        "preferences" => return crate::prefs_dialog::confirm(app),
+        "shortcuts" => return crate::shortcut_editor::confirm(app),
+        "newWorkspace" | "manageWorkspaces" => return crate::workspaces::confirm(app),
+        _ => {}
+    }
     let copy = d.bool("copy");
     if d.kind == "recolor" {
         let map = recolor_map(&d);
@@ -206,11 +213,6 @@ pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
         "simplify" => app.run("object.path.simplify", json!({"tolerance": d.f64("tolerance", 1.0)})),
         "splitIntoGrid" => app.run("object.path.splitIntoGrid", json!({"rows": d.f64("rows", 2.0), "columns": d.f64("columns", 2.0), "gutter": d.f64("gutter", 12.0)})),
         "documentSetup" => app.run("document.setUnits", json!({"units": d.str("units")})),
-        "preferences" => {
-            app.session.prefs.keyboard_increment = d.f64("keyboardIncrement", 1.0).max(0.001);
-            app.session.prefs.scale_strokes = d.bool("scaleStrokes");
-            Ok(Value::Null)
-        }
         _ => Ok(Value::Null),
     };
     app.ui.dialog = None;
@@ -256,6 +258,12 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
         app.ui.about = open;
     }
     let Some(mut d) = app.ui.dialog.clone() else { return };
+    match d.kind.as_str() {
+        "preferences" => return crate::prefs_dialog::show(app, ctx),
+        "shortcuts" => return crate::shortcut_editor::show(app, ctx),
+        "newWorkspace" | "manageWorkspaces" => return crate::workspaces::show(app, ctx),
+        _ => {}
+    }
     let t = Tokens::get(ctx);
     let mut ok = false;
     let mut cancel = false;
@@ -330,9 +338,6 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
                             check(ui, &mut d, "uniform", "Uniform");
                         }
                         check(ui, &mut d, "copy", "Copy (make a transformed copy)");
-                    }
-                    if d.kind == "preferences" {
-                        check(ui, &mut d, "scaleStrokes", "Scale Strokes & Effects");
                     }
                 }
             }

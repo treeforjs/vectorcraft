@@ -29,6 +29,8 @@ pub(crate) fn export(doc: &Document, opts: &ExportOptions) -> String {
         used_ids: HashSet::new(),
         names: HashMap::new(),
         depth: 1,
+        patterns: HashMap::new(),
+        pattern_nest: 0,
     };
     w.assign_name_ids();
     for l in &doc.layers {
@@ -83,6 +85,9 @@ struct Writer<'a> {
     used_ids: HashSet<String>,
     names: HashMap<NodeId, String>,
     depth: usize,
+    /// `<pattern>` def ids by pattern name + placement.
+    patterns: HashMap<String, String>,
+    pattern_nest: u32,
 }
 
 pub(crate) fn blend_css(b: BlendMode) -> &'static str {
@@ -258,10 +263,55 @@ impl Writer<'_> {
 
     fn paint(&mut self, p: &Paint, bounds: Option<Rect>) -> String {
         match p {
-            Paint::None | Paint::Pattern { .. } => "none".into(),
+            Paint::None => "none".into(),
+            Paint::Pattern { pattern, xf } => match self.pattern_def(pattern, *xf) {
+                Some(id) => format!("url(#{id})"),
+                None => "none".into(),
+            },
             Paint::Solid { color, .. } => color.to_hex(),
             Paint::Gradient(g) => format!("url(#{})", self.gradient_def(g, bounds.unwrap_or(Rect::new(0.0, 0.0, 1.0, 1.0)))),
         }
+    }
+
+    /// A `<pattern>` def for pattern `name` placed by `xf`: one period (super-tile) of the tiling,
+    /// with every instance that reaches into it.
+    fn pattern_def(&mut self, name: &str, xf: Affine) -> Option<String> {
+        let doc = self.doc;
+        let def = doc.pattern(name)?;
+        let m = self.xf * xf;
+        let key = format!("{name}|{:?}", m.as_coeffs());
+        if let Some(id) = self.patterns.get(&key) {
+            return Some(id.clone());
+        }
+        if self.pattern_nest > 4 {
+            return None;
+        }
+        let id = self.fresh_id("pattern");
+        self.patterns.insert(key, id.clone());
+        let (pw, ph) = def.period();
+        let (saved_body, saved_xf, saved_depth) = (std::mem::take(&mut self.body), self.xf, self.depth);
+        self.depth = 3;
+        self.pattern_nest += 1;
+        for o in def.offsets_covering(Rect::new(0.0, 0.0, pw, ph)) {
+            self.xf = def.instance_xf(o);
+            for a in &def.art {
+                self.node(a);
+            }
+        }
+        self.pattern_nest -= 1;
+        let content = std::mem::replace(&mut self.body, saved_body);
+        self.xf = saved_xf;
+        self.depth = saved_depth;
+        let head = format!(
+            "<pattern id=\"{id}\" patternUnits=\"userSpaceOnUse\" width=\"{}\" height=\"{}\" patternTransform=\"{}\">",
+            self.num(pw),
+            self.num(ph),
+            self.matrix(m)
+        );
+        self.def(1, &head);
+        self.defs.push_str(&content);
+        self.def(1, "</pattern>");
+        Some(id)
     }
 
     fn gradient_def(&mut self, g: &GradientPaint, bounds: Rect) -> String {
@@ -486,7 +536,7 @@ impl Writer<'_> {
                 out.push((self.path_d(&p, self.xf), FillRule::NonZero));
             }
             NodeKind::Text(_) | NodeKind::SymbolInstance { .. } => {}
-            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) => {
+            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) | NodeKind::Repeat(_) => {
                 let g = drawcraft_doc::live::expand_deep(n, None);
                 self.clip_shapes(&g, out);
             }
@@ -585,7 +635,7 @@ impl Writer<'_> {
                 self.xf = saved;
             }
             // Live blends/envelopes/meshes export their evaluated (expanded) form.
-            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) => {
+            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) | NodeKind::Repeat(_) => {
                 let g = drawcraft_doc::live::expand_deep(n, None);
                 self.node(&g);
             }

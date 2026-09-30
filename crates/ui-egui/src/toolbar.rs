@@ -48,7 +48,7 @@ pub const BASIC: &[(&str, &[&[&str]])] = &[
 ];
 
 fn tip(t: &ToolInfo) -> String {
-    match t.shortcut {
+    match crate::shortcut_editor::tool_shortcut(t.id) {
         Some(s) => format!("{} ({})", t.label, s),
         None => t.label.to_string(),
     }
@@ -285,7 +285,7 @@ fn flyout(app: &mut DrawcraftApp, ctx: &egui::Context) {
                             egui::FontId::proportional(13.0),
                             color,
                         );
-                        if let Some(sc) = tool.shortcut {
+                        if let Some(sc) = crate::shortcut_editor::tool_shortcut(tool.id) {
                             ui.painter().text(
                                 r.right_center() - vec2(18.0, 0.0),
                                 egui::Align2::RIGHT_CENTER,

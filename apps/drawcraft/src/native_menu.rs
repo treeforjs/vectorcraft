@@ -20,6 +20,8 @@ pub struct NativeMenu {
     _menu: Menu,
     items: HashMap<String, (String, Value, Handle, String)>,
     last_refresh: f64,
+    /// Shortcut-override / workspace-list generation the menu was built for.
+    generation: u64,
 }
 
 /// Accelerator for a shortcut like "Cmd+Shift+]" (modifier-less shortcuts stay in the app so they
@@ -33,6 +35,9 @@ fn accel(sc: &str) -> Option<Accelerator> {
 
 impl NativeMenu {
     pub fn install(app: &mut DrawcraftApp) -> Self {
+        // Accelerators come from `shortcut_of`, which honours the user's overrides.
+        drawcraft_ui_egui::shortcut_editor::sync(&app.ui);
+        let generation = drawcraft_ui_egui::shortcut_editor::GENERATION.load(std::sync::atomic::Ordering::Relaxed);
         let menu = Menu::new();
         let mut items = HashMap::new();
         let mut counter = 0usize;
@@ -48,7 +53,7 @@ impl NativeMenu {
             .filter(|(_, p, _, c)| (p.is_null() || p.as_object().is_some_and(|o| o.is_empty())) && menus::shortcut_of(c).and_then(accel).is_some())
             .map(|(_, _, _, c)| c.clone())
             .collect();
-        Self { _menu: menu, items, last_refresh: 0.0 }
+        Self { _menu: menu, items, last_refresh: 0.0, generation }
     }
 
     /// Dispatch clicked items and refresh state.
@@ -64,6 +69,11 @@ impl NativeMenu {
             return;
         }
         self.last_refresh = now;
+        // Shortcuts edited or workspaces added: rebuild so accelerators and lists are current.
+        if drawcraft_ui_egui::shortcut_editor::GENERATION.load(std::sync::atomic::Ordering::Relaxed) != self.generation {
+            *self = NativeMenu::install(app);
+            return;
+        }
         for (run, rp, h, cmd) in self.items.values() {
             let null = Value::Null;
             let params = if run == cmd { rp } else { &null };
@@ -83,6 +93,7 @@ impl NativeMenu {
                             | "view.artboards"
                             | "view.boundingBox"
                             | "view.transparencyGrid"
+                            | "window.workspace.reset"
                     ) {
                         i.set_text(menus::dynamic_label(app, cmd, ""));
                     }

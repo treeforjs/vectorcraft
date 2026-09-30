@@ -35,10 +35,14 @@ pub fn app_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
             let right = egui::Rect::from_min_max(egui::pos2(full.right() - 340.0, full.top()), full.right_bottom());
             let mut rui = ui.new_child(egui::UiBuilder::new().max_rect(right).layout(egui::Layout::right_to_left(egui::Align::Center)));
             let ui = &mut rui;
-            let (wr, wresp) = ui.allocate_exact_size(vec2(112.0, 24.0), Sense::click());
+            // Workspace switcher: shows the current workspace, opens Window → Workspace.
+            let ws = ui.painter().layout_no_wrap(app.ui.workspace.clone(), egui::FontId::proportional(12.0), t.text);
+            let (wr, wresp) = ui.allocate_exact_size(vec2((ws.size().x + 36.0).clamp(112.0, 190.0), 24.0), Sense::click());
             ui.painter().rect_filled(wr, CornerRadius::same(4), if wresp.hovered() { t.hover } else { t.panel });
-            ui.painter().text(wr.left_center() + vec2(10.0, 0.0), egui::Align2::LEFT_CENTER, "Essentials", egui::FontId::proportional(12.0), t.text);
+            ui.painter().with_clip_rect(wr.shrink2(vec2(4.0, 0.0))).galley(wr.left_center() + vec2(10.0, -ws.size().y / 2.0), ws, t.text);
             icons::paint(ui, "chevron-down", egui::Rect::from_center_size(wr.right_center() - vec2(12.0, 0.0), vec2(12.0, 12.0)), t.text_dim);
+            let wresp = wresp.on_hover_text("Switch workspace");
+            egui::Popup::menu(&wresp).show(|ui| crate::workspaces::popup(app, ui));
             ui.add_space(8.0);
             // Search box → command palette.
             let (r, resp) = ui.allocate_exact_size(vec2(200.0, 24.0), Sense::click());

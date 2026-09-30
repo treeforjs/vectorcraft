@@ -198,6 +198,21 @@ pub struct UiState {
     /// Recording in progress: (set index, action name, journal length when recording started).
     #[serde(skip)]
     pub recording: Option<(usize, String, usize)>,
+    /// Keyboard shortcut overrides: command id or `tool:<id>` → chord ("" = none).
+    #[serde(default)]
+    pub shortcut_overrides: std::collections::BTreeMap<String, String>,
+    /// Name of the shortcut set (preset or "Custom").
+    #[serde(default = "default_shortcut_set")]
+    pub shortcut_set: String,
+    /// Current workspace (Window → Workspace).
+    #[serde(default = "default_workspace")]
+    pub workspace: String,
+    /// User-saved workspaces (New Workspace…).
+    #[serde(default)]
+    pub custom_workspaces: Vec<crate::workspaces::Workspace>,
+    /// Engine preferences (Edit → Preferences), persisted alongside the UI state.
+    #[serde(default)]
+    pub engine_prefs: Value,
 }
 
 impl UiState {
@@ -242,12 +257,25 @@ impl Default for UiState {
             about: false,
             action_sets: crate::panels::actions::default_sets(),
             recording: None,
+            shortcut_overrides: Default::default(),
+            shortcut_set: default_shortcut_set(),
+            workspace: default_workspace(),
+            custom_workspaces: vec![],
+            engine_prefs: Value::Null,
         }
     }
 }
 
 fn yes() -> bool {
     true
+}
+
+fn default_shortcut_set() -> String {
+    crate::shortcut_editor::PRESETS[0].to_string()
+}
+
+fn default_workspace() -> String {
+    crate::workspaces::ESSENTIALS.to_string()
 }
 
 #[cfg(test)]

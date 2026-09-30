@@ -17,6 +17,7 @@ mod paint;
 mod panelcmds;
 mod path;
 mod pathops;
+pub mod prefscmds;
 mod recolor;
 mod select;
 mod textedit;
@@ -143,6 +144,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(panelcmds::specs());
         v.extend(buildcmds::specs());
         v.extend(brushsym::specs());
+        v.extend(prefscmds::specs());
         v
     })
 }

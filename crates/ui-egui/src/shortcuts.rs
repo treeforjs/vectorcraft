@@ -43,15 +43,16 @@ pub fn parse(s: &str) -> Option<KeyboardShortcut> {
     Some(KeyboardShortcut::new(m, key))
 }
 
+/// Every command shortcut in effect (user overrides from Edit → Keyboard Shortcuts win).
 fn all_shortcuts() -> Vec<(KeyboardShortcut, &'static str)> {
     let mut v: Vec<(KeyboardShortcut, &'static str)> = vec![];
     for c in drawcraft_engine::command_specs() {
-        if let Some(sc) = c.shortcut.and_then(parse) {
+        if let Some(sc) = crate::menus::shortcut_of(c.id).and_then(parse) {
             v.push((sc, c.id));
         }
     }
     for c in crate::menus::UI_COMMANDS {
-        if let Some(sc) = parse(c.2) {
+        if let Some(sc) = crate::menus::shortcut_of(c.0).and_then(parse) {
             v.push((sc, c.0));
         }
     }
@@ -64,6 +65,9 @@ fn all_shortcuts() -> Vec<(KeyboardShortcut, &'static str)> {
 
 pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
     if app.ui.dialog.is_some() || app.ui.palette_open {
+        if crate::shortcut_editor::is_recording(app) {
+            return;
+        }
         if ctx.input(|i| i.key_pressed(Key::Escape)) {
             app.ui.dialog = None;
             app.ui.palette_open = false;
@@ -165,39 +169,13 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
         }
         let upper = text.to_uppercase();
         let key = if m.shift && text.chars().all(|c| c.is_alphabetic()) { format!("Shift+{upper}") } else { upper.clone() };
-        match key.as_str() {
-            "X" => {
-                let _ = app.run("paint.toggleActive", json!({}));
-                continue;
-            }
-            "Shift+X" => {
-                let _ = app.run("paint.swap", json!({}));
-                continue;
-            }
-            "D" => {
-                let _ = app.run("paint.default", json!({}));
-                continue;
-            }
-            "/" => {
-                let _ = app.run("paint.none", json!({}));
-                continue;
-            }
-            "Shift+D" => {
-                let _ = app.run("view.drawMode", json!({}));
-                continue;
-            }
-            "F" => {
-                let _ = app.run("view.screenMode", json!({}));
-                continue;
-            }
-            "Shift+F" => {
-                let _ = app.run("view.presentation", json!({}));
-                continue;
-            }
-            _ => {}
+        // Single-key command shortcuts (X, Shift+X, D, /, Shift+D, F, Shift+F by default).
+        if let Some(id) = crate::shortcut_editor::command_for_key(&key).or_else(|| crate::shortcut_editor::command_for_key(&text)) {
+            let _ = app.run(id, json!({}));
+            continue;
         }
-        if let Some(t) = drawcraft_tools::catalog::tool_for_shortcut(&key).or_else(|| drawcraft_tools::catalog::tool_for_shortcut(&text)) {
-            app.select_tool(t.id);
+        if let Some(t) = crate::shortcut_editor::tool_for_key(&key).or_else(|| crate::shortcut_editor::tool_for_key(&text)) {
+            app.select_tool(t);
         }
     }
 }

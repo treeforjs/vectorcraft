@@ -15,13 +15,13 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
     for c in drawcraft_engine::command_specs() {
         let path = c.menu.join(" › ");
         let label = if path.is_empty() { c.label.to_string() } else { format!("{path} › {}", c.label) };
-        items.push((label, c.id.to_string(), c.shortcut.unwrap_or("").to_string()));
+        items.push((label, c.id.to_string(), menus::shortcut_of(c.id).unwrap_or("").to_string()));
     }
     for c in menus::UI_COMMANDS {
-        items.push((c.1.to_string(), c.0.to_string(), c.2.to_string()));
+        items.push((c.1.to_string(), c.0.to_string(), menus::shortcut_of(c.0).unwrap_or("").to_string()));
     }
     for tool in drawcraft_tools::catalog::all_tools() {
-        items.push((tool.label.to_string(), format!("tool:{}", tool.id), tool.shortcut.unwrap_or("").to_string()));
+        items.push((tool.label.to_string(), format!("tool:{}", tool.id), crate::shortcut_editor::tool_shortcut(tool.id).unwrap_or("").to_string()));
     }
     let matches: Vec<&(String, String, String)> = items
         .iter()

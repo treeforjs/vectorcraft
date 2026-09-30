@@ -11,6 +11,7 @@ pub mod bbox;
 pub mod builder;
 pub mod catalog;
 pub mod direct;
+pub mod distort;
 pub mod draw2;
 pub mod guides;
 pub mod meshblend;
@@ -255,6 +256,7 @@ pub fn create(id: &str) -> Box<dyn Tool> {
             .or_else(|| draw2::create(other))
             .or_else(|| xform::create(other))
             .or_else(|| meshblend::create(other))
+            .or_else(|| distort::create(other))
             .unwrap_or_else(|| Box::new(NoopTool(tool_info(other).map(|t| t.id).unwrap_or("selection")))),
     }
 }
