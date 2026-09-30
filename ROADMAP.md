@@ -12,13 +12,14 @@ _Last updated: 2026-09-30._
 |---|---|
 | Infrastructure (engine, command registry, history, render, formats, MCP, web, packaging, tests) | **~90%** |
 | Look & feel vs Illustrator 2026 default workspace (measured) | **~75–80%** |
-| Feature surface vs full Illustrator | **~35–40%** |
-| Estimated time to **checklist parity** (every menu item, tool, panel and dialog functional) | **~200–300 h** |
+| Feature surface vs full Illustrator | **~45–50%** |
+| Estimated time to **checklist parity** (every menu item, tool, panel and dialog functional) | **~170–260 h** |
 | Estimated time to **1:1 feel** (edge cases, modifier nuances, typographic/colour fidelity) | **~500+ h** |
 
 ### Shipped so far
 - **Architecture:** 19+ crates with enforced layering (`cargo xtask layers`). Every action is a command (~400 engine + ~50 UI). Undo is unlimited via structural sharing. `command.batch` runs several commands as one transaction.
 - **Automation:**
+  - Actions panel (record/playback, persisted), generic parameter dialogs for every "…" command.
   - JSON-lines control channel with real egui pointer and keyboard injection.
   - MCP server with 19 tools, which can attach to the running app or run headless.
   - Headless CLI (`drawcraft-cli`).
@@ -39,7 +40,8 @@ _Last updated: 2026-09-30._
 - **Geometry and effects:**
   - Pathfinder (10 exact curve booleans), Offset, Outline Stroke, Simplify, Clean Up, Split Into Grid, Divide Objects Below.
   - Live effects with previewing dialogs: Distort & Transform, Path, Convert to Shape, 15 Warp styles, Round Corners, Scribble, and raster drop shadow, glows and feather.
-- **Colour, type and file workflows:** Recolor Artwork (engine), Edit Colors, Find & Replace, Change Case, Smart Punctuation, Guides, Lock/Hide Above, Transform Each, Rasterize.
+- **Advanced art:** live Blends (steps/distance/smooth colour, spine), Envelope Distort (warp/mesh/top object), Gradient Mesh, Shape Builder, Live Paint, Image Trace (12 presets).
+- **Colour, type and file workflows:** Recolor Artwork (dialog with harmonies), Edit Colors, Find & Replace, Change Case, Smart Punctuation, Guides, Lock/Hide Above, Transform Each, Rasterize.
 - **Formats:**
   - `.drawcraft` (lossless JSON), SVG import/export, PDF export/import (including PDF-compatible `.ai`).
   - PNG, JPEG and WebP export, Export for Screens, Place.
@@ -54,20 +56,20 @@ _Last updated: 2026-09-30._
 | M1 | Selection, transform, layers, MCP | ✅ mostly done (rotated persistent bbox pending) | 3–5 |
 | M2 | Drawing tools + smart guides | ✅ mostly done (Shaper, Pen modifier nuances) | 5–10 |
 | M3 | Paint & appearance (swatches, color, gradient, stroke, appearance, transparency, styles) | 🟡 panels done; opacity masks, freeform gradients pending | 10–15 |
-| M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 system clipboard SVG/PNG interop, EPS/DXF pending | 10–15 |
+| M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 Export for Screens (PNG/JPG/WebP/SVG/PDF × scales) done; system clipboard SVG/PNG interop, EPS/DXF pending | 8–12 |
 | M5 | Performance | 🟡 background render + caches + MT done; dirty-region rendering, GPU backend spike | 10–20 |
-| M6 | Path operations (Pathfinder, Shape Builder, offset…) | 🟡 Shape Builder in progress; large-offset bug open | 5–10 |
+| M6 | Path operations (Pathfinder, Shape Builder, offset…) | ✅ mostly done (Shape Builder edge erase, large-offset bug open) | 3–6 |
 | M7 | Type (point/area/path, editing, styles, OpenType, threading, glyphs) | 🟡 in progress | 20–30 |
-| M8 | Transform & distort (Puppet Warp, Liquify tools, Envelopes, Blends, Perspective Grid) | 🟡 envelopes/blends in progress | 25–40 |
+| M8 | Transform & distort (Puppet Warp, Liquify tools, Envelopes, Blends, Perspective Grid) | 🟡 live Blends + Envelopes (warp/mesh/top object) done; Puppet Warp, Liquify, Perspective Grid pending | 20–30 |
 | M9 | Live effects (+ 3D & Materials) | 🟡 2D effects done; 3D pending | 25–40 |
 | M10 | Brushes, symbols, patterns, Repeat | 🟡 brushes/symbols in progress; patterns, Repeat pending | 15–25 |
 | M11 | Artboards & views (artboard panel/tool done; print tiling, multiple windows, presentation polish) | 🟡 | 10–15 |
-| M12 | Advanced color & art (CMYK/ICC, separations, Gradient Mesh, Live Paint, Image Trace, Graphs) | 🟡 mesh/live paint/trace in progress | 35–55 |
-| M13 | Automation (Actions ✅, variables, scripting, batch) | 🟡 | 10–15 |
+| M12 | Advanced color & art (CMYK/ICC, separations, Gradient Mesh, Live Paint, Image Trace, Graphs) | 🟡 Gradient Mesh, Live Paint, Image Trace (12 presets, 18 ms/1k² image), Recolor Artwork done; CMYK/ICC, separations, Graphs pending | 25–40 |
+| M13 | Automation (Actions ✅ record/playback, persisted; variables, scripting, batch) | 🟡 | 8–12 |
 | M14 | 1.0 polish (preferences, shortcut editor, workspaces, accessibility, packaging for all OSes) | ⬜ | 20–30 |
 | — | Interaction fidelity pass (every tool's modifiers, Properties panel per context, isolation, nuance) | ⬜ | 40–60 |
 | — | Hardening at scale (big-file corpus, fuzzing, cross-platform + browser QA) | 🟡 | 30–50 |
-| | **Total to checklist parity** | | **~200–300** |
+| | **Total to checklist parity** | | **~170–260** |
 
 ## Out of scope (by design or by law)
 - **Native `.ai` private data:** it's undocumented. We read the PDF-compatible part, so Illustrator-only live objects arrive as appearance.
