@@ -21,26 +21,26 @@ pub fn icon_button(ui: &mut Ui, icon: &str, tip: &str, selected: bool, size: f32
     ui.painter().rect_filled(rect, CornerRadius::same(3), bg);
     let pad = (size * 0.2).round();
     icons::paint(ui, icon, rect.shrink(pad), if selected { t.text } else { t.icon });
-    if !tip.is_empty() {
-        resp.on_hover_text(tip)
-    } else {
-        resp
-    }
+    if !tip.is_empty() { resp.on_hover_text(tip) } else { resp }
 }
 
 /// Small flat text button (Quick Actions style).
 pub fn flat_button(ui: &mut Ui, text: &str, width: f32) -> Response {
     let t = Tokens::get(ui.ctx());
     let (rect, resp) = ui.allocate_exact_size(vec2(width, 24.0), Sense::click());
-    let bg = if resp.is_pointer_button_down_on() {
-        t.tool_active
+    let rect = rect.shrink2(vec2(0.0, 0.5));
+    if resp.is_pointer_button_down_on() {
+        ui.painter().rect_filled(rect, CornerRadius::same(2), t.tool_active);
     } else if resp.hovered() {
-        t.hover
-    } else {
-        t.button
-    };
-    ui.painter().rect_filled(rect, CornerRadius::same(4), bg);
-    ui.painter().text(rect.center(), egui::Align2::CENTER_CENTER, text, egui::FontId::proportional(12.0), t.text);
+        ui.painter().rect_filled(rect, CornerRadius::same(2), t.hover);
+    }
+    ui.painter().rect_stroke(
+        rect,
+        CornerRadius::same(2),
+        Stroke::new(1.0, if resp.hovered() { t.text } else { t.button_border }),
+        StrokeKind::Inside,
+    );
+    ui.painter().with_clip_rect(rect).text(rect.center(), egui::Align2::CENTER_CENTER, text, egui::FontId::proportional(12.5), t.text_strong);
     resp
 }
 
@@ -74,7 +74,7 @@ pub fn secondary_button(ui: &mut Ui, text: &str) -> Response {
 pub fn section_header(ui: &mut Ui, text: &str) {
     let t = Tokens::get(ui.ctx());
     ui.add_space(2.0);
-    ui.label(egui::RichText::new(text).font(theme::semibold(12.0)).color(t.text));
+    ui.label(egui::RichText::new(text).size(13.0).color(t.text));
     ui.add_space(2.0);
 }
 
@@ -89,7 +89,7 @@ pub fn divider(ui: &mut Ui) {
 
 pub fn dim_label(ui: &mut Ui, text: &str) -> Response {
     let t = Tokens::get(ui.ctx());
-    ui.label(egui::RichText::new(text).color(t.text_dim).size(11.5))
+    ui.label(egui::RichText::new(text).color(t.text).size(12.5))
 }
 
 /// A recessed numeric field showing `value` (points) in `unit`. Returns the new value (points)
@@ -106,9 +106,18 @@ pub fn num_field(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, value:
     let resp = egui::Frame::NONE
         .fill(t.input)
         .stroke(Stroke::new(1.0, if editing { t.accent } else { t.input_border }))
-        .corner_radius(CornerRadius::same(3))
-        .inner_margin(egui::Margin::symmetric(5, 2))
-        .show(ui, |ui| ui.add(egui::TextEdit::singleline(&mut buf).id(id).frame(egui::Frame::NONE).desired_width(width - 12.0).font(egui::FontId::proportional(12.0)).text_color(t.text)))
+        .corner_radius(CornerRadius::same(2))
+        .inner_margin(egui::Margin::symmetric(6, 4))
+        .show(ui, |ui| {
+            ui.add(
+                egui::TextEdit::singleline(&mut buf)
+                    .id(id)
+                    .frame(egui::Frame::NONE)
+                    .desired_width(width - 14.0)
+                    .font(egui::FontId::proportional(12.5))
+                    .text_color(t.text_strong),
+            )
+        })
         .inner;
     let commit = resp.lost_focus() && buf != shown;
     ui.data_mut(|d| d.insert_temp(id, buf.clone()));
@@ -129,9 +138,18 @@ pub fn plain_field(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, valu
     let resp = egui::Frame::NONE
         .fill(t.input)
         .stroke(Stroke::new(1.0, if editing { t.accent } else { t.input_border }))
-        .corner_radius(CornerRadius::same(3))
-        .inner_margin(egui::Margin::symmetric(5, 2))
-        .show(ui, |ui| ui.add(egui::TextEdit::singleline(&mut buf).id(id).frame(egui::Frame::NONE).desired_width(width - 12.0).font(egui::FontId::proportional(12.0)).text_color(t.text)))
+        .corner_radius(CornerRadius::same(2))
+        .inner_margin(egui::Margin::symmetric(6, 4))
+        .show(ui, |ui| {
+            ui.add(
+                egui::TextEdit::singleline(&mut buf)
+                    .id(id)
+                    .frame(egui::Frame::NONE)
+                    .desired_width(width - 14.0)
+                    .font(egui::FontId::proportional(12.5))
+                    .text_color(t.text_strong),
+            )
+        })
         .inner;
     ui.data_mut(|d| d.insert_temp(id, buf.clone()));
     if resp.lost_focus() && buf != shown {
@@ -235,19 +253,15 @@ pub fn fill_stroke_proxy(ui: &mut Ui, fill: &Paint, stroke: &Paint, fill_active:
 pub fn dropdown(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, current: &str, options: &[&str], width: f32) -> Option<usize> {
     let t = Tokens::get(ui.ctx());
     let mut chosen = None;
-    let resp = egui::Frame::NONE
-        .fill(t.input)
-        .stroke(Stroke::new(1.0, t.input_border))
-        .corner_radius(CornerRadius::same(3))
-        .show(ui, |ui| {
-            egui::ComboBox::from_id_salt(ui.id().with(id)).selected_text(egui::RichText::new(current).size(12.0)).width(width - 4.0).show_ui(ui, |ui| {
-                for (i, o) in options.iter().enumerate() {
-                    if ui.selectable_label(*o == current, *o).clicked() {
-                        chosen = Some(i);
-                    }
+    let resp = egui::Frame::NONE.fill(t.input).stroke(Stroke::new(1.0, t.input_border)).corner_radius(CornerRadius::same(3)).show(ui, |ui| {
+        egui::ComboBox::from_id_salt(ui.id().with(id)).selected_text(egui::RichText::new(current).size(12.0)).width(width - 4.0).show_ui(ui, |ui| {
+            for (i, o) in options.iter().enumerate() {
+                if ui.selectable_label(*o == current, *o).clicked() {
+                    chosen = Some(i);
                 }
-            })
-        });
+            }
+        })
+    });
     let _ = resp;
     chosen
 }

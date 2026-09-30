@@ -59,7 +59,12 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         divider(ui);
         section_header(ui, "Pathfinder");
         ui.horizontal(|ui| {
-            for (icon, tip, op) in [("squares-unite", "Unite", "unite"), ("squares-subtract", "Minus Front", "minusFront"), ("squares-intersect", "Intersect", "intersect"), ("squares-exclude", "Exclude", "exclude")] {
+            for (icon, tip, op) in [
+                ("squares-unite", "Unite", "unite"),
+                ("squares-subtract", "Minus Front", "minusFront"),
+                ("squares-intersect", "Intersect", "intersect"),
+                ("squares-exclude", "Exclude", "exclude"),
+            ] {
                 if widgets::icon_button(ui, icon, tip, false, 28.0).clicked() {
                     app.run(&format!("object.pathfinder.{op}"), json!({})).ok();
                 }

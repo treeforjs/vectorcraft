@@ -15,8 +15,8 @@ pub mod icons;
 pub mod io;
 pub mod menus;
 pub mod palette;
-pub mod render_worker;
 pub mod panels;
+pub mod render_worker;
 pub mod shortcuts;
 pub mod state;
 pub mod theme;
@@ -119,7 +119,14 @@ impl DrawcraftApp {
             ui: UiState::default(),
             views,
             services,
-            canvas: CanvasCache { renderer: drawcraft_render::Renderer::new(), texture: None, key: None, last_ms: 0.0, worker: None, worker_started: false },
+            canvas: CanvasCache {
+                renderer: drawcraft_render::Renderer::new(),
+                texture: None,
+                key: None,
+                last_ms: 0.0,
+                worker: None,
+                worker_started: false,
+            },
             perf: Perf::default(),
             integrated_titlebar: false,
             control_rx: None,
@@ -198,6 +205,7 @@ impl DrawcraftApp {
         {
             *slot = id.to_string();
         }
+        toolbar::remember(self, id);
         self.ui.flyout = None;
     }
 
@@ -268,7 +276,8 @@ impl DrawcraftApp {
     }
 
     fn drain_inbox(&mut self) {
-        let arrived: Vec<(String, Vec<u8>)> = self.services.inbox.as_ref().map(|q| std::mem::take(&mut *q.lock().unwrap_or_else(|e| e.into_inner()))).unwrap_or_default();
+        let arrived: Vec<(String, Vec<u8>)> =
+            self.services.inbox.as_ref().map(|q| std::mem::take(&mut *q.lock().unwrap_or_else(|e| e.into_inner()))).unwrap_or_default();
         for (name, bytes) in arrived {
             if let Err(e) = io::open_bytes(self, &name, &bytes, None) {
                 self.status(format!("Couldn't open {name}: {e}"));
@@ -337,7 +346,11 @@ impl DrawcraftApp {
     /// Inject synthetic events (one press/release step per frame).
     pub fn raw_input_hook(&mut self, raw: &mut egui::RawInput) {
         if !self.synthetic.is_empty() {
-            let n = self.synthetic.iter().position(|e| matches!(e, egui::Event::PointerButton { pressed: false, .. } | egui::Event::Key { pressed: false, .. })).map_or(self.synthetic.len(), |i| i + 1);
+            let n = self
+                .synthetic
+                .iter()
+                .position(|e| matches!(e, egui::Event::PointerButton { pressed: false, .. } | egui::Event::Key { pressed: false, .. }))
+                .map_or(self.synthetic.len(), |i| i + 1);
             raw.events.extend(self.synthetic.drain(..n));
         }
     }
@@ -379,4 +392,3 @@ impl DrawcraftApp {
         let _ = json!(null);
     }
 }
-

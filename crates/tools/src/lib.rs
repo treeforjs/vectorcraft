@@ -11,12 +11,12 @@ pub mod bbox;
 pub mod catalog;
 pub mod direct;
 pub mod draw2;
-pub mod xform;
 pub mod guides;
 pub mod pen;
 pub mod select;
 pub mod shape;
 pub mod text;
+pub mod xform;
 
 use drawcraft_color::Paint;
 use drawcraft_doc::{Document, NodeId, Selection};
@@ -243,7 +243,9 @@ pub fn create(id: &str) -> Box<dyn Tool> {
         "pen" => Box::new(pen::PenTool::default()),
         "type" => Box::new(text::TypeTool::default()),
         "rectangle" | "roundedRectangle" | "ellipse" | "polygon" | "star" | "lineSegment" => Box::new(shape::ShapeTool::new(id)),
-        other => draw2::create(other).or_else(|| xform::create(other)).unwrap_or_else(|| Box::new(NoopTool(tool_info(other).map(|t| t.id).unwrap_or("selection")))),
+        other => draw2::create(other)
+            .or_else(|| xform::create(other))
+            .unwrap_or_else(|| Box::new(NoopTool(tool_info(other).map(|t| t.id).unwrap_or("selection")))),
     }
 }
 

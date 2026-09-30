@@ -2,9 +2,9 @@
 
 mod create;
 mod draw2;
-mod effectcmd;
-mod xform;
 mod edit;
+mod effectcmd;
+mod file;
 mod layer;
 mod object;
 mod paint;
@@ -12,6 +12,7 @@ mod path;
 mod pathops;
 mod select;
 mod typecmd;
+mod xform;
 
 use drawcraft_color::Color;
 use drawcraft_doc::NodeId;
@@ -110,6 +111,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
     SPECS.get_or_init(|| {
         let mut v = Vec::new();
         v.extend(edit::specs());
+        v.extend(file::specs());
         v.extend(create::specs());
         v.extend(object::specs());
         v.extend(path::specs());

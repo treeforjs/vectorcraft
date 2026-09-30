@@ -19,10 +19,7 @@ pub fn start() {
             log::error!("no document");
             return;
         };
-        let Some(canvas) = document
-            .get_element_by_id(CANVAS_ID)
-            .and_then(|e| e.dyn_into::<web_sys::HtmlCanvasElement>().ok())
-        else {
+        let Some(canvas) = document.get_element_by_id(CANVAS_ID).and_then(|e| e.dyn_into::<web_sys::HtmlCanvasElement>().ok()) else {
             log::error!("missing <canvas id=\"{CANVAS_ID}\">");
             return;
         };
@@ -49,9 +46,7 @@ pub fn start() {
         if let Some(el) = document.get_element_by_id(LOADING_ID) {
             match result {
                 Ok(()) => el.remove(),
-                Err(e) => el.set_inner_html(&format!(
-                    "<p>DrawCraft failed to start: {e:?}</p><p>A browser with WebGPU or WebGL2 is required.</p>"
-                )),
+                Err(e) => el.set_inner_html(&format!("<p>DrawCraft failed to start: {e:?}</p><p>A browser with WebGPU or WebGL2 is required.</p>")),
             }
         }
     });
@@ -75,11 +70,7 @@ impl eframe::App for WebShell {
             let inbox = self.inbox.clone();
             let ctx = ctx.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                let name = f
-                    .path()
-                    .file_name()
-                    .map(|n| n.to_string_lossy().to_string())
-                    .unwrap_or_else(|| "dropped".into());
+                let name = f.path().file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "dropped".into());
                 match f.bytes_async().await {
                     Ok(bytes) => {
                         inbox.lock().unwrap_or_else(|e| e.into_inner()).push((name, bytes));
@@ -129,10 +120,7 @@ fn services(inbox: Inbox, ctx: egui::Context) -> Services {
 /// Trigger a browser download of `bytes` named after the last component of `path`.
 fn download(path: &str, bytes: &[u8]) -> Result<(), String> {
     let js = |e: wasm_bindgen::JsValue| format!("{e:?}");
-    let name = std::path::Path::new(path)
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| "drawcraft".into());
+    let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "drawcraft".into());
     let window = web_sys::window().ok_or("no window")?;
     let document = window.document().ok_or("no document")?;
     let parts = js_sys::Array::of1(&js_sys::Uint8Array::from(bytes));
@@ -140,8 +128,7 @@ fn download(path: &str, bytes: &[u8]) -> Result<(), String> {
     opts.set_type(mime_for(&name));
     let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(&parts, &opts).map_err(js)?;
     let url = web_sys::Url::create_object_url_with_blob(&blob).map_err(js)?;
-    let a: web_sys::HtmlAnchorElement =
-        document.create_element("a").map_err(js)?.dyn_into().map_err(|_| "not an anchor")?;
+    let a: web_sys::HtmlAnchorElement = document.create_element("a").map_err(js)?.dyn_into().map_err(|_| "not an anchor")?;
     a.set_href(&url);
     a.set_download(&name);
     a.style().set_property("display", "none").map_err(js)?;
@@ -153,9 +140,7 @@ fn download(path: &str, bytes: &[u8]) -> Result<(), String> {
     let revoke = wasm_bindgen::closure::Closure::once_into_js(move || {
         web_sys::Url::revoke_object_url(&url).ok();
     });
-    window
-        .set_timeout_with_callback_and_timeout_and_arguments_0(revoke.unchecked_ref(), 10_000)
-        .map_err(js)?;
+    window.set_timeout_with_callback_and_timeout_and_arguments_0(revoke.unchecked_ref(), 10_000).map_err(js)?;
     Ok(())
 }
 

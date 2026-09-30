@@ -13,7 +13,7 @@ use crate::{DrawcraftApp, icons, menus};
 pub fn app_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let left = if app.integrated_titlebar { 78 } else { 8 };
-    egui::Panel::top("app_bar").exact_size(34.0).frame(egui::Frame::NONE.fill(t.app_bar).inner_margin(egui::Margin { left, right: 14, top: 0, bottom: 0 })).show(ui, |ui| {
+    egui::Panel::top("app_bar").exact_size(44.0).frame(egui::Frame::NONE.fill(t.app_bar).inner_margin(egui::Margin { left, right: 14, top: 0, bottom: 0 }).stroke(Stroke::new(1.0, t.border))).show(ui, |ui| {
         ui.horizontal_centered(|ui| {
             // Brand mark: a small rounded square with "Dc".
             let (r, _) = ui.allocate_exact_size(vec2(22.0, 22.0), Sense::hover());
@@ -65,110 +65,117 @@ fn chip_button(ui: &mut Ui, paint: &Paint, stroke_style: bool, tip: &str) -> egu
 /// The Control bar (Window → Control), context-sensitive like Illustrator's.
 pub fn control_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
-    egui::Panel::top("control_bar").exact_size(34.0).frame(egui::Frame::NONE.fill(t.panel).inner_margin(egui::Margin::symmetric(10, 0)).stroke(Stroke::new(1.0, t.border))).show(ui, |ui| {
-        ui.horizontal_centered(|ui| {
-            // Gripper
-            let (g, _) = ui.allocate_exact_size(vec2(6.0, 20.0), Sense::hover());
-            for i in 0..5 {
-                ui.painter().circle_filled(g.center_top() + vec2(0.0, 2.0 + i as f32 * 4.0), 0.9, t.text_disabled);
-            }
-            let Some(st) = app.session.active() else {
-                ui.label(egui::RichText::new("No Document").color(t.text_dim));
-                return;
-            };
-            let sel = st.selection.objects.clone();
-            let units = st.doc.units;
-            let first = sel.first().and_then(|id| st.doc.node(*id)).cloned();
-            let anchor_mode = !st.selection.anchors.is_empty();
-            let label = match (&first, sel.len()) {
-                (None, _) => "No Selection".to_string(),
-                (_, n) if n > 1 => "Mixed Objects".to_string(),
-                (Some(_), _) if anchor_mode => "Anchor Point".to_string(),
-                (Some(n), _) => match &n.kind {
-                    NodeKind::Text(_) => "Type".into(),
-                    NodeKind::Image(_) => "Embedded".into(),
-                    NodeKind::Path { live: Some(_), .. } => n.kind_label().to_string(),
-                    _ => n.kind_label().to_string(),
-                },
-            };
-            ui.label(egui::RichText::new(label).font(theme::semibold(12.0)).color(t.text));
-            ui.add_space(6.0);
-            let (fill, stroke, weight, opacity) = match &first {
-                Some(n) => (n.appearance.fill_paint(), n.appearance.stroke_paint(), n.appearance.stroke().map(|s| s.width).unwrap_or(0.0), n.opacity),
-                None => (app.session.paint.fill.clone(), app.session.paint.stroke.clone(), app.session.paint.stroke_width, 1.0),
-            };
-            if chip_button(ui, &fill, false, "Fill").clicked() {
-                app.run("paint.toggleActive", json!({})).ok();
-                app.session.fill_active = true;
-                app.ui.open_panel = Some("swatches".into());
-            }
-            if chip_button(ui, &stroke, true, "Stroke").clicked() {
-                app.session.fill_active = false;
-                app.ui.open_panel = Some("swatches".into());
-            }
-            if ui.link(egui::RichText::new("Stroke:").size(12.0).color(t.text).underline()).clicked() {
-                app.ui.open_panel = Some("stroke".into());
-            }
-            if let Some(w) = widgets::num_field(ui, "cb-stroke", Some(weight), drawcraft_doc::Unit::Points, 64.0) {
-                app.run("stroke.set", json!({"weight": w})).ok();
-            }
-            ui.add_space(4.0);
-            ui.separator();
-            if ui.link(egui::RichText::new("Opacity:").size(12.0).color(t.text).underline()).clicked() {
-                app.ui.open_panel = Some("transparency".into());
-            }
-            if let Some(o) = widgets::plain_field(ui, "cb-opacity", opacity as f64 * 100.0, "%", 0, 56.0)
-                && !sel.is_empty()
-            {
-                app.run("object.setProps", json!({"opacity": o.clamp(0.0, 100.0) / 100.0})).ok();
-            }
-            ui.separator();
-            if sel.is_empty() {
-                if widgets::flat_button(ui, "Document Setup", 112.0).clicked() {
-                    app.run("file.documentSetup", json!({})).ok();
+    egui::Panel::top("control_bar")
+        .exact_size(34.0)
+        .frame(egui::Frame::NONE.fill(t.panel).inner_margin(egui::Margin::symmetric(10, 0)).stroke(Stroke::new(1.0, t.border)))
+        .show(ui, |ui| {
+            ui.horizontal_centered(|ui| {
+                // Gripper
+                let (g, _) = ui.allocate_exact_size(vec2(6.0, 20.0), Sense::hover());
+                for i in 0..5 {
+                    ui.painter().circle_filled(g.center_top() + vec2(0.0, 2.0 + i as f32 * 4.0), 0.9, t.text_disabled);
                 }
-                if widgets::flat_button(ui, "Preferences", 90.0).clicked() {
-                    app.run("edit.preferences", json!({})).ok();
-                }
-                return;
-            }
-            // Align buttons.
-            for (icon, tip, p) in [
-                ("align-start-vertical", "Horizontal Align Left", json!({"horizontal": "left"})),
-                ("align-center-vertical", "Horizontal Align Center", json!({"horizontal": "center"})),
-                ("align-end-vertical", "Horizontal Align Right", json!({"horizontal": "right"})),
-                ("align-start-horizontal", "Vertical Align Top", json!({"vertical": "top"})),
-                ("align-center-horizontal", "Vertical Align Center", json!({"vertical": "center"})),
-                ("align-end-horizontal", "Vertical Align Bottom", json!({"vertical": "bottom"})),
-            ] {
-                if widgets::icon_button(ui, icon, tip, false, 24.0).clicked() {
-                    let mut p = p;
-                    if sel.len() == 1 {
-                        p["to"] = json!("artboard");
+                let Some(st) = app.session.active() else {
+                    ui.label(egui::RichText::new("No Document").color(t.text_dim));
+                    return;
+                };
+                let sel = st.selection.objects.clone();
+                let units = st.doc.units;
+                let first = sel.first().and_then(|id| st.doc.node(*id)).cloned();
+                let anchor_mode = !st.selection.anchors.is_empty();
+                let label = match (&first, sel.len()) {
+                    (None, _) => "No Selection".to_string(),
+                    (_, n) if n > 1 => "Mixed Objects".to_string(),
+                    (Some(_), _) if anchor_mode => "Anchor Point".to_string(),
+                    (Some(n), _) => match &n.kind {
+                        NodeKind::Text(_) => "Type".into(),
+                        NodeKind::Image(_) => "Embedded".into(),
+                        NodeKind::Path { live: Some(_), .. } => n.kind_label().to_string(),
+                        _ => n.kind_label().to_string(),
+                    },
+                };
+                ui.label(egui::RichText::new(label).font(theme::semibold(12.0)).color(t.text));
+                ui.add_space(6.0);
+                let (fill, stroke, weight, opacity) = match &first {
+                    Some(n) => {
+                        (n.appearance.fill_paint(), n.appearance.stroke_paint(), n.appearance.stroke().map(|s| s.width).unwrap_or(0.0), n.opacity)
                     }
-                    app.run("object.align", p).ok();
+                    None => (app.session.paint.fill.clone(), app.session.paint.stroke.clone(), app.session.paint.stroke_width, 1.0),
+                };
+                if chip_button(ui, &fill, false, "Fill").clicked() {
+                    app.run("paint.toggleActive", json!({})).ok();
+                    app.session.fill_active = true;
+                    app.ui.open_panel = Some("swatches".into());
                 }
-            }
-            ui.separator();
-            // Transform fields.
-            let b = app.session.active().and_then(|s| s.doc.bounds_of(&s.selection.objects, false));
-            if let Some(b) = b {
-                for (k, lbl, v) in [("x", "X:", b.center().x), ("y", "Y:", b.center().y), ("width", "W:", b.width()), ("height", "H:", b.height())] {
-                    ui.label(egui::RichText::new(lbl).size(12.0).color(t.text_dim));
-                    if let Some(nv) = widgets::num_field(ui, ("cb", k), Some(v), units, 74.0) {
-                        app.run("object.setBounds", json!({k: nv, "reference": 4})).ok();
+                if chip_button(ui, &stroke, true, "Stroke").clicked() {
+                    app.session.fill_active = false;
+                    app.ui.open_panel = Some("swatches".into());
+                }
+                if ui.link(egui::RichText::new("Stroke:").size(12.0).color(t.text).underline()).clicked() {
+                    app.ui.open_panel = Some("stroke".into());
+                }
+                if let Some(w) = widgets::num_field(ui, "cb-stroke", Some(weight), drawcraft_doc::Unit::Points, 64.0) {
+                    app.run("stroke.set", json!({"weight": w})).ok();
+                }
+                ui.add_space(4.0);
+                ui.separator();
+                if ui.link(egui::RichText::new("Opacity:").size(12.0).color(t.text).underline()).clicked() {
+                    app.ui.open_panel = Some("transparency".into());
+                }
+                if let Some(o) = widgets::plain_field(ui, "cb-opacity", opacity as f64 * 100.0, "%", 0, 56.0)
+                    && !sel.is_empty()
+                {
+                    app.run("object.setProps", json!({"opacity": o.clamp(0.0, 100.0) / 100.0})).ok();
+                }
+                ui.separator();
+                if sel.is_empty() {
+                    if widgets::flat_button(ui, "Document Setup", 112.0).clicked() {
+                        app.run("file.documentSetup", json!({})).ok();
+                    }
+                    if widgets::flat_button(ui, "Preferences", 90.0).clicked() {
+                        app.run("edit.preferences", json!({})).ok();
+                    }
+                    return;
+                }
+                // Align buttons.
+                for (icon, tip, p) in [
+                    ("align-start-vertical", "Horizontal Align Left", json!({"horizontal": "left"})),
+                    ("align-center-vertical", "Horizontal Align Center", json!({"horizontal": "center"})),
+                    ("align-end-vertical", "Horizontal Align Right", json!({"horizontal": "right"})),
+                    ("align-start-horizontal", "Vertical Align Top", json!({"vertical": "top"})),
+                    ("align-center-horizontal", "Vertical Align Center", json!({"vertical": "center"})),
+                    ("align-end-horizontal", "Vertical Align Bottom", json!({"vertical": "bottom"})),
+                ] {
+                    if widgets::icon_button(ui, icon, tip, false, 24.0).clicked() {
+                        let mut p = p;
+                        if sel.len() == 1 {
+                            p["to"] = json!("artboard");
+                        }
+                        app.run("object.align", p).ok();
                     }
                 }
-            }
+                ui.separator();
+                // Transform fields.
+                let b = app.session.active().and_then(|s| s.doc.bounds_of(&s.selection.objects, false));
+                if let Some(b) = b {
+                    for (k, lbl, v) in
+                        [("x", "X:", b.center().x), ("y", "Y:", b.center().y), ("width", "W:", b.width()), ("height", "H:", b.height())]
+                    {
+                        ui.label(egui::RichText::new(lbl).size(12.0).color(t.text_dim));
+                        if let Some(nv) = widgets::num_field(ui, ("cb", k), Some(v), units, 74.0) {
+                            app.run("object.setBounds", json!({k: nv, "reference": 4})).ok();
+                        }
+                    }
+                }
+            });
         });
-    });
 }
 
 /// Document tab strip: "Name* @ 66.67% (RGB/Preview)".
 pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
-    let (strip, _) = ui.allocate_exact_size(vec2(ui.available_width(), 27.0), Sense::hover());
-    ui.painter().rect_filled(strip, 0.0, t.panel_darker);
+    let (strip, _) = ui.allocate_exact_size(vec2(ui.available_width(), 35.0), Sense::hover());
+    ui.painter().rect_filled(strip, 0.0, t.tab_strip);
     ui.painter().line_segment([strip.left_bottom(), strip.right_bottom()], Stroke::new(1.0, t.border));
     let mut x = strip.left();
     let mut activate = None;
@@ -178,23 +185,23 @@ pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
         let zoom = app.views.get(i).map(|v| v.zoom).unwrap_or(1.0);
         let mode = if d.doc.color_mode == drawcraft_doc::ColorMode::Cmyk { "CMYK" } else { "RGB" };
         let vm = if app.ui.view.outline { "Outline" } else { "Preview" };
-        let title = format!("{}{} @ {} ({mode}/{vm})", d.title(), if d.is_dirty() { "*" } else { "" }, zoom_label(zoom));
-        let galley = ui.painter().layout_no_wrap(title, egui::FontId::proportional(12.0), if Some(i) == active { t.text } else { t.text_dim });
-        let w = galley.size().x + 44.0;
-        let r = egui::Rect::from_min_size(egui::pos2(x, strip.top()), vec2(w, strip.height()));
+        let title = format!("{}{} @ {} ({mode}/{vm})", d.title(), if d.is_dirty() { "*" } else { "" }, zoom_label(zoom).replace('%', " %"));
+        let is_active = Some(i) == active;
+        let galley = ui.painter().layout_no_wrap(title, theme::semibold(12.5), if is_active { t.text_strong } else { t.text_dim });
+        let w = galley.size().x + 50.0;
+        let r = egui::Rect::from_min_size(egui::pos2(x, strip.top()), vec2(w, strip.height() - 1.0));
         let resp = ui.interact(r, ui.id().with(("tab", i)), Sense::click());
-        if Some(i) == active {
+        if is_active {
             ui.painter().rect_filled(r, 0.0, t.panel);
         } else if resp.hovered() {
-            ui.painter().rect_filled(r, 0.0, t.hover.gamma_multiply(0.5));
+            ui.painter().rect_filled(r, 0.0, t.hover.gamma_multiply(0.4));
         }
-        ui.painter().line_segment([r.right_top(), r.right_bottom()], Stroke::new(1.0, t.border));
-        ui.painter().galley(egui::pos2(r.left() + 12.0, r.center().y - galley.size().y / 2.0), galley, t.text);
-        let xr = egui::Rect::from_center_size(egui::pos2(r.right() - 15.0, r.center().y), vec2(14.0, 14.0));
-        let xresp = ui.interact(xr, ui.id().with(("tabx", i)), Sense::click());
-        if xresp.hovered() || Some(i) == active || resp.hovered() {
-            icons::paint(ui, "x", xr.shrink(1.5), if xresp.hovered() { t.text } else { t.text_dim });
-        }
+        ui.painter().line_segment([r.right_top(), r.right_bottom()], Stroke::new(1.5, t.border));
+        // × at the left like Illustrator.
+        let xr = egui::Rect::from_center_size(egui::pos2(r.left() + 16.0, r.center().y), vec2(12.0, 12.0));
+        let xresp = ui.interact(xr.expand(3.0), ui.id().with(("tabx", i)), Sense::click());
+        icons::paint(ui, "x", xr, if xresp.hovered() { t.text_strong } else { t.text });
+        ui.painter().galley(egui::pos2(r.left() + 32.0, r.center().y - galley.size().y / 2.0), galley, t.text);
         if xresp.clicked() {
             close = Some(i);
         } else if resp.clicked() {
@@ -204,7 +211,9 @@ pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
     if let Some(i) = close {
         app.session.close_document(i);
-        app.views.remove(i.min(app.views.len().saturating_sub(1)));
+        if i < app.views.len() {
+            app.views.remove(i);
+        }
         app.sync_views();
     } else if let Some(i) = activate {
         app.session.set_active(i);
@@ -213,13 +222,20 @@ pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
     if let Some(st) = app.session.active()
         && let Some(iso) = st.isolation
     {
-        let crumbs: Vec<String> = st.doc.ancestry(iso).unwrap_or_default().iter().filter_map(|id| st.doc.node(*id)).map(|n| n.display_name()).collect();
+        let crumbs: Vec<String> =
+            st.doc.ancestry(iso).unwrap_or_default().iter().filter_map(|id| st.doc.node(*id)).map(|n| n.display_name()).collect();
         let (bar, _) = ui.allocate_exact_size(vec2(ui.available_width(), 24.0), Sense::hover());
         ui.painter().rect_filled(bar, 0.0, t.panel);
         let back = egui::Rect::from_min_size(bar.min + vec2(6.0, 3.0), vec2(18.0, 18.0));
         let bresp = ui.interact(back, ui.id().with("iso-back"), Sense::click());
         icons::paint(ui, "chevron-left", back, if bresp.hovered() { t.text } else { t.icon });
-        ui.painter().text(bar.left_center() + vec2(30.0, 0.0), egui::Align2::LEFT_CENTER, crumbs.join("  ›  "), egui::FontId::proportional(12.0), t.text);
+        ui.painter().text(
+            bar.left_center() + vec2(30.0, 0.0),
+            egui::Align2::LEFT_CENTER,
+            crumbs.join("  ›  "),
+            egui::FontId::proportional(12.0),
+            t.text,
+        );
         if bresp.clicked() {
             app.run("object.exitIsolation", json!({})).ok();
         }
@@ -228,54 +244,171 @@ pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
 
 pub fn status_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
-    egui::Panel::bottom("status_bar").exact_size(24.0).frame(egui::Frame::NONE.fill(t.panel).inner_margin(egui::Margin::symmetric(8, 0)).stroke(Stroke::new(1.0, t.border))).show(ui, |ui| {
-        ui.horizontal_centered(|ui| {
-            let zoom = app.view().map(|v| v.zoom).unwrap_or(1.0);
-            egui::ComboBox::from_id_salt("zoom-combo").selected_text(egui::RichText::new(zoom_label(zoom)).size(11.5)).width(76.0).show_ui(ui, |ui| {
-                for z in ZOOM_STOPS.iter().rev() {
-                    if ui.selectable_label((z / 100.0 - zoom).abs() < 1e-4, zoom_label(z / 100.0)).clicked() {
-                        app.run("view.setZoom", json!({"zoom": z})).ok();
-                    }
+    hint_bar(app, ui);
+    egui::Panel::bottom("status_bar")
+        .exact_size(24.0)
+        .frame(egui::Frame::NONE.fill(t.panel).inner_margin(egui::Margin::symmetric(8, 0)).stroke(Stroke::new(1.0, t.border)))
+        .show(ui, |ui| {
+            ui.horizontal_centered(|ui| {
+                let zoom = app.view().map(|v| v.zoom).unwrap_or(1.0);
+                egui::ComboBox::from_id_salt("zoom-combo").selected_text(egui::RichText::new(zoom_label(zoom)).size(11.5)).width(76.0).show_ui(
+                    ui,
+                    |ui| {
+                        for z in ZOOM_STOPS.iter().rev() {
+                            if ui.selectable_label((z / 100.0 - zoom).abs() < 1e-4, zoom_label(z / 100.0)).clicked() {
+                                app.run("view.setZoom", json!({"zoom": z})).ok();
+                            }
+                        }
+                        ui.separator();
+                        if ui.selectable_label(false, "Fit on Screen").clicked() {
+                            app.run("view.fitArtboard", json!({})).ok();
+                        }
+                        if ui.selectable_label(false, "Fit All").clicked() {
+                            app.run("view.fitAll", json!({})).ok();
+                        }
+                    },
+                );
+                let rot = app.view().map(|v| v.rotation).unwrap_or(0.0);
+                egui::ComboBox::from_id_salt("rot-combo").selected_text(egui::RichText::new(format!("{rot:.0}°")).size(11.5)).width(52.0).show_ui(
+                    ui,
+                    |ui| {
+                        for a in [0.0, 15.0, 30.0, 45.0, 60.0, 90.0, 180.0, -15.0, -30.0, -45.0, -60.0, -90.0] {
+                            if ui.selectable_label(rot == a, format!("{a:.0}°")).clicked()
+                                && let Some(v) = app.view_mut()
+                            {
+                                v.rotation = a;
+                            }
+                        }
+                    },
+                );
+                ui.separator();
+                let nab = app.session.active().map(|d| d.doc.artboards.len()).unwrap_or(0);
+                for icon in ["chevrons-left", "chevron-left"] {
+                    widgets::icon_button(ui, icon, "", false, 18.0);
+                }
+                ui.label(egui::RichText::new(if nab > 0 { "1" } else { "–" }).size(11.5));
+                for icon in ["chevron-right", "chevrons-right"] {
+                    widgets::icon_button(ui, icon, "", false, 18.0);
                 }
                 ui.separator();
-                if ui.selectable_label(false, "Fit on Screen").clicked() {
-                    app.run("view.fitArtboard", json!({})).ok();
-                }
-                if ui.selectable_label(false, "Fit All").clicked() {
-                    app.run("view.fitAll", json!({})).ok();
-                }
-            });
-            let rot = app.view().map(|v| v.rotation).unwrap_or(0.0);
-            egui::ComboBox::from_id_salt("rot-combo").selected_text(egui::RichText::new(format!("{rot:.0}°")).size(11.5)).width(52.0).show_ui(ui, |ui| {
-                for a in [0.0, 15.0, 30.0, 45.0, 60.0, 90.0, 180.0, -15.0, -30.0, -45.0, -60.0, -90.0] {
-                    if ui.selectable_label(rot == a, format!("{a:.0}°")).clicked()
-                        && let Some(v) = app.view_mut()
-                    {
-                        v.rotation = a;
+                let tool = drawcraft_tools::tool_info(app.session.tool_id()).map(|t| t.label.trim_end_matches(" Tool")).unwrap_or("");
+                ui.label(egui::RichText::new(tool).size(11.5).color(t.text_dim));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.label(
+                        egui::RichText::new(format!(
+                            "render {:.1} ms · ui {:.1} ms · {:.0} fps",
+                            app.perf.render_ms, app.perf.frame_ms, app.perf.fps
+                        ))
+                        .size(10.5)
+                        .color(t.text_disabled),
+                    );
+                    if let Some(p) = app.hover_doc {
+                        ui.label(egui::RichText::new(format!("X: {:.2}  Y: {:.2}", p.x, p.y)).font(theme::mono(10.5)).color(t.text_dim));
                     }
-                }
-            });
-            ui.separator();
-            let nab = app.session.active().map(|d| d.doc.artboards.len()).unwrap_or(0);
-            for icon in ["chevrons-left", "chevron-left"] {
-                widgets::icon_button(ui, icon, "", false, 18.0);
-            }
-            ui.label(egui::RichText::new(if nab > 0 { "1" } else { "–" }).size(11.5));
-            for icon in ["chevron-right", "chevrons-right"] {
-                widgets::icon_button(ui, icon, "", false, 18.0);
-            }
-            ui.separator();
-            let tool = drawcraft_tools::tool_info(app.session.tool_id()).map(|t| t.label.trim_end_matches(" Tool")).unwrap_or("");
-            ui.label(egui::RichText::new(tool).size(11.5).color(t.text_dim));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(egui::RichText::new(format!("render {:.1} ms · ui {:.1} ms · {:.0} fps", app.perf.render_ms, app.perf.frame_ms, app.perf.fps)).size(10.5).color(t.text_disabled));
-                if let Some(p) = app.hover_doc {
-                    ui.label(egui::RichText::new(format!("X: {:.2}  Y: {:.2}", p.x, p.y)).font(theme::mono(10.5)).color(t.text_dim));
-                }
-                if !app.ui.status.is_empty() {
-                    ui.label(egui::RichText::new(&app.ui.status).size(11.0).color(t.text));
-                }
+                    if !app.ui.status.is_empty() {
+                        ui.label(egui::RichText::new(&app.ui.status).size(11.0).color(t.text));
+                    }
+                });
             });
         });
-    });
+}
+
+/// Contextual hint for the active tool: segments of (text, bold).
+fn hint_for(tool: &str) -> &'static [(&'static str, bool)] {
+    match tool {
+        "selection" => &[
+            ("Click", true),
+            (" the object to select  |  ", false),
+            ("Shift+Click", true),
+            (" to select multiple objects  |  ", false),
+            ("Option+Drag", true),
+            (" the object to duplicate", false),
+        ],
+        "directSelection" => &[
+            ("Click", true),
+            (" an anchor or path segment to select it  |  ", false),
+            ("Drag", true),
+            (" to move  |  ", false),
+            ("Shift+Click", true),
+            (" to add", false),
+        ],
+        "pen" => &[
+            ("Click", true),
+            (" to add a corner point  |  ", false),
+            ("Drag", true),
+            (" to add a smooth point  |  ", false),
+            ("Click the first point", true),
+            (" to close  |  ", false),
+            ("Enter", true),
+            (" to finish", false),
+        ],
+        "curvature" => &[
+            ("Click", true),
+            (" to add smooth points  |  ", false),
+            ("Double-click", true),
+            (" to toggle corner  |  ", false),
+            ("Esc", true),
+            (" to finish", false),
+        ],
+        "type" => &[
+            ("Click", true),
+            (" to create point type  |  ", false),
+            ("Drag", true),
+            (" to create area type  |  ", false),
+            ("Esc", true),
+            (" to exit editing", false),
+        ],
+        "rectangle" | "roundedRectangle" | "ellipse" | "polygon" | "star" => &[
+            ("Drag", true),
+            (" to draw  |  ", false),
+            ("Shift+Drag", true),
+            (" to constrain proportions  |  ", false),
+            ("Option+Drag", true),
+            (" from center  |  ", false),
+            ("Click", true),
+            (" for exact size", false),
+        ],
+        "rotate" | "reflect" | "scale" | "shear" => &[
+            ("Click", true),
+            (" to set the reference point  |  ", false),
+            ("Drag", true),
+            (" to transform  |  ", false),
+            ("Option+Click", true),
+            (" for exact values", false),
+        ],
+        "hand" => &[("Drag", true), (" to pan the view", false)],
+        "zoom" => &[
+            ("Click", true),
+            (" to zoom in  |  ", false),
+            ("Option+Click", true),
+            (" to zoom out  |  ", false),
+            ("Drag", true),
+            (" to zoom into an area", false),
+        ],
+        "eyedropper" => &[("Click", true), (" an object to copy its appearance  |  ", false), ("Shift+Click", true), (" to sample a color", false)],
+        "gradient" => &[("Drag", true), (" across a selected object to set the gradient direction", false)],
+        "artboard" => &[("Click", true), (" to select an artboard  |  ", false), ("Drag", true), (" on the canvas to create one", false)],
+        _ => &[("Press ", false), ("Cmd+Shift+/", true), (" to search every command", false)],
+    }
+}
+
+pub fn hint_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
+    let t = Tokens::get(ui.ctx());
+    egui::Panel::bottom("hint_bar")
+        .exact_size(28.0)
+        .frame(egui::Frame::NONE.fill(t.panel).inner_margin(egui::Margin::symmetric(10, 0)).stroke(Stroke::new(1.0, t.border)))
+        .show(ui, |ui| {
+            ui.horizontal_centered(|ui| {
+                let (r, _) = ui.allocate_exact_size(vec2(16.0, 16.0), Sense::hover());
+                ui.painter().circle_stroke(r.center(), 7.0, Stroke::new(1.2, t.text));
+                ui.painter().text(r.center(), egui::Align2::CENTER_CENTER, "?", theme::semibold(11.0), t.text);
+                ui.add_space(6.0);
+                let mut job = egui::text::LayoutJob::default();
+                for (txt, bold) in hint_for(app.session.tool_id()) {
+                    let font = if *bold { theme::semibold(12.5) } else { egui::FontId::proportional(12.5) };
+                    job.append(txt, 0.0, egui::TextFormat { font_id: font, color: if *bold { t.text_strong } else { t.text }, ..Default::default() });
+                }
+                ui.label(job);
+            });
+        });
 }

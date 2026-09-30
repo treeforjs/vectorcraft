@@ -30,7 +30,12 @@ impl eframe::App for App {
 
 fn services() -> Services {
     Services {
-        pick_open: Some(Box::new(|| rfd::FileDialog::new().add_filter("All supported", &["drawcraft", "svg", "png", "jpg", "jpeg", "gif", "webp"]).pick_file().map(|p| p.to_string_lossy().to_string()))),
+        pick_open: Some(Box::new(|| {
+            rfd::FileDialog::new()
+                .add_filter("All supported", &["drawcraft", "svg", "png", "jpg", "jpeg", "gif", "webp"])
+                .pick_file()
+                .map(|p| p.to_string_lossy().to_string())
+        })),
         pick_save: Some(Box::new(|name: &str| rfd::FileDialog::new().set_file_name(name).save_file().map(|p| p.to_string_lossy().to_string()))),
         read: Some(Box::new(|p: &str| std::fs::read(p).map_err(|e| e.to_string()))),
         write: Some(Box::new(|p: &str, b: &[u8]| std::fs::write(p, b).map_err(|e| e.to_string()))),

@@ -24,6 +24,24 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     let current = st.active_layer;
     let mut expanded: HashSet<u64> = ui.data(|d| d.get_temp(expanded_id())).unwrap_or_else(|| doc.layers.iter().map(|l| l.id.0).collect());
     let mut actions: Vec<(String, serde_json::Value)> = vec![];
+    // Search field ("Search All").
+    let search_id = egui::Id::new("layers-search");
+    let mut query: String = ui.data(|d| d.get_temp(search_id)).unwrap_or_default();
+    egui::Frame::NONE
+        .fill(t.input)
+        .stroke(Stroke::new(1.0, t.input_border))
+        .corner_radius(egui::CornerRadius::same(2))
+        .inner_margin(egui::Margin::symmetric(8, 5))
+        .show(ui, |ui| {
+            ui.add(
+                egui::TextEdit::singleline(&mut query)
+                    .frame(egui::Frame::NONE)
+                    .hint_text(egui::RichText::new("Search All").italics())
+                    .desired_width(ui.available_width()),
+            );
+        });
+    ui.data_mut(|d| d.insert_temp(search_id, query.clone()));
+    ui.add_space(6.0);
     let h = ui.available_height() - 34.0;
     egui::ScrollArea::vertical().max_height(h).auto_shrink([false, false]).show(ui, |ui| {
         ui.spacing_mut().item_spacing.y = 0.0;
@@ -39,7 +57,13 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     let (bar, _) = ui.allocate_exact_size(vec2(ui.available_width(), 30.0), Sense::hover());
     ui.painter().line_segment([bar.left_top(), bar.right_top()], Stroke::new(1.0, t.divider));
     let n = doc.layers.len();
-    ui.painter().text(bar.left_center() + vec2(4.0, 0.0), egui::Align2::LEFT_CENTER, format!("{n} Layer{}", if n == 1 { "" } else { "s" }), egui::FontId::proportional(11.5), t.text_dim);
+    ui.painter().text(
+        bar.left_center() + vec2(4.0, 0.0),
+        egui::Align2::LEFT_CENTER,
+        format!("{n} Layer{}", if n == 1 { "" } else { "s" }),
+        egui::FontId::proportional(11.5),
+        t.text_dim,
+    );
     let mut child = ui.new_child(egui::UiBuilder::new().max_rect(bar).layout(egui::Layout::right_to_left(egui::Align::Center)));
     if widgets::icon_button(&mut child, "trash-2", "Delete Selection", false, 24.0).clicked() {
         if app.session.active().is_some_and(|d| !d.selection.is_empty()) {
@@ -75,14 +99,25 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn row(ui: &mut Ui, doc: &drawcraft_doc::Document, n: &Node, depth: usize, sel: &HashSet<NodeId>, current: Option<NodeId>, expanded: &mut HashSet<u64>, actions: &mut Vec<(String, serde_json::Value)>, t: &Tokens) {
+fn row(
+    ui: &mut Ui,
+    doc: &drawcraft_doc::Document,
+    n: &Node,
+    depth: usize,
+    sel: &HashSet<NodeId>,
+    current: Option<NodeId>,
+    expanded: &mut HashSet<u64>,
+    actions: &mut Vec<(String, serde_json::Value)>,
+    t: &Tokens,
+) {
     let (r, resp) = ui.allocate_exact_size(vec2(ui.available_width(), ROW), Sense::click_and_drag());
     let is_sel = sel.contains(&n.id);
-    let child_sel = !is_sel && n.children().is_some_and(|_| {
-        let mut any = false;
-        n.walk(&mut |c| any |= c.id != n.id && sel.contains(&c.id));
-        any
-    });
+    let child_sel = !is_sel
+        && n.children().is_some_and(|_| {
+            let mut any = false;
+            n.walk(&mut |c| any |= c.id != n.id && sel.contains(&c.id));
+            any
+        });
     let color = {
         let c = doc.layer_color(n.id);
         Color32::from_rgb(c[0], c[1], c[2])
@@ -92,12 +127,17 @@ fn row(ui: &mut Ui, doc: &drawcraft_doc::Document, n: &Node, depth: usize, sel: 
     } else if resp.hovered() {
         ui.painter().rect_filled(r, 0.0, t.hover.gamma_multiply(0.6));
     }
-    ui.painter().line_segment([r.left_bottom(), r.right_bottom()], Stroke::new(1.0, t.border));
+    ui.painter().line_segment([r.left_bottom(), r.right_bottom()], Stroke::new(1.0, t.input_border));
+    if n.is_layer() && Some(n.id) == current {
+        // Current-layer marker: small triangle in the top-right corner.
+        let c = r.right_top();
+        ui.painter().add(egui::Shape::convex_polygon(vec![c, c + vec2(-6.0, 0.0), c + vec2(0.0, 6.0)], Color32::from_gray(0xcc), Stroke::NONE));
+    }
     // Eye and lock columns.
-    let eye = egui::Rect::from_min_size(r.min, vec2(24.0, ROW));
-    let lock = egui::Rect::from_min_size(r.min + vec2(24.0, 0.0), vec2(22.0, ROW));
-    ui.painter().line_segment([eye.right_top(), eye.right_bottom()], Stroke::new(1.0, t.border));
-    ui.painter().line_segment([lock.right_top(), lock.right_bottom()], Stroke::new(1.0, t.border));
+    let eye = egui::Rect::from_min_size(r.min, vec2(25.0, ROW));
+    let lock = egui::Rect::from_min_size(r.min + vec2(25.0, 0.0), vec2(25.0, ROW));
+    ui.painter().line_segment([eye.right_top(), eye.right_bottom()], Stroke::new(1.0, t.input_border));
+    ui.painter().line_segment([lock.right_top(), lock.right_bottom()], Stroke::new(1.0, t.input_border));
     let er = ui.interact(eye, ui.id().with(("eye", n.id.0)), Sense::click());
     if n.visible {
         icons::paint(ui, "eye", egui::Rect::from_center_size(eye.center(), vec2(14.0, 14.0)), t.icon);
@@ -123,7 +163,7 @@ fn row(ui: &mut Ui, doc: &drawcraft_doc::Document, n: &Node, depth: usize, sel: 
     // Layer colour bar.
     let mut x = lock.right() + 2.0;
     if n.is_layer() {
-        ui.painter().rect_filled(egui::Rect::from_min_size(egui::pos2(x, r.top() + 2.0), vec2(3.0, ROW - 4.0)), 0.0, color);
+        ui.painter().rect_filled(egui::Rect::from_min_size(egui::pos2(x - 1.0, r.top()), vec2(4.0, ROW)), 0.0, color);
     }
     x += 6.0 + depth as f32 * 14.0;
     // Disclosure.
@@ -143,14 +183,14 @@ fn row(ui: &mut Ui, doc: &drawcraft_doc::Document, n: &Node, depth: usize, sel: 
     }
     x += 16.0;
     // Thumbnail.
-    let th = egui::Rect::from_min_size(egui::pos2(x, r.top() + 3.0), vec2(20.0, 20.0));
+    let th = egui::Rect::from_min_size(egui::pos2(x, r.top() + 2.0), vec2(22.0, 22.0));
     ui.painter().rect_filled(th, 0.0, Color32::WHITE);
-    ui.painter().rect_stroke(th, 0.0, Stroke::new(1.0, t.border), StrokeKind::Outside);
+    ui.painter().rect_stroke(th, 0.0, Stroke::new(1.0, Color32::BLACK), StrokeKind::Outside);
     thumb(ui, n, th);
     x += 26.0;
     // Name.
     let name = n.display_name();
-    let font = if n.is_layer() { egui::FontId::proportional(12.5) } else { egui::FontId::proportional(12.0) };
+    let font = egui::FontId::proportional(13.0);
     let rename_id = egui::Id::new("layers-rename");
     let renaming: Option<(u64, String)> = ui.data(|d| d.get_temp(rename_id));
     let name_rect = egui::Rect::from_min_max(egui::pos2(x - 2.0, r.top() + 3.0), egui::pos2(r.right() - 44.0, r.bottom() - 3.0));
@@ -176,18 +216,22 @@ fn row(ui: &mut Ui, doc: &drawcraft_doc::Document, n: &Node, depth: usize, sel: 
         }
     }
     // Target circle and selection square.
-    let tc = egui::pos2(r.right() - 30.0, r.center().y);
+    let col_x = r.right() - 43.5;
+    ui.painter().line_segment([egui::pos2(col_x, r.top()), egui::pos2(col_x, r.bottom())], Stroke::new(1.0, t.input_border));
+    let tc = egui::pos2(r.right() - 28.0, r.center().y);
     let styled = !n.appearance.is_basic() || n.opacity < 1.0;
-    ui.painter().circle_stroke(tc, 5.0, Stroke::new(1.0, t.text_dim));
+    ui.painter().circle_stroke(tc, 5.0, Stroke::new(1.0, t.icon));
     if is_sel {
-        ui.painter().circle_stroke(tc, 3.0, Stroke::new(1.0, t.text_dim));
+        ui.painter().circle_stroke(tc, 2.8, Stroke::new(1.0, t.icon));
     }
     if styled {
-        ui.painter().circle_filled(tc, 3.5, t.text_dim);
+        ui.painter().circle_filled(tc, 3.2, t.icon);
     }
-    let sq = egui::pos2(r.right() - 12.0, r.center().y);
+    let sq = egui::pos2(r.right() - 11.0, r.center().y);
     if is_sel {
-        ui.painter().rect_filled(egui::Rect::from_center_size(sq, vec2(8.0, 8.0)), 0.0, color);
+        let q = egui::Rect::from_center_size(sq, vec2(7.0, 7.0));
+        ui.painter().rect_filled(q, 0.0, color);
+        ui.painter().rect_stroke(q, 0.0, Stroke::new(1.0, Color32::BLACK), StrokeKind::Inside);
     } else if child_sel {
         ui.painter().rect_filled(egui::Rect::from_center_size(sq, vec2(4.0, 4.0)), 0.0, color);
     }

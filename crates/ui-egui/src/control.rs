@@ -144,7 +144,13 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest)
         "ui.key" => {
             let Some(k) = s("key").and_then(key_from) else { return err("unknown or missing `key`") };
             let b = |n: &str| p.get(n).and_then(Value::as_bool).unwrap_or(false);
-            let m = egui::Modifiers { alt: b("alt"), ctrl: b("ctrl"), shift: b("shift"), mac_cmd: b("cmd") && cfg!(target_os = "macos"), command: b("cmd") };
+            let m = egui::Modifiers {
+                alt: b("alt"),
+                ctrl: b("ctrl"),
+                shift: b("shift"),
+                mac_cmd: b("cmd") && cfg!(target_os = "macos"),
+                command: b("cmd"),
+            };
             app.synthetic.push(egui::Event::Key { key: k, physical_key: None, pressed: true, repeat: false, modifiers: m });
             app.synthetic.push(egui::Event::Key { key: k, physical_key: None, pressed: false, repeat: false, modifiers: m });
             if let Some(t) = s("text") {
@@ -166,7 +172,13 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest)
             if let Some(pn) = s("panel") {
                 r = app.run("window.panel", json!({"panel": pn}));
             }
-            for (k, flag) in [("rulers", "view.rulers"), ("outline", "view.outline"), ("grid", "view.grid"), ("smartGuides", "view.smartGuides"), ("boundingBox", "view.boundingBox")] {
+            for (k, flag) in [
+                ("rulers", "view.rulers"),
+                ("outline", "view.outline"),
+                ("grid", "view.grid"),
+                ("smartGuides", "view.smartGuides"),
+                ("boundingBox", "view.boundingBox"),
+            ] {
                 if let Some(want) = p.get(k).and_then(Value::as_bool) {
                     let cur = match k {
                         "rulers" => app.ui.view.rulers,
@@ -236,7 +248,10 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest)
         "app.save" => wrap(app.run("file.save", json!({"path": s("path")}))),
         "app.export" => {
             let f = s("format").unwrap_or("png");
-            wrap(crate::io::export(app, f, s("path").map(str::to_string), p.get("scale").and_then(Value::as_f64).unwrap_or(1.0)).map(|p| json!({"path": p})))
+            wrap(
+                crate::io::export(app, f, s("path").map(str::to_string), p.get("scale").and_then(Value::as_f64).unwrap_or(1.0))
+                    .map(|p| json!({"path": p})),
+            )
         }
         "app.quit" => {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);

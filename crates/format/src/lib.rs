@@ -49,7 +49,13 @@ struct File {
 /// Serialize a document (pretty = human-diffable).
 pub fn save(doc: &Document, pretty: bool) -> Vec<u8> {
     let images = doc.images.iter().map(|(k, b)| (k.clone(), Image { mime: b.mime.clone(), data: base64_encode(&b.bytes) })).collect();
-    let f = File { format: "drawcraft".into(), version: VERSION, generator: format!("DrawCraft {}", env!("CARGO_PKG_VERSION")), document: doc.clone(), images };
+    let f = File {
+        format: "drawcraft".into(),
+        version: VERSION,
+        generator: format!("DrawCraft {}", env!("CARGO_PKG_VERSION")),
+        document: doc.clone(),
+        images,
+    };
     if pretty { serde_json::to_vec_pretty(&f).unwrap_or_default() } else { serde_json::to_vec(&f).unwrap_or_default() }
 }
 

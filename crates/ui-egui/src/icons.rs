@@ -97,7 +97,13 @@ pub fn tool_icon(name: &str) -> &'static str {
         "tool-rotate-view" => "dc-rotate-view",
         "tool-print-tiling" => "printer",
         "tool-zoom" => "zoom-in",
-        other => if exists(other) { table().get_key_value(other).map(|(k, _)| *k).unwrap_or("square-dashed") } else { "square-dashed" },
+        other => {
+            if exists(other) {
+                table().get_key_value(other).map(|(k, _)| *k).unwrap_or("square-dashed")
+            } else {
+                "square-dashed"
+            }
+        }
     }
 }
 
@@ -117,4 +123,3 @@ pub fn icon(ui: &mut Ui, name: &str, size: f32, tint: Color32) -> egui::Response
     paint(ui, name, rect, tint);
     resp
 }
-

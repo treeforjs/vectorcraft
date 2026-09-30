@@ -354,4 +354,10 @@ impl Session {
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
+mod tests_draw2;
+#[cfg(test)]
+mod tests_file;
+#[cfg(test)]
 mod tests_pathops;
+#[cfg(test)]
+mod tests_xform;

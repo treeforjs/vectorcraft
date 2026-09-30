@@ -33,7 +33,18 @@ impl ShapeTool {
             "lineSegment" => "lineSegment",
             _ => "rectangle",
         };
-        Self { id, start: None, last: Point::ZERO, mods: Mods::default(), began: false, sides: 6, points: 5, corner_radius: 12.0, star_ratio: 0.5, guides: vec![] }
+        Self {
+            id,
+            start: None,
+            last: Point::ZERO,
+            mods: Mods::default(),
+            began: false,
+            sides: 6,
+            points: 5,
+            corner_radius: 12.0,
+            star_ratio: 0.5,
+            guides: vec![],
+        }
     }
 
     fn label(&self) -> &'static str {

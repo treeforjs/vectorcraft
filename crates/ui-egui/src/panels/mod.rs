@@ -49,7 +49,10 @@ pub fn libraries(_app: &mut DrawcraftApp, ui: &mut Ui) {
         icons::icon(ui, "library", 40.0, t.text_dim);
         ui.add_space(8.0);
         ui.label(egui::RichText::new("Local Libraries").size(14.0).color(t.text));
-        dim_label(ui, "Drag art, colors and text styles here to reuse them across documents. Libraries are stored on this machine — no account required.");
+        dim_label(
+            ui,
+            "Drag art, colors and text styles here to reuse them across documents. Libraries are stored on this machine — no account required.",
+        );
     });
 }
 
@@ -106,8 +109,20 @@ pub fn swatches(app: &mut DrawcraftApp, ui: &mut Ui) {
 
 pub fn color(app: &mut DrawcraftApp, ui: &mut Ui) {
     let current = match first_selected(app) {
-        Some(n) => if app.session.fill_active { n.appearance.fill_paint() } else { n.appearance.stroke_paint() },
-        None => if app.session.fill_active { app.session.paint.fill.clone() } else { app.session.paint.stroke.clone() },
+        Some(n) => {
+            if app.session.fill_active {
+                n.appearance.fill_paint()
+            } else {
+                n.appearance.stroke_paint()
+            }
+        }
+        None => {
+            if app.session.fill_active {
+                app.session.paint.fill.clone()
+            } else {
+                app.session.paint.stroke.clone()
+            }
+        }
     };
     let c = current.color().unwrap_or(Color::BLACK);
     let mut rgb = c.to_rgba8(1.0);
@@ -140,7 +155,8 @@ pub fn color(app: &mut DrawcraftApp, ui: &mut Ui) {
             let h = i as f32 / n as f32 * 360.0;
             let v = 1.0 - j as f32 / 4.0 * 0.8;
             let [cr, cg, cb, _] = Color::from_hsb(h, 1.0, v).to_rgba8(1.0);
-            let cell = egui::Rect::from_min_size(r.min + vec2(i as f32 * r.width() / n as f32, j as f32 * 10.0), vec2(r.width() / n as f32 + 0.5, 10.0));
+            let cell =
+                egui::Rect::from_min_size(r.min + vec2(i as f32 * r.width() / n as f32, j as f32 * 10.0), vec2(r.width() / n as f32 + 0.5, 10.0));
             ui.painter().rect_filled(cell, 0.0, egui::Color32::from_rgb(cr, cg, cb));
         }
     }
@@ -159,7 +175,8 @@ pub fn color(app: &mut DrawcraftApp, ui: &mut Ui) {
 }
 
 fn color_guide(app: &mut DrawcraftApp, ui: &mut Ui) {
-    let base = first_selected(app).and_then(|n| n.appearance.fill_paint().color()).or(app.session.paint.fill.color()).unwrap_or(Color::rgb(0.9, 0.3, 0.1));
+    let base =
+        first_selected(app).and_then(|n| n.appearance.fill_paint().color()).or(app.session.paint.fill.color()).unwrap_or(Color::rgb(0.9, 0.3, 0.1));
     for h in drawcraft_color::harmony::Harmony::ALL {
         ui.horizontal(|ui| {
             ui.add_sized(vec2(110.0, 18.0), egui::Label::new(egui::RichText::new(h.label()).size(11.0)));
@@ -189,7 +206,11 @@ pub fn stroke(app: &mut DrawcraftApp, ui: &mut Ui) {
     let align = st.as_ref().map(|s| s.align).unwrap_or_default();
     ui.horizontal(|ui| {
         dim_label(ui, "Cap:");
-        for (v, lbl, name) in [(drawcraft_doc::LineCap::Butt, "Butt", "butt"), (drawcraft_doc::LineCap::Round, "Round", "round"), (drawcraft_doc::LineCap::Square, "Projecting", "square")] {
+        for (v, lbl, name) in [
+            (drawcraft_doc::LineCap::Butt, "Butt", "butt"),
+            (drawcraft_doc::LineCap::Round, "Round", "round"),
+            (drawcraft_doc::LineCap::Square, "Projecting", "square"),
+        ] {
             if ui.selectable_label(cap == v, lbl).clicked() {
                 app.run("stroke.set", json!({"cap": name})).ok();
             }
@@ -197,7 +218,11 @@ pub fn stroke(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
     ui.horizontal(|ui| {
         dim_label(ui, "Corner:");
-        for (v, lbl, name) in [(drawcraft_doc::LineJoin::Miter, "Miter", "miter"), (drawcraft_doc::LineJoin::Round, "Round", "round"), (drawcraft_doc::LineJoin::Bevel, "Bevel", "bevel")] {
+        for (v, lbl, name) in [
+            (drawcraft_doc::LineJoin::Miter, "Miter", "miter"),
+            (drawcraft_doc::LineJoin::Round, "Round", "round"),
+            (drawcraft_doc::LineJoin::Bevel, "Bevel", "bevel"),
+        ] {
             if ui.selectable_label(join == v, lbl).clicked() {
                 app.run("stroke.set", json!({"join": name})).ok();
             }
@@ -205,7 +230,11 @@ pub fn stroke(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
     ui.horizontal(|ui| {
         dim_label(ui, "Align:");
-        for (v, lbl, name) in [(drawcraft_doc::StrokeAlign::Center, "Center", "center"), (drawcraft_doc::StrokeAlign::Inside, "Inside", "inside"), (drawcraft_doc::StrokeAlign::Outside, "Outside", "outside")] {
+        for (v, lbl, name) in [
+            (drawcraft_doc::StrokeAlign::Center, "Center", "center"),
+            (drawcraft_doc::StrokeAlign::Inside, "Inside", "inside"),
+            (drawcraft_doc::StrokeAlign::Outside, "Outside", "outside"),
+        ] {
             if ui.selectable_label(align == v, lbl).clicked() {
                 app.run("stroke.set", json!({"align": name})).ok();
             }
@@ -304,7 +333,8 @@ pub fn appearance(app: &mut DrawcraftApp, ui: &mut Ui) {
 
 fn graphic_styles(app: &mut DrawcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
-    let styles: Vec<(String, drawcraft_doc::Appearance)> = app.session.active().map(|d| d.doc.graphic_styles.iter().map(|g| (g.name.clone(), g.appearance.clone())).collect()).unwrap_or_default();
+    let styles: Vec<(String, drawcraft_doc::Appearance)> =
+        app.session.active().map(|d| d.doc.graphic_styles.iter().map(|g| (g.name.clone(), g.appearance.clone())).collect()).unwrap_or_default();
     ui.horizontal_wrapped(|ui| {
         for (name, ap) in styles {
             let (r, resp) = ui.allocate_exact_size(vec2(44.0, 44.0), Sense::click());
@@ -373,7 +403,12 @@ pub fn align(app: &mut DrawcraftApp, ui: &mut Ui) {
 pub fn pathfinder(app: &mut DrawcraftApp, ui: &mut Ui) {
     dim_label(ui, "Shape Modes:");
     ui.horizontal(|ui| {
-        for (icon, tip, op) in [("squares-unite", "Unite", "unite"), ("squares-subtract", "Minus Front", "minusFront"), ("squares-intersect", "Intersect", "intersect"), ("squares-exclude", "Exclude", "exclude")] {
+        for (icon, tip, op) in [
+            ("squares-unite", "Unite", "unite"),
+            ("squares-subtract", "Minus Front", "minusFront"),
+            ("squares-intersect", "Intersect", "intersect"),
+            ("squares-exclude", "Exclude", "exclude"),
+        ] {
             if widgets::icon_button(ui, icon, tip, false, 30.0).clicked() {
                 app.run(&format!("object.pathfinder.{op}"), json!({})).ok();
             }
@@ -381,7 +416,9 @@ pub fn pathfinder(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
     dim_label(ui, "Pathfinders:");
     ui.horizontal_wrapped(|ui| {
-        for (tip, op) in [("Divide", "divide"), ("Trim", "trim"), ("Merge", "merge"), ("Crop", "crop"), ("Outline", "outline"), ("Minus Back", "minusBack")] {
+        for (tip, op) in
+            [("Divide", "divide"), ("Trim", "trim"), ("Merge", "merge"), ("Crop", "crop"), ("Outline", "outline"), ("Minus Back", "minusBack")]
+        {
             if widgets::flat_button(ui, tip, 72.0).clicked() {
                 app.run(&format!("object.pathfinder.{op}"), json!({})).ok();
             }
@@ -444,13 +481,20 @@ fn info(app: &mut DrawcraftApp, ui: &mut Ui) {
 
 fn artboards(app: &mut DrawcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
-    let abs: Vec<(usize, String)> = app.session.active().map(|d| d.doc.artboards.iter().enumerate().map(|(i, a)| (i, a.name.clone())).collect()).unwrap_or_default();
+    let abs: Vec<(usize, String)> =
+        app.session.active().map(|d| d.doc.artboards.iter().enumerate().map(|(i, a)| (i, a.name.clone())).collect()).unwrap_or_default();
     for (i, name) in abs {
         let (r, resp) = ui.allocate_exact_size(vec2(ui.available_width(), 24.0), Sense::click());
         if resp.hovered() {
             ui.painter().rect_filled(r, 0.0, t.hover);
         }
-        ui.painter().text(r.left_center() + vec2(6.0, 0.0), egui::Align2::LEFT_CENTER, format!("{}", i + 1), egui::FontId::proportional(12.0), t.text_dim);
+        ui.painter().text(
+            r.left_center() + vec2(6.0, 0.0),
+            egui::Align2::LEFT_CENTER,
+            format!("{}", i + 1),
+            egui::FontId::proportional(12.0),
+            t.text_dim,
+        );
         ui.painter().text(r.left_center() + vec2(28.0, 0.0), egui::Align2::LEFT_CENTER, name, egui::FontId::proportional(12.0), t.text);
     }
     ui.horizontal(|ui| {
@@ -464,7 +508,11 @@ fn gradient(app: &mut DrawcraftApp, ui: &mut Ui) {
     let n = first_selected(app);
     let paint = n.as_ref().map(|n| n.appearance.fill_paint()).unwrap_or(Paint::None);
     let (r, _) = ui.allocate_exact_size(vec2(ui.available_width(), 20.0), Sense::hover());
-    let preview = if matches!(paint, Paint::Gradient(_)) { paint.clone() } else { Paint::Gradient(Box::new(drawcraft_color::GradientPaint::new(Default::default()))) };
+    let preview = if matches!(paint, Paint::Gradient(_)) {
+        paint.clone()
+    } else {
+        Paint::Gradient(Box::new(drawcraft_color::GradientPaint::new(Default::default())))
+    };
     paint_chip(ui, r, &preview);
     ui.horizontal(|ui| {
         dim_label(ui, "Type:");

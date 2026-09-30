@@ -12,7 +12,8 @@ pub fn parse(s: &str) -> Option<KeyboardShortcut> {
     if s.is_empty() {
         return None;
     }
-    let (mods_part, key_part) = if let Some(stripped) = s.strip_suffix("++") { (stripped.trim_end_matches('+'), "+") } else { s.rsplit_once('+').unwrap_or(("", s)) };
+    let (mods_part, key_part) =
+        if let Some(stripped) = s.strip_suffix("++") { (stripped.trim_end_matches('+'), "+") } else { s.rsplit_once('+').unwrap_or(("", s)) };
     let mut m = Modifiers::NONE;
     for part in mods_part.split('+').filter(|p| !p.is_empty()) {
         match part {
@@ -55,7 +56,9 @@ fn all_shortcuts() -> Vec<(KeyboardShortcut, &'static str)> {
         }
     }
     // Most specific (most modifiers) first so Cmd+Shift+Z isn't eaten by Cmd+Z.
-    v.sort_by_key(|(sc, _)| std::cmp::Reverse(sc.modifiers.shift as u8 + sc.modifiers.alt as u8 + sc.modifiers.command as u8 + sc.modifiers.ctrl as u8));
+    v.sort_by_key(|(sc, _)| {
+        std::cmp::Reverse(sc.modifiers.shift as u8 + sc.modifiers.alt as u8 + sc.modifiers.command as u8 + sc.modifiers.ctrl as u8)
+    });
     v
 }
 
@@ -88,17 +91,24 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
     }
     // Type tool editing: text and editing keys go to the tool.
     if app.session.tool_wants_text() {
-        let texts: Vec<String> = ctx.input(|i| i.events.iter().filter_map(|e| if let egui::Event::Text(t) = e { Some(t.clone()) } else { None }).collect());
+        let texts: Vec<String> =
+            ctx.input(|i| i.events.iter().filter_map(|e| if let egui::Event::Text(t) = e { Some(t.clone()) } else { None }).collect());
         for t in texts {
             let _ = app.session.tool_text(&t, view);
         }
-        for (k, tk) in [(Key::Backspace, ToolKey::Backspace), (Key::Delete, ToolKey::Delete), (Key::ArrowLeft, ToolKey::Left), (Key::ArrowRight, ToolKey::Right)] {
+        for (k, tk) in
+            [(Key::Backspace, ToolKey::Backspace), (Key::Delete, ToolKey::Delete), (Key::ArrowLeft, ToolKey::Left), (Key::ArrowRight, ToolKey::Right)]
+        {
             if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, k)) {
                 let _ = app.session.tool_key(tk, Mods::default(), view);
             }
         }
         // Enter was already delivered above as ToolKey::Enter (newline).
-        let fire = all_shortcuts().into_iter().filter(|(sc, _)| sc.modifiers.command).find(|(sc, _)| ctx.input_mut(|i| i.consume_shortcut(sc))).map(|(_, id)| id);
+        let fire = all_shortcuts()
+            .into_iter()
+            .filter(|(sc, _)| sc.modifiers.command)
+            .find(|(sc, _)| ctx.input_mut(|i| i.consume_shortcut(sc)))
+            .map(|(_, id)| id);
         if let Some(id) = fire {
             crate::menus::invoke(app, id, json!({}));
         }

@@ -13,6 +13,12 @@ drawcraft-geom = { workspace = true }
 drawcraft-color = { workspace = true }
 drawcraft-doc = { workspace = true }
 drawcraft-text = { workspace = true }
+drawcraft-effects = { workspace = true }
 vello_cpu = { workspace = true }
+# Filter types (Gaussian blur, drop shadow) are not re-exported by vello_cpu 0.2.
+vello_common = { version = "0.2", default-features = false }
 image = { workspace = true }
 log = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

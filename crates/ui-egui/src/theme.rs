@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Brightness {
-    #[default]
     Dark,
+    #[default]
     MediumDark,
     MediumLight,
     Light,
@@ -65,6 +65,19 @@ pub struct Tokens {
     pub measure_bg: Color32,
     pub button: Color32,
     pub radius: u8,
+    /// Field values, button labels, link labels.
+    pub text_strong: Color32,
+    /// Panel tab strips, doc-tab bar, dock header.
+    pub tab_strip: Color32,
+    /// Outline of secondary (outlined) buttons.
+    pub button_border: Color32,
+    /// Default Layer 1 selection colour and selected-anchor fill.
+    pub selection: Color32,
+    pub anchor_selected: Color32,
+    /// Active item text in tool flyouts.
+    pub flyout_active: Color32,
+    /// Hint-bar / tab-bar heights etc. scale with this base font size.
+    pub font_size: f32,
 }
 
 impl Tokens {
@@ -95,31 +108,46 @@ impl Tokens {
             guide: hex(0x4affff),
             measure_bg: Color32::from_rgba_unmultiplied(92, 92, 92, 235),
             button: hex(0x444444),
-            radius: 3,
+            radius: 2,
+            text_strong: hex(0xf5f5f5),
+            tab_strip: hex(0x282828),
+            button_border: hex(0x6a6a6a),
+            selection: hex(0x4f80ff),
+            anchor_selected: hex(0x3d82ff),
+            flyout_active: hex(0x54b2f7),
+            font_size: 13.0,
         };
         match b {
             Brightness::Dark => base,
+            // Measured from Illustrator 2026 (plan/illustrator/10-observed-ui.md §1).
             Brightness::MediumDark => Tokens {
-                app_bar: hex(0x444444),
+                app_bar: hex(0x535353),
                 panel: hex(0x535353),
-                panel_darker: hex(0x474747),
-                input: hex(0x3a3a3a),
-                input_border: hex(0x6a6a6a),
+                panel_darker: hex(0x424242),
+                tab_strip: hex(0x424242),
+                input: hex(0x454545),
+                input_border: hex(0x5f5f5f),
                 border: hex(0x383838),
-                divider: hex(0x656565),
-                text: hex(0xeeeeee),
-                text_dim: hex(0xc4c4c4),
-                icon: hex(0xe6e6e6),
-                hover: hex(0x646464),
-                tool_active: hex(0x383838),
-                row_selected: hex(0x6a6d72),
-                pasteboard: hex(0x494949),
-                ruler: hex(0x4c4c4c),
-                ruler_tick: hex(0xb0b0b0),
-                button: hex(0x656565),
+                divider: hex(0x4b4b4b),
+                text: hex(0xd1d1d1),
+                text_strong: hex(0xffffff),
+                text_dim: hex(0xb0b0b0),
+                text_disabled: hex(0x7a7a7a),
+                icon: hex(0xc2c2c2),
+                hover: hex(0x606060),
+                tool_active: hex(0x303030),
+                row_selected: hex(0x52677c),
+                pasteboard: hex(0x606060),
+                ruler: hex(0x333333),
+                ruler_tick: hex(0x8a8a8a),
+                button: hex(0x535353),
+                button_border: hex(0x747474),
                 ..base
             },
             Brightness::MediumLight => Tokens {
+                tab_strip: hex(0xa6a6a6),
+                text_strong: hex(0x000000),
+                button_border: hex(0x7a7a7a),
                 dark: false,
                 app_bar: hex(0xa9a9a9),
                 panel: hex(0xb8b8b8),
@@ -142,6 +170,9 @@ impl Tokens {
                 ..base
             },
             Brightness::Light => Tokens {
+                tab_strip: hex(0xdddddd),
+                text_strong: hex(0x000000),
+                button_border: hex(0x9a9a9a),
                 dark: false,
                 app_bar: hex(0xe4e4e4),
                 panel: hex(0xf0f0f0),
@@ -167,7 +198,7 @@ impl Tokens {
     }
 
     pub fn get(ctx: &egui::Context) -> Tokens {
-        ctx.data(|d| d.get_temp::<Tokens>(egui::Id::NULL)).unwrap_or_else(|| Tokens::for_brightness(Brightness::Dark))
+        ctx.data(|d| d.get_temp::<Tokens>(egui::Id::NULL)).unwrap_or_else(|| Tokens::for_brightness(Brightness::MediumDark))
     }
     pub fn cr(&self) -> CornerRadius {
         CornerRadius::same(self.radius)
@@ -228,7 +259,13 @@ pub fn apply(ctx: &egui::Context, b: Brightness) {
     v.popup_shadow = egui::epaint::Shadow { offset: [0, 4], blur: 14, spread: 0, color: Color32::from_black_alpha(if t.dark { 120 } else { 60 }) };
     v.window_shadow = egui::epaint::Shadow { offset: [0, 8], blur: 28, spread: 0, color: Color32::from_black_alpha(if t.dark { 140 } else { 70 }) };
     let w = &mut v.widgets;
-    for (wv, fill) in [(&mut w.noninteractive, t.panel), (&mut w.inactive, t.button), (&mut w.hovered, t.hover), (&mut w.active, t.tool_active), (&mut w.open, t.hover)] {
+    for (wv, fill) in [
+        (&mut w.noninteractive, t.panel),
+        (&mut w.inactive, t.button),
+        (&mut w.hovered, t.hover),
+        (&mut w.active, t.tool_active),
+        (&mut w.open, t.hover),
+    ] {
         wv.bg_fill = fill;
         wv.weak_bg_fill = fill;
         wv.corner_radius = t.cr();
@@ -242,13 +279,13 @@ pub fn apply(ctx: &egui::Context, b: Brightness) {
     ctx.global_style_mut(|s| {
         s.spacing.item_spacing = egui::vec2(6.0, 5.0);
         s.spacing.button_padding = egui::vec2(6.0, 2.0);
-        s.spacing.interact_size = egui::vec2(24.0, 22.0);
+        s.spacing.interact_size = egui::vec2(24.0, 24.0);
         s.spacing.menu_margin = egui::Margin::same(6);
         s.spacing.slider_width = 120.0;
         s.text_styles = [
-            (TextStyle::Small, FontId::proportional(10.5)),
-            (TextStyle::Body, FontId::proportional(12.5)),
-            (TextStyle::Button, FontId::proportional(12.5)),
+            (TextStyle::Small, FontId::proportional(11.0)),
+            (TextStyle::Body, FontId::proportional(13.0)),
+            (TextStyle::Button, FontId::proportional(13.0)),
             (TextStyle::Heading, FontId::new(15.0, FontFamily::Name(FONT_UI_SEMIBOLD.into()))),
             (TextStyle::Monospace, FontId::new(11.5, FontFamily::Name(FONT_MONO.into()))),
         ]

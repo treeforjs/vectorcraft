@@ -17,9 +17,32 @@ pub fn open_tool_dialog(app: &mut DrawcraftApp, kind: &str, p: Value) {
         "polygon" => Dialog::new(kind, json!({"x": x, "y": y, "radius": "50 pt", "sides": 6})),
         "star" => Dialog::new(kind, json!({"x": x, "y": y, "radius1": "50 pt", "radius2": "25 pt", "points": 5})),
         "lineSegment" => Dialog::new(kind, json!({"x": x, "y": y, "length": "100 pt", "angle": 0})),
+        "rotate" | "reflect" | "scale" | "shear" | "artboardOptions" => {
+            let mut base = match kind {
+                "rotate" => json!({"angle": 0}),
+                "reflect" => json!({"axis": "vertical"}),
+                "scale" => json!({"sx": 100, "sy": 100, "uniform": true}),
+                "shear" => json!({"angle": 0, "axis": "horizontal"}),
+                _ => json!({}),
+            };
+            if let (Some(b), Some(o)) = (base.as_object_mut(), p.as_object()) {
+                for (k, v) in o {
+                    b.insert(k.clone(), v.clone());
+                }
+            }
+            Dialog::new(kind, base)
+        }
         _ => return,
     };
     app.ui.dialog = Some(d);
+}
+
+/// Pass a tool-chosen reference point (origin) through to transform commands.
+fn origin_params(d: &Dialog, mut p: Value) -> Value {
+    if let Some(o) = d.fields.get("origin") {
+        p["origin"] = o.clone();
+    }
+    p
 }
 
 fn title(kind: &str) -> &'static str {
@@ -42,6 +65,7 @@ fn title(kind: &str) -> &'static str {
         "splitIntoGrid" => "Split Into Grid",
         "documentSetup" => "Document Setup",
         "preferences" => "Preferences",
+        "artboardOptions" => "Artboard Options",
         "allTools" => "All Tools",
         _ => "Dialog",
     }
@@ -68,14 +92,23 @@ pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
             app.run("shape.line", json!({"x1": x, "y1": y, "x2": x + l * a.cos(), "y2": y - l * a.sin()}))
         }
         "move" => app.run("object.move", json!({"dx": d.f64("dx", 0.0), "dy": d.f64("dy", 0.0), "copy": copy})),
-        "rotate" => app.run("object.rotate", json!({"angle": d.f64("angle", 0.0), "copy": copy})),
+        "rotate" => app.run("object.rotate", origin_params(&d, json!({"angle": d.f64("angle", 0.0), "copy": copy}))),
         "scale" => {
             let sx = d.f64("sx", 100.0);
             let sy = if d.bool("uniform") { sx } else { d.f64("sy", 100.0) };
-            app.run("object.scale", json!({"sx": sx, "sy": sy, "copy": copy}))
+            app.run("object.scale", origin_params(&d, json!({"sx": sx, "sy": sy, "copy": copy})))
         }
-        "reflect" => app.run("object.reflect", json!({"axis": d.str("axis"), "copy": copy})),
-        "shear" => app.run("object.shear", json!({"angle": d.f64("angle", 0.0), "axis": d.str("axis"), "copy": copy})),
+        "reflect" => app.run("object.reflect", origin_params(&d, json!({"axis": d.fields.get("axis").cloned().unwrap_or(json!("vertical")), "copy": copy}))),
+        "shear" => app.run("object.shear", origin_params(&d, json!({"angle": d.f64("angle", 0.0), "axis": d.str("axis"), "copy": copy}))),
+        "artboardOptions" => {
+            let mut p = serde_json::Value::Object(d.fields.clone());
+            for k in ["x", "y", "width", "height"] {
+                if d.fields.contains_key(k) {
+                    p[k] = json!(d.f64(k, 0.0));
+                }
+            }
+            app.run("artboard.setProps", p)
+        }
         "average" => app.run("path.average", json!({"axis": d.str("axis")})),
         "offsetPath" => app.run("object.path.offsetPath", json!({"offset": d.f64("offset", 10.0), "joins": d.str("joins"), "miterLimit": d.f64("miterLimit", 4.0)})),
         "simplify" => app.run("object.path.simplify", json!({"tolerance": d.f64("tolerance", 1.0)})),
@@ -96,7 +129,12 @@ fn field(ui: &mut egui::Ui, d: &mut Dialog, key: &str, label: &str) {
     let t = Tokens::get(ui.ctx());
     ui.label(egui::RichText::new(label).color(t.text_dim));
     let mut s = d.str(key);
-    let r = egui::Frame::NONE.fill(t.input).stroke(egui::Stroke::new(1.0, t.input_border)).corner_radius(egui::CornerRadius::same(3)).inner_margin(egui::Margin::symmetric(6, 3)).show(ui, |ui| ui.add(egui::TextEdit::singleline(&mut s).frame(egui::Frame::NONE).desired_width(120.0)));
+    let r = egui::Frame::NONE
+        .fill(t.input)
+        .stroke(egui::Stroke::new(1.0, t.input_border))
+        .corner_radius(egui::CornerRadius::same(3))
+        .inner_margin(egui::Margin::symmetric(6, 3))
+        .show(ui, |ui| ui.add(egui::TextEdit::singleline(&mut s).frame(egui::Frame::NONE).desired_width(120.0)));
     if r.inner.changed() {
         d.fields.insert(key.into(), Value::String(s));
     }
@@ -113,11 +151,16 @@ fn check(ui: &mut egui::Ui, d: &mut Dialog, key: &str, label: &str) {
 pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
     if app.ui.about {
         let mut open = true;
-        egui::Window::new("About DrawCraft").collapsible(false).resizable(false).open(&mut open).anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0]).show(ctx, |ui| {
-            ui.label(egui::RichText::new("DrawCraft").font(theme::semibold(22.0)));
-            ui.label(format!("Version {} — open-source vector illustration in pure Rust.", env!("CARGO_PKG_VERSION")));
-            ui.label("MIT OR Apache-2.0. Fonts: Source Sans 3, Inter, JetBrains Mono (OFL). Icons: Lucide (ISC) + DrawCraft.");
-        });
+        egui::Window::new("About DrawCraft")
+            .collapsible(false)
+            .resizable(false)
+            .open(&mut open)
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, |ui| {
+                ui.label(egui::RichText::new("DrawCraft").font(theme::semibold(22.0)));
+                ui.label(format!("Version {} — open-source vector illustration in pure Rust.", env!("CARGO_PKG_VERSION")));
+                ui.label("MIT OR Apache-2.0. Fonts: Source Sans 3, Inter, JetBrains Mono (OFL). Icons: Lucide (ISC) + DrawCraft.");
+            });
         app.ui.about = open;
     }
     let Some(mut d) = app.ui.dialog.clone() else { return };
@@ -158,7 +201,7 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
                     egui::Grid::new("dlg").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
                         let keys: Vec<(String, Value)> = d.fields.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
                         for (k, v) in keys {
-                            if k == "x" || k == "y" || v.is_boolean() {
+                            if k == "x" || k == "y" || k == "origin" || k == "index" || v.is_boolean() {
                                 continue;
                             }
                             field(ui, &mut d, &k, &humanize(&k));

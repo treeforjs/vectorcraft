@@ -23,7 +23,11 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
     for tool in drawcraft_tools::catalog::all_tools() {
         items.push((tool.label.to_string(), format!("tool:{}", tool.id), tool.shortcut.unwrap_or("").to_string()));
     }
-    let matches: Vec<&(String, String, String)> = items.iter().filter(|(l, id, _)| q.is_empty() || q.split_whitespace().all(|w| l.to_lowercase().contains(w) || id.to_lowercase().contains(w))).take(14).collect();
+    let matches: Vec<&(String, String, String)> = items
+        .iter()
+        .filter(|(l, id, _)| q.is_empty() || q.split_whitespace().all(|w| l.to_lowercase().contains(w) || id.to_lowercase().contains(w)))
+        .take(14)
+        .collect();
     let mut run: Option<String> = None;
     egui::Area::new(egui::Id::new("palette")).order(egui::Order::Foreground).anchor(egui::Align2::CENTER_TOP, [0.0, 90.0]).show(ctx, |ui| {
         egui::Frame::popup(ui.style()).fill(t.panel).inner_margin(egui::Margin::same(10)).show(ui, |ui| {
@@ -32,7 +36,9 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
             r.request_focus();
             ui.add_space(6.0);
             for (i, (label, id, sc)) in matches.iter().enumerate() {
-                let resp = ui.add(egui::Button::new(label.as_str()).shortcut_text(menus::pretty_shortcut(sc)).min_size(egui::vec2(500.0, 24.0)).selected(i == 0));
+                let resp = ui.add(
+                    egui::Button::new(label.as_str()).shortcut_text(menus::pretty_shortcut(sc)).min_size(egui::vec2(500.0, 24.0)).selected(i == 0),
+                );
                 if resp.clicked() {
                     run = Some(id.clone());
                 }

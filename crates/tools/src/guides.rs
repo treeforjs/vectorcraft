@@ -82,11 +82,15 @@ impl Targets {
         }
         let mut out = p;
         let mut ov = vec![];
-        if let Some((x, from, _)) = self.xs.iter().filter(|(x, _, _)| (x - p.x).abs() <= tol).min_by(|a, b| (a.0 - p.x).abs().total_cmp(&(b.0 - p.x).abs())) {
+        if let Some((x, from, _)) =
+            self.xs.iter().filter(|(x, _, _)| (x - p.x).abs() <= tol).min_by(|a, b| (a.0 - p.x).abs().total_cmp(&(b.0 - p.x).abs()))
+        {
             out.x = *x;
             ov.push(Overlay::Line { a: *from, b: Point::new(*x, p.y), color: MAGENTA, dashed: false });
         }
-        if let Some((y, from, _)) = self.ys.iter().filter(|(y, _, _)| (y - p.y).abs() <= tol).min_by(|a, b| (a.0 - p.y).abs().total_cmp(&(b.0 - p.y).abs())) {
+        if let Some((y, from, _)) =
+            self.ys.iter().filter(|(y, _, _)| (y - p.y).abs() <= tol).min_by(|a, b| (a.0 - p.y).abs().total_cmp(&(b.0 - p.y).abs()))
+        {
             out.y = *y;
             ov.push(Overlay::Line { a: *from, b: Point::new(p.x, *y), color: MAGENTA, dashed: false });
         }
@@ -101,8 +105,16 @@ impl Targets {
         let c = r.center();
         let xs = [r.x0, c.x, r.x1];
         let ys = [r.y0, c.y, r.y1];
-        let best_x = xs.iter().flat_map(|x| self.xs.iter().map(move |(t, from, _)| (t - x, *from, *x))).filter(|(d, _, _)| d.abs() <= tol).min_by(|a, b| a.0.abs().total_cmp(&b.0.abs()));
-        let best_y = ys.iter().flat_map(|y| self.ys.iter().map(move |(t, from, _)| (t - y, *from, *y))).filter(|(d, _, _)| d.abs() <= tol).min_by(|a, b| a.0.abs().total_cmp(&b.0.abs()));
+        let best_x = xs
+            .iter()
+            .flat_map(|x| self.xs.iter().map(move |(t, from, _)| (t - x, *from, *x)))
+            .filter(|(d, _, _)| d.abs() <= tol)
+            .min_by(|a, b| a.0.abs().total_cmp(&b.0.abs()));
+        let best_y = ys
+            .iter()
+            .flat_map(|y| self.ys.iter().map(move |(t, from, _)| (t - y, *from, *y)))
+            .filter(|(d, _, _)| d.abs() <= tol)
+            .min_by(|a, b| a.0.abs().total_cmp(&b.0.abs()));
         let mut d = Vec2::ZERO;
         let mut ov = vec![];
         if let Some((dx, from, x)) = best_x {

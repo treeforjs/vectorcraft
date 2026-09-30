@@ -11,5 +11,13 @@ workspace = true
 [dependencies]
 drawcraft-geom = { workspace = true }
 drawcraft-doc = { workspace = true }
+drawcraft-color = { workspace = true }
+drawcraft-text = { workspace = true }
 kurbo = { workspace = true }
 thiserror = { workspace = true }
+image = { workspace = true }
+krilla = { workspace = true }
+hayro-syntax = "0.7.2"
+hayro-interpret = { version = "0.7.0", default-features = false, features = ["embed-fonts"] }
+log = { workspace = true }
+smallvec = "1"

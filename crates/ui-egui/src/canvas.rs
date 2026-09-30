@@ -43,8 +43,13 @@ impl Xf {
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Drag {
     Tool,
-    Pan { start: Pos2, center: Point },
-    ZoomBox { start: Pos2 },
+    Pan {
+        start: Pos2,
+        center: Point,
+    },
+    ZoomBox {
+        start: Pos2,
+    },
     /// Cmd held: temporary selection tool; restore this tool on release.
     TempSelect,
 }
@@ -70,7 +75,9 @@ pub fn fit(app: &mut DrawcraftApp, how: &str) {
     };
     let Some(st) = app.session.active() else { return };
     let target = match how {
-        "view.fitAll" => st.doc.art_bounds().map(|a| st.doc.artboards.iter().fold(a, |r, ab| r.union(ab.rect))).or(st.doc.artboards.first().map(|a| a.rect)),
+        "view.fitAll" => {
+            st.doc.art_bounds().map(|a| st.doc.artboards.iter().fold(a, |r, ab| r.union(ab.rect))).or(st.doc.artboards.first().map(|a| a.rect))
+        }
         _ => st.doc.artboards.first().map(|a| a.rect),
     };
     let Some(target) = target else { return };
@@ -112,8 +119,9 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     if app.ui.view.artboards && !app.ui.view.outline {
         for ab in &doc.artboards {
             let r = xf.rect_to_screen(ab.rect);
-            painter.rect_filled(r.translate(vec2(2.0, 2.0)).expand(1.0), 1.0, Color32::from_black_alpha(90));
-            painter.rect_filled(r.translate(vec2(1.0, 1.0)), 0.0, Color32::from_black_alpha(110));
+            // Hard 2 pt drop shadow, right and bottom (measured: #4d4d4d then #565656 on #606060).
+            painter.rect_filled(r.translate(vec2(2.0, 2.0)), 0.0, Color32::from_black_alpha(26));
+            painter.rect_filled(r.translate(vec2(1.0, 1.0)), 0.0, Color32::from_black_alpha(52));
             if app.ui.view.transparency_grid {
                 checker(&painter, r);
             } else {
@@ -132,7 +140,18 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     // Artwork raster.
     let ppp = ui.ctx().pixels_per_point();
     let (w, h) = ((rect.width() * ppp).round().max(1.0) as u32, (rect.height() * ppp).round().max(1.0) as u32);
-    let key = CacheKey { doc: app.session.active_index().unwrap_or(0), revision: st.revision, zoom: v.zoom, cx: v.center.x, cy: v.center.y, w, h, outline: app.ui.view.outline, ppp, hidden: vec![] };
+    let key = CacheKey {
+        doc: app.session.active_index().unwrap_or(0),
+        revision: st.revision,
+        zoom: v.zoom,
+        cx: v.center.x,
+        cy: v.center.y,
+        w,
+        h,
+        outline: app.ui.view.outline,
+        ppp,
+        hidden: vec![],
+    };
     if !app.canvas.worker_started {
         app.canvas.worker_started = true;
         if std::env::var_os("DRAWCRAFT_SYNC_RENDER").is_none() {
@@ -177,7 +196,13 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         let c = if i == active_ab { Color32::from_gray(0) } else { Color32::from_gray(120) };
         painter.rect_stroke(r, 0.0, Stroke::new(if i == active_ab { 1.0 } else { 0.6 }, c), StrokeKind::Outside);
         if app.session.tool_id() == "artboard" || doc.artboards.len() > 1 {
-            painter.text(r.left_top() - vec2(0.0, 4.0), egui::Align2::LEFT_BOTTOM, format!("{:02} - {}", i + 1, ab.name), egui::FontId::proportional(11.0), t.text_dim);
+            painter.text(
+                r.left_top() - vec2(0.0, 4.0),
+                egui::Align2::LEFT_BOTTOM,
+                format!("{:02} - {}", i + 1, ab.name),
+                egui::FontId::proportional(11.0),
+                t.text_dim,
+            );
         }
     }
     if app.ui.view.guides {
@@ -204,6 +229,9 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
 
     if app.ui.view.rulers && app.ui.screen_mode < 3 {
         rulers(ui, full, &xf, app.hover_doc, &t);
+    }
+    if app.ui.task_bar && !app.session.tool_busy() && app.ui.screen_mode < 3 {
+        task_bar(app, ui, &xf);
     }
     // Cursor.
     if resp.hovered() {
@@ -272,7 +300,8 @@ fn cursor_icon(c: Cursor) -> egui::CursorIcon {
 }
 
 fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: egui::Rect) {
-    let (pointer, m, space, scroll, zoom_delta) = ui.input(|i| (i.pointer.clone(), i.modifiers, i.key_down(egui::Key::Space), i.smooth_scroll_delta, i.zoom_delta()));
+    let (pointer, m, space, scroll, zoom_delta) =
+        ui.input(|i| (i.pointer.clone(), i.modifiers, i.key_down(egui::Key::Space), i.smooth_scroll_delta, i.zoom_delta()));
     let v = *app.view().unwrap_or(&View::default());
     let xf = Xf { rect, zoom: v.zoom, center: v.center };
     let hover = pointer.hover_pos().filter(|p| rect.contains(*p));
@@ -480,7 +509,13 @@ fn rulers(ui: &Ui, full: egui::Rect, xf: &Xf, hover: Option<Point>, t: &Tokens) 
         let sx = xf.to_screen(Point::new(x, 0.0)).x;
         let is_major = ((x / step).round() * step - x).abs() < minor * 0.01;
         let is_mid = ((x / (step / 2.0)).round() * (step / 2.0) - x).abs() < minor * 0.01;
-        let len = if is_major { RULER } else if is_mid { 7.0 } else { 4.0 };
+        let len = if is_major {
+            RULER
+        } else if is_mid {
+            7.0
+        } else {
+            4.0
+        };
         clip_top.line_segment([pos2(sx, top.bottom() - len), pos2(sx, top.bottom())], Stroke::new(1.0, t.ruler_tick));
         if is_major {
             clip_top.text(pos2(sx + 2.0, top.top() + 1.0), egui::Align2::LEFT_TOP, format!("{}", x.round() as i64), font.clone(), t.ruler_tick);
@@ -495,13 +530,25 @@ fn rulers(ui: &Ui, full: egui::Rect, xf: &Xf, hover: Option<Point>, t: &Tokens) 
         let sy = xf.to_screen(Point::new(0.0, y)).y;
         let is_major = ((y / step).round() * step - y).abs() < minor * 0.01;
         let is_mid = ((y / (step / 2.0)).round() * (step / 2.0) - y).abs() < minor * 0.01;
-        let len = if is_major { RULER } else if is_mid { 7.0 } else { 4.0 };
+        let len = if is_major {
+            RULER
+        } else if is_mid {
+            7.0
+        } else {
+            4.0
+        };
         clip_left.line_segment([pos2(left.right() - len, sy), pos2(left.right(), sy)], Stroke::new(1.0, t.ruler_tick));
         if is_major {
             // Vertical labels read top-to-bottom, one digit per line like Illustrator.
             let s = format!("{}", y.round() as i64);
             for (k, ch) in s.chars().enumerate() {
-                clip_left.text(pos2(left.left() + 4.0, sy + 2.0 + k as f32 * 8.5), egui::Align2::LEFT_TOP, ch.to_string(), font.clone(), t.ruler_tick);
+                clip_left.text(
+                    pos2(left.left() + 4.0, sy + 2.0 + k as f32 * 8.5),
+                    egui::Align2::LEFT_TOP,
+                    ch.to_string(),
+                    font.clone(),
+                    t.ruler_tick,
+                );
             }
         }
         y += minor;
@@ -585,6 +632,11 @@ fn hover_highlight(app: &DrawcraftApp, p: &egui::Painter, xf: &Xf) {
     }
 }
 
+/// Selected anchors are drawn slightly deeper than the layer colour (#4f80ff → #3d82ff for Layer 1).
+fn selected_anchor(c: Color32) -> Color32 {
+    if c == Color32::from_rgb(0x4f, 0x80, 0xff) { Color32::from_rgb(0x3d, 0x82, 0xff) } else { c }
+}
+
 fn anchor_square(p: &egui::Painter, c: Pos2, color: Color32, filled: bool, size: f32) {
     let r = egui::Rect::from_center_size(c, vec2(size, size));
     if filled {
@@ -619,11 +671,17 @@ fn selection_overlay(app: &DrawcraftApp, p: &egui::Painter, xf: &Xf) {
                         if h.distance(a.p) > 1e-6 {
                             let hp = xf.to_screen(h);
                             p.line_segment([sp, hp], Stroke::new(1.0, color));
-                            p.circle_filled(hp, 2.8, color);
+                            p.circle_filled(hp, 2.75, color);
                         }
                     }
                 }
-                anchor_square(p, sp, color, sel, if partial.is_some() || direct { 6.0 } else { 4.5 });
+                anchor_square(
+                    p,
+                    sp,
+                    if sel && partial.is_some() { selected_anchor(color) } else { color },
+                    sel,
+                    if partial.is_some() || direct { 5.0 } else { 4.0 },
+                );
             }
         });
         // Text: baseline marker.
@@ -643,16 +701,14 @@ fn selection_overlay(app: &DrawcraftApp, p: &egui::Painter, xf: &Xf) {
         p.rect_stroke(r, 0.0, Stroke::new(1.0, color), StrokeKind::Middle);
         for h in drawcraft_tools::bbox::Handle::ALL {
             let c = xf.to_screen(h.pos(b));
-            let hr = egui::Rect::from_center_size(c, vec2(7.0, 7.0));
+            let hr = egui::Rect::from_center_size(c, vec2(6.0, 6.0));
             p.rect_filled(hr, 0.0, Color32::WHITE);
             p.rect_stroke(hr, 0.0, Stroke::new(1.0, color), StrokeKind::Inside);
         }
-        // Centre point.
-        let c = r.center();
-        p.rect_filled(egui::Rect::from_center_size(c, vec2(3.0, 3.0)), 0.0, color);
         // Live corner widgets on single live rectangles.
         if st.selection.len() == 1
-            && let Some(NodeKind::Path { live: Some(drawcraft_doc::LiveShape::Rectangle { w, h, radii, xf: lxf }), .. }) = st.doc.node(st.selection.objects[0]).map(|n| &n.kind)
+            && let Some(NodeKind::Path { live: Some(drawcraft_doc::LiveShape::Rectangle { w, h, radii, xf: lxf }), .. }) =
+                st.doc.node(st.selection.objects[0]).map(|n| &n.kind)
             && r.width() > 40.0
             && r.height() > 40.0
         {
@@ -763,7 +819,6 @@ fn home(app: &mut DrawcraftApp, ui: &mut Ui, rect: egui::Rect) {
     });
 }
 
-
 fn kurbo_flatten(p: &BezPath, tol: f64, f: &mut impl FnMut(PathEl)) {
     drawcraft_geom::kurbo::flatten(p.elements().iter().copied(), tol, f);
 }
@@ -773,5 +828,88 @@ fn upload(app: &mut DrawcraftApp, ctx: &egui::Context, img: &drawcraft_render::R
     match &mut app.canvas.texture {
         Some(tex) => tex.set(color, egui::TextureOptions::LINEAR),
         None => app.canvas.texture = Some(ctx.load_texture("canvas", color, egui::TextureOptions::LINEAR)),
+    }
+}
+
+/// The Contextual Task Bar: a floating pill under the selection with the most likely next actions.
+fn task_bar(app: &mut DrawcraftApp, ui: &mut Ui, xf: &Xf) {
+    let t = Tokens::get(ui.ctx());
+    let Some(st) = app.session.active() else { return };
+    if st.selection.is_empty() || !matches!(app.session.tool_id(), "selection" | "directSelection" | "groupSelection") {
+        return;
+    }
+    let Some(b) = st.doc.bounds_of(&st.selection.objects, true) else { return };
+    let n = st.selection.len();
+    let first = st.selection.objects.first().and_then(|id| st.doc.node(*id)).cloned();
+    let is_group = first.as_ref().is_some_and(|f| matches!(f.kind, NodeKind::Group { .. }));
+    let is_text = first.as_ref().is_some_and(|f| matches!(f.kind, NodeKind::Text(_)));
+    let mut items: Vec<(&str, &str, &str)> = vec![]; // (label, icon, command)
+    if n > 1 {
+        items.push(("Group", "group", "object.group"));
+        items.push(("Unite", "squares-unite", "object.pathfinder.unite"));
+    } else if is_group {
+        items.push(("Ungroup", "ungroup", "object.ungroup"));
+        items.push(("Isolate", "square-dashed", "object.isolate"));
+    } else if is_text {
+        items.push(("Create Outlines", "type", "type.createOutlines"));
+    } else {
+        items.push(("Offset Path", "square-dashed", "object.path.offsetPath"));
+        items.push(("Simplify", "spline", "object.path.simplify"));
+    }
+    items.push(("Duplicate", "copy", "edit.duplicate"));
+    let fill = first.as_ref().map(|f| f.appearance.fill_paint()).unwrap_or_default();
+    let anchor = xf.to_screen(Point::new(b.center().x, b.y1));
+    let est_w = 118.0 + items.iter().map(|(l, _, _)| l.len() as f32 * 7.2 + 44.0).sum::<f32>();
+    let x = (anchor.x - est_w / 2.0).clamp(xf.rect.left() + 8.0, (xf.rect.right() - est_w - 8.0).max(xf.rect.left() + 8.0));
+    let y = (anchor.y + 28.0).min(xf.rect.bottom() - 56.0);
+    let mut run: Option<String> = None;
+    egui::Area::new(egui::Id::new("task-bar")).order(egui::Order::Middle).fixed_pos(pos2(x, y)).show(ui.ctx(), |ui| {
+        egui::Frame::NONE
+            .fill(t.panel)
+            .stroke(Stroke::new(1.0, t.tool_active))
+            .corner_radius(CornerRadius::same(5))
+            .inner_margin(egui::Margin::symmetric(8, 6))
+            .shadow(egui::epaint::Shadow { offset: [0, 3], blur: 10, spread: 0, color: Color32::from_black_alpha(70) })
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 6.0;
+                    let (g, _) = ui.allocate_exact_size(vec2(4.0, 28.0), Sense::hover());
+                    ui.painter().rect_filled(g.shrink2(vec2(0.5, 4.0)), CornerRadius::same(2), t.button_border);
+                    for (label, icon, cmd) in &items {
+                        let galley = ui.painter().layout_no_wrap(label.to_string(), egui::FontId::proportional(13.0), t.text_strong);
+                        let (r, resp) = ui.allocate_exact_size(vec2(galley.size().x + 38.0, 30.0), Sense::click());
+                        if resp.hovered() {
+                            ui.painter().rect_filled(r, CornerRadius::same(3), t.hover);
+                        }
+                        ui.painter().rect_stroke(r, CornerRadius::same(3), Stroke::new(1.0, t.button_border), StrokeKind::Inside);
+                        crate::icons::paint(ui, icon, egui::Rect::from_min_size(r.min + vec2(8.0, 7.0), vec2(16.0, 16.0)), t.icon);
+                        ui.painter().galley(pos2(r.left() + 30.0, r.center().y - galley.size().y / 2.0), galley, t.text_strong);
+                        if resp.clicked() {
+                            run = Some(cmd.to_string());
+                        }
+                    }
+                    let (r, resp) = ui.allocate_exact_size(vec2(26.0, 30.0), Sense::click());
+                    widgets::paint_chip(ui, egui::Rect::from_center_size(r.center(), vec2(16.0, 16.0)), &fill);
+                    ui.painter().rect_stroke(
+                        egui::Rect::from_center_size(r.center(), vec2(16.0, 16.0)),
+                        0.0,
+                        Stroke::new(1.0, t.button_border),
+                        StrokeKind::Outside,
+                    );
+                    if resp.on_hover_text("Fill").clicked() {
+                        app.session.fill_active = true;
+                        app.ui.open_panel = Some("swatches".into());
+                    }
+                    if widgets::icon_button(ui, "lock", "Lock (⌘2)", false, 30.0).clicked() {
+                        run = Some("object.lock".into());
+                    }
+                    if widgets::icon_button(ui, "ellipsis", "Hide Contextual Task Bar", false, 30.0).clicked() {
+                        run = Some("window.taskBar".into());
+                    }
+                });
+            });
+    });
+    if let Some(c) = run {
+        crate::menus::invoke(app, &c, json!({}));
     }
 }

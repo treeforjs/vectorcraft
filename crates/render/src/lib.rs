@@ -6,6 +6,7 @@
 //! gradients, images and text (via `drawcraft-text` glyph outlines).
 #![forbid(unsafe_code)]
 
+mod fx;
 mod paint;
 
 use std::collections::HashMap;
@@ -17,6 +18,7 @@ use vello_cpu::kurbo;
 use vello_cpu::peniko::{self, BlendMode, Compose, Mix};
 use vello_cpu::{Pixmap, RenderContext, Resources};
 
+pub use drawcraft_effects as effects;
 pub use vello_cpu;
 
 /// Rendering options.
@@ -171,7 +173,7 @@ impl Renderer {
     /// Render a single node (thumbnails, previews) fitted into `size`×`size` pixels.
     pub fn render_thumbnail(&mut self, doc: &Document, id: NodeId, size: u32) -> Option<Rendered> {
         let n = doc.node(id)?;
-        let b = n.visual_bounds()?;
+        let b = fx::cull_bounds(n)?;
         let s = (size as f64 - 2.0) / b.width().max(b.height()).max(1e-6);
         let view = Affine::translate((size as f64 / 2.0, size as f64 / 2.0)) * Affine::scale(s) * Affine::translate(-b.center().to_vec2());
         let w = size.clamp(1, u16::MAX as u32) as u16;
@@ -188,7 +190,7 @@ impl Renderer {
         if !force && (!n.visible || f.opts.hidden.contains(&n.id)) {
             return;
         }
-        if let Some(b) = n.visual_bounds() {
+        if let Some(b) = fx::cull_bounds(n) {
             let pad = f.px * 2.0;
             if !rects_overlap(b.inflate(pad, pad), f.visible) {
                 self.stats.culled += n.count();
@@ -274,6 +276,9 @@ impl Renderer {
     }
 
     fn draw_shape(&mut self, ctx: &mut RenderContext, f: &Frame, n: &Node, bp: &BezPath, rule: FillRule) {
+        if fx::has_fx(n) {
+            return self.draw_shape_fx(ctx, f, n, bp, rule);
+        }
         if f.opts.outline {
             self.hairline(ctx, f, bp, [0, 0, 0, 255]);
             return;

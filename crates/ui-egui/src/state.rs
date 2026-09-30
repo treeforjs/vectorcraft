@@ -27,12 +27,17 @@ impl Default for View {
 
 /// Illustrator's preset zoom stops, in percent.
 pub const ZOOM_STOPS: [f64; 26] = [
-    3.13, 4.17, 6.25, 8.33, 12.5, 16.67, 25.0, 33.33, 50.0, 66.67, 100.0, 150.0, 200.0, 300.0, 400.0, 600.0, 800.0, 1200.0, 1600.0, 2400.0, 3200.0, 4800.0, 6400.0, 12800.0, 25600.0, 64000.0,
+    3.13, 4.17, 6.25, 8.33, 12.5, 16.67, 25.0, 33.33, 50.0, 66.67, 100.0, 150.0, 200.0, 300.0, 400.0, 600.0, 800.0, 1200.0, 1600.0, 2400.0, 3200.0,
+    4800.0, 6400.0, 12800.0, 25600.0, 64000.0,
 ];
 
 pub fn next_zoom(z: f64, up: bool) -> f64 {
     let pct = z * 100.0;
-    let stop = if up { ZOOM_STOPS.iter().find(|s| **s > pct + 0.01).copied().unwrap_or(64000.0) } else { ZOOM_STOPS.iter().rev().find(|s| **s < pct - 0.01).copied().unwrap_or(3.13) };
+    let stop = if up {
+        ZOOM_STOPS.iter().find(|s| **s > pct + 0.01).copied().unwrap_or(64000.0)
+    } else {
+        ZOOM_STOPS.iter().rev().find(|s| **s < pct - 0.01).copied().unwrap_or(3.13)
+    };
     stop / 100.0
 }
 
@@ -104,7 +109,20 @@ pub struct ViewFlags {
 
 impl Default for ViewFlags {
     fn default() -> Self {
-        Self { rulers: true, grid: false, guides: true, smart_guides: true, bounding_box: true, outline: false, pixel_preview: false, snap_to_grid: false, snap_to_point: true, artboards: true, transparency_grid: false, edges: true }
+        Self {
+            rulers: false,
+            grid: false,
+            guides: true,
+            smart_guides: true,
+            bounding_box: true,
+            outline: false,
+            pixel_preview: false,
+            snap_to_grid: false,
+            snap_to_point: true,
+            artboards: true,
+            transparency_grid: false,
+            edges: true,
+        }
     }
 }
 
@@ -147,6 +165,14 @@ pub struct UiState {
     pub control_bar: bool,
     pub toolbar: bool,
     pub toolbar_double: bool,
+    /// Advanced toolbar (every tool group) instead of the categorized Basic toolbar.
+    #[serde(default)]
+    pub toolbar_advanced: bool,
+    #[serde(default = "yes")]
+    pub task_bar: bool,
+    /// Last tool shown in each toolbar slot (keyed by the slot's first tool id).
+    #[serde(default)]
+    pub slot_tool: std::collections::BTreeMap<String, String>,
     pub status_bar: bool,
     pub dock: bool,
     pub view: ViewFlags,
@@ -168,12 +194,15 @@ pub struct UiState {
 impl Default for UiState {
     fn default() -> Self {
         Self {
-            brightness: Brightness::Dark,
+            brightness: Brightness::MediumDark,
             dock_tab: DockTab::Properties,
             open_panel: None,
-            control_bar: true,
+            control_bar: false,
             toolbar: true,
             toolbar_double: false,
+            toolbar_advanced: false,
+            task_bar: true,
+            slot_tool: Default::default(),
             status_bar: true,
             dock: true,
             view: ViewFlags::default(),
@@ -188,6 +217,10 @@ impl Default for UiState {
             about: false,
         }
     }
+}
+
+fn yes() -> bool {
+    true
 }
 
 #[cfg(test)]
