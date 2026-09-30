@@ -1,6 +1,9 @@
 //! The command registry. Ids follow Illustrator's menu structure.
 
 mod create;
+mod draw2;
+mod effectcmd;
+mod xform;
 mod edit;
 mod layer;
 mod object;
@@ -113,6 +116,9 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(select::specs());
         v.extend(paint::specs());
         v.extend(layer::specs());
+        v.extend(draw2::specs());
+        v.extend(xform::specs());
+        v.extend(effectcmd::specs());
         v.extend(pathops::specs());
         v.extend(typecmd::specs());
         v
