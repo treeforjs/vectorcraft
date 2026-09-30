@@ -1,0 +1,21 @@
+# Control protocol
+
+`drawcraft --control <port>` listens on `127.0.0.1:<port>` (loopback only). One JSON request per line:
+`{"id": 1, "method": "ui.inspect", "params": {}}` → `{"id": 1, "ok": true, "result": {...}}` or `{"id":1,"ok":false,"error":"..."}`.
+
+| Method | Params | |
+|---|---|---|
+| `engine.execute` | `{command, params}` | run any engine or UI command (see `engine.commands`) |
+| `engine.commands` | | every command with label, shortcut, params doc, enablement |
+| `document.inspect` | | layer tree, selection, history, paint defaults |
+| `ui.inspect` | | tool, UI state, view, canvas rect, window size, perf |
+| `ui.menu.list` / `ui.menu.invoke` | `{command, params}` | the full menu tree / invoke an item |
+| `ui.tool.select` / `ui.tool.list` | `{tool}` | |
+| `ui.pointer` | `{events:[{kind: down|drag|up|move|doubleclick, x, y, space?: "doc"|"screen", mods?}]}` | drive the active tool exactly like the mouse |
+| `ui.key` / `ui.text` | `{key, shift?, alt?, cmd?}` / `{text}` | synthetic keyboard input |
+| `ui.set` | `{brightness?, panel?, rulers?, outline?, grid?, smartGuides?, boundingBox?, controlBar?}` | |
+| `ui.dialog.set` / `.confirm` / `.cancel` | `{field, value}` | fill and submit the open dialog |
+| `ui.screenshot` | `{path?}` | capture the window (PNG) |
+| `ui.render` | `{path?, scale?}` | render the artboard headlessly (PNG) |
+| `ui.resize` / `ui.focus` | | |
+| `app.open` / `app.save` / `app.export` / `app.quit` | `{path}` / `{path?}` / `{format, path, scale?}` | |

@@ -3,8 +3,18 @@ name = "drawcraft-mcp"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "DrawCraft MCP server: JSON-RPC 2.0 over stdio, driving a running app or a headless session"
 
 [lints]
 workspace = true
 
 [dependencies]
+drawcraft-engine = { workspace = true }
+drawcraft-render = { workspace = true }
+drawcraft-svg = { workspace = true }
+drawcraft-format = { workspace = true }
+drawcraft-tools = { workspace = true }
+drawcraft-geom = { workspace = true }
+drawcraft-doc = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }

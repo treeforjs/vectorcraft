@@ -802,6 +802,10 @@ dependencies = [
 [[package]]
 name = "drawcraft-cli"
 version = "0.1.0"
+dependencies = [
+ "drawcraft-mcp",
+ "serde_json",
+]
 
 [[package]]
 name = "drawcraft-color"
@@ -883,6 +887,17 @@ dependencies = [
 [[package]]
 name = "drawcraft-mcp"
 version = "0.1.0"
+dependencies = [
+ "drawcraft-doc",
+ "drawcraft-engine",
+ "drawcraft-format",
+ "drawcraft-geom",
+ "drawcraft-render",
+ "drawcraft-svg",
+ "drawcraft-tools",
+ "log",
+ "serde_json",
+]
 
 [[package]]
 name = "drawcraft-pathops"
@@ -988,6 +1003,18 @@ dependencies = [
 [[package]]
 name = "drawcraft-web"
 version = "0.1.0"
+dependencies = [
+ "drawcraft-engine",
+ "drawcraft-ui-egui",
+ "eframe",
+ "egui",
+ "js-sys",
+ "log",
+ "rfd",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
 
 [[package]]
 name = "ecolor"

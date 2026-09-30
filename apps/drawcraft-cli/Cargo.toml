@@ -4,8 +4,15 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish = false
+description = "DrawCraft command line: MCP server (stdio) and headless batch runs"
+
+[[bin]]
+name = "drawcraft-cli"
+path = "src/main.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
+drawcraft-mcp = { workspace = true }
+serde_json = { workspace = true }

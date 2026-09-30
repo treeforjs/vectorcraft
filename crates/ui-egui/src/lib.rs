@@ -308,8 +308,9 @@ impl DrawcraftApp {
         if self.fonts_ready {
             shortcuts::handle(self, ctx);
         }
-        let dropped = ctx.input(|i| i.raw.dropped_files.clone());
-        for f in dropped {
+        // Native only: the web host reads dropped files asynchronously and feeds `Services::inbox`.
+        #[cfg(not(target_arch = "wasm32"))]
+        for f in ctx.input(|i| i.raw.dropped_files.clone()) {
             let path = f.path().to_path_buf();
             let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "dropped".into());
             match f.bytes() {
