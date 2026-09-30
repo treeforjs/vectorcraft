@@ -162,6 +162,7 @@ pub struct Session {
     /// Executed commands (for actions and debugging).
     pub journal: Vec<(String, Value)>,
     pub(crate) tool: Box<dyn Tool>,
+    pub(crate) last_view: ViewInfo,
     untitled_counter: u32,
 }
 
@@ -182,6 +183,7 @@ impl Session {
             clipboard: vec![],
             journal: vec![],
             tool: drawcraft_tools::create("selection"),
+            last_view: ViewInfo::default(),
             untitled_counter: 0,
         }
     }
@@ -351,3 +353,5 @@ impl Session {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_pathops;

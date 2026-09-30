@@ -38,6 +38,9 @@ enum State {
 pub struct SelectionTool {
     state: State,
     measure: Option<(Point, String)>,
+    guides: Vec<Overlay>,
+    targets: Option<crate::guides::Targets>,
+    start_bounds: Option<Rect>,
 }
 
 pub fn matrix_json(a: Affine) -> Value {
@@ -131,7 +134,18 @@ impl Tool for SelectionTool {
                     }
                     out.push(Action::Begin(if m.alt { "Copy".into() } else { "Move".into() }));
                 }
-                let d = move_delta(start, p, m.shift);
+                let mut d = move_delta(start, p, m.shift);
+                if !began {
+                    let sel_ids: Vec<drawcraft_doc::NodeId> = cx.selection.objects.clone();
+                    self.start_bounds = cx.doc.bounds_of(&sel_ids, false);
+                    self.targets = cx.smart_guides.then(|| crate::guides::Targets::collect(cx.doc, &sel_ids, None));
+                }
+                self.guides.clear();
+                if let (Some(t), Some(b)) = (&self.targets, self.start_bounds) {
+                    let (adj, ov) = t.snap_rect(b + d, cx.tol(5.0));
+                    d += adj;
+                    self.guides = ov;
+                }
                 self.state = State::Moving { start, began: true };
                 self.measure = Some((p, format!("dX: {:.2} pt\ndY: {:.2} pt", d.x, d.y)));
                 out.push(Action::Preview("object.transform".into(), json!({ "matrix": matrix_json(Affine::translate(d)), "copy": m.alt })));
@@ -155,6 +169,8 @@ impl Tool for SelectionTool {
             (PointerKind::Up, State::Moving { began, .. }) => {
                 self.state = State::Idle;
                 self.measure = None;
+                self.guides.clear();
+                self.targets = None;
                 if began { vec![Action::Commit] } else { vec![] }
             }
             (PointerKind::Up, State::Scaling { .. } | State::Rotating { .. }) => {
@@ -184,6 +200,7 @@ impl Tool for SelectionTool {
         if let State::Marquee { start, cur, .. } = self.state {
             o.push(Overlay::Marquee(Rect::from_points(start, cur)));
         }
+        o.extend(self.guides.iter().cloned());
         if let Some((p, t)) = &self.measure {
             o.push(Overlay::Measure { p: *p, text: t.clone() });
         }

@@ -12,14 +12,14 @@ pub fn parse(s: &str) -> Option<KeyboardShortcut> {
     if s.is_empty() {
         return None;
     }
-    let (mods_part, key_part) = if let Some(stripped) = s.strip_suffix("++") { (stripped.trim_end_matches('+'), "+") } else { s.rsplit_once('+').map(|(m, k)| (m, k)).unwrap_or(("", s)) };
+    let (mods_part, key_part) = if let Some(stripped) = s.strip_suffix("++") { (stripped.trim_end_matches('+'), "+") } else { s.rsplit_once('+').unwrap_or(("", s)) };
     let mut m = Modifiers::NONE;
     for part in mods_part.split('+').filter(|p| !p.is_empty()) {
         match part {
-            "Cmd" => m = m | Modifiers::COMMAND,
-            "Shift" => m = m | Modifiers::SHIFT,
-            "Alt" => m = m | Modifiers::ALT,
-            "Ctrl" => m = m | Modifiers::CTRL,
+            "Cmd" => m |= Modifiers::COMMAND,
+            "Shift" => m |= Modifiers::SHIFT,
+            "Alt" => m |= Modifiers::ALT,
+            "Ctrl" => m |= Modifiers::CTRL,
             _ => return None,
         }
     }
@@ -84,6 +84,24 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
         }
     }
     if typing {
+        return;
+    }
+    // Type tool editing: text and editing keys go to the tool.
+    if app.session.tool_wants_text() {
+        let texts: Vec<String> = ctx.input(|i| i.events.iter().filter_map(|e| if let egui::Event::Text(t) = e { Some(t.clone()) } else { None }).collect());
+        for t in texts {
+            let _ = app.session.tool_text(&t, view);
+        }
+        for (k, tk) in [(Key::Backspace, ToolKey::Backspace), (Key::Delete, ToolKey::Delete), (Key::ArrowLeft, ToolKey::Left), (Key::ArrowRight, ToolKey::Right)] {
+            if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, k)) {
+                let _ = app.session.tool_key(tk, Mods::default(), view);
+            }
+        }
+        // Enter was already delivered above as ToolKey::Enter (newline).
+        let fire = all_shortcuts().into_iter().filter(|(sc, _)| sc.modifiers.command).find(|(sc, _)| ctx.input_mut(|i| i.consume_shortcut(sc))).map(|(_, id)| id);
+        if let Some(id) = fire {
+            crate::menus::invoke(app, id, json!({}));
+        }
         return;
     }
     if busy {

@@ -6,7 +6,9 @@ mod layer;
 mod object;
 mod paint;
 mod path;
+mod pathops;
 mod select;
+mod typecmd;
 
 use drawcraft_color::Color;
 use drawcraft_doc::NodeId;
@@ -111,6 +113,8 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(select::specs());
         v.extend(paint::specs());
         v.extend(layer::specs());
+        v.extend(pathops::specs());
+        v.extend(typecmd::specs());
         v
     })
 }

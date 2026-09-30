@@ -44,7 +44,8 @@ impl Tool for PenTool {
         self.drag.is_some()
     }
     fn pointer(&mut self, cx: &ToolContext, ev: &PointerEvent) -> Vec<Action> {
-        let mut p = ev.pos;
+        let exclude: Vec<drawcraft_doc::NodeId> = if self.drawing { cx.selection.objects.clone() } else { vec![] };
+        let (mut p, _) = if matches!(ev.kind, PointerKind::Down) { crate::guides::snap_draw(cx, ev.pos, &exclude) } else { (ev.pos, vec![]) };
         let tol = cx.tol(5.0);
         let active = if self.drawing { active_path(cx) } else { None };
         if self.drawing && active.is_none() && ev.kind == PointerKind::Down {

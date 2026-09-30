@@ -16,27 +16,97 @@ use super::edit::selected_roots;
 use super::*;
 
 pub fn specs() -> Vec<CommandSpec> {
-    const PF: &str = "{} operate on the selected objects (back → front) → {ids}";
     vec![
-        cmd!("object.pathfinder.unite", "Unite", ["Window", "Pathfinder"], None, PF, has_selection, |s, _| run_pf(s, PathfinderOp::Unite)),
-        cmd!("object.pathfinder.minusFront", "Minus Front", ["Window", "Pathfinder"], None, PF, has_selection, |s, _| run_pf(
-            s,
-            PathfinderOp::MinusFront
-        )),
-        cmd!("object.pathfinder.intersect", "Intersect", ["Window", "Pathfinder"], None, PF, has_selection, |s, _| run_pf(
-            s,
-            PathfinderOp::Intersect
-        )),
-        cmd!("object.pathfinder.exclude", "Exclude", ["Window", "Pathfinder"], None, PF, has_selection, |s, _| run_pf(s, PathfinderOp::Exclude)),
-        cmd!("object.pathfinder.divide", "Divide", ["Window", "Pathfinder"], None, PF, has_selection, |s, _| run_pf(s, PathfinderOp::Divide)),
-        cmd!("object.pathfinder.trim", "Trim", ["Window", "Pathfinder"], None, PF, has_selection, |s, _| run_pf(s, PathfinderOp::Trim)),
-        cmd!("object.pathfinder.merge", "Merge", ["Window", "Pathfinder"], None, PF, has_selection, |s, _| run_pf(s, PathfinderOp::Merge)),
-        cmd!("object.pathfinder.crop", "Crop", ["Window", "Pathfinder"], None, PF, has_multi, |s, _| run_pf(s, PathfinderOp::Crop)),
-        cmd!("object.pathfinder.outline", "Outline", ["Window", "Pathfinder"], None, PF, has_selection, |s, _| run_pf(s, PathfinderOp::Outline)),
-        cmd!("object.pathfinder.minusBack", "Minus Back", ["Window", "Pathfinder"], None, PF, has_selection, |s, _| run_pf(
-            s,
-            PathfinderOp::MinusBack
-        )),
+        cmd!(
+            "object.pathfinder.unite",
+            "Unite",
+            ["Window", "Pathfinder"],
+            None,
+            "{} operate on the selected objects (back → front) → {ids}",
+            has_selection,
+            |s, _| run_pf(s, PathfinderOp::Unite)
+        ),
+        cmd!(
+            "object.pathfinder.minusFront",
+            "Minus Front",
+            ["Window", "Pathfinder"],
+            None,
+            "{} operate on the selected objects (back → front) → {ids}",
+            has_selection,
+            |s, _| run_pf(s, PathfinderOp::MinusFront)
+        ),
+        cmd!(
+            "object.pathfinder.intersect",
+            "Intersect",
+            ["Window", "Pathfinder"],
+            None,
+            "{} operate on the selected objects (back → front) → {ids}",
+            has_selection,
+            |s, _| run_pf(s, PathfinderOp::Intersect)
+        ),
+        cmd!(
+            "object.pathfinder.exclude",
+            "Exclude",
+            ["Window", "Pathfinder"],
+            None,
+            "{} operate on the selected objects (back → front) → {ids}",
+            has_selection,
+            |s, _| run_pf(s, PathfinderOp::Exclude)
+        ),
+        cmd!(
+            "object.pathfinder.divide",
+            "Divide",
+            ["Window", "Pathfinder"],
+            None,
+            "{} operate on the selected objects (back → front) → {ids}",
+            has_selection,
+            |s, _| run_pf(s, PathfinderOp::Divide)
+        ),
+        cmd!(
+            "object.pathfinder.trim",
+            "Trim",
+            ["Window", "Pathfinder"],
+            None,
+            "{} operate on the selected objects (back → front) → {ids}",
+            has_selection,
+            |s, _| run_pf(s, PathfinderOp::Trim)
+        ),
+        cmd!(
+            "object.pathfinder.merge",
+            "Merge",
+            ["Window", "Pathfinder"],
+            None,
+            "{} operate on the selected objects (back → front) → {ids}",
+            has_selection,
+            |s, _| run_pf(s, PathfinderOp::Merge)
+        ),
+        cmd!(
+            "object.pathfinder.crop",
+            "Crop",
+            ["Window", "Pathfinder"],
+            None,
+            "{} operate on the selected objects (back → front) → {ids}",
+            has_multi,
+            |s, _| run_pf(s, PathfinderOp::Crop)
+        ),
+        cmd!(
+            "object.pathfinder.outline",
+            "Outline",
+            ["Window", "Pathfinder"],
+            None,
+            "{} operate on the selected objects (back → front) → {ids}",
+            has_selection,
+            |s, _| run_pf(s, PathfinderOp::Outline)
+        ),
+        cmd!(
+            "object.pathfinder.minusBack",
+            "Minus Back",
+            ["Window", "Pathfinder"],
+            None,
+            "{} operate on the selected objects (back → front) → {ids}",
+            has_selection,
+            |s, _| run_pf(s, PathfinderOp::MinusBack)
+        ),
         cmd!(
             "object.path.outlineStroke",
             "Outline Stroke",
@@ -239,7 +309,8 @@ fn pf_label(op: PathfinderOp) -> &'static str {
 fn run_pf(s: &mut Session, op: PathfinderOp) -> Result<Value> {
     let roots = selected_roots(s)?;
     let Some(&top) = roots.last() else { return Err(EngineError::Other("nothing selected".into())) };
-    let shape_mode = matches!(op, PathfinderOp::Unite | PathfinderOp::MinusFront | PathfinderOp::Intersect | PathfinderOp::Exclude | PathfinderOp::MinusBack);
+    let shape_mode =
+        matches!(op, PathfinderOp::Unite | PathfinderOp::MinusFront | PathfinderOp::Intersect | PathfinderOp::Exclude | PathfinderOp::MinusBack);
     let label = pf_label(op);
     let ids = s.edit(label, |d, sel| {
         // Build the stack (back → front) with a style per entry.
@@ -432,7 +503,8 @@ fn outline_stroke(s: &mut Session, _: &Value) -> Result<Value> {
                     continue;
                 }
                 let mut stroke_node = shape_node(d, outline, Some(&l));
-                stroke_node.appearance = Appearance { items: vec![AppearanceItem::Fill(drawcraft_doc::appearance::FillLayer::new(st.paint.clone()))], effects: vec![] };
+                stroke_node.appearance =
+                    Appearance { items: vec![AppearanceItem::Fill(drawcraft_doc::appearance::FillLayer::new(st.paint.clone()))], effects: vec![] };
                 let fill = l.appearance.fill().filter(|f| f.visible && !f.paint.is_none()).cloned();
                 let new = if let Some(f) = fill {
                     let mut fill_node = l.clone();
@@ -598,9 +670,7 @@ fn clean_up(s: &mut Session, p: &Value) -> Result<Value> {
                     if *guide || *clipping || (parent_clip && first) {
                         return;
                     }
-                    if stray && path.anchor_count() <= 1 {
-                        v.push(n.id);
-                    } else if unpainted && !parent_compound && !is_painted(&n.appearance) {
+                    if (stray && path.anchor_count() <= 1) || (unpainted && !parent_compound && !is_painted(&n.appearance)) {
                         v.push(n.id);
                     }
                 }
@@ -707,4 +777,3 @@ fn divide_objects_below(s: &mut Session, _: &Value) -> Result<Value> {
     })?;
     Ok(ids_json(&ids))
 }
-

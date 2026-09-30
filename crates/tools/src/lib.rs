@@ -10,9 +10,11 @@
 pub mod bbox;
 pub mod catalog;
 pub mod direct;
+pub mod guides;
 pub mod pen;
 pub mod select;
 pub mod shape;
+pub mod text;
 
 use drawcraft_color::Paint;
 use drawcraft_doc::{Document, NodeId, Selection};
@@ -112,6 +114,8 @@ pub enum Action {
     Dialog(String, Value),
     /// Switch to another tool (e.g. after placing a text frame).
     SwitchTool(String),
+    /// Call the tool's `notify` after the preceding actions ran (e.g. to pick up a created object).
+    Notify(String),
 }
 
 /// Paint defaults for new art (the fill/stroke proxy).
@@ -214,6 +218,14 @@ pub trait Tool: Send {
     fn busy(&self) -> bool {
         false
     }
+    /// Does the tool want typed text (Type tool editing)? Single-key shortcuts are suppressed.
+    fn wants_text(&self) -> bool {
+        false
+    }
+    fn text_input(&mut self, _cx: &ToolContext, _s: &str) -> Vec<Action> {
+        vec![]
+    }
+    fn notify(&mut self, _cx: &ToolContext, _what: &str) {}
     /// Called when the user switches away (finish pending work).
     fn deactivate(&mut self, _cx: &ToolContext) -> Vec<Action> {
         vec![]
@@ -227,6 +239,7 @@ pub fn create(id: &str) -> Box<dyn Tool> {
         "directSelection" => Box::new(direct::DirectSelectionTool::new(false)),
         "groupSelection" => Box::new(direct::DirectSelectionTool::new(true)),
         "pen" => Box::new(pen::PenTool::default()),
+        "type" => Box::new(text::TypeTool::default()),
         "rectangle" | "roundedRectangle" | "ellipse" | "polygon" | "star" | "lineSegment" => Box::new(shape::ShapeTool::new(id)),
         other => Box::new(NoopTool(tool_info(other).map(|t| t.id).unwrap_or("selection"))),
     }

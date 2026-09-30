@@ -197,7 +197,7 @@ mod tests {
     #[test]
     fn zoom_steps() {
         assert_eq!(next_zoom(1.0, true), 1.5);
-        assert_eq!(next_zoom(1.0, false), 0.6667);
+        assert!((next_zoom(1.0, false) - 0.6667).abs() < 1e-9);
         assert_eq!(next_zoom(640.0, true), 640.0);
         assert_eq!(zoom_label(0.6667), "66.67%");
         assert_eq!(zoom_label(1.0), "100%");

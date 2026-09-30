@@ -66,6 +66,7 @@ impl Session {
 
     /// Feed a pointer event to the active tool. Returns requests for the UI.
     pub fn pointer(&mut self, ev: &PointerEvent, view: ViewInfo) -> Result<Vec<UiRequest>> {
+        self.last_view = view;
         let acts = self.with_cx(view, |t, cx| t.pointer(cx, ev));
         self.apply_actions(acts)
     }
@@ -73,6 +74,16 @@ impl Session {
     pub fn tool_key(&mut self, key: ToolKey, mods: Mods, view: ViewInfo) -> Result<Vec<UiRequest>> {
         let acts = self.with_cx(view, |t, cx| t.key(cx, key, mods));
         self.apply_actions(acts)
+    }
+
+    /// Typed text for the active tool (Type tool).
+    pub fn tool_text(&mut self, text: &str, view: ViewInfo) -> Result<Vec<UiRequest>> {
+        let acts = self.with_cx(view, |t, cx| t.text_input(cx, text));
+        self.apply_actions(acts)
+    }
+
+    pub fn tool_wants_text(&self) -> bool {
+        self.tool.wants_text()
     }
 
     pub fn tool_busy(&self) -> bool {
@@ -112,6 +123,10 @@ impl Session {
                 }
                 Action::Dialog(k, p) => ui.push(UiRequest::Dialog(k, p)),
                 Action::SwitchTool(t) => ui.push(UiRequest::SwitchTool(t)),
+                Action::Notify(what) => {
+                    let view = self.last_view;
+                    self.with_cx(view, |t, cx| t.notify(cx, &what));
+                }
             }
         }
         Ok(ui)

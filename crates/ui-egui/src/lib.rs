@@ -31,19 +31,25 @@ use serde_json::{Value, json};
 pub use control::{ControlRequest, ControlResponse};
 pub use state::{UiState, View};
 
+pub type PickSave = Box<dyn FnMut(&str) -> Option<String>>;
+pub type ReadFn = Box<dyn Fn(&str) -> Result<Vec<u8>, String>>;
+pub type WriteFn = Box<dyn FnMut(&str, &[u8]) -> Result<(), String>>;
+pub type Inbox = Arc<Mutex<Vec<(String, Vec<u8>)>>>;
+pub type DownloadFn = Box<dyn FnMut(&str, &[u8])>;
+
 /// Platform services injected by the host app (desktop or web).
 #[derive(Default)]
 pub struct Services {
     /// Show an open dialog; returns a path.
     pub pick_open: Option<Box<dyn FnMut() -> Option<String>>>,
     /// Show a save dialog with a suggested file name; returns a path.
-    pub pick_save: Option<Box<dyn FnMut(&str) -> Option<String>>>,
-    pub read: Option<Box<dyn Fn(&str) -> Result<Vec<u8>, String>>>,
-    pub write: Option<Box<dyn FnMut(&str, &[u8]) -> Result<(), String>>>,
+    pub pick_save: Option<PickSave>,
+    pub read: Option<ReadFn>,
+    pub write: Option<WriteFn>,
     /// Files that arrived asynchronously (web open / drops): (name, bytes).
-    pub inbox: Option<Arc<Mutex<Vec<(String, Vec<u8>)>>>>,
+    pub inbox: Option<Inbox>,
     /// Web: trigger a browser download instead of writing a path.
-    pub download: Option<Box<dyn FnMut(&str, &[u8])>>,
+    pub download: Option<DownloadFn>,
     /// Web: start an async open (bytes arrive via `inbox`).
     pub open_async: Option<Box<dyn FnMut()>>,
 }

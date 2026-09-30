@@ -353,11 +353,11 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
                 Drag::Pan { .. } => {}
             }
         }
-    } else if let Some(p) = hover {
-        if pointer.is_moving() {
-            let ev = PointerEvent { kind: PointerKind::Move, pos: xf.to_doc(p), mods: mods(m, space), pressure: 1.0 };
-            dispatch(app, &ev, view);
-        }
+    } else if let Some(p) = hover
+        && pointer.is_moving()
+    {
+        let ev = PointerEvent { kind: PointerKind::Move, pos: xf.to_doc(p), mods: mods(m, space), pressure: 1.0 };
+        dispatch(app, &ev, view);
     }
     if resp.double_clicked()
         && let Some(p) = hover

@@ -29,26 +29,22 @@ pub fn app_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
             let full = ui.max_rect();
             let right = egui::Rect::from_min_max(egui::pos2(full.right() - 340.0, full.top()), full.right_bottom());
             let mut rui = ui.new_child(egui::UiBuilder::new().max_rect(right).layout(egui::Layout::right_to_left(egui::Align::Center)));
-            (|ui: &mut Ui| {
-                let ws = egui::Frame::NONE.fill(t.panel).corner_radius(CornerRadius::same(4)).inner_margin(egui::Margin::symmetric(8, 3));
-                ws.show(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.label(egui::RichText::new("Essentials").size(12.0).color(t.text));
-                        icons::icon(ui, "chevron-down", 12.0, t.text_dim);
-                    });
-                });
-                ui.add_space(6.0);
-                // Search box → command palette.
-                let (r, resp) = ui.allocate_exact_size(vec2(200.0, 24.0), Sense::click());
-                ui.painter().rect_filled(r, CornerRadius::same(12), t.input);
-                ui.painter().rect_stroke(r, CornerRadius::same(12), Stroke::new(1.0, if resp.hovered() { t.input_border } else { t.divider }), StrokeKind::Inside);
-                icons::paint(ui, "search", egui::Rect::from_center_size(r.left_center() + vec2(14.0, 0.0), vec2(13.0, 13.0)), t.text_dim);
-                ui.painter().text(r.left_center() + vec2(26.0, 0.0), egui::Align2::LEFT_CENTER, "Search commands and tools", egui::FontId::proportional(11.5), t.text_dim);
-                if resp.clicked() {
-                    app.ui.palette_open = true;
-                    app.ui.palette_query.clear();
-                }
-            })(&mut rui);
+            let ui = &mut rui;
+            let (wr, wresp) = ui.allocate_exact_size(vec2(112.0, 24.0), Sense::click());
+            ui.painter().rect_filled(wr, CornerRadius::same(4), if wresp.hovered() { t.hover } else { t.panel });
+            ui.painter().text(wr.left_center() + vec2(10.0, 0.0), egui::Align2::LEFT_CENTER, "Essentials", egui::FontId::proportional(12.0), t.text);
+            icons::paint(ui, "chevron-down", egui::Rect::from_center_size(wr.right_center() - vec2(12.0, 0.0), vec2(12.0, 12.0)), t.text_dim);
+            ui.add_space(8.0);
+            // Search box → command palette.
+            let (r, resp) = ui.allocate_exact_size(vec2(200.0, 24.0), Sense::click());
+            ui.painter().rect_filled(r, CornerRadius::same(12), t.input);
+            ui.painter().rect_stroke(r, CornerRadius::same(12), Stroke::new(1.0, if resp.hovered() { t.input_border } else { t.divider }), StrokeKind::Inside);
+            icons::paint(ui, "search", egui::Rect::from_center_size(r.left_center() + vec2(14.0, 0.0), vec2(13.0, 13.0)), t.text_dim);
+            ui.painter().text(r.left_center() + vec2(26.0, 0.0), egui::Align2::LEFT_CENTER, "Search commands and tools", egui::FontId::proportional(11.5), t.text_dim);
+            if resp.clicked() {
+                app.ui.palette_open = true;
+                app.ui.palette_query.clear();
+            }
         });
     });
 }

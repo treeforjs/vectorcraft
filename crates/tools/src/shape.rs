@@ -20,6 +20,7 @@ pub struct ShapeTool {
     pub corner_radius: f64,
     /// Star inner radius as a fraction of the outer radius.
     pub star_ratio: f64,
+    guides: Vec<Overlay>,
 }
 
 impl ShapeTool {
@@ -32,7 +33,7 @@ impl ShapeTool {
             "lineSegment" => "lineSegment",
             _ => "rectangle",
         };
-        Self { id, start: None, last: Point::ZERO, mods: Mods::default(), began: false, sides: 6, points: 5, corner_radius: 12.0, star_ratio: 0.5 }
+        Self { id, start: None, last: Point::ZERO, mods: Mods::default(), began: false, sides: 6, points: 5, corner_radius: 12.0, star_ratio: 0.5, guides: vec![] }
     }
 
     fn label(&self) -> &'static str {
@@ -95,13 +96,17 @@ impl Tool for ShapeTool {
     fn pointer(&mut self, cx: &ToolContext, ev: &PointerEvent) -> Vec<Action> {
         match ev.kind {
             PointerKind::Down => {
-                self.start = Some(ev.pos);
+                let (p, _) = crate::guides::snap_draw(cx, ev.pos, &[]);
+                self.start = Some(p);
                 self.last = ev.pos;
                 self.began = false;
                 vec![]
             }
             PointerKind::Drag => {
                 let Some(s) = self.start else { return vec![] };
+                let (pos, g) = crate::guides::snap_draw(cx, ev.pos, &[]);
+                self.guides = g;
+                let ev = &PointerEvent { pos, ..*ev };
                 self.last = ev.pos;
                 self.mods = ev.mods;
                 let mut out = vec![];
@@ -118,6 +123,7 @@ impl Tool for ShapeTool {
             }
             PointerKind::Up => {
                 let Some(s) = self.start.take() else { return vec![] };
+                self.guides.clear();
                 if self.began {
                     self.began = false;
                     vec![Action::Commit]
@@ -172,7 +178,9 @@ impl Tool for ShapeTool {
         match self.start {
             Some(s) if self.began => {
                 let d = self.last - s;
-                vec![Overlay::Measure { p: self.last, text: format!("W: {:.2} pt\nH: {:.2} pt", d.x.abs(), d.y.abs()) }]
+                let mut o = self.guides.clone();
+                o.push(Overlay::Measure { p: self.last, text: format!("W: {:.2} pt\nH: {:.2} pt", d.x.abs(), d.y.abs()) });
+                o
             }
             _ => vec![],
         }
