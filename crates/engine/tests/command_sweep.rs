@@ -1,0 +1,328 @@
+//! Every-command sweep: each registered command, in three fixture states, with `{}` and with fuzzed
+//! junk params, must return Ok or Err (never panic), never leave an interaction open, and never
+//! corrupt the tree.
+
+use drawcraft_engine::{Session, command_specs};
+use drawcraft_testkit::catch_quiet;
+use drawcraft_testkit::fixtures::Fixture;
+use drawcraft_testkit::invariants::{check_all, check_session, doc_json};
+use drawcraft_testkit::strategies::{junk_params, junk_values, param_keys};
+use serde_json::{Value, json};
+
+/// Commands that replace/close the active document or touch the filesystem are fine to call, but a
+/// few need their paths redirected into a temp dir (handled by `junk_params`).
+fn safe_path() -> String {
+    drawcraft_testkit::temp_dir("sweep").join("out.bin").to_string_lossy().to_string()
+}
+
+/// Run one call; returns a failure description or None.
+fn probe(fx: Fixture, id: &str, params: &Value) -> Option<String> {
+    let mut s = fx.session();
+    let r = catch_quiet(|| s.execute(id, params));
+    match r {
+        Err(msg) => Some(format!("PANIC {id} {params} [{fx:?}]: {msg}")),
+        Ok(_) => {
+            if s.in_interaction() {
+                return Some(format!("{id} {params} [{fx:?}]: left an interaction open"));
+            }
+            check_session(&s).err().map(|e| format!("{id} {params} [{fx:?}]: {e}"))
+        }
+    }
+}
+
+#[test]
+fn registry_is_well_formed() {
+    let specs = command_specs();
+    assert!(specs.len() > 150, "only {} commands", specs.len());
+    let mut ids = std::collections::HashSet::new();
+    for c in specs {
+        assert!(ids.insert(c.id), "duplicate command id {}", c.id);
+        assert!(!c.label.is_empty(), "{} has no label", c.id);
+        assert!(c.params.starts_with('{') || c.params.starts_with("same as"), "{}: params doc `{}`", c.id, c.params);
+        assert!(c.id.contains('.'), "{}: ids are namespaced", c.id);
+    }
+    // Every command reports enablement without a document.
+    let s = Session::new();
+    for info in s.commands() {
+        assert_eq!(info.enabled, info.disabled_reason.is_none(), "{}", info.id);
+    }
+}
+
+#[test]
+fn every_command_with_empty_params_in_every_fixture() {
+    let mut failures = vec![];
+    for fx in Fixture::ALL {
+        for c in command_specs() {
+            if let Some(f) = probe(fx, c.id, &json!({})) {
+                failures.push(f);
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{} failures:\n{}", failures.len(), failures.join("\n"));
+}
+
+#[test]
+fn every_command_without_a_document() {
+    let mut failures = vec![];
+    for c in command_specs() {
+        let mut s = Session::new();
+        match catch_quiet(|| s.execute(c.id, &json!({}))) {
+            Err(p) => failures.push(format!("PANIC {} with no document: {p}", c.id)),
+            // Anything that needs a document must say so via enablement, not fail later.
+            Ok(Err(drawcraft_engine::EngineError::NoDocument)) => failures.push(format!("{}: enabled without a document but needs one", c.id)),
+            Ok(_) => {}
+        }
+        if s.in_interaction() {
+            failures.push(format!("{}: interaction left open", c.id));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+/// Known bugs (see the `#[ignore]` repro tests below): (command, param key) pairs skipped by the
+/// junk sweep so the rest of the sweep stays meaningful.
+const KNOWN_BUGS: &[(&str, &str)] = &[
+    ("object.scale", "sx"),
+    ("object.transformEach", "scaleH"),
+    ("object.transformEach", "scaleV"),
+    ("object.distributeSpacing", "spacing"),
+    ("artboard.setProps", "x"),
+    ("artboard.setProps", "y"),
+    ("artboard.setProps", "width"),
+    ("artboard.setProps", "height"),
+];
+
+fn known_bug(id: &str, p: &Value) -> bool {
+    KNOWN_BUGS.iter().any(|(c, k)| *c == id && p.get(*k).is_some())
+}
+
+/// Regression: huge column counts used to panic with `capacity overflow`.
+#[test]
+fn artboard_rearrange_huge_columns() {
+    for fx in Fixture::ALL {
+        for cols in [json!(u64::MAX), json!(1e308)] {
+            let p = json!({ "columns": cols });
+            assert_eq!(probe(fx, "artboard.rearrange", &p), None);
+        }
+    }
+}
+
+#[test]
+fn bug_huge_transform_makes_document_unloadable() {
+    for (id, p) in [
+        ("object.scale", json!({"sx": 1e308})),
+        ("object.transformEach", json!({"scaleH": 1e308})),
+        ("object.distributeSpacing", json!({"spacing": 1e308})),
+    ] {
+        let mut s = Fixture::Multi.session();
+        if s.execute(id, &p).is_ok() {
+            drawcraft_testkit::invariants::check_native_roundtrip(&s.doc().unwrap().doc).unwrap_or_else(|e| panic!("{id} {p}: {e}"));
+        }
+    }
+}
+
+#[test]
+fn bug_artboard_huge_props_break_svg() {
+    for key in ["x", "y", "width", "height"] {
+        let mut s = Fixture::Single.session();
+        let p = json!({"index": 0, key: 1e308});
+        if s.execute("artboard.setProps", &p).is_ok() {
+            drawcraft_testkit::invariants::check_svg_roundtrip(&s.doc().unwrap().doc).unwrap_or_else(|e| panic!("{p}: {}", &e[..e.len().min(200)]));
+        }
+    }
+}
+
+/// Commands too slow to fuzz exhaustively get a reduced junk set (they still run).
+fn heavy(id: &str) -> bool {
+    id.starts_with("document.serialize") || id.starts_with("document.export") || id == "document.open"
+}
+
+#[test]
+fn every_command_with_junk_params() {
+    let path = safe_path();
+    let mut failures = vec![];
+    let mut calls = 0usize;
+    for fx in Fixture::ALL {
+        for c in command_specs() {
+            let mut cases = junk_params(c.params, &path);
+            if heavy(c.id) {
+                cases.truncate(12);
+            }
+            for p in &cases {
+                if known_bug(c.id, p) {
+                    continue;
+                }
+                calls += 1;
+                if let Some(f) = probe(fx, c.id, p) {
+                    failures.push(f);
+                }
+            }
+        }
+    }
+    assert!(calls > 5_000, "only {calls} calls");
+    failures.sort();
+    failures.dedup();
+    assert!(
+        failures.is_empty(),
+        "{} failures (of {calls} calls):\n{}",
+        failures.len(),
+        failures.iter().take(60).cloned().collect::<Vec<_>>().join("\n")
+    );
+}
+
+/// Junk inside the obvious structured params: ids arrays, anchors, matrices, colours, stops.
+#[test]
+fn structured_junk() {
+    let cases: Vec<(&str, Value)> = vec![
+        ("select.set", json!({"ids": [0, u64::MAX, -1, "x", null, 1.5]})),
+        ("select.add", json!({"ids": [[1], {"a": 1}]})),
+        ("select.anchors", json!({"id": 2, "anchors": [[99, 99], [-1, 0], ["a", "b"]], "mode": "set"})),
+        ("select.anchorsMany", json!({"items": [{"id": 2, "anchors": [[0, 1000]]}, null, 5]})),
+        ("object.transform", json!({"matrix": [0, 0, 0, 0, 0, 0]})),
+        ("object.transform", json!({"matrix": [1e308, 1e308, 1e308, 1e308, 1e308, 1e308]})),
+        ("object.transform", json!({"matrix": [1, 2, 3]})),
+        ("object.scale", json!({"sx": 0, "sy": 0})),
+        ("object.scale", json!({"sx": -100, "sy": 1e308})),
+        ("object.rotate", json!({"angle": 1e308, "origin": [1e308, -1e308]})),
+        ("object.distort", json!({"corners": [[0, 0], [0, 0], [0, 0], [0, 0]]})),
+        ("object.distort", json!({"corners": [[0, 0]], "from": [0, 0, 0, 0]})),
+        ("path.create", json!({"anchors": []})),
+        ("path.create", json!({"anchors": [{"x": 1e308, "y": -1e308}, {"x": 0, "y": 0, "in": [1e308, 1e308]}], "closed": true})),
+        ("path.create", json!({"d": "M 0 0 L"})),
+        ("path.create", json!({"d": "M0 0 C 1e308 1e308 -1e308 -1e308 0 0 Z"})),
+        ("path.create", json!({"d": "Z Z Z m 1 1 z"})),
+        ("path.setAnchors", json!({"id": 2, "subpaths": [{"anchors": [], "closed": true}]})),
+        ("path.setAnchors", json!({"id": 1, "subpaths": [{"anchors": [{"x": 0, "y": 0}], "closed": true}]})),
+        ("path.insertAnchor", json!({"id": 2, "subpath": 0, "segment": 99, "t": 5})),
+        ("path.insertAnchor", json!({"id": 2, "subpath": 7, "segment": 0, "t": -1})),
+        ("path.setHandle", json!({"id": 2, "subpath": 0, "anchor": 100, "which": "in", "x": 0, "y": 0})),
+        ("path.removeAnchor", json!({"id": 2, "subpath": 0, "anchor": 0})),
+        ("path.split", json!({"id": 2, "subpath": 0, "segment": 1000, "t": 0.5})),
+        ("path.reshapeSegment", json!({"id": 2, "subpath": 0, "segment": 0, "t": 2.0, "dx": 1e308, "dy": 0})),
+        ("path.freehand", json!({"points": [[0, 0]]})),
+        ("path.freehand", json!({"points": [[0, 0], [0, 0], [0, 0], [0, 0]]})),
+        ("path.freehand", json!({"points": [[1e308, 1e308], [-1e308, 0]], "fidelity": 0})),
+        ("path.curvature", json!({"points": [{"x": 0, "y": 0}]})),
+        ("path.knife", json!({"points": [[0, 0], [1e9, 1e9]]})),
+        ("path.eraseRegion", json!({"points": [[100, 80]], "size": 0})),
+        ("path.eraseRegion", json!({"points": [[100, 80], [101, 80]], "size": 1e9})),
+        ("path.blob", json!({"points": [[0, 0], [0, 0]], "size": -5})),
+        ("path.smoothRegion", json!({"points": [[100, 80], [120, 90]], "radius": 1e308})),
+        ("paint.setFill", json!({"gradient": {"stops": []}})),
+        ("paint.setFill", json!({"gradient": {"stops": [{"offset": 0.5, "color": "#ff0000"}]}})),
+        (
+            "paint.setFill",
+            json!({"gradient": {"kind": "radial", "stops": [{"offset": -5, "color": [1, 0, 0]}, {"offset": 99, "color": {"gray": 50}}], "angle": 1e308}}),
+        ),
+        ("paint.setFill", json!({"color": [1e308, -1e308, 2]})),
+        ("paint.setFill", json!({"color": {"c": 200, "m": -1, "y": 0, "k": 1e9}})),
+        ("paint.setGradientGeom", json!({"start": [0, 0], "end": [0, 0]})),
+        ("stroke.set", json!({"weight": -5, "dash": [0, 0, 0], "miterLimit": -1})),
+        ("stroke.set", json!({"weight": 1e308, "dash": [-1, -2], "dashOffset": 1e308})),
+        ("stroke.set", json!({"dash": [1e-12]})),
+        ("transparency.set", json!({"opacity": -50})),
+        ("transparency.set", json!({"opacity": 1e308, "blend": "NoSuchBlend"})),
+        ("object.setProps", json!({"opacity": -1, "blend": 5})),
+        ("effect.apply", json!({"effect": "distort.roughen", "params": {"size": 100, "detail": 100, "relative": false}})),
+        ("effect.apply", json!({"effect": "distort.zigZag", "params": {"size": 1e308, "ridges": 100}})),
+        ("effect.apply", json!({"effect": "distort.transform", "params": {"copies": 1e308}})),
+        ("effect.apply", json!({"effect": "stylize.dropShadow", "params": {"blur": 1e308, "opacity": -1}})),
+        ("effect.apply", json!({"effect": "no.such.effect"})),
+        ("effect.remove", json!({"index": 99})),
+        ("effect.setParams", json!({"index": 0, "params": null})),
+        ("object.path.offsetPath", json!({"offset": 1e308})),
+        ("object.path.offsetPath", json!({"offset": -1e308})),
+        ("object.path.simplify", json!({"tolerance": -1, "cornerAngle": 1e308})),
+        ("object.path.splitIntoGrid", json!({"rows": 500, "columns": 1, "gutter": 1e308})),
+        ("object.path.splitIntoGrid", json!({"rows": 0.4})),
+        ("object.setBounds", json!({"width": 0, "height": 0})),
+        ("object.setBounds", json!({"width": -10, "height": 1e308, "reference": 99})),
+        ("object.distributeSpacing", json!({"axis": "horizontal", "spacing": -1e308})),
+        ("artboard.setProps", json!({"index": 0, "width": -1, "height": 0})),
+        ("artboard.new", json!({"width": 0, "height": -1})),
+        ("artboard.delete", json!({"index": 0})),
+        ("artboard.move", json!({"index": 0, "dx": 1e308, "dy": 0, "moveArt": true})),
+        ("node.move", json!({"id": 1, "parent": 2, "index": 0})),
+        ("node.move", json!({"id": 2, "parent": 2, "index": 0})),
+        ("node.move", json!({"id": 1, "parent": null, "index": 1000})),
+        ("layer.setProps", json!({"id": 1, "color": 1000})),
+        ("layer.newSublayer", json!({"parent": 2})),
+        ("text.create", json!({"x": 0, "y": 0, "text": "\u{0}\u{FFFF}\u{1F600}", "size": -1})),
+        ("text.create", json!({"x": 0, "y": 0, "text": "a", "size": 1e308, "area": {"width": -1, "height": 0}})),
+        ("text.setStyle", json!({"size": 0, "leading": -1, "tracking": 1e308})),
+        ("document.setUnits", json!({"units": "Parsecs"})),
+        ("document.open", json!({"name": "x.svg", "dataBase64": "!!!"})),
+        ("document.open", json!({"name": "x.svg", "dataBase64": "PHN2Zz4="})),
+        ("document.open", json!({"name": "x.pdf", "dataBase64": "JVBERi0xLjQK"})),
+        ("document.open", json!({"name": "x.drawcraft", "dataBase64": "e30="})),
+        ("document.activate", json!({"index": 99})),
+        ("file.close", json!({"index": 99})),
+        ("file.new", json!({"width": -1, "height": 0, "artboards": 1000000})),
+        ("command.batch", json!({"commands": [{"command": 5}, {"params": 3}]})),
+        ("command.batch", json!({"commands": "nope"})),
+    ];
+    let mut failures = vec![];
+    for fx in Fixture::ALL {
+        for (id, p) in &cases {
+            if let Some(f) = probe(fx, id, p) {
+                failures.push(f);
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{} failures:\n{}", failures.len(), failures.join("\n"));
+}
+
+/// After a successful fuzzed call, the document still round-trips and exports.
+#[test]
+fn fuzzed_calls_keep_documents_serializable() {
+    let path = safe_path();
+    let mut failures = vec![];
+    for c in command_specs() {
+        if heavy(c.id) || c.id.starts_with("file.") {
+            continue;
+        }
+        for v in junk_values().iter().take(8) {
+            for k in param_keys(c.params) {
+                let k = if k == "path" { continue } else { k };
+                let mut s = Fixture::Multi.session();
+                let p = json!({ k.clone(): v });
+                if known_bug(c.id, &p) {
+                    continue;
+                }
+                let ok = catch_quiet(|| s.execute(c.id, &p)).map(|r| r.is_ok()).unwrap_or(false);
+                if ok && let Err(e) = catch_quiet(|| check_all(&mut s)).unwrap_or_else(|m| Err(format!("panic in checks: {m}"))) {
+                    failures.push(format!("{} {p}: {e}", c.id));
+                }
+            }
+        }
+    }
+    let _ = path;
+    failures.sort();
+    failures.dedup();
+    assert!(failures.is_empty(), "{} failures:\n{}", failures.len(), failures.iter().take(40).cloned().collect::<Vec<_>>().join("\n"));
+}
+
+/// Undo after any successful command in the Multi fixture restores the exact document.
+#[test]
+fn every_command_undoes_exactly() {
+    let mut failures = vec![];
+    for c in command_specs() {
+        if matches!(c.id, "edit.undo" | "edit.redo") || c.id.starts_with("file.") || c.id.starts_with("document.") {
+            continue;
+        }
+        let mut s = Fixture::Multi.session();
+        let before = doc_json(&s.doc().unwrap().doc);
+        let depth = s.doc().unwrap().history.undo.len();
+        let Ok(Ok(_)) = catch_quiet(|| s.execute(c.id, &json!({}))) else { continue };
+        if s.doc().unwrap().history.undo.len() > depth {
+            let _ = s.execute("edit.undo", &json!({}));
+            let after = doc_json(&s.doc().unwrap().doc);
+            if after != before {
+                failures.push(format!("{}: {}", c.id, drawcraft_testkit::invariants::first_diff(&before, &after, "$")));
+            }
+        } else if doc_json(&s.doc().unwrap().doc) != before {
+            failures.push(format!("{}: changed the document without an undo step", c.id));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}

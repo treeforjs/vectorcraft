@@ -19,16 +19,36 @@ pub struct Xf {
     pub rect: egui::Rect,
     pub zoom: f64,
     pub center: Point,
+    /// View rotation in radians (Rotate View), clockwise on screen.
+    pub rot: f64,
 }
 
 impl Xf {
+    pub fn new(rect: egui::Rect, v: &View) -> Self {
+        Self { rect, zoom: v.zoom, center: v.center, rot: v.rotation.to_radians() }
+    }
     pub fn to_screen(&self, p: Point) -> Pos2 {
         let c = self.rect.center();
-        pos2(c.x + ((p.x - self.center.x) * self.zoom) as f32, c.y + ((p.y - self.center.y) * self.zoom) as f32)
+        let (dx, dy) = ((p.x - self.center.x) * self.zoom, (p.y - self.center.y) * self.zoom);
+        let (sn, cs) = self.rot.sin_cos();
+        pos2(c.x + (dx * cs - dy * sn) as f32, c.y + (dx * sn + dy * cs) as f32)
     }
     pub fn to_doc(&self, p: Pos2) -> Point {
         let c = self.rect.center();
-        Point::new(self.center.x + (p.x - c.x) as f64 / self.zoom, self.center.y + (p.y - c.y) as f64 / self.zoom)
+        let (dx, dy) = ((p.x - c.x) as f64, (p.y - c.y) as f64);
+        let (sn, cs) = self.rot.sin_cos();
+        let (ux, uy) = (dx * cs + dy * sn, -dx * sn + dy * cs);
+        Point::new(self.center.x + ux / self.zoom, self.center.y + uy / self.zoom)
+    }
+    /// Screen-space corners of a document rect (a rotated quad when the view is rotated).
+    pub fn quad(&self, r: Rect) -> Vec<Pos2> {
+        [Point::new(r.x0, r.y0), Point::new(r.x1, r.y0), Point::new(r.x1, r.y1), Point::new(r.x0, r.y1)].iter().map(|p| self.to_screen(*p)).collect()
+    }
+    /// Convert a screen-space delta to a document delta.
+    pub fn delta_to_doc(&self, d: egui::Vec2) -> drawcraft_geom::Vec2 {
+        let (sn, cs) = self.rot.sin_cos();
+        let (dx, dy) = (d.x as f64, d.y as f64);
+        drawcraft_geom::Vec2::new((dx * cs + dy * sn) / self.zoom, (-dx * sn + dy * cs) / self.zoom)
     }
     pub fn rect_to_screen(&self, r: Rect) -> egui::Rect {
         egui::Rect::from_two_pos(self.to_screen(Point::new(r.x0, r.y0)), self.to_screen(Point::new(r.x1, r.y1)))
@@ -36,7 +56,7 @@ impl Xf {
     /// Affine mapping document points to screen points.
     pub fn affine(&self) -> Affine {
         let c = self.rect.center();
-        Affine::translate((c.x as f64, c.y as f64)) * Affine::scale(self.zoom) * Affine::translate(-self.center.to_vec2())
+        Affine::translate((c.x as f64, c.y as f64)) * Affine::rotate(self.rot) * Affine::scale(self.zoom) * Affine::translate(-self.center.to_vec2())
     }
 }
 
@@ -49,6 +69,10 @@ enum Drag {
     },
     ZoomBox {
         start: Pos2,
+    },
+    RotateView {
+        start_angle: f64,
+        start_rot: f64,
     },
     /// Cmd held: temporary selection tool; restore this tool on release.
     TempSelect,
@@ -109,7 +133,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     let resp = ui.interact(rect, egui::Id::new("canvas"), Sense::click_and_drag());
     handle_input(app, ui, &resp, rect);
     let v = *app.view().unwrap_or(&View::default());
-    let xf = Xf { rect, zoom: v.zoom, center: v.center };
+    let xf = Xf::new(rect, &v);
     let painter = ui.painter_at(rect);
     let Some(st) = app.session.active() else { return };
     let doc = st.doc.clone();
@@ -119,18 +143,20 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     if app.ui.view.artboards && !app.ui.view.outline {
         for ab in &doc.artboards {
             let r = xf.rect_to_screen(ab.rect);
+            let q = xf.quad(ab.rect);
             // Hard 2 pt drop shadow, right and bottom (measured: #4d4d4d then #565656 on #606060).
-            painter.rect_filled(r.translate(vec2(2.0, 2.0)), 0.0, Color32::from_black_alpha(26));
-            painter.rect_filled(r.translate(vec2(1.0, 1.0)), 0.0, Color32::from_black_alpha(52));
-            if app.ui.view.transparency_grid {
+            let shift = |d: f32| q.iter().map(|p| *p + vec2(d, d)).collect::<Vec<_>>();
+            painter.add(Shape::convex_polygon(shift(2.0), Color32::from_black_alpha(26), Stroke::NONE));
+            painter.add(Shape::convex_polygon(shift(1.0), Color32::from_black_alpha(52), Stroke::NONE));
+            if app.ui.view.transparency_grid && xf.rot == 0.0 {
                 checker(&painter, r);
             } else {
-                painter.rect_filled(r, 0.0, Color32::WHITE);
+                painter.add(Shape::convex_polygon(q, Color32::WHITE, Stroke::NONE));
             }
         }
     } else if app.ui.view.outline {
         for ab in &doc.artboards {
-            painter.rect_filled(xf.rect_to_screen(ab.rect), 0.0, Color32::WHITE);
+            painter.add(Shape::convex_polygon(xf.quad(ab.rect), Color32::WHITE, Stroke::NONE));
         }
     }
     if app.ui.view.grid {
@@ -151,6 +177,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         outline: app.ui.view.outline,
         ppp,
         hidden: vec![],
+        rot: v.rotation,
     };
     if !app.canvas.worker_started {
         app.canvas.worker_started = true;
@@ -166,7 +193,10 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         app.canvas.last_ms = done.ms;
     }
     if app.canvas.key.as_ref() != Some(&key) || app.canvas.texture.is_none() {
-        let view = Affine::translate((w as f64 / 2.0, h as f64 / 2.0)) * Affine::scale(v.zoom * ppp as f64) * Affine::translate(-v.center.to_vec2());
+        let view = Affine::translate((w as f64 / 2.0, h as f64 / 2.0))
+            * Affine::rotate(v.rotation.to_radians())
+            * Affine::scale(v.zoom * ppp as f64)
+            * Affine::translate(-v.center.to_vec2());
         let opts = drawcraft_render::RenderOptions { outline: app.ui.view.outline, background: None, artboards: false, ..Default::default() };
         // Light documents render synchronously (no lag vs overlays); heavy ones go to the worker.
         let heavy = app.canvas.last_ms > 8.0 && app.canvas.texture.is_some();
@@ -182,9 +212,12 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
             }
         }
     }
-    if let (Some(tex), Some(k)) = (&app.canvas.texture, &app.canvas.key) {
+    if let (Some(tex), Some(k)) = (&app.canvas.texture, &app.canvas.key)
+        && (k.rot - v.rotation).abs() < 1e-9
+    {
         // Reproject the last frame if it was rendered for a different view.
-        let old = Xf { rect, zoom: k.zoom, center: Point::new(k.cx, k.cy) };
+        let old = Xf { rect, zoom: k.zoom, center: Point::new(k.cx, k.cy), rot: xf.rot };
+        let _ = k.rot;
         let a = xf.to_screen(old.to_doc(rect.min));
         let b = xf.to_screen(old.to_doc(rect.max));
         painter.image(tex.id(), egui::Rect::from_min_max(a, b), egui::Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
@@ -194,7 +227,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     for (i, ab) in doc.artboards.iter().enumerate() {
         let r = xf.rect_to_screen(ab.rect);
         let c = if i == active_ab { Color32::from_gray(0) } else { Color32::from_gray(120) };
-        painter.rect_stroke(r, 0.0, Stroke::new(if i == active_ab { 1.0 } else { 0.6 }, c), StrokeKind::Outside);
+        painter.add(Shape::closed_line(xf.quad(ab.rect), Stroke::new(if i == active_ab { 1.0 } else { 0.6 }, c)));
         if app.session.tool_id() == "artboard" || doc.artboards.len() > 1 {
             painter.text(
                 r.left_top() - vec2(0.0, 4.0),
@@ -284,7 +317,7 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
     let (pointer, m, space, scroll, zoom_delta) =
         ui.input(|i| (i.pointer.clone(), i.modifiers, i.key_down(egui::Key::Space), i.smooth_scroll_delta, i.zoom_delta()));
     let v = *app.view().unwrap_or(&View::default());
-    let xf = Xf { rect, zoom: v.zoom, center: v.center };
+    let xf = Xf::new(rect, &v);
     let hover = pointer.hover_pos().filter(|p| rect.contains(*p));
     app.hover_doc = hover.map(|p| xf.to_doc(p));
     let view = app.view_info();
@@ -300,7 +333,7 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
             if let (Some(p), Some(vm)) = (hover, app.view_mut()) {
                 let before = xf.to_doc(p);
                 vm.zoom = (vm.zoom * factor).clamp(0.0313, 640.0);
-                let nx = Xf { rect, zoom: vm.zoom, center: vm.center };
+                let nx = Xf { rect, zoom: vm.zoom, center: vm.center, rot: vm.rotation.to_radians() };
                 let after = nx.to_doc(p);
                 vm.center += before - after;
             }
@@ -308,8 +341,8 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
             && !m.alt
             && let Some(vm) = app.view_mut()
         {
-            vm.center.x -= scroll.x as f64 / vm.zoom;
-            vm.center.y -= scroll.y as f64 / vm.zoom;
+            let d = Xf { rect, zoom: vm.zoom, center: vm.center, rot: vm.rotation.to_radians() }.delta_to_doc(scroll);
+            vm.center -= d;
         }
     }
 
@@ -323,6 +356,9 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
             Drag::Pan { start: p, center: v.center }
         } else if tool == "zoom" {
             Drag::ZoomBox { start: p }
+        } else if tool == "rotateView" {
+            let c = rect.center();
+            Drag::RotateView { start_angle: (p.y - c.y).atan2(p.x - c.x) as f64, start_rot: v.rotation }
         } else {
             let selection_family = matches!(tool, "selection" | "directSelection" | "groupSelection");
             let mut kind = Drag::Tool;
@@ -341,8 +377,20 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
         if pointer.primary_down() {
             match d {
                 Drag::Pan { start, center } => {
+                    let d = xf.delta_to_doc(p - start);
                     if let Some(vm) = app.view_mut() {
-                        vm.center = center - (p - start).to_vec2_f64() / vm.zoom;
+                        vm.center = center - d;
+                    }
+                }
+                Drag::RotateView { start_angle, start_rot } => {
+                    let c = rect.center();
+                    let a = (p.y - c.y).atan2(p.x - c.x) as f64;
+                    let mut deg = start_rot + (a - start_angle).to_degrees();
+                    if m.shift {
+                        deg = (deg / 15.0).round() * 15.0;
+                    }
+                    if let Some(vm) = app.view_mut() {
+                        vm.rotation = drawcraft_geom::normalize_deg(deg);
                     }
                 }
                 Drag::ZoomBox { .. } => {}
@@ -367,7 +415,7 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
                         } else {
                             let before = xf.to_doc(p);
                             vm.zoom = crate::state::next_zoom(vm.zoom, !m.alt);
-                            let nx = Xf { rect, zoom: vm.zoom, center: vm.center };
+                            let nx = Xf { rect, zoom: vm.zoom, center: vm.center, rot: vm.rotation.to_radians() };
                             vm.center += before - nx.to_doc(p);
                         }
                     }
@@ -381,7 +429,7 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
                         app.select_tool(&prev);
                     }
                 }
-                Drag::Pan { .. } => {}
+                Drag::Pan { .. } | Drag::RotateView { .. } => {}
             }
         }
     } else if let Some(p) = hover
@@ -398,15 +446,6 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
     }
     if drag.is_some() || pointer.is_moving() {
         ui.ctx().request_repaint();
-    }
-}
-
-trait ToVec2F64 {
-    fn to_vec2_f64(self) -> drawcraft_geom::Vec2;
-}
-impl ToVec2F64 for egui::Vec2 {
-    fn to_vec2_f64(self) -> drawcraft_geom::Vec2 {
-        drawcraft_geom::Vec2::new(self.x as f64, self.y as f64)
     }
 }
 
@@ -693,8 +732,7 @@ fn selection_overlay(app: &DrawcraftApp, p: &egui::Painter, xf: &Xf) {
     if tool == "selection" && app.ui.view.bounding_box && !st.selection.is_empty() && st.selection.anchors.is_empty() {
         let Some(b) = st.doc.bounds_of(&st.selection.objects, false) else { return };
         let color = c32(st.doc.layer_color(st.selection.objects[0]));
-        let r = xf.rect_to_screen(b);
-        p.rect_stroke(r, 0.0, Stroke::new(1.0, color), StrokeKind::Middle);
+        p.add(Shape::closed_line(xf.quad(b), Stroke::new(1.0, color)));
         for h in drawcraft_tools::bbox::Handle::ALL {
             let c = xf.to_screen(h.pos(b));
             let hr = egui::Rect::from_center_size(c, vec2(6.0, 6.0));

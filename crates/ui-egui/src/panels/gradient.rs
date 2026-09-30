@@ -1,0 +1,475 @@
+//! Gradient panel: type buttons, angle / aspect ratio / reverse, the gradient slider with draggable
+//! stops and midpoint diamonds (click below the ramp adds a stop, drag a stop off to remove it),
+//! and stop Opacity / Location fields. Stop colours are edited with the Color panel.
+
+use drawcraft_color::{Color, Gradient, GradientKind, GradientPaint, GradientStop, Paint};
+use egui::{Color32, Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
+use serde_json::{Value, json};
+
+use super::{active_paint, color_json, live_run, pstate, set_pstate};
+use crate::theme::Tokens;
+use crate::widgets::{self, Live, menu_item};
+use crate::{DrawcraftApp, icons};
+
+/// Minimum number of stops (Illustrator won't delete below two).
+pub const MIN_STOPS: usize = 2;
+/// Dragging a stop this far below the ramp removes it.
+pub const REMOVE_DISTANCE: f32 = 28.0;
+
+/// The Gradient panel's selected stop (shared with the Color panel).
+pub fn selected_stop(ctx: &egui::Context) -> Option<usize> {
+    pstate::<Option<usize>>(ctx, "grad-stop")
+}
+fn select_stop(ctx: &egui::Context, i: Option<usize>) {
+    set_pstate(ctx, "grad-stop", i);
+}
+
+// ---------- pure stop math (unit-tested) ----------
+
+/// Insert a stop at `offset`, coloured by sampling the gradient there. Returns the new stops and
+/// the new stop's index.
+pub fn insert_stop(g: &Gradient, offset: f32) -> (Vec<GradientStop>, usize) {
+    let offset = offset.clamp(0.0, 1.0);
+    let (color, opacity) = g.sample(offset);
+    let mut stops = g.stops.clone();
+    let idx = stops.iter().position(|s| s.offset > offset).unwrap_or(stops.len());
+    stops.insert(idx, GradientStop { offset, color, opacity, midpoint: 0.5 });
+    (stops, idx)
+}
+
+/// Remove stop `i`; `None` when that would leave fewer than [`MIN_STOPS`].
+pub fn remove_stop(stops: &[GradientStop], i: usize) -> Option<Vec<GradientStop>> {
+    if stops.len() <= MIN_STOPS || i >= stops.len() {
+        return None;
+    }
+    let mut v = stops.to_vec();
+    v.remove(i);
+    Some(v)
+}
+
+/// Move stop `i` to `offset`, keeping the list sorted. Returns the stops and the stop's new index.
+pub fn move_stop(stops: &[GradientStop], i: usize, offset: f32) -> (Vec<GradientStop>, usize) {
+    let mut v = stops.to_vec();
+    if i >= v.len() {
+        return (v, i);
+    }
+    let mut s = v.remove(i);
+    s.offset = offset.clamp(0.0, 1.0);
+    let idx = v.iter().position(|o| o.offset > s.offset).unwrap_or(v.len());
+    v.insert(idx, s);
+    (v, idx)
+}
+
+/// Set the midpoint between stop `i` and `i + 1` (clamped to Illustrator's 13–87 %).
+pub fn set_midpoint(stops: &[GradientStop], i: usize, m: f32) -> Vec<GradientStop> {
+    let mut v = stops.to_vec();
+    if let Some(s) = v.get_mut(i) {
+        s.midpoint = m.clamp(0.13, 0.87);
+    }
+    v
+}
+
+/// Offset (0..1) of an x position on a ramp spanning `left..left + width`.
+pub fn x_to_offset(x: f32, left: f32, width: f32) -> f32 {
+    ((x - left) / width.max(1.0)).clamp(0.0, 1.0)
+}
+
+/// Absolute position (0..1) of the midpoint diamond after stop `i`.
+pub fn midpoint_pos(stops: &[GradientStop], i: usize) -> Option<f32> {
+    let (a, b) = (stops.get(i)?, stops.get(i + 1)?);
+    Some(a.offset + (b.offset - a.offset) * a.midpoint)
+}
+
+/// Inverse of [`midpoint_pos`]: the relative midpoint for an absolute position.
+pub fn midpoint_from_pos(stops: &[GradientStop], i: usize, pos: f32) -> Option<f32> {
+    let (a, b) = (stops.get(i)?, stops.get(i + 1)?);
+    let span = (b.offset - a.offset).max(1e-6);
+    Some(((pos - a.offset) / span).clamp(0.13, 0.87))
+}
+
+/// Stops as `paint.editGradient` JSON.
+pub fn stops_json(stops: &[GradientStop]) -> Value {
+    Value::Array(
+        stops.iter().map(|s| json!({"offset": s.offset, "color": color_json(&s.color), "opacity": s.opacity, "midpoint": s.midpoint})).collect(),
+    )
+}
+
+// ---------- UI ----------
+
+fn current(app: &DrawcraftApp) -> Option<GradientPaint> {
+    match active_paint(app) {
+        Paint::Gradient(g) => Some(*g),
+        _ => None,
+    }
+}
+
+fn edit(app: &mut DrawcraftApp, params: Value, phase: Live) {
+    let mut p = params;
+    p["stroke"] = json!(!app.session.fill_active);
+    live_run(app, "Gradient", "paint.editGradient", p, phase);
+}
+
+/// Drag state of the ramp: which handle is being dragged.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+enum Drag {
+    #[default]
+    None,
+    Stop(usize),
+    Mid(usize),
+}
+
+pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+    let t = Tokens::get(ui.ctx());
+    let gp = current(app);
+    let fallback = GradientPaint::new(Gradient::default());
+    let g = gp.clone().unwrap_or(fallback);
+    let is_grad = gp.is_some();
+    let kind = g.gradient.kind;
+    // Header: gradient swatch + type buttons + Edit Gradient.
+    ui.horizontal(|ui| {
+        let (r, resp) = ui.allocate_exact_size(vec2(40.0, 40.0), Sense::click());
+        widgets::paint_chip(ui, r, &Paint::Gradient(Box::new(g.clone())));
+        ui.painter().rect_stroke(r, 0.0, Stroke::new(1.0, t.border), StrokeKind::Inside);
+        if resp.on_hover_text("Gradient Fill — click to apply").clicked() && !is_grad {
+            edit(app, json!({}), Live::Released);
+        }
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                widgets::dim_label(ui, "Type:");
+                for (k, icon, tip) in [
+                    (GradientKind::Linear, "dc-grad-linear", "Linear Gradient"),
+                    (GradientKind::Radial, "dc-grad-radial", "Radial Gradient"),
+                    (GradientKind::Freeform, "dc-grad-freeform", "Freeform Gradient"),
+                ] {
+                    if widgets::icon_button(ui, icon, tip, is_grad && kind == k, 24.0).clicked() {
+                        edit(app, json!({"kind": k.label().to_lowercase()}), Live::Released);
+                    }
+                }
+            });
+            ui.horizontal(|ui| {
+                if widgets::flat_button(ui, "Edit Gradient", 96.0).clicked() {
+                    app.select_tool("gradient");
+                }
+            });
+        });
+    });
+    ui.add_space(4.0);
+    ui.horizontal(|ui| {
+        widgets::dim_label(ui, "Stroke:");
+        for (icon, tip) in [
+            ("dc-stroke-center", "Apply gradient within stroke"),
+            ("dc-stroke-outside", "Apply gradient along stroke (on the roadmap)"),
+            ("dc-stroke-inside", "Apply gradient across stroke (on the roadmap)"),
+        ] {
+            widgets::icon_button_enabled(ui, icon, tip, icon == "dc-stroke-center" && !app.session.fill_active, false, 22.0);
+        }
+    });
+    ui.horizontal(|ui| {
+        icons::icon(ui, "rotate-ccw", 15.0, t.icon).on_hover_text("Angle");
+        if let Some(a) = widgets::plain_field(ui, "grad-angle", g.geom.map(|x| x.angle_deg()).unwrap_or(g.angle), "°", 1, 64.0) {
+            edit(app, json!({"angle": a}), Live::Released);
+        }
+        ui.add_space(4.0);
+        let radial = kind == GradientKind::Radial;
+        icons::icon(ui, "scaling", 15.0, if radial { t.icon } else { t.text_disabled }).on_hover_text("Aspect Ratio");
+        let asp = g.geom.map(|x| x.aspect * 100.0).unwrap_or(100.0);
+        if radial {
+            if let Some(a) = widgets::plain_field(ui, "grad-aspect", asp, "%", 1, 60.0) {
+                edit(app, json!({"aspect": a}), Live::Released);
+            }
+        } else {
+            ui.add_enabled(false, egui::Label::new(egui::RichText::new(format!("{asp:.0}%")).color(t.text_disabled)));
+        }
+        if widgets::icon_button_enabled(ui, "dc-reverse", "Reverse Gradient", false, is_grad, 22.0).clicked() {
+            edit(app, json!({"reverse": true}), Live::Released);
+        }
+    });
+    ui.add_space(6.0);
+    ramp(app, ui, &g.gradient, is_grad);
+    ui.add_space(4.0);
+    // Stop fields.
+    let sel = selected_stop(ui.ctx()).filter(|i| *i < g.gradient.stops.len());
+    ui.horizontal(|ui| {
+        let enabled = is_grad && sel.is_some();
+        let stop = sel.and_then(|i| g.gradient.stops.get(i)).copied();
+        widgets::dim_label(ui, "Opacity:");
+        let op = stop.map(|s| s.opacity as f64 * 100.0).unwrap_or(100.0);
+        if let Some(v) = widgets::plain_field(ui, "grad-op", op, "%", 0, 54.0)
+            && enabled
+            && let Some(i) = sel
+        {
+            let mut stops = g.gradient.stops.clone();
+            stops[i].opacity = (v / 100.0).clamp(0.0, 1.0) as f32;
+            edit(app, json!({"stops": stops_json(&stops)}), Live::Released);
+        }
+        widgets::dim_label(ui, "Location:");
+        let loc = stop.map(|s| s.offset as f64 * 100.0).unwrap_or(0.0);
+        if let Some(v) = widgets::plain_field(ui, "grad-loc", loc, "%", 1, 54.0)
+            && enabled
+            && let Some(i) = sel
+        {
+            let (stops, ni) = move_stop(&g.gradient.stops, i, (v / 100.0) as f32);
+            select_stop(ui.ctx(), Some(ni));
+            edit(app, json!({"stops": stops_json(&stops)}), Live::Released);
+        }
+        let can_del = enabled && g.gradient.stops.len() > MIN_STOPS;
+        if widgets::icon_button_enabled(ui, "trash-2", "Delete Stop", false, can_del, 22.0).clicked()
+            && let Some(i) = sel
+            && let Some(stops) = remove_stop(&g.gradient.stops, i)
+        {
+            select_stop(ui.ctx(), Some(i.min(stops.len() - 1)));
+            edit(app, json!({"stops": stops_json(&stops)}), Live::Released);
+        }
+    });
+    if let Some(i) = sel
+        && is_grad
+    {
+        let c = g.gradient.stops[i].color;
+        ui.horizontal(|ui| {
+            widgets::dim_label(ui, "Stop color:");
+            let (r, resp) = ui.allocate_exact_size(vec2(18.0, 18.0), Sense::click());
+            widgets::swatch_tile(ui, r, &Paint::solid(c), false, resp.hovered());
+            widgets::dim_label(ui, &c.to_hex().to_uppercase());
+            if resp.on_hover_text("Edit the stop in the Color panel").clicked() {
+                app.ui.open_panel = Some("color".into());
+            }
+        });
+    }
+    if !is_grad {
+        widgets::dim_label(ui, "Click the ramp or a type button to apply a gradient.");
+    }
+}
+
+/// The gradient slider: ramp, stops below, midpoint diamonds above.
+fn ramp(app: &mut DrawcraftApp, ui: &mut Ui, g: &Gradient, is_grad: bool) {
+    let t = Tokens::get(ui.ctx());
+    let w = ui.available_width();
+    let (area, _) = ui.allocate_exact_size(vec2(w, 50.0), Sense::hover());
+    let bar = Rect::from_min_size(area.min + vec2(8.0, 10.0), vec2(w - 16.0, 18.0));
+    // Checkerboard under the ramp (opacity).
+    let cell = 6.0;
+    let mut y = bar.top();
+    let mut row = 0;
+    while y < bar.bottom() {
+        let mut x = bar.left();
+        let mut col = row % 2;
+        while x < bar.right() {
+            let r = Rect::from_min_max(pos2(x, y), pos2((x + cell).min(bar.right()), (y + cell).min(bar.bottom())));
+            ui.painter().rect_filled(r, 0.0, if col % 2 == 0 { Color32::WHITE } else { Color32::from_gray(204) });
+            x += cell;
+            col += 1;
+        }
+        y += cell;
+        row += 1;
+    }
+    let n = (bar.width() / 2.0) as usize;
+    for i in 0..n {
+        let tt = (i as f32 + 0.5) / n as f32;
+        let (c, o) = g.sample(tt);
+        let [r, gg, b, a] = c.to_rgba8(o);
+        let rr =
+            Rect::from_min_size(pos2(bar.left() + i as f32 * bar.width() / n as f32, bar.top()), vec2(bar.width() / n as f32 + 0.5, bar.height()));
+        ui.painter().rect_filled(rr, 0.0, Color32::from_rgba_unmultiplied(r, gg, b, a));
+    }
+    ui.painter().rect_stroke(bar, 0.0, Stroke::new(1.0, t.border), StrokeKind::Outside);
+    let x_of = |o: f32| bar.left() + o * bar.width();
+    let sel = selected_stop(ui.ctx());
+    let mut drag: Drag = pstate(ui.ctx(), "grad-drag");
+    let stops = &g.stops;
+    // While dragging, edits are computed against the stops as they were when the drag began (the
+    // document shows the preview).
+    let origin: Vec<GradientStop> = if drag == Drag::None { stops.clone() } else { pstate::<Vec<GradientStop>>(ui.ctx(), "grad-origin") };
+    let origin = if origin.len() == stops.len() { origin } else { stops.clone() };
+    let mut changed: Option<(Vec<GradientStop>, Live)> = None;
+    // Midpoint diamonds.
+    for i in 0..stops.len().saturating_sub(1) {
+        let Some(p) = midpoint_pos(stops, i) else { continue };
+        let c = pos2(x_of(p), bar.top() - 5.0);
+        let rect = Rect::from_center_size(c, vec2(10.0, 10.0));
+        let resp = ui.interact(rect, ui.id().with(("grad-mid", i)), Sense::click_and_drag());
+        let active = drag == Drag::Mid(i) || resp.hovered();
+        let pts = vec![c + vec2(0.0, -4.0), c + vec2(4.0, 0.0), c + vec2(0.0, 4.0), c + vec2(-4.0, 0.0)];
+        ui.painter().add(egui::Shape::convex_polygon(pts, if active { Color32::WHITE } else { t.icon }, Stroke::new(1.0, t.border)));
+        if !is_grad {
+            continue;
+        }
+        if resp.drag_started() {
+            drag = Drag::Mid(i);
+            set_pstate(ui.ctx(), "grad-origin", stops.clone());
+        }
+        if (resp.dragged() || resp.drag_stopped())
+            && let Some(pp) = resp.interact_pointer_pos()
+            && let Some(m) = midpoint_from_pos(&origin, i, x_to_offset(pp.x, bar.left(), bar.width()))
+        {
+            let phase = if resp.drag_stopped() { Live::Released } else { Live::Dragging };
+            changed = Some((set_midpoint(&origin, i, m), phase));
+            if resp.drag_stopped() {
+                drag = Drag::None;
+            }
+        }
+    }
+    // Stops (house-shaped markers under the ramp).
+    let mut hit_stop = false;
+    for (i, s) in stops.iter().enumerate() {
+        let x = x_of(s.offset);
+        let top = bar.bottom() + 2.0;
+        let marker = Rect::from_min_size(pos2(x - 6.0, top), vec2(12.0, 16.0));
+        let resp = ui.interact(marker, ui.id().with(("grad-stop", i)), Sense::click_and_drag());
+        hit_stop |= resp.hovered() || resp.dragged();
+        let dragging_this = drag == Drag::Stop(i);
+        let off = dragging_this && resp.interact_pointer_pos().is_some_and(|p| p.y > bar.bottom() + REMOVE_DISTANCE) && origin.len() > MIN_STOPS;
+        let outline = if sel == Some(i) { t.accent } else { t.border };
+        let body = vec![pos2(x, top), pos2(x + 6.0, top + 5.0), pos2(x + 6.0, top + 15.0), pos2(x - 6.0, top + 15.0), pos2(x - 6.0, top + 5.0)];
+        if !off {
+            ui.painter().add(egui::Shape::convex_polygon(body, if sel == Some(i) { t.text_strong } else { t.icon }, Stroke::new(1.0, outline)));
+            let chip = Rect::from_min_size(pos2(x - 4.0, top + 6.0), vec2(8.0, 7.0));
+            ui.painter().rect_filled(chip, 0.0, super::c32(&s.color));
+        }
+        if !is_grad {
+            continue;
+        }
+        if resp.clicked() || resp.drag_started() {
+            select_stop(ui.ctx(), Some(i));
+        }
+        if resp.drag_started() {
+            drag = Drag::Stop(i);
+            set_pstate(ui.ctx(), "grad-origin", stops.clone());
+        }
+        if (resp.dragged() || resp.drag_stopped())
+            && dragging_this
+            && let Some(pp) = resp.interact_pointer_pos()
+        {
+            let removing = pp.y > bar.bottom() + REMOVE_DISTANCE && origin.len() > MIN_STOPS;
+            if resp.drag_stopped() {
+                drag = Drag::None;
+                if removing {
+                    if let Some(v) = remove_stop(&origin, i) {
+                        select_stop(ui.ctx(), Some(i.min(v.len() - 1)));
+                        changed = Some((v, Live::Released));
+                    }
+                } else {
+                    let (v, ni) = move_stop(&origin, i, x_to_offset(pp.x, bar.left(), bar.width()));
+                    select_stop(ui.ctx(), Some(ni));
+                    changed = Some((v, Live::Released));
+                }
+            } else if removing {
+                // Dragged off: show the gradient without moving the stop until release.
+                changed = Some((origin.clone(), Live::Dragging));
+            } else {
+                let (v, _) = move_stop(&origin, i, x_to_offset(pp.x, bar.left(), bar.width()));
+                changed = Some((v, Live::Dragging));
+            }
+        }
+    }
+    // Click below the ramp (not on a stop) adds a stop; clicking the ramp applies a gradient.
+    let below = Rect::from_min_max(pos2(bar.left(), bar.bottom()), pos2(bar.right(), area.bottom()));
+    let resp = ui.interact(below, ui.id().with("grad-add"), Sense::click());
+    if resp.hovered() && !hit_stop && is_grad {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::Copy);
+    }
+    if resp.clicked()
+        && !hit_stop
+        && let Some(p) = resp.interact_pointer_pos()
+    {
+        if is_grad {
+            let (v, i) = insert_stop(g, x_to_offset(p.x, bar.left(), bar.width()));
+            select_stop(ui.ctx(), Some(i));
+            changed = Some((v, Live::Released));
+        } else {
+            edit(app, json!({}), Live::Released);
+        }
+    }
+    let bar_resp = ui.interact(bar, ui.id().with("grad-bar"), Sense::click());
+    if bar_resp.clicked() && !is_grad {
+        edit(app, json!({}), Live::Released);
+    }
+    set_pstate(ui.ctx(), "grad-drag", drag);
+    if let Some((v, phase)) = changed {
+        edit(app, json!({"stops": stops_json(&v)}), phase);
+    }
+}
+
+pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+    let g = current(app);
+    menu_item(ui, "Hide Options", false, false);
+    if menu_item(ui, "Add to Swatches", g.is_some(), false)
+        && let Some(g) = g
+    {
+        app.run("swatch.new", super::paint_params(&Paint::Gradient(Box::new(g)))).ok();
+    }
+    if menu_item(ui, "Reverse Gradient", current(app).is_some(), false) {
+        edit(app, json!({"reverse": true}), Live::Released);
+    }
+    if menu_item(ui, "Reset to White, Black", true, false) {
+        let d = Gradient::default();
+        edit(app, json!({"stops": stops_json(&d.stops)}), Live::Released);
+    }
+    let _ = Color::BLACK;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn g3() -> Gradient {
+        let mut g = Gradient::default();
+        g.stops.insert(1, GradientStop { offset: 0.5, color: Color::rgb(1.0, 0.0, 0.0), opacity: 1.0, midpoint: 0.5 });
+        g
+    }
+
+    #[test]
+    fn insert_samples_color_and_sorts() {
+        let g = Gradient::default();
+        let (stops, i) = insert_stop(&g, 0.25);
+        assert_eq!(stops.len(), 3);
+        assert_eq!(i, 1);
+        let r = stops[1].color.to_rgb()[0];
+        assert!((r - 0.75).abs() < 1e-4, "sampled {r}");
+        let (stops, i) = insert_stop(&g, 2.0);
+        assert_eq!(i, 2);
+        assert_eq!(stops[2].offset, 1.0);
+    }
+
+    #[test]
+    fn remove_keeps_two() {
+        let g = g3();
+        let v = remove_stop(&g.stops, 1).unwrap();
+        assert_eq!(v.len(), 2);
+        assert!(remove_stop(&v, 0).is_none());
+        assert!(remove_stop(&g.stops, 9).is_none());
+    }
+
+    #[test]
+    fn move_reorders_and_tracks_index() {
+        let g = g3();
+        let (v, i) = move_stop(&g.stops, 0, 0.8);
+        assert_eq!(i, 1);
+        assert_eq!(v[1].color.to_hex(), "#ffffff");
+        assert!(v.windows(2).all(|w| w[0].offset <= w[1].offset));
+        let (v, i) = move_stop(&g.stops, 1, -3.0);
+        // Clamped to 0 and placed after the existing stop at 0.
+        assert_eq!((i, v[i].offset, v[i].color.to_hex()), (1, 0.0, "#ff0000".to_string()));
+    }
+
+    #[test]
+    fn midpoint_math() {
+        let g = g3();
+        assert_eq!(midpoint_pos(&g.stops, 0), Some(0.25));
+        assert_eq!(midpoint_pos(&g.stops, 2), None);
+        let m = midpoint_from_pos(&g.stops, 1, 0.6).unwrap();
+        assert!((m - 0.2).abs() < 1e-5);
+        assert_eq!(midpoint_from_pos(&g.stops, 1, 0.51).unwrap(), 0.13);
+        let v = set_midpoint(&g.stops, 0, 0.99);
+        assert_eq!(v[0].midpoint, 0.87);
+    }
+
+    #[test]
+    fn offsets_and_json() {
+        assert_eq!(x_to_offset(50.0, 0.0, 200.0), 0.25);
+        assert_eq!(x_to_offset(-5.0, 0.0, 200.0), 0.0);
+        assert_eq!(x_to_offset(500.0, 0.0, 200.0), 1.0);
+        let j = stops_json(&g3().stops);
+        assert_eq!(j.as_array().unwrap().len(), 3);
+        assert_eq!(j[1]["midpoint"], json!(0.5));
+    }
+}

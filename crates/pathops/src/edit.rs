@@ -29,6 +29,11 @@ pub fn simplify(path: &PathData, tolerance: f64) -> PathData {
     simplify_with(path, &SimplifyOptions { tolerance, ..Default::default() })
 }
 
+/// Simplify never adds anchors: keep whichever subpath is smaller.
+fn no_worse(original: &SubPath, fitted: SubPath) -> SubPath {
+    if fitted.anchors.len() > original.anchors.len() { original.clone() } else { fitted }
+}
+
 fn subpath_segs(sp: &SubPath) -> Vec<Seg> {
     (0..sp.segment_count()).map(|i| Seg { c: sp.segment(i), line: sp.segment_is_line(i) }).collect()
 }
@@ -92,7 +97,7 @@ pub fn simplify_with(path: &PathData, opts: &SimplifyOptions) -> PathData {
             }
         }
         if let Some(s) = segs_to_subpath(&result, sp.closed) {
-            out.push(s);
+            out.push(if opts.straight_lines { s } else { no_worse(sp, s) });
         }
     }
     PathData::new(out)

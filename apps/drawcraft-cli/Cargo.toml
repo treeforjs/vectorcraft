@@ -18,4 +18,5 @@ drawcraft-mcp = { workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]
+drawcraft-testkit = { workspace = true }
 serde_json = { workspace = true }

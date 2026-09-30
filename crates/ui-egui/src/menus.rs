@@ -89,6 +89,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("tool.select", "Select Tool", "", "{tool: id} (see tools)"),
     ("tool.setOption", "Tool Option", "", "{key, value}"),
     ("effect.dialog", "Effect…", "", "{effect: id} open the effect's dialog with live preview"),
+    ("ui.paramDialog", "Command Dialog", "", "{command, label?, params} open a parameter dialog for any command"),
     ("effect.applyLast", "Apply Last Effect", "Cmd+Shift+E", "{}"),
     ("file.export.pdf", "Save as PDF…", "", "{path?}"),
     ("help.about", "About DrawCraft", "", "{}"),
@@ -293,6 +294,14 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
                 None => Err(format!("unknown effect `{id}`")),
             }
         }
+        "ui.paramDialog" => {
+            let cmd = s("command").unwrap_or_default();
+            let mut fields = p.get("params").and_then(Value::as_object).cloned().unwrap_or_default();
+            fields.insert("__command".into(), json!(cmd));
+            fields.insert("__label".into(), json!(s("label").unwrap_or(cmd.clone())));
+            app.ui.dialog = Some(crate::state::Dialog { kind: "command".into(), fields });
+            Ok(Value::Null)
+        }
         "effect.applyLast" => match app.last_effect.clone() {
             Some((e, params)) => app.run("effect.apply", json!({"effect": e, "params": params})),
             None => Err("no effect applied yet".into()),
@@ -341,6 +350,10 @@ pub fn checked(app: &DrawcraftApp, id: &str, p: &Value) -> Option<bool> {
             }
         }
         "window.brightness" => p.get("brightness").and_then(Value::as_str).and_then(Brightness::parse) == Some(app.ui.brightness),
+        "file.documentColorMode" => {
+            let cmyk = app.session.active().is_some_and(|d| d.doc.color_mode == drawcraft_engine::doc::ColorMode::Cmyk);
+            p.get("mode").and_then(Value::as_str) == Some(if cmyk { "cmyk" } else { "rgb" })
+        }
         _ => return None,
     })
 }
@@ -357,6 +370,7 @@ pub fn dynamic_label(app: &DrawcraftApp, id: &str, label: &str) -> String {
         "view.transparencyGrid" => if v.transparency_grid { "Hide Transparency Grid" } else { "Show Transparency Grid" }.into(),
         "view.guides" => if v.guides { "Hide Guides" } else { "Show Guides" }.into(),
         "view.grid" => if v.grid { "Hide Grid" } else { "Show Grid" }.into(),
+        "view.guides.lock" => if app.session.guides_locked() { "Unlock Guides" } else { "Lock Guides" }.into(),
         "edit.undo" => app.session.active().and_then(|d| d.history.undo.last()).map(|h| format!("Undo {}", h.label)).unwrap_or_else(|| "Undo".into()),
         "edit.redo" => app.session.active().and_then(|d| d.history.redo.last()).map(|h| format!("Redo {}", h.label)).unwrap_or_else(|| "Redo".into()),
         _ => label.into(),
@@ -421,7 +435,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 todo("Open Recent Files"),
                 Sep,
                 c("Close", "file.close"),
-                todos("Close All", "Cmd+Alt+W"),
+                c("Close All", "file.closeAll"),
                 c("Save", "file.save"),
                 c("Save As…", "file.saveAs"),
                 c("Save a Copy…", "file.saveCopy"),
@@ -445,8 +459,14 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 sub("Scripts", vec![todos("Other Script…", "Cmd+F12")]),
                 Sep,
                 c("Document Setup…", "file.documentSetup"),
-                sub("Document Color Mode", vec![todo("CMYK Color"), todo("RGB Color")]),
-                todos("File Info…", "Cmd+Alt+Shift+I"),
+                sub(
+                    "Document Color Mode",
+                    vec![
+                        cp("CMYK Color", "file.documentColorMode", json!({"mode": "cmyk"})),
+                        cp("RGB Color", "file.documentColorMode", json!({"mode": "rgb"})),
+                    ],
+                ),
+                c("File Info…", "file.info"),
                 Sep,
                 todos("Print…", "Cmd+P"),
             ],
@@ -464,27 +484,27 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Paste in Back", "edit.pasteInBack"),
                 c("Paste in Place", "edit.pasteInPlace"),
                 c("Paste on All Artboards", "edit.pasteOnAllArtboards"),
-                todos("Paste without Formatting", "Cmd+Alt+V"),
+                c("Paste without Formatting", "edit.pasteWithoutFormatting"),
                 c("Clear", "edit.clear"),
                 Sep,
-                todo("Find and Replace…"),
-                todo("Find Next"),
+                cp("Find and Replace…", "edit.findReplace", json!({"find": "", "replace": "", "matchCase": false, "wholeWord": false})),
+                cp("Find Next", "edit.findNext", json!({"find": ""})),
                 sub("Spelling", vec![todo("Auto Spell Check"), todos("Check Spelling…", "Cmd+I"), todo("Edit Custom Dictionary…")]),
                 Sep,
                 sub(
                     "Edit Colors",
                     vec![
                         todo("Recolor Artwork…"),
-                        todo("Adjust Color Balance…"),
-                        todo("Blend Front to Back"),
-                        todo("Blend Horizontally"),
-                        todo("Blend Vertically"),
-                        todo("Convert to CMYK"),
-                        todo("Convert to Grayscale"),
-                        todo("Convert to RGB"),
-                        todo("Invert Colors"),
+                        cp("Adjust Color Balance…", "edit.colors.adjustBalance", json!({"r": 0, "g": 0, "b": 0})),
+                        c("Blend Front to Back", "edit.colors.blendFrontToBack"),
+                        c("Blend Horizontally", "edit.colors.blendHorizontally"),
+                        c("Blend Vertically", "edit.colors.blendVertically"),
+                        c("Convert to CMYK", "edit.colors.toCMYK"),
+                        c("Convert to Grayscale", "edit.colors.toGrayscale"),
+                        c("Convert to RGB", "edit.colors.toRGB"),
+                        c("Invert Colors", "edit.colors.invert"),
                         todo("Overprint Black…"),
-                        todo("Saturate…"),
+                        cp("Saturate…", "edit.colors.saturate", json!({"intensity": 20})),
                     ],
                 ),
                 todo("Edit Original"),
@@ -515,9 +535,13 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         c("Scale…", "object.scale"),
                         c("Shear…", "object.shear"),
                         Sep,
-                        todos("Transform Each…", "Cmd+Alt+Shift+D"),
+                        cp(
+                            "Transform Each…",
+                            "object.transformEach",
+                            json!({"scaleH": 100, "scaleV": 100, "moveH": 0, "moveV": 0, "rotate": 0, "reflectX": false, "reflectY": false, "random": false, "reference": 4}),
+                        ),
                         Sep,
-                        todo("Reset Bounding Box"),
+                        c("Reset Bounding Box", "object.resetBoundingBox"),
                     ],
                 ),
                 sub(
@@ -545,18 +569,24 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 Sep,
                 c("Group", "object.group"),
                 c("Ungroup", "object.ungroup"),
-                sub("Lock", vec![c("Selection", "object.lock"), todo("All Artwork Above"), todo("Other Layers")]),
+                sub(
+                    "Lock",
+                    vec![c("Selection", "object.lock"), c("All Artwork Above", "object.lock.above"), c("Other Layers", "object.lock.otherLayers")],
+                ),
                 c("Unlock All", "object.unlockAll"),
-                sub("Hide", vec![c("Selection", "object.hide"), todo("All Artwork Above"), todo("Other Layers")]),
+                sub(
+                    "Hide",
+                    vec![c("Selection", "object.hide"), c("All Artwork Above", "object.hide.above"), c("Other Layers", "object.hide.otherLayers")],
+                ),
                 c("Show All", "object.showAll"),
                 Sep,
-                todo("Expand…"),
+                cp("Expand…", "object.expand", json!({"object": true, "fill": true, "stroke": true})),
                 c("Expand Appearance", "effect.expandAppearance"),
-                todo("Crop Image"),
-                todo("Rasterize…"),
+                c("Crop Image", "object.cropImage"),
+                cp("Rasterize…", "object.rasterize", json!({"ppi": 72, "background": "transparent"})),
                 todo("Create Gradient Mesh…"),
                 todo("Create Object Mosaic…"),
-                todo("Create Trim Marks"),
+                c("Create Trim Marks", "object.createTrimMarks"),
                 todo("Flatten Transparency…"),
                 Sep,
                 todo("Make Pixel Perfect"),
@@ -576,28 +606,28 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         c("Simplify…", "object.path.simplify"),
                         c("Add Anchor Points", "object.path.addAnchorPoints"),
                         c("Remove Anchor Points", "path.deleteAnchors"),
-                        todo("Divide Objects Below"),
+                        c("Divide Objects Below", "object.path.divideObjectsBelow"),
                         c("Split Into Grid…", "object.path.splitIntoGrid"),
                         Sep,
-                        todo("Clean Up…"),
+                        cp("Clean Up…", "object.path.cleanUp", json!({"strayPoints": true, "unpaintedObjects": true, "emptyTextPaths": true})),
                     ],
                 ),
-                sub("Shape", vec![todo("Convert to Shape"), c("Expand Shape", "object.expandShape")]),
+                sub("Shape", vec![c("Convert to Shape", "object.shape.convertToShape"), c("Expand Shape", "object.expandShape")]),
                 sub("Pattern", vec![todo("Make"), todo("Edit Pattern"), todo("Tile Edge Color…")]),
                 sub("Repeat", vec![todo("Radial"), todo("Grid"), todo("Mirror"), Sep, todo("Release"), todo("Options…")]),
                 sub(
                     "Blend",
                     vec![
-                        todos("Make", "Cmd+Alt+B"),
-                        todos("Release", "Cmd+Alt+Shift+B"),
+                        c("Make", "object.blend.make"),
+                        c("Release", "object.blend.release"),
                         Sep,
-                        todo("Blend Options…"),
+                        cp("Blend Options…", "object.blend.options", json!({"steps": 5})),
                         Sep,
-                        todo("Expand"),
+                        c("Expand", "object.blend.expand"),
                         Sep,
                         todo("Replace Spine"),
-                        todo("Reverse Spine"),
-                        todo("Reverse Front to Back"),
+                        c("Reverse Spine", "object.blend.reverseSpine"),
+                        c("Reverse Front to Back", "object.blend.reverseFrontToBack"),
                     ],
                 ),
                 sub(
@@ -622,8 +652,8 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 sub(
                     "Artboards",
                     vec![
-                        todo("Convert to Artboards"),
-                        todo("Rearrange All Artboards…"),
+                        c("Convert to Artboards", "artboard.convertToArtboards"),
+                        cp("Rearrange All Artboards…", "artboard.rearrange", json!({"columns": 2, "spacing": 20, "moveArtwork": true})),
                         Sep,
                         c("Fit to Artwork Bounds", "artboard.fitToArt"),
                         c("Fit to Selected Art", "artboard.fitToSelection"),
@@ -635,46 +665,49 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
         (
             "Type",
             vec![
-                sub(
-                    "Font",
-                    drawcraft_text::FontDb::global()
-                        .families()
-                        .into_iter()
-                        .take(0)
-                        .map(|_| todo(""))
-                        .chain([todo("Source Sans 3"), todo("Source Serif 4"), todo("Inter"), todo("JetBrains Mono")])
-                        .collect(),
-                ),
+                sub("Font", font_items()),
                 todo("Recent Fonts"),
-                sub(
-                    "Size",
-                    [6, 8, 9, 10, 11, 12, 14, 18, 24, 30, 36, 48, 60, 72]
-                        .iter()
-                        .map(|_| todo("pt"))
-                        .take(0)
-                        .chain([todo("6 pt"), todo("8 pt"), todo("12 pt"), todo("24 pt"), todo("36 pt"), todo("72 pt")])
-                        .collect(),
-                ),
+                sub("Size", TYPE_SIZES.iter().map(|(l, n)| cp(l, "text.setStyle", json!({ "size": n }))).collect()),
                 Sep,
                 todo("Glyphs"),
+                sub("Insert Special Character", insert_items(INSERT_SPECIAL)),
+                sub("Insert Whitespace Character", insert_items(INSERT_WHITESPACE)),
+                sub("Insert Break Character", insert_items(INSERT_BREAK)),
                 Sep,
-                todo("Convert To Area Type"),
+                c("Convert To Area Type", "type.convertToAreaType"),
+                c("Convert To Point Type", "type.convertToPointType"),
                 todo("Area Type Options…"),
                 sub(
                     "Type on a Path",
-                    vec![todo("Rainbow"), todo("Skew"), todo("3D Ribbon"), todo("Stair Step"), todo("Gravity"), Sep, todo("Type on a Path Options…")],
+                    vec![
+                        todo("Rainbow"),
+                        todo("Skew"),
+                        todo("3D Ribbon"),
+                        todo("Stair Step"),
+                        todo("Gravity"),
+                        Sep,
+                        cp("Type on a Path Options…", "type.pathOptions", json!({"start": 0})),
+                    ],
                 ),
                 sub("Threaded Text", vec![todo("Create"), todo("Release Selection"), todo("Remove Threading")]),
                 todo("Fit Headline"),
                 Sep,
                 todo("Find Font…"),
-                sub("Change Case", vec![todo("UPPERCASE"), todo("lowercase"), todo("Title Case"), todo("Sentence case")]),
-                todo("Smart Punctuation…"),
+                sub(
+                    "Change Case",
+                    vec![
+                        cp("UPPERCASE", "type.changeCase", json!({"case": "upper"})),
+                        cp("lowercase", "type.changeCase", json!({"case": "lower"})),
+                        cp("Title Case", "type.changeCase", json!({"case": "title"})),
+                        cp("Sentence case", "type.changeCase", json!({"case": "sentence"})),
+                    ],
+                ),
+                cp("Smart Punctuation…", "type.smartPunctuation", json!({"quotes": true, "dashes": true, "ellipsis": true, "scope": "selection"})),
                 Sep,
                 c("Create Outlines", "type.createOutlines"),
                 todo("Optical Margin Alignment"),
                 Sep,
-                todo("Fill with Placeholder Text"),
+                c("Fill with Placeholder Text", "type.fillPlaceholder"),
                 Sep,
                 todos("Show Hidden Characters", "Cmd+Alt+I"),
                 sub("Type Orientation", vec![todo("Horizontal"), todo("Vertical")]),
@@ -706,30 +739,36 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         c("Stroke Weight", "select.same.strokeWeight"),
                         todo("Graphic Style"),
                         c("Shape", "select.same.shapeType"),
-                        todo("Symbol Instance"),
+                        c("Symbol Instance", "select.same.symbolInstance"),
                         Sep,
-                        todo("Font Family"),
-                        todo("Font Size"),
-                        todo("Text Fill Color"),
+                        c("Font Family", "select.same.fontFamily"),
+                        c("Font Family & Style", "select.same.fontFamilyStyle"),
+                        c("Font Family, Style & Size", "select.same.fontFamilyStyleSize"),
+                        c("Font Size", "select.same.fontSize"),
+                        c("Text Fill Color", "select.same.textFillColor"),
+                        c("Text Stroke Color", "select.same.textStrokeColor"),
                     ],
                 ),
                 sub(
                     "Object",
                     vec![
                         c("All on Same Layers", "select.object.allOnSameLayers"),
-                        todo("Direction Handles"),
+                        c("Direction Handles", "select.object.directionHandles"),
                         Sep,
-                        todo("Brush Strokes"),
+                        c("Brush Strokes", "select.object.brushStrokes"),
+                        c("Bristle Brush Strokes", "select.object.bristleBrushStrokes"),
                         c("Clipping Masks", "select.object.clippingMasks"),
                         c("Stray Points", "select.object.strayPoints"),
                         c("Open Paths", "select.object.openPaths"),
                         Sep,
                         c("All Text Objects", "select.object.textObjects"),
+                        c("Point Text Objects", "select.object.pointText"),
+                        c("Area Text Objects", "select.object.areaText"),
                     ],
                 ),
                 todo("Start Global Edit"),
                 Sep,
-                todo("Save Selection…"),
+                c("Save Selection…", "select.save"),
                 todo("Edit Selection…"),
             ],
         ),
@@ -785,10 +824,10 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                     "Guides",
                     vec![
                         c("Hide Guides", "view.guides"),
-                        todos("Lock Guides", "Cmd+Alt+;"),
-                        todos("Make Guides", "Cmd+5"),
-                        todos("Release Guides", "Cmd+Alt+5"),
-                        todo("Clear Guides"),
+                        c("Lock Guides", "view.guides.lock"),
+                        c("Make Guides", "view.guides.make"),
+                        c("Release Guides", "view.guides.release"),
+                        c("Clear Guides", "view.guides.clear"),
                     ],
                 ),
                 c("Smart Guides", "view.smartGuides"),
@@ -937,12 +976,31 @@ fn render_items(app: &DrawcraftApp, ui: &mut egui::Ui, items: &[Item], clicked: 
                 };
                 let r = ui.add_enabled(en, egui::Button::new(text).shortcut_text(sc).min_size(egui::vec2(ui.available_width(), 0.0)));
                 if r.clicked() {
-                    *clicked = Some((id.to_string(), if p.is_null() { json!({}) } else { p.clone() }));
+                    *clicked = Some(click_target(label_of(it), id, p));
                     ui.close();
                 }
             }
         }
     }
+}
+
+fn label_of(it: &Item) -> &'static str {
+    match it {
+        Item::Cmd(l, _, _) => l,
+        _ => "",
+    }
+}
+
+/// What a menu click runs: items whose label ends with "…" and that carry default params open a
+/// generic parameter dialog (fields = the defaults) instead of running immediately.
+pub fn click_target(label: &str, id: &str, p: &Value) -> (String, Value) {
+    let dialog = label.ends_with('…')
+        && p.as_object().is_some_and(|o| !o.is_empty())
+        && !matches!(id, "effect.dialog" | "window.panel" | "window.brightness" | "view.screenMode");
+    if dialog {
+        return ("ui.paramDialog".into(), json!({"command": id, "label": label.trim_end_matches('…'), "params": p}));
+    }
+    (id.to_string(), if p.is_null() { json!({}) } else { p.clone() })
 }
 
 /// Invoke a menu/command id with UI side effects (dialogs for "…" commands that need input).
@@ -1043,6 +1101,80 @@ pub fn menu_entries(app: &DrawcraftApp) -> Vec<MenuEntry> {
     out
 }
 
+/// Type → Size presets.
+const TYPE_SIZES: [(&str, u32); 14] = [
+    ("6 pt", 6),
+    ("8 pt", 8),
+    ("9 pt", 9),
+    ("10 pt", 10),
+    ("11 pt", 11),
+    ("12 pt", 12),
+    ("14 pt", 14),
+    ("18 pt", 18),
+    ("24 pt", 24),
+    ("30 pt", 30),
+    ("36 pt", 36),
+    ("48 pt", 48),
+    ("60 pt", 60),
+    ("72 pt", 72),
+];
+
+const INSERT_SPECIAL: &[(&str, &str)] = &[
+    ("Bullet", "bullet"),
+    ("Copyright Symbol", "copyright"),
+    ("Ellipsis", "ellipsis"),
+    ("Paragraph Symbol", "paragraph"),
+    ("Registered Trademark Symbol", "registered"),
+    ("Section Symbol", "section"),
+    ("Trademark Symbol", "trademark"),
+    ("Em Dash", "emDash"),
+    ("En Dash", "enDash"),
+    ("Discretionary Hyphen", "discretionaryHyphen"),
+    ("Nonbreaking Hyphen", "nonBreakingHyphen"),
+    ("Double Left Quotation Marks", "doubleLeftQuote"),
+    ("Double Right Quotation Marks", "doubleRightQuote"),
+    ("Single Left Quotation Mark", "singleLeftQuote"),
+    ("Single Right Quotation Mark", "singleRightQuote"),
+];
+const INSERT_WHITESPACE: &[(&str, &str)] = &[
+    ("Em Space", "emSpace"),
+    ("En Space", "enSpace"),
+    ("Hair Space", "hairSpace"),
+    ("Sixth Space", "sixthSpace"),
+    ("Thin Space", "thinSpace"),
+    ("Nonbreaking Space", "nonBreakingSpace"),
+    ("Figure Space", "figureSpace"),
+    ("Punctuation Space", "punctuationSpace"),
+    ("Third Space", "thirdSpace"),
+    ("Quarter Space", "quarterSpace"),
+];
+const INSERT_BREAK: &[(&str, &str)] = &[("Forced Line Break", "forcedLineBreak"), ("Tab", "tab")];
+
+fn insert_items(list: &[(&'static str, &'static str)]) -> Vec<Item> {
+    list.iter().map(|(l, c)| cp(l, "type.insert", json!({ "char": c }))).collect()
+}
+
+/// Type → Font: one item per installed family (labels interned once so the per-frame menu build
+/// doesn't allocate forever).
+fn font_items() -> Vec<Item> {
+    static NAMES: std::sync::Mutex<Vec<&'static str>> = std::sync::Mutex::new(Vec::new());
+    let fams = drawcraft_text::FontDb::global().families();
+    let Ok(mut names) = NAMES.lock() else { return vec![] };
+    fams.iter()
+        .map(|f| {
+            let label: &'static str = match names.iter().find(|n| **n == f.as_str()) {
+                Some(n) => n,
+                None => {
+                    let n: &'static str = Box::leak(f.clone().into_boxed_str());
+                    names.push(n);
+                    n
+                }
+            };
+            cp(label, "text.setStyle", json!({ "font": label }))
+        })
+        .collect()
+}
+
 /// The Effect menu, built from the effects catalogue (Illustrator Effects), plus raster effects.
 fn effect_menu() -> Vec<Item> {
     let cat = drawcraft_effects::effect_catalog();
@@ -1130,4 +1262,3 @@ mod tests {
         assert_eq!(pretty_shortcut(""), "");
     }
 }
-

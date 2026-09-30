@@ -146,7 +146,17 @@ fn redo(s: &mut Session, _: &Value) -> Result<Value> {
 /// Selected top-level objects in paint order, dropping any whose ancestor is also selected.
 pub(crate) fn selected_roots(s: &Session) -> Result<Vec<NodeId>> {
     let st = s.doc()?;
-    let sel = st.selection.in_paint_order(&st.doc);
+    // A selected compound-path member acts as its compound (Illustrator treats compounds as one object).
+    let mut sel: Vec<NodeId> = st
+        .selection
+        .in_paint_order(&st.doc)
+        .into_iter()
+        .map(|id| match st.doc.parent_of(id).and_then(|p| st.doc.node(p).map(|n| (p, n))) {
+            Some((p, n)) if matches!(n.kind, drawcraft_doc::NodeKind::Compound { .. }) => p,
+            _ => id,
+        })
+        .collect();
+    sel.dedup();
     Ok(sel
         .iter()
         .copied()

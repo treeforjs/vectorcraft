@@ -842,6 +842,7 @@ name = "drawcraft-cli"
 version = "0.1.0"
 dependencies = [
  "drawcraft-mcp",
+ "drawcraft-testkit",
  "serde_json",
 ]
 
@@ -892,10 +893,12 @@ dependencies = [
  "drawcraft-pdf",
  "drawcraft-render",
  "drawcraft-svg",
+ "drawcraft-testkit",
  "drawcraft-text",
  "drawcraft-tools",
  "kurbo 0.13.1",
  "log",
+ "proptest",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
@@ -907,6 +910,8 @@ version = "0.1.0"
 dependencies = [
  "drawcraft-doc",
  "drawcraft-geom",
+ "drawcraft-testkit",
+ "proptest",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
@@ -916,6 +921,7 @@ dependencies = [
 name = "drawcraft-geom"
 version = "0.1.0"
 dependencies = [
+ "drawcraft-testkit",
  "kurbo 0.13.1",
  "proptest",
  "serde",
@@ -933,8 +939,10 @@ dependencies = [
  "drawcraft-geom",
  "drawcraft-render",
  "drawcraft-svg",
+ "drawcraft-testkit",
  "drawcraft-tools",
  "log",
+ "proptest",
  "serde_json",
 ]
 
@@ -943,6 +951,7 @@ name = "drawcraft-pathops"
 version = "0.1.0"
 dependencies = [
  "drawcraft-geom",
+ "drawcraft-testkit",
  "kurbo 0.13.1",
  "linesweeper",
  "proptest",
@@ -975,9 +984,11 @@ dependencies = [
  "drawcraft-doc",
  "drawcraft-effects",
  "drawcraft-geom",
+ "drawcraft-testkit",
  "drawcraft-text",
  "image",
  "log",
+ "proptest",
  "serde_json",
  "vello_common 0.2.0",
  "vello_cpu 0.2.0",
@@ -990,8 +1001,10 @@ dependencies = [
  "drawcraft-color",
  "drawcraft-doc",
  "drawcraft-geom",
+ "drawcraft-testkit",
  "image",
  "kurbo 0.13.1",
+ "proptest",
  "svgtypes 0.16.1",
  "thiserror 2.0.21",
  "usvg 0.48.1",
@@ -1001,8 +1014,17 @@ dependencies = [
 name = "drawcraft-testkit"
 version = "0.1.0"
 dependencies = [
+ "drawcraft-color",
  "drawcraft-doc",
+ "drawcraft-engine",
+ "drawcraft-format",
  "drawcraft-geom",
+ "drawcraft-render",
+ "drawcraft-svg",
+ "image",
+ "kurbo 0.13.1",
+ "proptest",
+ "serde_json",
 ]
 
 [[package]]
@@ -5026,6 +5048,10 @@ checksum = "9440ea3e5aeabb0ac63af70daf835274065238cdd0cec83418f417eae38bacee"
 name = "xtask"
 version = "0.1.0"
 dependencies = [
+ "drawcraft-color",
+ "drawcraft-doc",
+ "drawcraft-geom",
+ "drawcraft-render",
  "serde_json",
 ]
 

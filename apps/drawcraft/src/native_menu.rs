@@ -18,7 +18,7 @@ enum Handle {
 
 pub struct NativeMenu {
     _menu: Menu,
-    items: HashMap<String, (String, Value, Handle)>,
+    items: HashMap<String, (String, Value, Handle, String)>,
     last_refresh: f64,
 }
 
@@ -43,15 +43,18 @@ impl NativeMenu {
         }
         menu.init_for_nsapp();
         app.native_menu = true;
-        app.native_shortcuts =
-            items.values().filter(|(c, p, _)| p.is_null() && menus::shortcut_of(c).and_then(accel).is_some()).map(|(c, _, _)| c.clone()).collect();
+        app.native_shortcuts = items
+            .values()
+            .filter(|(_, p, _, c)| (p.is_null() || p.as_object().is_some_and(|o| o.is_empty())) && menus::shortcut_of(c).and_then(accel).is_some())
+            .map(|(_, _, _, c)| c.clone())
+            .collect();
         Self { _menu: menu, items, last_refresh: 0.0 }
     }
 
     /// Dispatch clicked items and refresh state.
     pub fn poll(&mut self, app: &mut DrawcraftApp) {
         while let Ok(ev) = MenuEvent::receiver().try_recv() {
-            if let Some((cmd, params, _)) = self.items.get(ev.id.as_ref()) {
+            if let Some((cmd, params, _, _)) = self.items.get(ev.id.as_ref()) {
                 let p = if params.is_null() { serde_json::json!({}) } else { params.clone() };
                 menus::invoke(app, cmd, p);
             }
@@ -61,7 +64,9 @@ impl NativeMenu {
             return;
         }
         self.last_refresh = now;
-        for (cmd, params, h) in self.items.values() {
+        for (run, rp, h, cmd) in self.items.values() {
+            let null = Value::Null;
+            let params = if run == cmd { rp } else { &null };
             let en = menus::enabled(app, cmd);
             match h {
                 Handle::Plain(i) => {
@@ -91,7 +96,7 @@ impl NativeMenu {
     }
 }
 
-fn build(app: &DrawcraftApp, parent: &Submenu, entries: &[Item], items: &mut HashMap<String, (String, Value, Handle)>, counter: &mut usize) {
+fn build(app: &DrawcraftApp, parent: &Submenu, entries: &[Item], items: &mut HashMap<String, (String, Value, Handle, String)>, counter: &mut usize) {
     for e in entries {
         match e {
             Item::Sep => {
@@ -121,7 +126,9 @@ fn build(app: &DrawcraftApp, parent: &Submenu, entries: &[Item], items: &mut Has
                     let _ = parent.append(&i);
                     Handle::Plain(i)
                 };
-                items.insert(id, (cmd.to_string(), params.clone(), handle));
+                let (run, run_params) = menus::click_target(label, cmd, params);
+                let _ = &run_params;
+                items.insert(id, (run, run_params, handle, cmd.to_string()));
             }
         }
     }

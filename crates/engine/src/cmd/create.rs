@@ -26,7 +26,15 @@ pub fn specs() -> Vec<CommandSpec> {
             has_doc,
             path_create
         ),
-        cmd!("view.drawMode", "Drawing Mode", [], Some("Shift+D"), "{mode?: normal|behind|inside} (no param cycles; inside needs one selected path)", has_doc, draw_mode),
+        cmd!(
+            "view.drawMode",
+            "Drawing Mode",
+            [],
+            Some("Shift+D"),
+            "{mode?: normal|behind|inside} (no param cycles; inside needs one selected path)",
+            has_doc,
+            draw_mode
+        ),
         cmd!(
             "text.create",
             "Create Text",
@@ -108,7 +116,10 @@ fn draw_mode(s: &mut Session, p: &Value) -> Result<Value> {
     };
     if mode == crate::DrawMode::Inside {
         let st = s.doc()?;
-        let target = st.selection.objects.first().copied().filter(|id| matches!(st.doc.node(*id).map(|n| &n.kind), Some(NodeKind::Path { .. } | NodeKind::Compound { .. } | NodeKind::Text(_))));
+        let target =
+            st.selection.objects.first().copied().filter(|id| {
+                matches!(st.doc.node(*id).map(|n| &n.kind), Some(NodeKind::Path { .. } | NodeKind::Compound { .. } | NodeKind::Text(_)))
+            });
         match target {
             Some(t) if st.selection.len() == 1 => s.draw_inside = Some(t),
             _ => return Err(bad("view.drawMode", "Draw Inside needs exactly one selected path, compound path or text")),

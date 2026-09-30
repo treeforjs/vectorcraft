@@ -20,4 +20,6 @@ image = { workspace = true }
 svgtypes = "0.16"
 
 [dev-dependencies]
+drawcraft-testkit = { workspace = true }
+proptest = { workspace = true }
 image = { workspace = true }

@@ -120,6 +120,12 @@ fn title(kind: &str) -> &'static str {
 pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
     let Some(d) = app.ui.dialog.clone() else { return Err("no dialog open".into()) };
     let copy = d.bool("copy");
+    if d.kind == "command" {
+        let cmd = d.str("__command");
+        let params = effect_params(&d);
+        app.ui.dialog = None;
+        return app.run(&cmd, params);
+    }
     if d.kind == "effect" {
         let effect = d.str("__effect");
         let params = effect_params(&d);
@@ -240,10 +246,13 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
         .frame(egui::Frame::window(&ctx.global_style()).fill(t.panel).inner_margin(egui::Margin::same(22)))
         .show(ctx, |ui| {
             ui.set_min_width(if d.kind == "newDocument" { 560.0 } else { 320.0 });
-            let heading = if d.kind == "effect" { d.str("__label") } else { title(&d.kind).to_string() };
+            let heading = if d.kind == "effect" || d.kind == "command" { d.str("__label") } else { title(&d.kind).to_string() };
             ui.label(egui::RichText::new(heading).font(theme::semibold(16.0)).color(t.text));
             ui.add_space(12.0);
             match d.kind.as_str() {
+                "command" => {
+                    effect_fields(ui, &mut d);
+                }
                 "effect" => {
                     let changed = effect_fields(ui, &mut d);
                     ui.add_space(6.0);

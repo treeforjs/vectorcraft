@@ -78,6 +78,7 @@ pub struct CacheKey {
     pub outline: bool,
     pub ppp: f32,
     pub hidden: Vec<u64>,
+    pub rot: f64,
 }
 
 #[derive(Clone, Copy, Debug, Default)]

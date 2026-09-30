@@ -15,4 +15,6 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
+drawcraft-testkit = { workspace = true }
+proptest = { workspace = true }
 drawcraft-geom = { workspace = true }

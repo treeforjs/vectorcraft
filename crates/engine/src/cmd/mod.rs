@@ -1,17 +1,22 @@
 //! The command registry. Ids follow Illustrator's menu structure.
 
+mod colorcmds;
 mod create;
+mod docmenu;
 mod draw2;
 mod edit;
 mod effectcmd;
 mod file;
 mod layer;
+pub(crate) mod menucmds;
 mod object;
 mod paint;
+mod panelcmds;
 mod path;
 mod pathops;
 mod select;
 mod typecmd;
+mod typemenu;
 mod xform;
 
 use drawcraft_color::Color;
@@ -123,6 +128,11 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(effectcmd::specs());
         v.extend(pathops::specs());
         v.extend(typecmd::specs());
+        v.extend(menucmds::specs());
+        v.extend(colorcmds::specs());
+        v.extend(typemenu::specs());
+        v.extend(docmenu::specs());
+        v.extend(panelcmds::specs());
         v
     })
 }

@@ -117,7 +117,7 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest)
             let Some(events) = p.get("events").and_then(Value::as_array) else { return err("missing `events`") };
             let base_mods: Mods = p.get("mods").and_then(|m| serde_json::from_value(m.clone()).ok()).unwrap_or_default();
             let view = app.view_info();
-            let xf = app.canvas_rect.zip(app.view().copied()).map(|(rect, v)| Xf { rect, zoom: v.zoom, center: v.center });
+            let xf = app.canvas_rect.zip(app.view().copied()).map(|(rect, v)| Xf::new(rect, &v));
             for e in events {
                 let kind = match e.get("kind").and_then(Value::as_str).unwrap_or("") {
                     "down" => PointerKind::Down,

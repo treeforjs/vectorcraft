@@ -103,20 +103,26 @@ pub fn num_field(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, value:
     if !editing {
         buf = shown.clone();
     }
-    let resp = egui::Frame::NONE
-        .fill(t.input)
-        .stroke(Stroke::new(1.0, if editing { t.accent } else { t.input_border }))
-        .corner_radius(CornerRadius::same(2))
-        .inner_margin(egui::Margin::symmetric(6, 4))
-        .show(ui, |ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut buf)
-                    .id(id)
-                    .frame(egui::Frame::NONE)
-                    .desired_width(width - 14.0)
-                    .font(egui::FontId::proportional(12.5))
-                    .text_color(t.text_strong),
-            )
+    let resp = ui
+        .allocate_ui_with_layout(vec2(width, 26.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            ui.set_min_width(width);
+            egui::Frame::NONE
+                .fill(t.input)
+                .stroke(Stroke::new(1.0, if editing { t.accent } else { t.input_border }))
+                .corner_radius(CornerRadius::same(2))
+                .inner_margin(egui::Margin::symmetric(6, 4))
+                .show(ui, |ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut buf)
+                            .id(id)
+                            .frame(egui::Frame::NONE)
+                            .desired_width(width - 14.0)
+                            .min_size(vec2(width - 14.0, 0.0))
+                            .font(egui::FontId::proportional(12.5))
+                            .text_color(t.text_strong),
+                    )
+                })
+                .inner
         })
         .inner;
     let commit = resp.lost_focus() && buf != shown;
@@ -135,20 +141,26 @@ pub fn plain_field(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, valu
     };
     let editing = ui.memory(|m| m.has_focus(id));
     let mut buf: String = if editing { ui.data_mut(|d| d.get_temp::<String>(id)).unwrap_or_else(|| shown.clone()) } else { shown.clone() };
-    let resp = egui::Frame::NONE
-        .fill(t.input)
-        .stroke(Stroke::new(1.0, if editing { t.accent } else { t.input_border }))
-        .corner_radius(CornerRadius::same(2))
-        .inner_margin(egui::Margin::symmetric(6, 4))
-        .show(ui, |ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut buf)
-                    .id(id)
-                    .frame(egui::Frame::NONE)
-                    .desired_width(width - 14.0)
-                    .font(egui::FontId::proportional(12.5))
-                    .text_color(t.text_strong),
-            )
+    let resp = ui
+        .allocate_ui_with_layout(vec2(width, 26.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            ui.set_min_width(width);
+            egui::Frame::NONE
+                .fill(t.input)
+                .stroke(Stroke::new(1.0, if editing { t.accent } else { t.input_border }))
+                .corner_radius(CornerRadius::same(2))
+                .inner_margin(egui::Margin::symmetric(6, 4))
+                .show(ui, |ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut buf)
+                            .id(id)
+                            .frame(egui::Frame::NONE)
+                            .desired_width(width - 14.0)
+                            .min_size(vec2(width - 14.0, 0.0))
+                            .font(egui::FontId::proportional(12.5))
+                            .text_color(t.text_strong),
+                    )
+                })
+                .inner
         })
         .inner;
     ui.data_mut(|d| d.insert_temp(id, buf.clone()));
@@ -172,6 +184,12 @@ pub fn paint_chip(ui: &Ui, rect: Rect, paint: &Paint) {
             p.rect_filled(rect, 0.0, Color32::from_rgb(r, g, b));
         }
         Paint::Gradient(gp) => {
+            if gp.gradient.kind == drawcraft_color::GradientKind::Radial {
+                // Outer colour fills the corners beyond the largest circle.
+                let (c, _) = gp.gradient.sample(1.0);
+                let [r, g, b, _] = c.to_rgba8(1.0);
+                p.rect_filled(rect, 0.0, Color32::from_rgb(r, g, b));
+            }
             let n = 24;
             let w = rect.width() / n as f32;
             for i in 0..n {
@@ -301,4 +319,291 @@ pub fn toggle_icon(ui: &mut Ui, on_icon: &str, on: bool, size: f32, tip: &str) -
         icons::paint(ui, on_icon, rect.shrink(size * 0.2), t.text_disabled);
     }
     resp.on_hover_text(tip).clicked()
+}
+
+// ---------- panel widgets (Swatches, Color, Stroke, Gradient, Appearance, …) ----------
+
+/// Icon button that can be disabled (greyed, no hover, never clicked).
+pub fn icon_button_enabled(ui: &mut Ui, icon: &str, tip: &str, selected: bool, enabled: bool, size: f32) -> Response {
+    if enabled {
+        return icon_button(ui, icon, tip, selected, size);
+    }
+    let t = Tokens::get(ui.ctx());
+    let (rect, resp) = ui.allocate_exact_size(Vec2::splat(size), Sense::hover());
+    let pad = (size * 0.2).round();
+    icons::paint(ui, icon, rect.shrink(pad), t.text_disabled);
+    if tip.is_empty() { resp } else { resp.on_hover_text(tip) }
+}
+
+/// Regular-weight panel sub-header ("Shape Modes:", "Align Objects:").
+pub fn subheader(ui: &mut Ui, text: &str) {
+    let t = Tokens::get(ui.ctx());
+    ui.label(egui::RichText::new(text).size(12.5).color(t.text));
+}
+
+/// A label drawn with a dotted underline (Illustrator's link labels: "Stroke:", "Opacity:").
+pub fn link_label(ui: &mut Ui, text: &str) -> Response {
+    let t = Tokens::get(ui.ctx());
+    let galley = ui.painter().layout_no_wrap(text.to_string(), egui::FontId::proportional(12.5), t.text_strong);
+    let (rect, resp) = ui.allocate_exact_size(galley.size() + vec2(0.0, 3.0), Sense::click());
+    let y = rect.top() + galley.size().y + 1.0;
+    ui.painter().galley(rect.min, galley, t.text_strong);
+    let mut x = rect.left();
+    while x < rect.right() - 1.0 {
+        ui.painter().line_segment([pos2(x, y), pos2((x + 1.0).min(rect.right()), y)], Stroke::new(1.0, t.text_dim));
+        x += 2.5;
+    }
+    resp
+}
+
+/// Illustrator-style checkbox with a disabled state. Returns true when toggled.
+pub fn check(ui: &mut Ui, label: &str, value: bool, enabled: bool) -> bool {
+    let t = Tokens::get(ui.ctx());
+    let galley = ui.painter().layout_no_wrap(label.to_string(), egui::FontId::proportional(12.5), if enabled { t.text } else { t.text_disabled });
+    let (rect, resp) =
+        ui.allocate_exact_size(vec2(18.0 + galley.size().x, 20.0f32.max(galley.size().y)), if enabled { Sense::click() } else { Sense::hover() });
+    let bx = Rect::from_min_size(pos2(rect.left(), rect.center().y - 6.5), Vec2::splat(13.0));
+    ui.painter().rect_filled(bx, CornerRadius::same(2), if value && enabled { t.accent_strong } else { t.input });
+    ui.painter().rect_stroke(
+        bx,
+        CornerRadius::same(2),
+        Stroke::new(
+            1.0,
+            if !enabled {
+                t.divider
+            } else if resp.hovered() {
+                t.text
+            } else {
+                t.button_border
+            },
+        ),
+        StrokeKind::Inside,
+    );
+    if value {
+        let c = if enabled { Color32::WHITE } else { t.text_disabled };
+        ui.painter().line_segment([bx.left_center() + vec2(3.0, 0.0), bx.center_bottom() + vec2(-1.0, -3.5)], Stroke::new(1.6, c));
+        ui.painter().line_segment([bx.center_bottom() + vec2(-1.0, -3.5), bx.right_top() + vec2(-3.0, 3.0)], Stroke::new(1.6, c));
+    }
+    ui.painter().galley(pos2(bx.right() + 5.0, rect.center().y - galley.size().y / 2.0), galley, t.text);
+    enabled && resp.clicked()
+}
+
+/// Numeric field with an up/down spinner on the left and a preset dropdown on the right
+/// (Stroke weight, font size, leading…). `presets` empty = no dropdown. Returns the committed value.
+#[allow(clippy::too_many_arguments)]
+pub fn spin_field(
+    ui: &mut Ui,
+    id: impl std::hash::Hash + std::fmt::Debug + Copy,
+    value: Option<f64>,
+    unit: Unit,
+    width: f32,
+    step: f64,
+    min: f64,
+    presets: &[f64],
+) -> Option<f64> {
+    spin_generic(ui, value, width, step, min, presets, &|v| unit.format(v), &mut |ui, fw| num_field(ui, id, value, unit, fw))
+}
+
+/// [`spin_field`] for unitless values (percent, degrees, 1/1000 em) with a display suffix.
+#[allow(clippy::too_many_arguments)]
+pub fn spin_plain(
+    ui: &mut Ui,
+    id: impl std::hash::Hash + std::fmt::Debug + Copy,
+    value: f64,
+    suffix: &str,
+    decimals: usize,
+    width: f32,
+    step: f64,
+    min: f64,
+    presets: &[f64],
+) -> Option<f64> {
+    let fmt = |v: f64| format!("{v}{suffix}");
+    spin_generic(ui, Some(value), width, step, min, presets, &fmt, &mut |ui, fw| plain_field(ui, id, value, suffix, decimals, fw))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn spin_generic(
+    ui: &mut Ui,
+    value: Option<f64>,
+    width: f32,
+    step: f64,
+    min: f64,
+    presets: &[f64],
+    fmt: &dyn Fn(f64) -> String,
+    field: &mut dyn FnMut(&mut Ui, f32) -> Option<f64>,
+) -> Option<f64> {
+    let t = Tokens::get(ui.ctx());
+    let mut out = None;
+    let h = 26.0;
+    let enabled = ui.is_enabled();
+    ui.scope(|ui| {
+        ui.spacing_mut().item_spacing.x = 0.0;
+        let (sr, sresp) = ui.allocate_exact_size(vec2(16.0, h), Sense::click());
+        ui.painter().rect_filled(sr, CornerRadius { nw: 2, sw: 2, ne: 0, se: 0 }, t.input);
+        ui.painter().rect_stroke(sr, CornerRadius { nw: 2, sw: 2, ne: 0, se: 0 }, Stroke::new(1.0, t.input_border), StrokeKind::Inside);
+        let up = Rect::from_min_max(sr.min, pos2(sr.right(), sr.center().y));
+        let down = Rect::from_min_max(pos2(sr.left(), sr.center().y), sr.max);
+        let hover = sresp.hover_pos();
+        for (r, is_up) in [(up, true), (down, false)] {
+            let c = if !enabled {
+                t.text_disabled
+            } else if hover.is_some_and(|p| r.contains(p)) {
+                t.text_strong
+            } else {
+                t.icon
+            };
+            let m = r.center();
+            let d = if is_up { -1.5 } else { 1.5 };
+            ui.painter().line_segment([m + vec2(-3.0, -d), m + vec2(0.0, d)], Stroke::new(1.2, c));
+            ui.painter().line_segment([m + vec2(0.0, d), m + vec2(3.0, -d)], Stroke::new(1.2, c));
+        }
+        if sresp.clicked()
+            && let Some(p) = sresp.interact_pointer_pos()
+        {
+            let v = value.unwrap_or(0.0);
+            let nv = if up.contains(p) { v + step } else { v - step };
+            out = Some(nv.max(min));
+        }
+        let fw = if presets.is_empty() { width - 16.0 } else { width - 36.0 };
+        if let Some(v) = field(ui, fw) {
+            out = Some(v.max(min));
+        }
+        if !presets.is_empty() {
+            let (dr, dresp) = ui.allocate_exact_size(vec2(20.0, h), Sense::click());
+            ui.painter().rect_filled(dr, CornerRadius { nw: 0, sw: 0, ne: 2, se: 2 }, t.input);
+            ui.painter().rect_stroke(dr, CornerRadius { nw: 0, sw: 0, ne: 2, se: 2 }, Stroke::new(1.0, t.input_border), StrokeKind::Inside);
+            let c = if !enabled {
+                t.text_disabled
+            } else if dresp.hovered() {
+                t.text_strong
+            } else {
+                t.icon
+            };
+            icons::paint(ui, "chevron-down", Rect::from_center_size(dr.center(), Vec2::splat(12.0)), c);
+            egui::Popup::menu(&dresp).show(|ui| {
+                ui.set_min_width(width - 10.0);
+                for p in presets {
+                    if ui.selectable_label(value.is_some_and(|v| (v - p).abs() < 1e-6), fmt(*p)).clicked() {
+                        out = Some(*p);
+                    }
+                }
+            });
+        }
+    });
+    out
+}
+
+/// Drag phase of a live slider/handle: previews while dragging, commits on release.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Live {
+    Idle,
+    Dragging,
+    Released,
+}
+
+/// A colour slider with a gradient track (`track(t)` gives the colour at 0..1) and a triangular
+/// thumb below it, like Illustrator's Color panel. Returns the new normalized value and the phase.
+pub fn color_slider(
+    ui: &mut Ui,
+    id: impl std::hash::Hash + std::fmt::Debug,
+    value: f32,
+    width: f32,
+    track: &dyn Fn(f32) -> Color32,
+) -> (Option<f32>, Live) {
+    let t = Tokens::get(ui.ctx());
+    let (rect, _) = ui.allocate_exact_size(vec2(width, 22.0), Sense::hover());
+    let bar = Rect::from_min_size(pos2(rect.left() + 4.0, rect.top() + 4.0), vec2(width - 8.0, 7.0));
+    let resp = ui.interact(rect, ui.id().with(id), Sense::click_and_drag());
+    let n = (bar.width() / 2.0).ceil().max(2.0) as usize;
+    let seg = bar.width() / n as f32;
+    for i in 0..n {
+        let r = Rect::from_min_size(pos2(bar.left() + i as f32 * seg, bar.top()), vec2(seg + 0.6, bar.height()));
+        ui.painter().rect_filled(r, 0.0, track((i as f32 + 0.5) / n as f32));
+    }
+    ui.painter().rect_stroke(bar, 0.0, Stroke::new(1.0, t.border), StrokeKind::Outside);
+    let v = value.clamp(0.0, 1.0);
+    let x = bar.left() + v * bar.width();
+    let tip = pos2(x, bar.bottom() - 1.0);
+    let thumb = vec![tip, pos2(x + 5.5, tip.y + 6.0), pos2(x + 5.5, tip.y + 10.0), pos2(x - 5.5, tip.y + 10.0), pos2(x - 5.5, tip.y + 6.0)];
+    let fill = if resp.dragged() || resp.hovered() { Color32::WHITE } else { t.icon };
+    ui.painter().add(egui::Shape::convex_polygon(thumb, fill, Stroke::new(1.0, t.border)));
+    let mut out = None;
+    let mut phase = Live::Idle;
+    if (resp.dragged() || resp.clicked() || resp.drag_stopped())
+        && let Some(p) = resp.interact_pointer_pos()
+    {
+        out = Some(((p.x - bar.left()) / bar.width()).clamp(0.0, 1.0));
+        phase = if resp.dragged() && !resp.drag_stopped() { Live::Dragging } else { Live::Released };
+    }
+    (out, phase)
+}
+
+/// One swatch tile (Illustrator: 1 px dark frame, white inset on hover/selection).
+pub fn swatch_tile(ui: &Ui, rect: Rect, paint: &Paint, selected: bool, hovered: bool) {
+    let t = Tokens::get(ui.ctx());
+    paint_chip(ui, rect, paint);
+    ui.painter().rect_stroke(rect, 0.0, Stroke::new(1.0, t.border), StrokeKind::Inside);
+    if selected || hovered {
+        ui.painter().rect_stroke(rect.shrink(1.0), 0.0, Stroke::new(1.0, Color32::WHITE), StrokeKind::Inside);
+        ui.painter().rect_stroke(rect, 0.0, Stroke::new(1.0, if selected { t.accent } else { t.text }), StrokeKind::Outside);
+    }
+}
+
+/// A bordered list box (Swatches tiles, Appearance rows, Artboards list).
+pub fn list_box<R>(ui: &mut Ui, add: impl FnOnce(&mut Ui) -> R) -> R {
+    let t = Tokens::get(ui.ctx());
+    egui::Frame::NONE.stroke(Stroke::new(1.0, t.input_border)).inner_margin(egui::Margin::same(1)).show(ui, add).inner
+}
+
+/// A bottom button bar separated from the content by a divider (panel footers).
+pub fn bottom_bar(ui: &mut Ui, add: impl FnOnce(&mut Ui)) {
+    let t = Tokens::get(ui.ctx());
+    ui.add_space(4.0);
+    let (r, _) = ui.allocate_exact_size(vec2(ui.available_width(), 1.0), Sense::hover());
+    ui.painter().rect_filled(r, 0.0, t.divider);
+    ui.add_space(2.0);
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 4.0;
+        add(ui)
+    });
+}
+
+/// A menu row for panel (≡) menus: label, optional check mark, disabled when not implemented.
+pub fn menu_item(ui: &mut Ui, label: &str, enabled: bool, checked: bool) -> bool {
+    let text = if checked { format!("✓ {label}") } else { format!("   {label}") };
+    ui.add_enabled(enabled, egui::Button::new(egui::RichText::new(text).size(12.5)).frame(false)).clicked()
+}
+
+/// A number field that may be empty (Stroke dash/gap). Returns `Some(new)` on commit, where
+/// `new` is `None` when the field was cleared.
+pub fn opt_field(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, value: Option<f64>, width: f32) -> Option<Option<f64>> {
+    let t = Tokens::get(ui.ctx());
+    let id = ui.id().with(id);
+    let shown = value.map(|v| format!("{v}")).unwrap_or_default();
+    let editing = ui.memory(|m| m.has_focus(id));
+    let mut buf: String = if editing { ui.data_mut(|d| d.get_temp::<String>(id)).unwrap_or_else(|| shown.clone()) } else { shown.clone() };
+    let enabled = ui.is_enabled();
+    let resp = egui::Frame::NONE
+        .fill(t.input)
+        .stroke(Stroke::new(1.0, if editing { t.accent } else { t.input_border }))
+        .corner_radius(CornerRadius::same(2))
+        .inner_margin(egui::Margin::symmetric(4, 4))
+        .show(ui, |ui| {
+            ui.add(
+                egui::TextEdit::singleline(&mut buf)
+                    .id(id)
+                    .frame(egui::Frame::NONE)
+                    .desired_width(width - 10.0)
+                    .font(egui::FontId::proportional(12.5))
+                    .text_color(if enabled { t.text_strong } else { t.text_disabled }),
+            )
+        })
+        .inner;
+    ui.data_mut(|d| d.insert_temp(id, buf.clone()));
+    if resp.lost_focus() && buf != shown {
+        let s = buf.trim().trim_end_matches("pt").trim();
+        if s.is_empty() { Some(None) } else { s.parse::<f64>().ok().map(Some) }
+    } else {
+        None
+    }
 }

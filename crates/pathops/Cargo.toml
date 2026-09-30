@@ -15,4 +15,5 @@ thiserror = { workspace = true }
 linesweeper = { workspace = true }
 
 [dev-dependencies]
+drawcraft-testkit = { workspace = true }
 proptest = { workspace = true }

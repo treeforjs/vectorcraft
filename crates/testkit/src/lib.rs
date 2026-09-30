@@ -1,2 +1,54 @@
-//! DrawCraft test helpers
+//! DrawCraft test helpers.
+//!
+//! - [`fixtures`]: sessions and documents in known states (empty, single/multi selection, a "rich"
+//!   document touching most node kinds), plus a [`fixtures::DocBuilder`] for building documents
+//!   directly (render tests).
+//! - [`strategies`]: proptest strategies for geometry and for engine command sequences ([`strategies::Op`]), and
+//!   junk-parameter generators for fuzzing the command registry.
+//! - [`invariants`]: structural checks for documents and sessions, and round-trip checks
+//!   (`.drawcraft`, SVG, `document.inspect`).
+//! - [`raster`]: rendering helpers and image comparison with a perceptual tolerance.
+//! - [`geom`]: geometry assertions (approximate equality, curve sampling, Hausdorff distance).
+//!
+//! This crate may only be used as a dev-dependency (enforced by `cargo xtask layers`).
 #![forbid(unsafe_code)]
+
+pub mod fixtures;
+pub mod geom;
+pub mod invariants;
+pub mod raster;
+pub mod strategies;
+
+pub use drawcraft_engine::{Session, doc::NodeId};
+pub use serde_json::{Value, json};
+/// Re-exports so dependents without direct dependencies (e.g. app test crates) can use them.
+pub use {drawcraft_doc as doc, drawcraft_format as format, drawcraft_render as render, drawcraft_svg as svg};
+
+/// A per-process temporary directory for test output (created on first use).
+pub fn temp_dir(tag: &str) -> std::path::PathBuf {
+    let dir = std::env::temp_dir().join(format!("drawcraft-testkit-{tag}-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    dir
+}
+
+thread_local! {
+    static QUIET: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Run `f`, catching a panic without printing it (other threads' panics still print). Returns the
+/// panic message on panic.
+pub fn catch_quiet<T>(f: impl FnOnce() -> T) -> Result<T, String> {
+    static HOOK: std::sync::Once = std::sync::Once::new();
+    HOOK.call_once(|| {
+        let prev = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |info| {
+            if !QUIET.with(|q| q.get()) {
+                prev(info);
+            }
+        }));
+    });
+    QUIET.with(|q| q.set(true));
+    let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(f));
+    QUIET.with(|q| q.set(false));
+    r.map_err(|p| p.downcast_ref::<String>().cloned().or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_else(|| "panic".into()))
+}

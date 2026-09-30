@@ -70,6 +70,9 @@ pub struct Interaction {
     pub doc: Arc<Document>,
     pub selection: Selection,
     pub preview: Option<(String, Value)>,
+    /// Per-document state restored on cancel (current layer, isolation).
+    pub active_layer: Option<NodeId>,
+    pub isolation: Option<NodeId>,
 }
 
 /// Per-document editing state.
@@ -131,6 +134,16 @@ impl DocState {
     }
 }
 
+/// Coordinates beyond this (points) are rejected: ~1,400 m, far past Illustrator's large canvas.
+pub const MAX_COORD: f64 = 4.0e6;
+
+/// Cheap sanity check after an edit: artboards and the objects just touched (the selection) must
+/// have finite, in-range geometry, so saved files always reload and renderers never see NaN/∞.
+fn doc_sane(d: &Document, sel: &Selection) -> bool {
+    let ok = |r: drawcraft_geom::Rect| [r.x0, r.y0, r.x1, r.y1].iter().all(|v| v.is_finite() && v.abs() <= MAX_COORD);
+    d.artboards.iter().all(|a| ok(a.rect)) && sel.objects.iter().all(|id| d.node(*id).and_then(|n| n.geometric_bounds()).is_none_or(ok))
+}
+
 /// Where new art goes (Illustrator's drawing modes, Shift+D cycles).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -173,6 +186,7 @@ pub struct Session {
     pub journal: Vec<(String, Value)>,
     pub(crate) tool: Box<dyn Tool>,
     pub(crate) last_view: ViewInfo,
+    depth: u32,
     /// Draw Normal / Behind / Inside (toolbar drawing modes).
     pub draw_mode: DrawMode,
     /// The path new art is drawn inside (Draw Inside).
@@ -200,6 +214,7 @@ impl Session {
             journal: vec![],
             tool: drawcraft_tools::create("selection"),
             last_view: ViewInfo::default(),
+            depth: 0,
             draw_mode: DrawMode::Normal,
             draw_inside: None,
             untitled_counter: 0,
@@ -259,8 +274,13 @@ impl Session {
         if let Err(why) = (spec.enabled)(self) {
             return Err(EngineError::Disabled(id.to_string(), why));
         }
-        let r = (spec.run)(self, params)?;
-        if spec.journal && self.active().is_none_or(|d| d.interaction.is_none()) {
+        // Only top-level commands are journaled (commands that call other commands would otherwise
+        // be recorded twice and replay differently).
+        self.depth += 1;
+        let r = (spec.run)(self, params);
+        self.depth -= 1;
+        let r = r?;
+        if spec.journal && self.depth == 0 && self.active().is_none_or(|d| d.interaction.is_none()) {
             self.journal.push((id.to_string(), params.clone()));
         }
         Ok(r)
@@ -273,7 +293,14 @@ impl Session {
         let before = st.doc.clone();
         let before_sel = st.selection.clone();
         let doc = Arc::make_mut(&mut st.doc);
-        match f(doc, &mut st.selection) {
+        let result = f(doc, &mut st.selection).and_then(|v| {
+            if doc_sane(&st.doc, &st.selection) {
+                Ok(v)
+            } else {
+                Err(EngineError::Other("result would exceed the canvas (coordinates out of range)".into()))
+            }
+        });
+        match result {
             Ok(v) => {
                 st.selection.prune(&st.doc);
                 st.revision += 1;
@@ -310,7 +337,14 @@ impl Session {
         if st.interaction.is_some() {
             return Ok(());
         }
-        st.interaction = Some(Interaction { label: label.to_string(), doc: st.doc.clone(), selection: st.selection.clone(), preview: None });
+        st.interaction = Some(Interaction {
+            label: label.to_string(),
+            doc: st.doc.clone(),
+            selection: st.selection.clone(),
+            preview: None,
+            active_layer: st.active_layer,
+            isolation: st.isolation,
+        });
         Ok(())
     }
 
@@ -355,6 +389,8 @@ impl Session {
         if let Some(it) = st.interaction.take() {
             st.doc = it.doc;
             st.selection = it.selection;
+            st.active_layer = it.active_layer;
+            st.isolation = it.isolation;
             st.revision += 1;
         }
         Ok(())
@@ -379,8 +415,8 @@ mod tests_file;
 #[cfg(test)]
 mod tests_menucmds;
 #[cfg(test)]
-mod tests_pathops;
-#[cfg(test)]
 mod tests_panelcmds;
+#[cfg(test)]
+mod tests_pathops;
 #[cfg(test)]
 mod tests_xform;

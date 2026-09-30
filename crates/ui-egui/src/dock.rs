@@ -98,6 +98,8 @@ pub fn floating_panel(app: &mut DrawcraftApp, ctx: &egui::Context) {
             if cr.clicked() {
                 open = false;
             }
+            let menu_r = egui::Rect::from_center_size(strip.right_center() - vec2(34.0, 0.0), vec2(16.0, 16.0));
+            panels::panel_menu(app, ui, &id, menu_r);
             egui::Frame::NONE.inner_margin(egui::Margin::same(10)).show(ui, |ui| {
                 ui.set_width(236.0);
                 panels::show_icon_panel(app, ui, &id);

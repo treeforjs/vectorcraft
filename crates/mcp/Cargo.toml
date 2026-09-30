@@ -18,3 +18,7 @@ drawcraft-geom = { workspace = true }
 drawcraft-doc = { workspace = true }
 serde_json = { workspace = true }
 log = { workspace = true }
+
+[dev-dependencies]
+drawcraft-testkit = { workspace = true }
+proptest = { workspace = true }

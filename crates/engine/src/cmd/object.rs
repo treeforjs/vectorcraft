@@ -269,17 +269,31 @@ fn arrange(s: &mut Session, how: Arrange) -> Result<Value> {
         Arrange::Back => "Send to Back",
     };
     s.edit(label, |d, _| {
-        let n = ids.len();
-        for (k, id) in ids.iter().enumerate() {
-            let Some((par, idx, len)) = d.position(*id) else { continue };
-            let to = match how {
-                Arrange::Front => len - 1 - k,
-                Arrange::Back => k,
-                Arrange::Forward => (idx + 1).min(len - 1 - k.min(len - 1)),
-                Arrange::Backward => idx.saturating_sub(1).max(k.min(n)),
-            };
-            if to != idx {
-                d.move_node(*id, par, to)?;
+        // Arrange within each parent independently (selections may span layers/groups).
+        let mut by_parent: Vec<(Option<drawcraft_doc::NodeId>, Vec<drawcraft_doc::NodeId>)> = vec![];
+        for id in &ids {
+            let par = d.parent_of(*id);
+            match by_parent.iter_mut().find(|(p, _)| *p == par) {
+                Some((_, v)) => v.push(*id),
+                None => by_parent.push((par, vec![*id])),
+            }
+        }
+        for (par, group) in by_parent {
+            for (k, id) in group.iter().enumerate() {
+                let Some((_, idx, len)) = d.position(*id) else { continue };
+                if len == 0 {
+                    continue;
+                }
+                let last = len - 1;
+                let to = match how {
+                    Arrange::Front => last.saturating_sub(k),
+                    Arrange::Back => k.min(last),
+                    Arrange::Forward => (idx + 1).min(last.saturating_sub(k)).max(idx),
+                    Arrange::Backward => idx.saturating_sub(1).max(k.min(idx)),
+                };
+                if to != idx {
+                    d.move_node(*id, par, to)?;
+                }
             }
         }
         Ok(())
