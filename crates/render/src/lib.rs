@@ -95,6 +95,7 @@ struct GeomEntry {
 
 /// Reusable renderer (keeps the render context, decoded images and glyph caches between frames).
 pub struct Renderer {
+    texts: HashMap<usize, (Arc<Node>, Arc<TextGeom>)>,
     /// Single-threaded context used when the document has raster filters (vello's filters require it).
     ctx_st: Option<RenderContext>,
     /// Worker threads for the multithreaded rasterizer (0 = single-threaded).
@@ -136,6 +137,7 @@ struct Frame<'a> {
 impl Renderer {
     pub fn new() -> Self {
         Self {
+            texts: HashMap::new(),
             ctx_st: None,
             threads: default_threads(),
             geom: HashMap::new(),
@@ -305,6 +307,16 @@ impl Renderer {
             self.alpha = a.opacity.clamp(0.0, 1.0);
             self.draw_shape(ctx, f, a, &bp, *rule);
             self.alpha = 1.0;
+            self.stats.drawn += 1;
+            return;
+        }
+        if let NodeKind::Text(t) = &a.kind
+            && a.opacity >= 1.0
+            && a.blend == drawcraft_color::BlendMode::Normal
+            && !fx::has_fx(a)
+        {
+            let g = self.text_geom_of(a, t);
+            self.draw_text_geom(ctx, f, a, t, &g);
             self.stats.drawn += 1;
             return;
         }
@@ -525,44 +537,57 @@ impl Renderer {
     }
 
     fn draw_text(&mut self, ctx: &mut RenderContext, f: &Frame, n: &Node, t: &TextObject) {
-        let layout = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+        let g = text_geom(t);
+        self.draw_text_geom(ctx, f, n, t, &g);
+    }
+
+    /// Cached glyph geometry for a text node (keyed by Arc identity like paths).
+    fn text_geom_of(&mut self, a: &Arc<Node>, t: &TextObject) -> Arc<TextGeom> {
+        let key = Arc::as_ptr(a) as usize;
+        if let Some((node, g)) = self.texts.get(&key)
+            && Arc::ptr_eq(node, a)
+        {
+            return g.clone();
+        }
+        let g = Arc::new(text_geom(t));
+        if self.texts.len() > 4096 {
+            self.texts.clear();
+        }
+        self.texts.insert(key, (a.clone(), g.clone()));
+        g
+    }
+
+    fn draw_text_geom(&mut self, ctx: &mut RenderContext, f: &Frame, n: &Node, t: &TextObject, g: &TextGeom) {
         let xf = f.view * t.xf;
         if f.opts.outline {
-            for g in &layout.glyphs {
-                let mut p = g.outline.clone();
-                p.apply_affine(xf);
-                ctx.set_transform(Affine::IDENTITY);
-                ctx.set_stroke(kurbo::Stroke::new(1.0));
-                ctx.set_paint(peniko::Color::BLACK);
-                ctx.stroke_path(&p);
-            }
+            let mut p = g.all.clone();
+            p.apply_affine(xf);
+            ctx.set_transform(Affine::IDENTITY);
+            ctx.set_stroke(kurbo::Stroke::new(1.0));
+            ctx.set_paint(peniko::Color::BLACK);
+            ctx.stroke_path(&p);
             return;
         }
-        let tb = t.xf.transform_rect_bbox(layout.bounds);
+        let tb = t.xf.transform_rect_bbox(g.bounds);
         // Object-level appearance fills/strokes apply on top of character fills (like Illustrator).
         for (i, run) in t.runs.iter().enumerate() {
-            let mut path = BezPath::new();
-            for g in layout.glyphs.iter().filter(|g| g.run == i) {
-                path.extend(g.outline.iter());
-            }
+            let Some(path) = g.runs.get(i) else { continue };
             if path.elements().is_empty() {
                 continue;
             }
             ctx.set_transform(xf);
             ctx.set_fill_rule(peniko::Fill::NonZero);
-            if paint::set_paint(ctx, &run.style.fill, layout.bounds, f.doc) {
-                ctx.fill_path(&path);
+            if paint::set_paint(ctx, &run.style.fill, g.bounds, f.doc) {
+                self.fold_alpha(ctx, &run.style.fill);
+                ctx.fill_path(path);
             }
-            if !run.style.stroke.is_none() && run.style.stroke_width > 0.0 && paint::set_paint(ctx, &run.style.stroke, layout.bounds, f.doc) {
+            if !run.style.stroke.is_none() && run.style.stroke_width > 0.0 && paint::set_paint(ctx, &run.style.stroke, g.bounds, f.doc) {
                 ctx.set_stroke(kurbo::Stroke::new(run.style.stroke_width));
-                ctx.stroke_path(&path);
+                ctx.stroke_path(path);
             }
         }
         if !n.appearance.items.is_empty() {
-            let mut all = BezPath::new();
-            for g in &layout.glyphs {
-                all.extend(g.outline.iter());
-            }
+            let mut all = g.all.clone();
             all.apply_affine(t.xf);
             for item in &n.appearance.items {
                 ctx.set_transform(f.view);
@@ -635,6 +660,26 @@ fn default_threads() -> u16 {
         }
         std::thread::available_parallelism().map(|n| (n.get().saturating_sub(1)).min(4) as u16).unwrap_or(0)
     }
+}
+
+/// Glyph outlines grouped by run, plus the whole text as one path.
+struct TextGeom {
+    runs: Vec<BezPath>,
+    all: BezPath,
+    bounds: Rect,
+}
+
+fn text_geom(t: &TextObject) -> TextGeom {
+    let layout = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+    let mut runs = vec![BezPath::new(); t.runs.len()];
+    let mut all = BezPath::new();
+    for g in &layout.glyphs {
+        if let Some(r) = runs.get_mut(g.run) {
+            r.extend(g.outline.iter());
+        }
+        all.extend(g.outline.iter());
+    }
+    TextGeom { runs, all, bounds: layout.bounds }
 }
 
 fn rects_overlap(a: Rect, b: Rect) -> bool {
