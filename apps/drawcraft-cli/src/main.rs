@@ -1,1 +1,152 @@
-fn main() {}
+//! `drawcraft-cli`: DrawCraft from the command line.
+//!
+//! ```text
+//! drawcraft-cli mcp [--connect 127.0.0.1:7979 | --headless]
+//! drawcraft-cli run [--in file.drawcraft|file.svg] [--cmd id [--params '{json}']]... [--export out.svg|.png|.drawcraft]... [--scale 2]
+//! drawcraft-cli commands
+//! ```
+#![forbid(unsafe_code)]
+
+use std::io::Write;
+use std::process::ExitCode;
+
+use drawcraft_mcp::{Backend, DEFAULT_ADDR, Headless, Remote, Server};
+use serde_json::{Value, json};
+
+const USAGE: &str = "\
+drawcraft-cli — DrawCraft automation
+
+USAGE:
+  drawcraft-cli mcp [--connect ADDR | --headless]
+      Run the MCP server on stdio. Default: connect to a running app at 127.0.0.1:7979
+      (drawcraft --control 7979), falling back to a headless in-process session.
+
+  drawcraft-cli run [--in FILE] [--cmd ID [--params JSON]]... [--export FILE]... [--scale N]
+      Headless batch: open FILE (.drawcraft/.svg) or start a new document, run commands in
+      order, export (.svg, .png, .drawcraft by extension). Prints one JSON result per step.
+
+  drawcraft-cli commands
+      Print the command catalogue as JSON.
+";
+
+fn main() -> ExitCode {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let r = match args.first().map(String::as_str) {
+        Some("mcp") => mcp(&args[1..]),
+        Some("run") => run(&args[1..]),
+        Some("commands") => commands(),
+        Some("-h" | "--help" | "help") | None => {
+            print!("{USAGE}");
+            Ok(())
+        }
+        Some("-V" | "--version") => {
+            println!("drawcraft-cli {}", env!("CARGO_PKG_VERSION"));
+            Ok(())
+        }
+        Some(other) => Err(format!("unknown subcommand `{other}`\n\n{USAGE}")),
+    };
+    match r {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("drawcraft-cli: {e}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn mcp(args: &[String]) -> Result<(), String> {
+    let mut connect: Option<String> = None;
+    let mut headless = false;
+    let mut it = args.iter();
+    while let Some(a) = it.next() {
+        match a.as_str() {
+            "--connect" => connect = Some(it.next().cloned().ok_or("--connect needs an address")?),
+            "--headless" => headless = true,
+            other => return Err(format!("unknown mcp option `{other}`")),
+        }
+    }
+    if headless && connect.is_some() {
+        return Err("use either --connect or --headless".into());
+    }
+    let backend: Box<dyn Backend> = if headless {
+        Box::new(Headless::with_document())
+    } else if let Some(addr) = connect {
+        // Explicit address: fail loudly if the app isn't there.
+        Box::new(Remote::connect(&addr).map_err(|e| format!("cannot connect to {addr}: {e}"))?)
+    } else {
+        match Remote::connect(DEFAULT_ADDR) {
+            Ok(r) => Box::new(r),
+            Err(_) => Box::new(Headless::with_document()),
+        }
+    };
+    eprintln!("drawcraft-cli: MCP server on stdio ({})", backend.describe());
+    let stdin = std::io::stdin();
+    let stdout = std::io::stdout();
+    Server::new(backend).serve(stdin.lock(), stdout.lock()).map_err(|e| e.to_string())
+}
+
+fn commands() -> Result<(), String> {
+    let mut h = Headless::new();
+    let v = h.call("engine.commands", json!({}))?;
+    println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
+    Ok(())
+}
+
+enum Step {
+    Cmd(String, Value),
+    Export(String),
+}
+
+fn run(args: &[String]) -> Result<(), String> {
+    let mut input: Option<String> = None;
+    let mut steps: Vec<Step> = vec![];
+    let mut scale = 1.0;
+    let mut it = args.iter();
+    while let Some(a) = it.next() {
+        let mut val = |what: &str| it.next().cloned().ok_or_else(|| format!("{a} needs {what}"));
+        match a.as_str() {
+            "--in" | "-i" => input = Some(val("a file")?),
+            "--cmd" | "-c" => steps.push(Step::Cmd(val("a command id")?, json!({}))),
+            "--params" | "-p" => {
+                let raw = val("JSON")?;
+                let p: Value = serde_json::from_str(&raw).map_err(|e| format!("--params {raw}: {e}"))?;
+                if !p.is_object() {
+                    return Err(format!("--params must be a JSON object, got {raw}"));
+                }
+                match steps.last_mut() {
+                    Some(Step::Cmd(_, params)) => *params = p,
+                    _ => return Err("--params must follow a --cmd".into()),
+                }
+            }
+            "--export" | "-o" => steps.push(Step::Export(val("a file")?)),
+            "--scale" | "-s" => {
+                let raw = val("a number")?;
+                scale = raw.parse::<f64>().map_err(|_| format!("--scale {raw}: not a number"))?;
+            }
+            other => return Err(format!("unknown run option `{other}`")),
+        }
+    }
+
+    let mut h = Headless::new();
+    let mut out = std::io::stdout().lock();
+    let mut emit = |v: Value| writeln!(out, "{v}").map_err(|e| e.to_string());
+    if let Some(path) = &input {
+        let r = h.call("app.open", json!({"path": path})).map_err(|e| format!("open {path}: {e}"))?;
+        emit(json!({"step": "open", "path": path, "result": r}))?;
+    } else if !matches!(steps.first(), Some(Step::Cmd(id, _)) if id == "file.new") {
+        h.ensure_document();
+    }
+    for step in steps {
+        match step {
+            Step::Cmd(id, params) => {
+                let r = h.call("engine.execute", json!({"command": id, "params": params})).map_err(|e| format!("{id}: {e}"))?;
+                emit(json!({"step": "cmd", "command": id, "result": r}))?;
+            }
+            Step::Export(path) => {
+                let r = h.call("app.export", json!({"path": path, "scale": scale})).map_err(|e| format!("export {path}: {e}"))?;
+                emit(json!({"step": "export", "result": r}))?;
+            }
+        }
+    }
+    Ok(())
+}
