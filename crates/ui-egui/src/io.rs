@@ -94,6 +94,14 @@ pub fn open_bytes(app: &mut DrawcraftApp, name: &str, bytes: &[u8], path: Option
             app.status(format!("Opened with {} warning(s): {}", warnings.len(), warnings.first().cloned().unwrap_or_default()));
         }
         (d, false)
+    } else if e == "pdf" || e == "ai" || bytes.starts_with(b"%PDF") {
+        let drawcraft_pdf::ImportReport { document: mut d, warnings } =
+            drawcraft_pdf::import_with_report(bytes, &drawcraft_pdf::ImportOptions::default()).map_err(|e| e.to_string())?;
+        d.title = name.to_string();
+        if !warnings.is_empty() {
+            app.status(format!("Opened with {} note(s): {}", warnings.len(), warnings.first().cloned().unwrap_or_default()));
+        }
+        (d, false)
     } else if ["png", "jpg", "jpeg", "gif", "webp"].contains(&e.as_str()) {
         (image_doc(name, bytes)?, false)
     } else {
@@ -173,6 +181,7 @@ pub fn export(app: &mut DrawcraftApp, format: &str, path: Option<String>, scale:
     };
     let bytes = match format {
         "svg" => drawcraft_svg::export(&doc, &drawcraft_svg::ExportOptions { artboard: Some(0), ..Default::default() }).into_bytes(),
+        "pdf" => drawcraft_pdf::export(&doc, &drawcraft_pdf::PdfOptions::default()).map_err(|e| e.to_string())?,
         "png" | "jpg" | "jpeg" => {
             let r = doc.artboards.first().map(|a| a.rect).ok_or("no artboard")?;
             let img = app.canvas.renderer.render_region(&doc, r, scale, format != "png");

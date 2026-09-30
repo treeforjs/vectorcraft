@@ -7,14 +7,25 @@
 //! See `drawcraft_ui_egui::control` for the methods.
 
 mod control_server;
+#[cfg(target_os = "macos")]
+mod native_menu;
 
 use drawcraft_engine::Session;
 use drawcraft_ui_egui::{DrawcraftApp, Services};
 
-struct App(DrawcraftApp);
+struct App(DrawcraftApp, #[cfg(target_os = "macos")] Option<native_menu::NativeMenu>);
 
 impl eframe::App for App {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        #[cfg(target_os = "macos")]
+        {
+            if self.1.is_none() && std::env::var_os("DRAWCRAFT_NO_NATIVE_MENU").is_none() {
+                self.1 = Some(native_menu::NativeMenu::install(&mut self.0));
+            }
+            if let Some(m) = &mut self.1 {
+                m.poll(&mut self.0);
+            }
+        }
         self.0.logic(ctx);
         if self.0.ui.status == "quit" {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
@@ -83,7 +94,11 @@ fn main() -> eframe::Result {
                     eprintln!("drawcraft: {f}: {e}");
                 }
             }
-            Ok(Box::new(App(app)))
+            Ok(Box::new(App(
+                app,
+                #[cfg(target_os = "macos")]
+                None,
+            )))
         }),
     )
 }

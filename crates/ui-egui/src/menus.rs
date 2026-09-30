@@ -88,6 +88,9 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("window.newWindow", "New Window", "", "{}"),
     ("tool.select", "Select Tool", "", "{tool: id} (see tools)"),
     ("tool.setOption", "Tool Option", "", "{key, value}"),
+    ("effect.dialog", "Effect…", "", "{effect: id} open the effect's dialog with live preview"),
+    ("effect.applyLast", "Apply Last Effect", "Cmd+Shift+E", "{}"),
+    ("file.export.pdf", "Save as PDF…", "", "{path?}"),
     ("help.about", "About DrawCraft", "", "{}"),
     ("help.commandPalette", "Search Commands…", "Cmd+Shift+/", "{}"),
     ("app.quit", "Quit DrawCraft", "Cmd+Q", "{}"),
@@ -276,6 +279,25 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
             app.session.set_tool_option(&k, p.get("value").unwrap_or(&Value::Null));
             Ok(app.session.tool_options())
         }
+        "effect.dialog" => {
+            let id = s("effect").unwrap_or_default();
+            match drawcraft_effects::effect_catalog().into_iter().find(|e| e.id == id) {
+                Some(e) => {
+                    let mut fields = e.defaults.as_object().cloned().unwrap_or_default();
+                    fields.insert("__effect".into(), json!(e.id));
+                    fields.insert("__label".into(), json!(e.label.trim_end_matches('…')));
+                    fields.insert("preview".into(), json!(true));
+                    app.ui.dialog = Some(crate::state::Dialog { kind: "effect".into(), fields });
+                    Ok(Value::Null)
+                }
+                None => Err(format!("unknown effect `{id}`")),
+            }
+        }
+        "effect.applyLast" => match app.last_effect.clone() {
+            Some((e, params)) => app.run("effect.apply", json!({"effect": e, "params": params})),
+            None => Err("no effect applied yet".into()),
+        },
+        "file.export.pdf" => io::export(app, "pdf", s("path"), 1.0).map(|p| json!({"path": p})),
         "help.about" => {
             app.ui.about = true;
             Ok(Value::Null)
@@ -324,7 +346,7 @@ pub fn checked(app: &DrawcraftApp, id: &str, p: &Value) -> Option<bool> {
 }
 
 /// Label for toggles whose text flips (Outline/Preview, Hide/Show …).
-fn dynamic_label(app: &DrawcraftApp, id: &str, label: &'static str) -> String {
+pub fn dynamic_label(app: &DrawcraftApp, id: &str, label: &str) -> String {
     let v = &app.ui.view;
     match id {
         "view.outline" => if v.outline { "Preview" } else { "Outline" }.into(),
@@ -368,6 +390,9 @@ pub fn enabled(app: &DrawcraftApp, id: &str) -> bool {
         | "view.fitAll"
         | "view.actualSize" => app.session.active().is_some(),
         "file.revert" => app.session.active().is_some_and(|d| d.path.is_some() && d.is_dirty()),
+        "effect.dialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
+        "effect.applyLast" => app.last_effect.is_some() && app.session.active().is_some_and(|d| !d.selection.is_empty()),
+        "file.export.pdf" => app.session.active().is_some(),
         _ => true,
     }
 }
@@ -526,7 +551,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Show All", "object.showAll"),
                 Sep,
                 todo("Expand…"),
-                todo("Expand Appearance"),
+                c("Expand Appearance", "effect.expandAppearance"),
                 todo("Crop Image"),
                 todo("Rasterize…"),
                 todo("Create Gradient Mesh…"),
@@ -708,81 +733,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 todo("Edit Selection…"),
             ],
         ),
-        (
-            "Effect",
-            vec![
-                todos("Apply Last Effect", "Cmd+Shift+E"),
-                todos("Last Effect", "Cmd+Alt+Shift+E"),
-                Sep,
-                todo("Document Raster Effects Settings…"),
-                Sep,
-                Item::Header("Illustrator Effects"),
-                sub("3D and Materials", vec![todo("Extrude & Bevel…"), todo("Revolve…"), todo("Inflate…"), todo("Rotate…"), todo("Materials…")]),
-                sub("Convert to Shape", vec![todo("Rectangle…"), todo("Rounded Rectangle…"), todo("Ellipse…")]),
-                todo("Crop Marks"),
-                sub(
-                    "Distort & Transform",
-                    vec![
-                        todo("Free Distort…"),
-                        todo("Pucker & Bloat…"),
-                        todo("Roughen…"),
-                        todo("Transform…"),
-                        todo("Tweak…"),
-                        todo("Twist…"),
-                        todo("Zig Zag…"),
-                    ],
-                ),
-                sub("Path", vec![todo("Offset Path…"), todo("Outline Object"), todo("Outline Stroke")]),
-                sub(
-                    "Pathfinder",
-                    vec![
-                        todo("Add"),
-                        todo("Intersect"),
-                        todo("Exclude"),
-                        todo("Subtract"),
-                        todo("Minus Back"),
-                        Sep,
-                        todo("Divide"),
-                        todo("Trim"),
-                        todo("Merge"),
-                        todo("Crop"),
-                        todo("Outline"),
-                    ],
-                ),
-                todo("Rasterize…"),
-                sub(
-                    "Stylize",
-                    vec![todo("Drop Shadow…"), todo("Feather…"), todo("Inner Glow…"), todo("Outer Glow…"), todo("Round Corners…"), todo("Scribble…")],
-                ),
-                sub("SVG Filters", vec![todo("Apply SVG Filter…"), todo("Import SVG Filter…")]),
-                sub(
-                    "Warp",
-                    vec![
-                        todo("Arc…"),
-                        todo("Arc Lower…"),
-                        todo("Arc Upper…"),
-                        todo("Arch…"),
-                        todo("Bulge…"),
-                        todo("Shell Lower…"),
-                        todo("Shell Upper…"),
-                        todo("Flag…"),
-                        todo("Wave…"),
-                        todo("Fish…"),
-                        todo("Rise…"),
-                        todo("Fisheye…"),
-                        todo("Inflate…"),
-                        todo("Squeeze…"),
-                        todo("Twist…"),
-                    ],
-                ),
-                Sep,
-                Item::Header("Raster Effects"),
-                todo("Effect Gallery…"),
-                sub("Blur", vec![todo("Gaussian Blur…"), todo("Radial Blur…"), todo("Smart Blur…")]),
-                sub("Pixelate", vec![todo("Color Halftone…"), todo("Crystallize…"), todo("Mezzotint…"), todo("Pointillize…")]),
-                sub("Stylize", vec![todo("Glowing Edges…")]),
-            ],
-        ),
+        ("Effect", effect_menu()),
         (
             "View",
             vec![
@@ -1092,6 +1043,54 @@ pub fn menu_entries(app: &DrawcraftApp) -> Vec<MenuEntry> {
     out
 }
 
+/// The Effect menu, built from the effects catalogue (Illustrator Effects), plus raster effects.
+fn effect_menu() -> Vec<Item> {
+    let cat = drawcraft_effects::effect_catalog();
+    let mut out = vec![
+        c("Apply Last Effect", "effect.applyLast"),
+        todos("Last Effect", "Cmd+Alt+Shift+E"),
+        Sep,
+        todo("Document Raster Effects Settings…"),
+        Sep,
+        Item::Header("Illustrator Effects"),
+    ];
+    // Submenus in Illustrator's order.
+    let order = ["3D and Materials", "Convert to Shape", "Distort & Transform", "Path", "Pathfinder", "Stylize", "SVG Filters", "Warp", "Blur"];
+    for sub_name in order {
+        let items: Vec<Item> = cat
+            .iter()
+            .filter(|e| e.menu.last().copied() == Some(sub_name))
+            .map(|e| Item::Cmd(e.label, "effect.dialog", json!({ "effect": e.id })))
+            .collect();
+        if sub_name == "Blur" {
+            if !items.is_empty() {
+                out.push(Sep);
+                out.push(Item::Header("Raster Effects"));
+                out.push(sub(sub_name, items));
+            }
+            continue;
+        }
+        if items.is_empty() {
+            let placeholder = match sub_name {
+                "3D and Materials" => vec![todo("Extrude & Bevel…"), todo("Revolve…"), todo("Inflate…"), todo("Rotate…"), todo("Materials…")],
+                "Pathfinder" => vec![todo("Add"), todo("Intersect"), todo("Exclude"), todo("Subtract")],
+                "SVG Filters" => vec![todo("Apply SVG Filter…")],
+                _ => continue,
+            };
+            out.push(sub(sub_name, placeholder));
+        } else {
+            out.push(sub(sub_name, items));
+        }
+    }
+    // Anything not placed above (future effects) still shows up.
+    for e in cat.iter().filter(|e| !e.menu.last().is_some_and(|m| order.contains(m))) {
+        out.push(Item::Cmd(e.label, "effect.dialog", json!({ "effect": e.id })));
+    }
+    out.push(Sep);
+    out.push(c("Expand Appearance", "effect.expandAppearance"));
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1131,3 +1130,4 @@ mod tests {
         assert_eq!(pretty_shortcut(""), "");
     }
 }
+

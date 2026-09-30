@@ -694,6 +694,21 @@ fn selection_overlay(app: &DrawcraftApp, p: &egui::Painter, xf: &Xf) {
         }
     }
     // Bounding box with handles (Selection tool).
+    // Live corner widgets (Direct Selection on a single live rectangle).
+    if tool == "directSelection"
+        && st.selection.len() == 1
+        && let Some(NodeKind::Path { live: Some(drawcraft_doc::LiveShape::Rectangle { w, h, radii, xf: lxf }), .. }) =
+            st.doc.node(st.selection.objects[0]).map(|n| &n.kind)
+    {
+        let color = c32(st.doc.layer_color(st.selection.objects[0]));
+        let inset = (radii[0].max(10.0 / xf.zoom)).min(w.min(*h) / 2.0);
+        for (cx, cy) in [(inset, inset), (w - inset, inset), (w - inset, h - inset), (inset, h - inset)] {
+            let sp = xf.to_screen(*lxf * Point::new(cx, cy));
+            p.circle_filled(sp, 3.0, Color32::WHITE);
+            p.circle_stroke(sp, 3.0, Stroke::new(1.0, color));
+            p.circle_filled(sp, 1.0, color);
+        }
+    }
     if tool == "selection" && app.ui.view.bounding_box && !st.selection.is_empty() && st.selection.anchors.is_empty() {
         let Some(b) = st.doc.bounds_of(&st.selection.objects, false) else { return };
         let color = c32(st.doc.layer_color(st.selection.objects[0]));
@@ -704,20 +719,6 @@ fn selection_overlay(app: &DrawcraftApp, p: &egui::Painter, xf: &Xf) {
             let hr = egui::Rect::from_center_size(c, vec2(6.0, 6.0));
             p.rect_filled(hr, 0.0, Color32::WHITE);
             p.rect_stroke(hr, 0.0, Stroke::new(1.0, color), StrokeKind::Inside);
-        }
-        // Live corner widgets on single live rectangles.
-        if st.selection.len() == 1
-            && let Some(NodeKind::Path { live: Some(drawcraft_doc::LiveShape::Rectangle { w, h, radii, xf: lxf }), .. }) =
-                st.doc.node(st.selection.objects[0]).map(|n| &n.kind)
-            && r.width() > 40.0
-            && r.height() > 40.0
-        {
-            let inset = (radii[0].max(20.0 / xf.zoom)).min(w.min(*h) / 2.0);
-            for (cx, cy) in [(inset, inset), (w - inset, inset), (w - inset, h - inset), (inset, h - inset)] {
-                let sp = xf.to_screen(*lxf * Point::new(cx, cy));
-                p.circle_stroke(sp, 3.5, Stroke::new(1.0, color));
-                p.circle_filled(sp, 1.3, color);
-            }
         }
     }
 }

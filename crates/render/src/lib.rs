@@ -83,8 +83,26 @@ impl Rendered {
     }
 }
 
+/// Cached per-node geometry, keyed by `Arc` identity. Structural sharing means an unchanged node
+/// keeps its allocation across edits, so a pointer match (with the Arc kept alive here so the
+/// address can't be reused) is an exact cache hit — no invalidation logic needed.
+struct GeomEntry {
+    node: Arc<Node>,
+    bounds: Option<Rect>,
+    path: Option<Arc<BezPath>>,
+    stamp: u64,
+}
+
 /// Reusable renderer (keeps the render context, decoded images and glyph caches between frames).
 pub struct Renderer {
+    /// Single-threaded context used when the document has raster filters (vello's filters require it).
+    ctx_st: Option<RenderContext>,
+    /// Worker threads for the multithreaded rasterizer (0 = single-threaded).
+    pub threads: u16,
+    geom: HashMap<usize, GeomEntry>,
+    stamp: u64,
+    /// Opacity folded into paint alpha for the leaf being drawn (avoids a compositing layer).
+    alpha: f32,
     ctx: Option<RenderContext>,
     resources: Resources,
     images: HashMap<String, Arc<Pixmap>>,
@@ -117,7 +135,17 @@ struct Frame<'a> {
 
 impl Renderer {
     pub fn new() -> Self {
-        Self { ctx: None, resources: Resources::new(), images: HashMap::new(), stats: FrameStats::default() }
+        Self {
+            ctx_st: None,
+            threads: default_threads(),
+            geom: HashMap::new(),
+            stamp: 0,
+            alpha: 1.0,
+            ctx: None,
+            resources: Resources::new(),
+            images: HashMap::new(),
+            stats: FrameStats::default(),
+        }
     }
 
     /// Render `doc` into a `width`×`height` image using `view` (document → pixel transform).
@@ -125,12 +153,21 @@ impl Renderer {
         let start = now();
         let w = width.clamp(1, u16::MAX as u32) as u16;
         let h = height.clamp(1, u16::MAX as u32) as u16;
-        let mut ctx = match self.ctx.take() {
+        // Raster filters (drop shadow, glows, blur) need the single-threaded pipeline.
+        let mut has_filters = false;
+        doc.walk(|n| {
+            if !has_filters && !n.appearance.effects.is_empty() && !drawcraft_effects::raster_effects(&n.appearance.effects).is_empty() {
+                has_filters = true;
+            }
+        });
+        let threads = if has_filters { 0 } else { self.threads };
+        let slot = if threads == 0 { self.ctx_st.take() } else { self.ctx.take() };
+        let mut ctx = match slot {
             Some(mut c) if c.width() == w && c.height() == h => {
                 c.reset();
                 c
             }
-            _ => RenderContext::new(w, h),
+            _ => RenderContext::new_with(w, h, vello_cpu::RenderSettings { num_threads: threads, ..Default::default() }),
         };
         self.stats = FrameStats::default();
         let inv = view.inverse();
@@ -150,13 +187,23 @@ impl Renderer {
                 ctx.fill_rect(&ab.rect);
             }
         }
+        self.stamp += 1;
         for layer in &doc.layers {
-            self.draw_node(&mut ctx, &frame, layer, false);
+            self.draw_arc(&mut ctx, &frame, layer);
+        }
+        // Drop cache entries not seen for a few frames.
+        let g = self.stamp;
+        if self.geom.len() > 1024 {
+            self.geom.retain(|_, e| g - e.stamp <= 3);
         }
         ctx.flush();
         let mut pm = Pixmap::new(w, h);
         ctx.render(&mut pm, &mut self.resources);
-        self.ctx = Some(ctx);
+        if threads == 0 {
+            self.ctx_st = Some(ctx);
+        } else {
+            self.ctx = Some(ctx);
+        }
         self.stats.micros = now().saturating_sub(start);
         Rendered { width: w as u32, height: h as u32, pixels: pm.data_as_u8_slice().to_vec() }
     }
@@ -186,11 +233,91 @@ impl Renderer {
         Some(Rendered { width: size, height: size, pixels: pm.data_as_u8_slice().to_vec() })
     }
 
+    /// Cached cull bounds of a node (containers union their cached children).
+    fn bounds_of(&mut self, a: &Arc<Node>) -> Option<Rect> {
+        let key = Arc::as_ptr(a) as usize;
+        if let Some(e) = self.geom.get_mut(&key)
+            && Arc::ptr_eq(&e.node, a)
+        {
+            e.stamp = self.stamp;
+            return e.bounds;
+        }
+        let b = match &a.kind {
+            NodeKind::Layer { children, .. } | NodeKind::Group { children, clip: false } if !fx::has_fx(a) => {
+                let mut acc: Option<Rect> = None;
+                for c in children {
+                    if c.visible {
+                        acc = drawcraft_geom::union_opt(acc, self.bounds_of(c));
+                    }
+                }
+                acc
+            }
+            _ => fx::cull_bounds(a),
+        };
+        self.geom.insert(key, GeomEntry { node: a.clone(), bounds: b, path: None, stamp: self.stamp });
+        b
+    }
+
+    /// Cached BezPath of a path node.
+    fn path_of(&mut self, a: &Arc<Node>) -> Option<Arc<BezPath>> {
+        let key = Arc::as_ptr(a) as usize;
+        if let Some(e) = self.geom.get(&key)
+            && Arc::ptr_eq(&e.node, a)
+            && let Some(p) = &e.path
+        {
+            return Some(p.clone());
+        }
+        let p = Arc::new(a.path_data()?.to_bezpath());
+        let bounds = self.bounds_of(a);
+        self.geom.insert(key, GeomEntry { node: a.clone(), bounds, path: Some(p.clone()), stamp: self.stamp });
+        Some(p)
+    }
+
+    fn draw_arc(&mut self, ctx: &mut RenderContext, f: &Frame, a: &Arc<Node>) {
+        if !a.visible || f.opts.hidden.contains(&a.id) {
+            return;
+        }
+        match self.bounds_of(a) {
+            Some(b) => {
+                let pad = f.px * 2.0;
+                if !rects_overlap(b.inflate(pad, pad), f.visible) {
+                    self.stats.culled += 1;
+                    return;
+                }
+                // Level of detail: leaves smaller than a quarter pixel are invisible.
+                if !a.is_container() && b.width() < f.px * 0.25 && b.height() < f.px * 0.25 {
+                    self.stats.culled += 1;
+                    return;
+                }
+            }
+            None if !a.is_container() => return,
+            None => {}
+        }
+        // Fast path for plain paths: cached geometry, opacity folded into the paint.
+        if let NodeKind::Path { rule, guide: false, .. } = &a.kind
+            && !f.opts.outline
+            && a.blend == drawcraft_color::BlendMode::Normal
+            && !a.isolate
+            && !fx::has_fx(a)
+            && (a.opacity >= 1.0 || painted_items(a) == 1)
+            && let Some(bp) = self.path_of(a)
+        {
+            self.alpha = a.opacity.clamp(0.0, 1.0);
+            self.draw_shape(ctx, f, a, &bp, *rule);
+            self.alpha = 1.0;
+            self.stats.drawn += 1;
+            return;
+        }
+        self.draw_node(ctx, f, a, true);
+    }
+
     fn draw_node(&mut self, ctx: &mut RenderContext, f: &Frame, n: &Node, force: bool) {
         if !force && (!n.visible || f.opts.hidden.contains(&n.id)) {
             return;
         }
-        if let Some(b) = fx::cull_bounds(n) {
+        if force {
+            // Bounds were already checked by draw_arc (or the caller wants it drawn regardless).
+        } else if let Some(b) = fx::cull_bounds(n) {
             let pad = f.px * 2.0;
             if !rects_overlap(b.inflate(pad, pad), f.visible) {
                 self.stats.culled += n.count();
@@ -211,7 +338,7 @@ impl Renderer {
         match &n.kind {
             NodeKind::Layer { children, .. } | NodeKind::Group { children, clip: false } => {
                 for c in children {
-                    self.draw_node(ctx, f, c, false);
+                    self.draw_arc(ctx, f, c);
                 }
             }
             NodeKind::Group { children, clip: true } => {
@@ -222,7 +349,7 @@ impl Renderer {
                         ctx.set_fill_rule(peniko::Fill::NonZero);
                         ctx.push_clip_layer(&clip);
                         for c in children.iter().skip(1) {
-                            self.draw_node(ctx, f, c, false);
+                            self.draw_arc(ctx, f, c);
                         }
                         ctx.pop_layer();
                     }
@@ -297,6 +424,7 @@ impl Renderer {
                     }
                     ctx.set_transform(f.view);
                     if paint::set_paint(ctx, &fl.paint, bounds, f.doc) {
+                        self.fold_alpha(ctx, &fl.paint);
                         ctx.set_fill_rule(fill_rule(rule));
                         ctx.fill_path(bp);
                     }
@@ -311,6 +439,16 @@ impl Renderer {
                     self.draw_stroke(ctx, f, bp, rule, st, bounds);
                 }
             }
+        }
+    }
+
+    /// Multiply the folded object opacity into a solid paint.
+    fn fold_alpha(&self, ctx: &mut RenderContext, p: &drawcraft_color::Paint) {
+        if self.alpha < 1.0
+            && let drawcraft_color::Paint::Solid { color, .. } = p
+        {
+            let [r, g, b, a] = color.to_rgba8(self.alpha);
+            ctx.set_paint(peniko::Color::from_rgba8(r, g, b, a));
         }
     }
 
@@ -357,6 +495,7 @@ impl Renderer {
             ctx.push_clip_layer(bp);
         }
         if paint::set_paint(ctx, &st.paint, bounds.inflate(st.width / 2.0, st.width / 2.0), f.doc) {
+            self.fold_alpha(ctx, &st.paint);
             ctx.stroke_path(bp);
         }
         if inside {
@@ -467,6 +606,34 @@ impl Renderer {
         ctx.set_paint_transform(Affine::scale_non_uniform(sx, sy));
         ctx.fill_rect(&rect);
         ctx.reset_paint_transform();
+    }
+}
+
+/// Number of visible painted fill/stroke items (opacity folding is exact only for one).
+fn painted_items(n: &Node) -> usize {
+    n.appearance
+        .items
+        .iter()
+        .filter(|i| match i {
+            AppearanceItem::Fill(f) => f.visible && !f.paint.is_none() && matches!(f.paint, drawcraft_color::Paint::Solid { .. }),
+            AppearanceItem::Stroke(s) => s.visible && !s.paint.is_none() && s.width > 0.0 && matches!(s.paint, drawcraft_color::Paint::Solid { .. }) && s.dash.is_none(),
+        })
+        .count()
+        .max(if n.appearance.items.iter().any(|i| matches!(i, AppearanceItem::Fill(f) if f.visible && !matches!(f.paint, drawcraft_color::Paint::Solid { .. } | drawcraft_color::Paint::None)) || matches!(i, AppearanceItem::Stroke(s) if s.visible && !matches!(s.paint, drawcraft_color::Paint::Solid { .. } | drawcraft_color::Paint::None))) { 2 } else { 0 })
+}
+
+/// Rasterizer worker threads: 0 on wasm; otherwise up to 4 (vello's sweet spot), leaving a core free.
+fn default_threads() -> u16 {
+    #[cfg(target_arch = "wasm32")]
+    {
+        0
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        if std::env::var_os("DRAWCRAFT_RENDER_THREADS").is_some() {
+            return std::env::var("DRAWCRAFT_RENDER_THREADS").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
+        }
+        std::thread::available_parallelism().map(|n| (n.get().saturating_sub(1)).min(4) as u16).unwrap_or(0)
     }
 }
 

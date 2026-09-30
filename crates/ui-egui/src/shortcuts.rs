@@ -130,6 +130,9 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
         if plain && (sc.logical_key.name().len() == 1 || sc.logical_key == Key::Slash) {
             continue;
         }
+        if app.native_shortcuts.contains(id) {
+            continue;
+        }
         if ctx.input_mut(|i| i.consume_shortcut(&sc)) {
             fire = Some(id);
             break;

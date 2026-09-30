@@ -17,6 +17,8 @@ drawcraft-text = { workspace = true }
 drawcraft-tools = { workspace = true }
 drawcraft-engine = { workspace = true }
 drawcraft-svg = { workspace = true }
+drawcraft-effects = { workspace = true }
+drawcraft-pdf = { workspace = true }
 drawcraft-format = { workspace = true }
 egui = { workspace = true }
 egui_extras = { workspace = true }

@@ -95,6 +95,12 @@ pub struct DrawcraftApp {
     pub perf: Perf,
     /// macOS: draw our own title strip under the traffic lights.
     pub integrated_titlebar: bool,
+    /// The host installed a native menu bar (macOS): don't draw in-window menus.
+    pub native_menu: bool,
+    /// Last applied effect (Effect → Apply Last Effect).
+    pub last_effect: Option<(String, serde_json::Value)>,
+    /// Commands whose shortcuts the native menu handles (skip them in egui to avoid double firing).
+    pub native_shortcuts: std::collections::HashSet<String>,
     control_rx: Option<Receiver<ControlRequest>>,
     pending_screenshots: Vec<(u64, Option<String>, Sender<ControlResponse>)>,
     queued_screenshots: Vec<(u64, f64, u32)>,
@@ -129,6 +135,9 @@ impl DrawcraftApp {
             },
             perf: Perf::default(),
             integrated_titlebar: false,
+            native_menu: false,
+            last_effect: None,
+            native_shortcuts: Default::default(),
             control_rx: None,
             pending_screenshots: vec![],
             queued_screenshots: vec![],
@@ -372,6 +381,7 @@ impl DrawcraftApp {
         }
         if self.ui.status_bar && self.ui.screen_mode < 3 {
             chrome::status_bar(self, ui);
+            chrome::hint_bar(self, ui);
         }
         if self.ui.toolbar && self.ui.screen_mode < 3 {
             toolbar::show(self, ui);

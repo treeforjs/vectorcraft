@@ -200,8 +200,8 @@ pub fn transform_section(app: &mut DrawcraftApp, ui: &mut Ui) {
             ui.data_mut(|d| d.insert_temp(egui::Id::new("refpt"), i));
         }
         ui.add_space(6.0);
-        egui::Grid::new("xf-grid").num_columns(4).spacing([4.0, 5.0]).show(ui, |ui| {
-            let fw = 78.0;
+        let fw = ((ui.available_width() - 44.0) / 2.0).clamp(60.0, 110.0);
+        egui::Grid::new("xf-grid").num_columns(4).spacing([4.0, 6.0]).min_col_width(0.0).show(ui, |ui| {
             dim_label(ui, "X:");
             if let Some(v) = widgets::num_field(ui, "tx", Some(rp.x), units, fw) {
                 app.run("object.setBounds", json!({"x": v, "reference": refi})).ok();

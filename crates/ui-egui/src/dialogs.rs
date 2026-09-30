@@ -45,6 +45,51 @@ fn origin_params(d: &Dialog, mut p: Value) -> Value {
     p
 }
 
+/// Effect parameters from the dialog fields (drop UI-only keys).
+fn effect_params(d: &Dialog) -> Value {
+    Value::Object(d.fields.iter().filter(|(k, _)| !k.starts_with("__") && k.as_str() != "preview").map(|(k, v)| (k.clone(), v.clone())).collect())
+}
+
+/// Generic editor for an effect dialog: numbers, booleans, strings and colours.
+fn effect_fields(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
+    let t = Tokens::get(ui.ctx());
+    let mut changed = false;
+    egui::Grid::new("fxgrid").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
+        let keys: Vec<(String, Value)> =
+            d.fields.iter().filter(|(k, _)| !k.starts_with("__") && k.as_str() != "preview").map(|(k, v)| (k.clone(), v.clone())).collect();
+        for (k, v) in keys {
+            ui.label(egui::RichText::new(humanize(&k)).color(t.text));
+            match v {
+                Value::Number(n) => {
+                    let mut x = n.as_f64().unwrap_or(0.0);
+                    let speed = if x.abs() > 20.0 { 1.0 } else { 0.1 };
+                    if ui.add(egui::DragValue::new(&mut x).speed(speed).max_decimals(2)).changed() {
+                        d.fields.insert(k, json!(x));
+                        changed = true;
+                    }
+                }
+                Value::Bool(mut b) => {
+                    if ui.checkbox(&mut b, "").changed() {
+                        d.fields.insert(k, json!(b));
+                        changed = true;
+                    }
+                }
+                Value::String(mut s) => {
+                    if ui.add(egui::TextEdit::singleline(&mut s).desired_width(140.0)).changed() {
+                        d.fields.insert(k, json!(s));
+                        changed = true;
+                    }
+                }
+                other => {
+                    ui.label(egui::RichText::new(other.to_string()).color(t.text_dim).size(11.0));
+                }
+            }
+            ui.end_row();
+        }
+    });
+    changed
+}
+
 fn title(kind: &str) -> &'static str {
     match kind {
         "newDocument" => "New Document",
@@ -75,6 +120,20 @@ fn title(kind: &str) -> &'static str {
 pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
     let Some(d) = app.ui.dialog.clone() else { return Err("no dialog open".into()) };
     let copy = d.bool("copy");
+    if d.kind == "effect" {
+        let effect = d.str("__effect");
+        let params = effect_params(&d);
+        let r = if app.session.in_interaction() {
+            // Live preview already applied: keep it (the interaction commits as one undo step).
+            let _ = app.session.preview("effect.apply", &json!({"effect": effect, "params": params}));
+            app.session.commit_interaction().map(|_| Value::Null).map_err(|e| e.to_string())
+        } else {
+            app.run("effect.apply", json!({"effect": effect, "params": params}))
+        };
+        app.last_effect = Some((effect, params));
+        app.ui.dialog = None;
+        return r;
+    }
     let r = match d.kind.as_str() {
         "newDocument" => {
             let r = app.run("file.new", json!({"width": d.f64("width", 612.0), "height": d.f64("height", 792.0), "units": d.str("units"), "title": d.str("name"), "artboards": d.f64("artboards", 1.0), "colorMode": d.str("colorMode").to_lowercase()}));
@@ -168,7 +227,7 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
     let mut ok = false;
     let mut cancel = false;
     egui::Area::new(egui::Id::new("modal-dim")).order(egui::Order::Middle).fixed_pos(egui::pos2(0.0, 0.0)).show(ctx, |ui| {
-        ui.painter().rect_filled(ctx.content_rect(), 0.0, egui::Color32::from_black_alpha(90));
+        // Illustrator's dialogs are modal but don't dim the canvas (previews stay readable).
         ui.allocate_rect(ctx.content_rect(), egui::Sense::click());
     });
     egui::Window::new(title(&d.kind))
@@ -181,9 +240,24 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
         .frame(egui::Frame::window(&ctx.global_style()).fill(t.panel).inner_margin(egui::Margin::same(22)))
         .show(ctx, |ui| {
             ui.set_min_width(if d.kind == "newDocument" { 560.0 } else { 320.0 });
-            ui.label(egui::RichText::new(title(&d.kind)).font(theme::semibold(16.0)).color(t.text));
+            let heading = if d.kind == "effect" { d.str("__label") } else { title(&d.kind).to_string() };
+            ui.label(egui::RichText::new(heading).font(theme::semibold(16.0)).color(t.text));
             ui.add_space(12.0);
             match d.kind.as_str() {
+                "effect" => {
+                    let changed = effect_fields(ui, &mut d);
+                    ui.add_space(6.0);
+                    let mut pv = d.bool("preview");
+                    let pv_changed = ui.checkbox(&mut pv, "Preview").changed();
+                    d.fields.insert("preview".into(), json!(pv));
+                    if pv && (changed || pv_changed || !app.session.in_interaction()) {
+                        let label = d.str("__label");
+                        let _ = app.session.begin_interaction(&label);
+                        let _ = app.session.preview("effect.apply", &json!({"effect": d.str("__effect"), "params": effect_params(&d)}));
+                    } else if !pv && pv_changed {
+                        let _ = app.session.cancel_interaction();
+                    }
+                }
                 "newDocument" => new_document(ui, &mut d),
                 "allTools" => {
                     for g in drawcraft_tools::TOOL_GROUPS {
@@ -234,8 +308,12 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
     if ctx.input(|i| i.key_pressed(egui::Key::Enter)) && d.kind != "allTools" {
         ok = true;
     }
+    let is_effect = d.kind == "effect";
     app.ui.dialog = Some(d);
     if cancel {
+        if is_effect {
+            let _ = app.session.cancel_interaction();
+        }
         app.ui.dialog = None;
     } else if ok && let Err(e) = confirm(app) {
         app.status(e);

@@ -25,7 +25,12 @@ pub fn app_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
                 app.ui.dialog = Some(crate::state::Dialog::new("newDocument", json!({"preset": "Letter", "width": "612 pt", "height": "792 pt", "units": "Points", "artboards": 1, "colorMode": "RGB", "name": "Untitled-1"})));
             }
             ui.add_space(2.0);
-            menus::menu_bar(app, ui);
+            if app.native_menu {
+                let full = ui.max_rect();
+                ui.painter().text(full.center(), egui::Align2::CENTER_CENTER, "DrawCraft", egui::FontId::proportional(13.5), t.text);
+            } else {
+                menus::menu_bar(app, ui);
+            }
             let full = ui.max_rect();
             let right = egui::Rect::from_min_max(egui::pos2(full.right() - 340.0, full.top()), full.right_bottom());
             let mut rui = ui.new_child(egui::UiBuilder::new().max_rect(right).layout(egui::Layout::right_to_left(egui::Align::Center)));
@@ -244,7 +249,6 @@ pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
 
 pub fn status_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
-    hint_bar(app, ui);
     egui::Panel::bottom("status_bar")
         .exact_size(24.0)
         .frame(egui::Frame::NONE.fill(t.panel).inner_margin(egui::Margin::symmetric(8, 0)).stroke(Stroke::new(1.0, t.border)))

@@ -15,13 +15,13 @@ pub fn specs() -> Vec<CommandSpec> {
             "Open Document",
             [],
             None,
-            "{path} or {name, dataBase64} → {index}; .drawcraft, .svg (PDF/.ai via drawcraft-pdf when available)",
+            "{path} or {name, dataBase64} → {index}; .drawcraft, .svg, .pdf, .ai (PDF-compatible)",
             always,
             open
         ),
         cmd!("document.save", "Save Document", [], None, "{path?} native .drawcraft (default: the document's path) → {path}", has_doc, save),
-        cmd!(query "document.serialize", "Serialize Document", [], None, "{format: drawcraft|svg} → {dataBase64 | text}", has_doc, serialize),
-        cmd!("document.export", "Export Document", [], None, "{format: svg|png|drawcraft, path, scale?: 1, artboard?: 0}", has_doc, export),
+        cmd!(query "document.serialize", "Serialize Document", [], None, "{format: drawcraft|svg|pdf|png} → {dataBase64 | text}", has_doc, serialize),
+        cmd!("document.export", "Export Document", [], None, "{format: svg|png|pdf|drawcraft, path, scale?: 1, artboard?: 0}", has_doc, export),
         cmd!(query "command.batch", "Batch", [], None, "{label?, commands: [{command, params}]} run several commands as ONE undo step; stops at the first error and rolls back", has_doc, batch),
     ]
 }
@@ -34,6 +34,12 @@ fn load(name: &str, bytes: &[u8]) -> Result<Document> {
     if lower.ends_with(".svg") || bytes.starts_with(b"<?xml") || bytes.starts_with(b"<svg") {
         let s = std::str::from_utf8(bytes).map_err(|_| EngineError::Other("SVG is not UTF-8".into()))?;
         let mut d = drawcraft_svg::import(s).map_err(|e| EngineError::Other(e.to_string()))?;
+        d.title = std::path::Path::new(name).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| name.to_string());
+        return Ok(d);
+    }
+    if lower.ends_with(".pdf") || lower.ends_with(".ai") || bytes.starts_with(b"%PDF") {
+        let r = drawcraft_pdf::import_with_report(bytes, &drawcraft_pdf::ImportOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?;
+        let mut d = r.document;
         d.title = std::path::Path::new(name).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| name.to_string());
         return Ok(d);
     }
@@ -74,6 +80,7 @@ pub(crate) fn encode(s: &Session, format: &str, scale: f64, artboard: usize) -> 
     Ok(match format {
         "drawcraft" => drawcraft_format::save(doc, true),
         "svg" => drawcraft_svg::export(doc, &drawcraft_svg::ExportOptions { artboard: Some(artboard), ..Default::default() }).into_bytes(),
+        "pdf" => drawcraft_pdf::export(doc, &drawcraft_pdf::PdfOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?,
         "png" => {
             let r = doc.artboards.get(artboard).map(|a| a.rect).ok_or_else(|| EngineError::Other("no such artboard".into()))?;
             drawcraft_render::Renderer::new().render_region(doc, r, scale.clamp(0.01, 64.0), false).to_png()

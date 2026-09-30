@@ -78,3 +78,12 @@ fn save_and_open_path() {
     assert!(std::fs::read_to_string(&svg).unwrap().contains("<svg"));
     let _ = std::fs::remove_dir_all(dir);
 }
+
+#[test]
+fn pdf_roundtrip_through_engine() {
+    let mut s = session();
+    s.execute("shape.rectangle", &json!({"x": 10, "y": 10, "width": 80, "height": 40})).unwrap();
+    let b64 = s.execute("document.serialize", &json!({"format": "pdf"})).unwrap()["dataBase64"].as_str().unwrap().to_string();
+    s.execute("document.open", &json!({"name": "x.pdf", "dataBase64": b64})).unwrap();
+    assert!(s.doc().unwrap().doc.node_count() >= 2);
+}
