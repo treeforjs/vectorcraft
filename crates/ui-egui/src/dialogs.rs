@@ -433,14 +433,24 @@ fn export_for_screens_ui(app: &mut DrawcraftApp, ui: &mut egui::Ui, d: &mut Dial
                 for (i, name) in names.iter().enumerate() {
                     ui.horizontal(|ui| {
                         let (r, _) = ui.allocate_exact_size(egui::vec2(46.0, 46.0), egui::Sense::hover());
-                        ui.painter().rect_filled(r, 2.0, egui::Color32::WHITE);
-                        ui.painter().text(r.center(), egui::Align2::CENTER_CENTER, format!("{}", i + 1), egui::FontId::proportional(12.0), egui::Color32::from_gray(120));
+                        match artboard_thumb(app, ui.ctx(), i) {
+                            Some(tex) => {
+                                let sz = tex.size_vec2();
+                                let s = (46.0 / sz.x.max(sz.y)).min(1.0);
+                                let ir = egui::Rect::from_center_size(r.center(), sz * s);
+                                ui.painter().image(tex.id(), ir, egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)), egui::Color32::WHITE);
+                            }
+                            None => {
+                                ui.painter().rect_filled(r, 2.0, egui::Color32::WHITE);
+                            }
+                        }
                         ui.checkbox(&mut boards[i], name);
                     });
                 }
             });
         });
-        ui.separator();
+        let (sep, _) = ui.allocate_exact_size(egui::vec2(9.0, 360.0), egui::Sense::hover());
+        ui.painter().line_segment([sep.center_top(), sep.center_bottom()], egui::Stroke::new(1.0, t.divider));
         ui.vertical(|ui| {
             ui.set_width(330.0);
             ui.label(egui::RichText::new("Export to").color(t.text));
@@ -475,7 +485,7 @@ fn export_for_screens_ui(app: &mut DrawcraftApp, ui: &mut egui::Ui, d: &mut Dial
                             }
                         }
                     });
-                    if ui.small_button("✕").clicked() {
+                    if ui.small_button("×").clicked() {
                         remove = Some(i);
                     }
                     ui.end_row();
@@ -500,4 +510,21 @@ fn export_for_screens_ui(app: &mut DrawcraftApp, ui: &mut egui::Ui, d: &mut Dial
         });
     });
     d.fields.insert("boards".into(), json!(boards));
+}
+
+/// A small cached rendering of artboard `i` (keyed by document revision).
+fn artboard_thumb(app: &mut DrawcraftApp, ctx: &egui::Context, i: usize) -> Option<egui::TextureHandle> {
+    let st = app.session.active()?;
+    let key = egui::Id::new(("ab-thumb", i, st.revision));
+    if let Some(t) = ctx.data(|d| d.get_temp::<egui::TextureHandle>(key)) {
+        return Some(t);
+    }
+    let doc = st.doc.clone();
+    let r = doc.artboards.get(i)?.rect;
+    let scale = 92.0 / r.width().max(r.height()).max(1.0);
+    let img = app.canvas.renderer.render_region(&doc, r, scale, true);
+    let color = egui::ColorImage::from_rgba_premultiplied([img.width as usize, img.height as usize], &img.pixels);
+    let tex = ctx.load_texture(format!("ab-thumb-{i}"), color, egui::TextureOptions::LINEAR);
+    ctx.data_mut(|d| d.insert_temp(key, tex.clone()));
+    Some(tex)
 }
