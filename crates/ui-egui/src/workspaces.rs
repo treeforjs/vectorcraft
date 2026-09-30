@@ -235,6 +235,7 @@ pub fn menu_items() -> Vec<crate::menus::Item> {
 /// The app-bar workspace switcher's menu.
 pub fn popup(app: &mut DrawcraftApp, ui: &mut egui::Ui) {
     ui.set_min_width(210.0);
+    ui.set_max_width(240.0);
     let mut clicked: Option<(&'static str, Value)> = None;
     for it in menu_items() {
         match it {
@@ -248,7 +249,7 @@ pub fn popup(app: &mut DrawcraftApp, ui: &mut egui::Ui) {
                     Some(false) => format!("     {label}"),
                     None => format!("     {label}"),
                 };
-                if ui.add(egui::Button::new(text).min_size(egui::vec2(ui.available_width(), 0.0))).clicked() {
+                if ui.add(egui::Button::new(text).min_size(egui::vec2(220.0, 0.0))).clicked() {
                     clicked = Some((id, if p.is_null() { json!({}) } else { p }));
                     ui.close();
                 }

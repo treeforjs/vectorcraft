@@ -68,6 +68,9 @@ impl Plane {
     pub const ALL: [Plane; 3] = [Plane::Left, Plane::Right, Plane::Ground];
 }
 
+/// Plane Switching widget: (plane, face quad) list and the "no plane" circle (centre, radius).
+pub type WidgetGeom = (Vec<(Plane, [Point; 4])>, (Point, f64));
+
 /// A 3×3 projective transform (row-major).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Homography(pub [[f64; 3]; 3]);
@@ -350,7 +353,7 @@ impl PerspectiveGrid {
     }
 
     /// Plane Switching widget geometry: (plane, quad) faces and the "no plane" circle (centre, r).
-    pub fn widget(&self, doc: &Document, tol: f64) -> (Vec<(Plane, [Point; 4])>, (Point, f64)) {
+    pub fn widget(&self, doc: &Document, tol: f64) -> WidgetGeom {
         let ab = doc.artboards.first().map(|a| a.rect).unwrap_or(Rect::new(0.0, 0.0, 612.0, 792.0));
         let s = 40.0 * tol;
         let (cx, cy) = (ab.x0 + 10.0 * tol + s / 2.0, ab.y0 + 10.0 * tol + s / 2.0);

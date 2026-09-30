@@ -602,12 +602,10 @@ mod tests {
         let mut pd = PathData::single(SubPath::polyline(&[Point::new(80.0, 100.0), Point::new(120.0, 100.0)], false));
         let p = LiquifyParams { detail: 1.0, simplify: 0.0, ..prm(LiquifyKind::Twirl) };
         apply_stroke(&mut pd, &[c], &p, 0);
-        // Rotation preserves the distance to the centre.
+        // Rotation preserves every anchor's distance to the centre (ends at 20, the midpoint at 0).
         for (_, _, a) in pd.anchors() {
-            let d0 = if a.p.x < 100.0 { 20.0 } else { 20.0 };
-            if a.p.distance(c) > 1.0 {
-                assert!((a.p.distance(c) - d0).abs() < 1e-6 || a.p.distance(c) < 20.0);
-            }
+            let d = a.p.distance(c);
+            assert!((d - 20.0).abs() < 1e-9 || d < 1e-9, "{d}");
         }
         let first = pd.subpaths[0].anchors[0].p;
         assert!(first.y != 100.0 && (first.distance(c) - 20.0).abs() < 1e-9);

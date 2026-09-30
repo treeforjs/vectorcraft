@@ -292,6 +292,12 @@ fn view_toggles_redraw_without_dirtying() {
     s.execute("view.overprintPreview", &json!({"on": false})).unwrap();
 }
 
+/// Whether the content has a DeviceCMYK fill/stroke operator (`c m y k k` / `K`).
+fn has_cmyk_op(pdf: &str) -> bool {
+    let toks: Vec<&str> = pdf.split_ascii_whitespace().collect();
+    toks.windows(5).any(|w| (w[4] == "k" || w[4] == "K") && w[..4].iter().all(|t| t.parse::<f32>().is_ok()))
+}
+
 fn pdf_text(doc: &Document) -> String {
     let bytes = drawcraft_pdf::export(doc, &drawcraft_pdf::PdfOptions { compress: false, created: Some(0), ..Default::default() }).unwrap();
     String::from_utf8_lossy(&bytes).into_owned()
@@ -302,17 +308,16 @@ fn pdf_cmyk_document_writes_device_cmyk() {
     let mut s = session();
     rect(&mut s, 0.0, 0.0, 10.0, 10.0, json!("#ff0000"));
     let rgb_pdf = pdf_text(&s.doc().unwrap().doc);
-    assert!(!rgb_pdf.contains("DeviceCMYK"));
+    assert!(!has_cmyk_op(&rgb_pdf) && rgb_pdf.contains(" rg"));
     s.execute("object.convertDocumentColorMode", &json!({"mode": "cmyk"})).unwrap();
     let pdf = pdf_text(&s.doc().unwrap().doc);
-    std::fs::write("/tmp/claude-dbg.pdf", &pdf).ok();
-    assert!(pdf.contains("DeviceCMYK"), "CMYK colours are written as DeviceCMYK");
+    assert!(has_cmyk_op(&pdf), "CMYK colours are written with the DeviceCMYK `k` operator");
     // RGB colours pasted into a CMYK document are separated on export.
     let mut s2 = session();
     rect(&mut s2, 0.0, 0.0, 10.0, 10.0, json!("#336699"));
     let mut d = (*s2.doc().unwrap().doc).clone();
     d.color_mode = ColorMode::Cmyk;
-    assert!(pdf_text(&d).contains("DeviceCMYK"));
+    assert!(has_cmyk_op(&pdf_text(&d)));
 }
 
 #[test]

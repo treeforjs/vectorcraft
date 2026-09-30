@@ -82,15 +82,16 @@ impl BandMatrix {
         let (n, bw) = (self.n, self.bw);
         for i in 0..n {
             let mut s = b[i];
-            for k in i.saturating_sub(bw)..i {
-                s -= self.a[self.idx(i, k)] * b[k];
+            let k0 = i.saturating_sub(bw);
+            for (k, bk) in b[k0..i].iter().enumerate() {
+                s -= self.a[self.idx(i, k0 + k)] * bk;
             }
             b[i] = s / self.a[self.idx(i, i)];
         }
         for i in (0..n).rev() {
             let mut s = b[i];
-            for k in i + 1..(i + bw + 1).min(n) {
-                s -= self.a[self.idx(k, i)] * b[k];
+            for (k, bk) in b[i + 1..(i + bw + 1).min(n)].iter().enumerate() {
+                s -= self.a[self.idx(i + 1 + k, i)] * bk;
             }
             b[i] = s / self.a[self.idx(i, i)];
         }
