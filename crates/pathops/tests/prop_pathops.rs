@@ -243,8 +243,7 @@ fn bug_simplify_adds_anchors() {
 }
 
 #[test]
-#[ignore = "BUG (open): offset by more than ~the shape's diameter loses area (inner stroke loop cancels winding)"]
-fn bug_offset_large_delta_loses_area() {
+fn offset_large_delta_keeps_area() {
     for (r, d) in [(1.0, 5.0), (1.0, 3.0), (10.0, 30.0)] {
         let p = drawcraft_geom::shapes::ellipse(Rect::new(0.0, 0.0, 2.0 * r, 2.0 * r));
         let got = area(&offset_path(&p, d, Join::Round, 4.0), NZ);

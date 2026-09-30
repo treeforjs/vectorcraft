@@ -1,7 +1,8 @@
 DrawCraft
 Copyright the DrawCraft contributors. Licensed under MIT OR Apache-2.0.
 
-This product bundles third-party material under the following licences:
+This product bundles third-party material under the following licences. Per-file attribution
+(author, source, licence) for every asset is in ASSETS.md. No Adobe icons, images or artwork are included.
 
 - Lucide icons (assets/icons/*.svg except dc-*.svg) — ISC License. See assets/icons/LICENSE-lucide.txt.
 - DrawCraft icons (assets/icons/dc-*.svg) — original work, MIT OR Apache-2.0.

@@ -5,7 +5,9 @@ use kurbo::{BezPath, PathEl, Stroke, StrokeOpts};
 
 pub use kurbo::{Cap, Join};
 
-use crate::boolean::{Arrangement, DEFAULT_PRECISION, Tidy, all_contours_to_path, fill_bezpath, normalize_bez};
+use linesweeper::topology::{ContourIdx, Contours};
+
+use crate::boolean::{Arrangement, DEFAULT_PRECISION, Tidy, all_contours_to_path, contours_to_path, fill_bezpath, normalize_bez};
 
 /// Flattening/fit tolerance handed to kurbo's stroker.
 const STROKE_TOL: f64 = 1e-3;
@@ -72,5 +74,83 @@ pub fn offset_path(path: &PathData, delta: f64, join: Join, miter_limit: f64) ->
         return PathData::default();
     };
     let c = if delta >= 0.0 { arr.contours(|m| m[0] || m[1] || m[2]) } else { arr.contours(|m| m[0] && !m[1]) };
-    all_contours_to_path(&c, &Tidy::free(DEFAULT_PRECISION))
+    // When `d` exceeds a curvature radius the stroker's inner offset inverts and its loops cancel
+    // winding, leaving faces uncovered that are really within `d` of the path. Every face of the
+    // true offset is bounded by arrangement edges, so a contour is spurious iff a point deep inside
+    // it lies closer than `d`: holes when growing, islands when insetting.
+    let src = path.to_bezpath();
+    let drop_outer = delta < 0.0;
+    let spurious: Vec<bool> =
+        c.contours().map(|k| k.outer == drop_outer && deep_point(&k.path).is_some_and(|p| dist_to(&src, p) < d * (1.0 - 1e-4) - 1e-6)).collect();
+    if !spurious.contains(&true) {
+        return all_contours_to_path(&c, &Tidy::free(DEFAULT_PRECISION));
+    }
+    let keep = (0..spurious.len()).filter(|&i| !has_marked_ancestor(&c, i, &spurious)).map(ContourIdx);
+    contours_to_path(&c, keep, &Tidy::free(DEFAULT_PRECISION))
+}
+
+fn has_marked_ancestor(c: &Contours, mut i: usize, marked: &[bool]) -> bool {
+    loop {
+        if marked[i] {
+            return true;
+        }
+        match c[ContourIdx(i)].parent {
+            Some(ContourIdx(p)) => i = p,
+            None => return false,
+        }
+    }
+}
+
+/// A point well inside a closed contour: the midpoint of the widest span on the horizontal line
+/// through its vertical centre.
+fn deep_point(bp: &BezPath) -> Option<kurbo::Point> {
+    use kurbo::Shape;
+    let r = bp.bounding_box();
+    if !(r.width() > 0.0 && r.height() > 0.0) {
+        return None;
+    }
+    let mut best: Option<(f64, kurbo::Point)> = None;
+    for f in [0.5, 0.3, 0.7] {
+        let y = r.y0 + r.height() * f;
+        let mut xs = vec![];
+        let mut prev: Option<kurbo::Point> = None;
+        let mut start = kurbo::Point::ZERO;
+        let edge = |a: kurbo::Point, b: kurbo::Point, xs: &mut Vec<f64>| {
+            if (a.y <= y) != (b.y <= y) {
+                xs.push(a.x + (y - a.y) / (b.y - a.y) * (b.x - a.x));
+            }
+        };
+        kurbo::flatten(bp.iter(), 0.01 * r.width().min(r.height()).max(1e-6), |el| match el {
+            PathEl::MoveTo(p) => {
+                start = p;
+                prev = Some(p);
+            }
+            PathEl::LineTo(p) => {
+                if let Some(a) = prev {
+                    edge(a, p, &mut xs);
+                }
+                prev = Some(p);
+            }
+            PathEl::ClosePath => {
+                if let Some(a) = prev {
+                    edge(a, start, &mut xs);
+                }
+                prev = Some(start);
+            }
+            _ => {}
+        });
+        xs.sort_by(f64::total_cmp);
+        for w in xs.chunks_exact(2) {
+            let span = w[1] - w[0];
+            if best.is_none_or(|(b, _)| span > b) {
+                best = Some((span, kurbo::Point::new((w[0] + w[1]) / 2.0, y)));
+            }
+        }
+    }
+    best.map(|(_, p)| p)
+}
+
+fn dist_to(bp: &BezPath, p: kurbo::Point) -> f64 {
+    use kurbo::ParamCurveNearest;
+    bp.segments().map(|s| s.nearest(p, 1e-6).distance_sq).fold(f64::INFINITY, f64::min).sqrt()
 }

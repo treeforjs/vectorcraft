@@ -80,6 +80,6 @@ Open-source, pure-Rust, clean-room creative tools — each engine-first, cross-p
 
 ## License
 
-MIT OR Apache-2.0. Bundled fonts are OFL; Lucide icons are ISC — see [`NOTICE`](NOTICE).
+MIT OR Apache-2.0. Bundled fonts are OFL; Lucide icons are ISC; all other icons and art are original. Per-asset attribution: [`ASSETS.md`](ASSETS.md) (see also [`NOTICE`](NOTICE)).
 
 <sub>DrawCraft is an independent project and is not affiliated with or endorsed by Adobe. "Adobe", "Illustrator", "Photoshop", "Premiere Pro", "Lightroom" and "Acrobat" are trademarks of Adobe Inc., used here only to describe compatibility and workflow familiarity.</sub>
