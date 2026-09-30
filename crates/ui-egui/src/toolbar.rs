@@ -224,9 +224,13 @@ fn bottom_controls(app: &mut DrawcraftApp, ui: &mut Ui, t: &Tokens) {
     ui.vertical_centered(|ui| {
         let modes = ["dc-draw-normal", "dc-draw-behind", "dc-draw-inside"];
         let names = ["Draw Normal", "Draw Behind", "Draw Inside"];
-        let m = app.ui.draw_mode as usize % 3;
-        if widgets::icon_button(ui, modes[m], &format!("{} (Shift+D)", names[m]), false, 26.0).clicked() {
-            app.ui.draw_mode = (app.ui.draw_mode + 1) % 3;
+        let m = match app.session.draw_mode {
+            drawcraft_engine::DrawMode::Normal => 0,
+            drawcraft_engine::DrawMode::Behind => 1,
+            drawcraft_engine::DrawMode::Inside => 2,
+        };
+        if widgets::icon_button(ui, modes[m], &format!("{} (Shift+D)", names[m]), m != 0, 26.0).clicked() {
+            app.run("view.drawMode", json!({})).ok();
         }
         if widgets::icon_button(ui, "dc-screen-mode", "Change Screen Mode (F)", false, 26.0).clicked() {
             app.run("view.screenMode", json!({})).ok();

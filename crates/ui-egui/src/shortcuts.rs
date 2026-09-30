@@ -187,6 +187,10 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
                 let _ = app.run("paint.none", json!({}));
                 continue;
             }
+            "Shift+D" => {
+                let _ = app.run("view.drawMode", json!({}));
+                continue;
+            }
             "F" => {
                 let _ = app.run("view.screenMode", json!({}));
                 continue;

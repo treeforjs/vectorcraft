@@ -87,3 +87,25 @@ fn pdf_roundtrip_through_engine() {
     s.execute("document.open", &json!({"name": "x.pdf", "dataBase64": b64})).unwrap();
     assert!(s.doc().unwrap().doc.node_count() >= 2);
 }
+
+#[test]
+fn draw_behind_and_inside() {
+    let mut s = session();
+    let a = s.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 100, "height": 100})).unwrap()["id"].as_u64().unwrap();
+    s.execute("view.drawMode", &json!({"mode": "behind"})).unwrap();
+    let b = s.execute("shape.ellipse", &json!({"x": 10, "y": 10, "width": 50, "height": 50})).unwrap()["id"].as_u64().unwrap();
+    let order: Vec<u64> = s.doc().unwrap().doc.layers[0].children().unwrap().iter().map(|n| n.id.0).collect();
+    assert_eq!(order, vec![b, a]);
+    s.execute("select.set", &json!({"ids": [a]})).unwrap();
+    s.execute("view.drawMode", &json!({"mode": "inside"})).unwrap();
+    let c = s.execute("shape.ellipse", &json!({"x": 50, "y": 50, "width": 100, "height": 100})).unwrap()["id"].as_u64().unwrap();
+    let d = &s.doc().unwrap().doc;
+    let g = d.parent_of(NodeId(c)).unwrap();
+    assert_eq!(d.node(g).unwrap().kind_label(), "Clip Group");
+    assert_eq!(d.parent_of(NodeId(a)), Some(g));
+    // A second shape goes into the same clip group.
+    s.execute("shape.ellipse", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap();
+    assert_eq!(s.doc().unwrap().doc.node(g).unwrap().children().unwrap().len(), 4);
+    s.execute("view.drawMode", &json!({"mode": "normal"})).unwrap();
+    assert!(s.draw_inside.is_none());
+}

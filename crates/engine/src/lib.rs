@@ -131,6 +131,16 @@ impl DocState {
     }
 }
 
+/// Where new art goes (Illustrator's drawing modes, Shift+D cycles).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum DrawMode {
+    #[default]
+    Normal,
+    Behind,
+    Inside,
+}
+
 /// Application preferences that affect commands.
 #[derive(Clone, Debug)]
 pub struct Prefs {
@@ -163,7 +173,13 @@ pub struct Session {
     pub journal: Vec<(String, Value)>,
     pub(crate) tool: Box<dyn Tool>,
     pub(crate) last_view: ViewInfo,
+    /// Draw Normal / Behind / Inside (toolbar drawing modes).
+    pub draw_mode: DrawMode,
+    /// The path new art is drawn inside (Draw Inside).
+    pub draw_inside: Option<NodeId>,
     untitled_counter: u32,
+    /// Session-level state of the menu commands (saved selections, guide lock).
+    pub(crate) menu: cmd::menucmds::MenuState,
 }
 
 impl Default for Session {
@@ -184,7 +200,10 @@ impl Session {
             journal: vec![],
             tool: drawcraft_tools::create("selection"),
             last_view: ViewInfo::default(),
+            draw_mode: DrawMode::Normal,
+            draw_inside: None,
             untitled_counter: 0,
+            menu: Default::default(),
         }
     }
 
@@ -358,6 +377,10 @@ mod tests_draw2;
 #[cfg(test)]
 mod tests_file;
 #[cfg(test)]
+mod tests_menucmds;
+#[cfg(test)]
 mod tests_pathops;
+#[cfg(test)]
+mod tests_panelcmds;
 #[cfg(test)]
 mod tests_xform;

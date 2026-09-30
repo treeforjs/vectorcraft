@@ -26,6 +26,7 @@ pub fn specs() -> Vec<CommandSpec> {
             has_doc,
             path_create
         ),
+        cmd!("view.drawMode", "Drawing Mode", [], Some("Shift+D"), "{mode?: normal|behind|inside} (no param cycles; inside needs one selected path)", has_doc, draw_mode),
         cmd!(
             "text.create",
             "Create Text",
@@ -46,16 +47,77 @@ pub(crate) fn add_art(s: &mut Session, label: &str, kind: NodeKind, name: Option
 
 pub(crate) fn add_node(s: &mut Session, label: &str, kind: NodeKind, appearance: Appearance, name: Option<String>) -> Result<Value> {
     let parent = s.doc()?.insertion_parent();
+    let mode = s.draw_mode;
+    let inside = s.draw_inside;
+    let behind_of = s.doc()?.selection.in_paint_order(&s.doc()?.doc).first().copied();
     let id = s.edit(label, |d, sel| {
         let id = d.alloc_id();
         let mut n = Node::new(id, kind);
         n.appearance = appearance;
         n.name = name;
-        d.insert(parent, usize::MAX, n)?;
+        match (mode, inside) {
+            (crate::DrawMode::Inside, Some(target)) if d.node(target).is_some() => {
+                // Wrap the target once in a clip group [mask copy, target, …new art].
+                let group = match d.parent_of(target).and_then(|p| d.node(p).map(|pn| (p, pn.kind.clone()))) {
+                    Some((p, NodeKind::Group { clip: true, children })) if children.get(1).is_some_and(|c| c.id == target) => p,
+                    _ => {
+                        let (par, idx, _) = d.position(target).ok_or(crate::EngineError::NoNode(target))?;
+                        let mut mask = d.node(target).cloned().ok_or(crate::EngineError::NoNode(target))?;
+                        mask.id = d.alloc_id();
+                        mask.appearance = Appearance::basic(drawcraft_color::Paint::None, drawcraft_color::Paint::None, 0.0);
+                        if let NodeKind::Path { clipping, .. } = &mut mask.kind {
+                            *clipping = true;
+                        }
+                        let gid = d.alloc_id();
+                        d.insert(par, idx + 1, Node::new(gid, NodeKind::Group { children: vec![std::sync::Arc::new(mask)], clip: true }))?;
+                        d.move_node(target, Some(gid), usize::MAX)?;
+                        gid
+                    }
+                };
+                d.insert(Some(group), usize::MAX, n)?;
+            }
+            (crate::DrawMode::Behind, _) => match behind_of.and_then(|b| d.position(b)) {
+                Some((par, idx, _)) => {
+                    d.insert(par, idx, n)?;
+                }
+                None => {
+                    d.insert(parent, 0, n)?;
+                }
+            },
+            _ => {
+                d.insert(parent, usize::MAX, n)?;
+            }
+        }
         sel.set([id]);
         Ok(id)
     })?;
     Ok(json!({ "id": id.0 }))
+}
+
+fn draw_mode(s: &mut Session, p: &Value) -> Result<Value> {
+    let mode = match str_param(p, "mode") {
+        Some("behind") => crate::DrawMode::Behind,
+        Some("inside") => crate::DrawMode::Inside,
+        Some("normal") => crate::DrawMode::Normal,
+        None => match s.draw_mode {
+            crate::DrawMode::Normal => crate::DrawMode::Behind,
+            crate::DrawMode::Behind if s.doc()?.selection.len() == 1 => crate::DrawMode::Inside,
+            _ => crate::DrawMode::Normal,
+        },
+        Some(o) => return Err(bad("view.drawMode", format!("unknown mode `{o}`"))),
+    };
+    if mode == crate::DrawMode::Inside {
+        let st = s.doc()?;
+        let target = st.selection.objects.first().copied().filter(|id| matches!(st.doc.node(*id).map(|n| &n.kind), Some(NodeKind::Path { .. } | NodeKind::Compound { .. } | NodeKind::Text(_))));
+        match target {
+            Some(t) if st.selection.len() == 1 => s.draw_inside = Some(t),
+            _ => return Err(bad("view.drawMode", "Draw Inside needs exactly one selected path, compound path or text")),
+        }
+    } else {
+        s.draw_inside = None;
+    }
+    s.draw_mode = mode;
+    Ok(json!({ "mode": mode }))
 }
 
 fn path_kind(path: PathData, live: Option<LiveShape>) -> NodeKind {
