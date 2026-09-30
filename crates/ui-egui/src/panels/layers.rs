@@ -32,6 +32,9 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         }
     });
     ui.data_mut(|d| d.insert_temp(expanded_id(), expanded));
+    if ui.input(|i| i.pointer.any_released()) {
+        ui.data_mut(|d| d.remove::<u64>(egui::Id::new("layers-drag")));
+    }
     // Bottom bar.
     let (bar, _) = ui.allocate_exact_size(vec2(ui.available_width(), 30.0), Sense::hover());
     ui.painter().line_segment([bar.left_top(), bar.right_top()], Stroke::new(1.0, t.divider));
@@ -73,7 +76,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
 
 #[allow(clippy::too_many_arguments)]
 fn row(ui: &mut Ui, doc: &drawcraft_doc::Document, n: &Node, depth: usize, sel: &HashSet<NodeId>, current: Option<NodeId>, expanded: &mut HashSet<u64>, actions: &mut Vec<(String, serde_json::Value)>, t: &Tokens) {
-    let (r, resp) = ui.allocate_exact_size(vec2(ui.available_width(), ROW), Sense::click());
+    let (r, resp) = ui.allocate_exact_size(vec2(ui.available_width(), ROW), Sense::click_and_drag());
     let is_sel = sel.contains(&n.id);
     let child_sel = !is_sel && n.children().is_some_and(|_| {
         let mut any = false;
@@ -148,7 +151,30 @@ fn row(ui: &mut Ui, doc: &drawcraft_doc::Document, n: &Node, depth: usize, sel: 
     // Name.
     let name = n.display_name();
     let font = if n.is_layer() { egui::FontId::proportional(12.5) } else { egui::FontId::proportional(12.0) };
-    ui.painter().with_clip_rect(egui::Rect::from_min_max(egui::pos2(x, r.top()), egui::pos2(r.right() - 44.0, r.bottom()))).text(egui::pos2(x, r.center().y), egui::Align2::LEFT_CENTER, name, font, t.text);
+    let rename_id = egui::Id::new("layers-rename");
+    let renaming: Option<(u64, String)> = ui.data(|d| d.get_temp(rename_id));
+    let name_rect = egui::Rect::from_min_max(egui::pos2(x - 2.0, r.top() + 3.0), egui::pos2(r.right() - 44.0, r.bottom() - 3.0));
+    match renaming {
+        Some((rid, mut buf)) if rid == n.id.0 => {
+            let mut child = ui.new_child(egui::UiBuilder::new().max_rect(name_rect));
+            let te = child.add(egui::TextEdit::singleline(&mut buf).desired_width(name_rect.width()).font(font.clone()));
+            te.request_focus();
+            if te.lost_focus() {
+                ui.data_mut(|d| d.remove::<(u64, String)>(rename_id));
+                if child.input(|i| !i.key_pressed(egui::Key::Escape)) && buf != name {
+                    let cmd = if n.is_layer() { "layer.setProps" } else { "object.setProps" };
+                    let key = if n.is_layer() { "id" } else { "ids" };
+                    let idv = if n.is_layer() { json!(n.id.0) } else { json!([n.id.0]) };
+                    actions.push((cmd.into(), json!({key: idv, "name": buf})));
+                }
+            } else {
+                ui.data_mut(|d| d.insert_temp(rename_id, (n.id.0, buf)));
+            }
+        }
+        _ => {
+            ui.painter().with_clip_rect(name_rect).text(egui::pos2(x, r.center().y), egui::Align2::LEFT_CENTER, name.clone(), font, t.text);
+        }
+    }
     // Target circle and selection square.
     let tc = egui::pos2(r.right() - 30.0, r.center().y);
     let styled = !n.appearance.is_basic() || n.opacity < 1.0;
@@ -181,9 +207,36 @@ fn row(ui: &mut Ui, doc: &drawcraft_doc::Document, n: &Node, depth: usize, sel: 
             actions.push(("select.set".into(), json!({"ids": [n.id.0]})));
         }
     }
-    if resp.double_clicked() && n.is_layer() {
-        // Rename via Layer Options (later: inline edit).
+    if resp.double_clicked() {
+        ui.data_mut(|d| d.insert_temp(egui::Id::new("layers-rename"), (n.id.0, n.display_name())));
     }
+    // Drag to reorder: drop onto a row moves the dragged node above it (into its parent).
+    let drag_id = egui::Id::new("layers-drag");
+    if resp.drag_started() {
+        ui.data_mut(|d| d.insert_temp(drag_id, n.id.0));
+    }
+    let dragging: Option<u64> = ui.data(|d| d.get_temp(drag_id));
+    if let Some(src) = dragging
+        && src != n.id.0
+        && ui.rect_contains_pointer(r)
+    {
+        let above = ui.input(|i| i.pointer.hover_pos()).is_some_and(|p| p.y < r.center().y);
+        let y = if above { r.top() } else { r.bottom() };
+        ui.painter().line_segment([egui::pos2(r.left() + 46.0, y), egui::pos2(r.right(), y)], Stroke::new(2.0, t.accent));
+        if ui.input(|i| i.pointer.any_released()) {
+            let (parent, index) = match doc.position(n.id) {
+                Some((par, idx, _)) => (par, if above { idx + 1 } else { idx }),
+                None => (None, 0),
+            };
+            // A layer dropped on a non-layer goes into that row's container; top level only for layers.
+            let src_is_layer = doc.node(drawcraft_doc::NodeId(src)).is_some_and(|x| x.is_layer());
+            if parent.is_some() || src_is_layer {
+                actions.push(("node.move".into(), json!({"id": src, "parent": parent.map(|p| p.0), "index": index})));
+            }
+            ui.data_mut(|d| d.remove::<u64>(drag_id));
+        }
+    }
+
     if has_children && expanded.contains(&n.id.0) {
         for c in n.children().unwrap().iter().rev() {
             row(ui, doc, c, depth + 1, sel, current, expanded, actions, t);

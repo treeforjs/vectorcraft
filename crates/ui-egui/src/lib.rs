@@ -15,6 +15,7 @@ pub mod icons;
 pub mod io;
 pub mod menus;
 pub mod palette;
+pub mod render_worker;
 pub mod panels;
 pub mod shortcuts;
 pub mod state;
@@ -60,6 +61,8 @@ pub struct CanvasCache {
     pub texture: Option<egui::TextureHandle>,
     pub key: Option<CacheKey>,
     pub last_ms: f64,
+    pub worker: Option<render_worker::Worker>,
+    pub worker_started: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -116,7 +119,7 @@ impl DrawcraftApp {
             ui: UiState::default(),
             views,
             services,
-            canvas: CanvasCache { renderer: drawcraft_render::Renderer::new(), texture: None, key: None, last_ms: 0.0 },
+            canvas: CanvasCache { renderer: drawcraft_render::Renderer::new(), texture: None, key: None, last_ms: 0.0, worker: None, worker_started: false },
             perf: Perf::default(),
             integrated_titlebar: false,
             control_rx: None,

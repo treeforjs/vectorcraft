@@ -133,21 +133,42 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     let ppp = ui.ctx().pixels_per_point();
     let (w, h) = ((rect.width() * ppp).round().max(1.0) as u32, (rect.height() * ppp).round().max(1.0) as u32);
     let key = CacheKey { doc: app.session.active_index().unwrap_or(0), revision: st.revision, zoom: v.zoom, cx: v.center.x, cy: v.center.y, w, h, outline: app.ui.view.outline, ppp, hidden: vec![] };
+    if !app.canvas.worker_started {
+        app.canvas.worker_started = true;
+        if std::env::var_os("DRAWCRAFT_SYNC_RENDER").is_none() {
+            app.canvas.worker = crate::render_worker::Worker::spawn(ui.ctx().clone());
+        }
+    }
+    // Upload finished background renders.
+    if let Some(done) = app.canvas.worker.as_mut().and_then(|w| w.poll()) {
+        upload(app, ui.ctx(), &done.img);
+        app.canvas.key = Some(done.key);
+        app.perf.render_ms = done.ms;
+        app.canvas.last_ms = done.ms;
+    }
     if app.canvas.key.as_ref() != Some(&key) || app.canvas.texture.is_none() {
-        let t0 = now_ms();
         let view = Affine::translate((w as f64 / 2.0, h as f64 / 2.0)) * Affine::scale(v.zoom * ppp as f64) * Affine::translate(-v.center.to_vec2());
         let opts = drawcraft_render::RenderOptions { outline: app.ui.view.outline, background: None, artboards: false, ..Default::default() };
-        let img = app.canvas.renderer.render(&doc, w, h, view, &opts);
-        let color = egui::ColorImage::from_rgba_premultiplied([img.width as usize, img.height as usize], &img.pixels);
-        match &mut app.canvas.texture {
-            Some(tex) => tex.set(color, egui::TextureOptions::LINEAR),
-            None => app.canvas.texture = Some(ui.ctx().load_texture("canvas", color, egui::TextureOptions::LINEAR)),
+        // Light documents render synchronously (no lag vs overlays); heavy ones go to the worker.
+        let heavy = app.canvas.last_ms > 8.0 && app.canvas.texture.is_some();
+        match (&mut app.canvas.worker, heavy) {
+            (Some(worker), true) => worker.submit(crate::render_worker::Job { key: key.clone(), doc: doc.clone(), w, h, view, opts }),
+            _ => {
+                let t0 = now_ms();
+                let img = app.canvas.renderer.render(&doc, w, h, view, &opts);
+                upload(app, ui.ctx(), &img);
+                app.canvas.key = Some(key.clone());
+                app.perf.render_ms = now_ms() - t0;
+                app.canvas.last_ms = app.perf.render_ms;
+            }
         }
-        app.canvas.key = Some(key);
-        app.perf.render_ms = now_ms() - t0;
     }
-    if let Some(tex) = &app.canvas.texture {
-        painter.image(tex.id(), rect, egui::Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
+    if let (Some(tex), Some(k)) = (&app.canvas.texture, &app.canvas.key) {
+        // Reproject the last frame if it was rendered for a different view.
+        let old = Xf { rect, zoom: k.zoom, center: Point::new(k.cx, k.cy) };
+        let a = xf.to_screen(old.to_doc(rect.min));
+        let b = xf.to_screen(old.to_doc(rect.max));
+        painter.image(tex.id(), egui::Rect::from_min_max(a, b), egui::Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
     }
     // Artboard edges and names.
     let active_ab = 0;
@@ -745,4 +766,12 @@ fn home(app: &mut DrawcraftApp, ui: &mut Ui, rect: egui::Rect) {
 
 fn kurbo_flatten(p: &BezPath, tol: f64, f: &mut impl FnMut(PathEl)) {
     drawcraft_geom::kurbo::flatten(p.elements().iter().copied(), tol, f);
+}
+
+fn upload(app: &mut DrawcraftApp, ctx: &egui::Context, img: &drawcraft_render::Rendered) {
+    let color = egui::ColorImage::from_rgba_premultiplied([img.width as usize, img.height as usize], &img.pixels);
+    match &mut app.canvas.texture {
+        Some(tex) => tex.set(color, egui::TextureOptions::LINEAR),
+        None => app.canvas.texture = Some(ctx.load_texture("canvas", color, egui::TextureOptions::LINEAR)),
+    }
 }
