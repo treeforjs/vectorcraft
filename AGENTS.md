@@ -23,3 +23,6 @@ DrawCraft is a clean-room, open-source, Rust-native vector illustration app targ
 - MCP: `drawcraft-cli mcp` (see `docs/mcp.md`).
 - Shell gotcha: `mv`/`cp` are aliased interactive here — use `/bin/mv -f` / `/bin/cp -f`.
 - Parallel agents: separate `CARGO_TARGET_DIR` per agent; edit only the crates you own; write manifests atomically.
+
+## Roadmap
+`ROADMAP.md` (committed) tracks status, milestones and time-to-parity estimates. Update it whenever a milestone task lands.
