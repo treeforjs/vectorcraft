@@ -9,6 +9,8 @@
 //! - `ui.pointer {events:[{kind: down|drag|up|move|doubleclick, x, y, space?: "doc"|"screen"}], mods?}`:
 //!   drive the active tool through the same path as the mouse
 //! - `ui.key {key, shift?, alt?, cmd?}` / `ui.text {text}`: synthetic keyboard input
+//! - `ui.move {x, y}` / `ui.click {x, y, button?, count?, shift?…}` / `ui.drag {x, y, toX, toY, steps?}`:
+//!   real egui pointer input in screen points (reaches every widget: panels, flyouts, dialogs)
 //! - `ui.set {brightness?, panel?, dockTab?, rulers?, outline?, …}`
 //! - `ui.dialog.set {field, value}` / `ui.dialog.confirm` / `ui.dialog.cancel`
 //! - `ui.resize {width, height}`, `ui.focus`, `ui.screenshot {path?}`
@@ -155,6 +157,47 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest)
             app.synthetic.push(egui::Event::Key { key: k, physical_key: None, pressed: false, repeat: false, modifiers: m });
             if let Some(t) = s("text") {
                 app.synthetic.push(egui::Event::Text(t.to_string()));
+            }
+            ctx.request_repaint();
+            ok(Value::Null)
+        }
+        "ui.move" => {
+            let pos = egui::pos2(p.get("x").and_then(Value::as_f64).unwrap_or(0.0) as f32, p.get("y").and_then(Value::as_f64).unwrap_or(0.0) as f32);
+            app.synthetic.push(egui::Event::PointerMoved(pos));
+            ctx.request_repaint();
+            ok(Value::Null)
+        }
+        "ui.click" | "ui.drag" => {
+            // Screen-space (egui points) pointer input through egui itself: reaches every widget.
+            let f = |k: &str| p.get(k).and_then(Value::as_f64).unwrap_or(0.0) as f32;
+            let button = match s("button") {
+                Some("right") | Some("secondary") => egui::PointerButton::Secondary,
+                _ => egui::PointerButton::Primary,
+            };
+            let b = |n: &str| p.get(n).and_then(Value::as_bool).unwrap_or(false);
+            let modifiers = egui::Modifiers {
+                alt: b("alt"),
+                ctrl: b("ctrl"),
+                shift: b("shift"),
+                mac_cmd: b("cmd") && cfg!(target_os = "macos"),
+                command: b("cmd"),
+            };
+            let a = egui::pos2(f("x"), f("y"));
+            let end = if req.method == "ui.drag" { egui::pos2(f("toX"), f("toY")) } else { a };
+            app.synthetic.push(egui::Event::PointerMoved(a));
+            app.synthetic.push(egui::Event::PointerButton { pos: a, button, pressed: true, modifiers });
+            if req.method == "ui.drag" {
+                let steps = p.get("steps").and_then(Value::as_u64).unwrap_or(8).max(1);
+                for i in 1..=steps {
+                    let t = i as f32 / steps as f32;
+                    app.synthetic.push(egui::Event::PointerMoved(a + (end - a) * t));
+                }
+            }
+            app.synthetic.push(egui::Event::PointerButton { pos: end, button, pressed: false, modifiers });
+            let count = p.get("count").and_then(Value::as_u64).unwrap_or(1);
+            for _ in 1..count {
+                app.synthetic.push(egui::Event::PointerButton { pos: end, button, pressed: true, modifiers });
+                app.synthetic.push(egui::Event::PointerButton { pos: end, button, pressed: false, modifiers });
             }
             ctx.request_repaint();
             ok(Value::Null)

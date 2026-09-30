@@ -1,0 +1,141 @@
+//! Tool cursors drawn as vector glyphs (egui only offers system cursors). Black shapes with a white
+//! halo, hotspot at `p`, Illustrator's visual grammar: solid arrow (Selection), hollow arrow (Direct
+//! Selection), pen nib with state badges, crosshair for drawing tools, curved arrows for rotate.
+
+use drawcraft_tools::Cursor;
+use egui::{Color32, Painter, Pos2, Shape, Stroke, pos2, vec2};
+
+const INK: Color32 = Color32::BLACK;
+const HALO: Color32 = Color32::WHITE;
+
+fn poly(p: &Painter, pts: Vec<Pos2>, fill: Color32, stroke: Color32) {
+    // Halo first (thicker white outline), then the glyph.
+    p.add(Shape::closed_line(pts.clone(), Stroke::new(3.0, HALO)));
+    p.add(Shape::convex_polygon(pts.clone(), fill, Stroke::NONE));
+    p.add(Shape::closed_line(pts, Stroke::new(1.0, stroke)));
+}
+
+fn line(p: &Painter, a: Pos2, b: Pos2) {
+    p.line_segment([a, b], Stroke::new(3.0, HALO));
+    p.line_segment([a, b], Stroke::new(1.2, INK));
+}
+
+fn arrow_points(o: Pos2) -> Vec<Pos2> {
+    // Classic pointer, tip at o.
+    [(0.0, 0.0), (0.0, 15.0), (3.8, 11.4), (6.4, 17.0), (8.6, 16.0), (6.1, 10.6), (11.0, 10.6)].iter().map(|(x, y)| o + vec2(*x, *y)).collect()
+}
+
+fn arrow(p: &Painter, o: Pos2, hollow: bool) {
+    let pts = arrow_points(o);
+    // The arrow is concave: draw as a filled mesh of two convex parts, then outline.
+    p.add(Shape::closed_line(pts.clone(), Stroke::new(3.0, HALO)));
+    let fill = if hollow { HALO } else { INK };
+    p.add(Shape::convex_polygon(vec![pts[0], pts[1], pts[2], pts[5], pts[6]], fill, Stroke::NONE));
+    p.add(Shape::convex_polygon(vec![pts[2], pts[3], pts[4], pts[5]], fill, Stroke::NONE));
+    p.add(Shape::closed_line(pts, Stroke::new(1.0, INK)));
+}
+
+fn crosshair(p: &Painter, o: Pos2) {
+    for (a, b) in
+        [(vec2(-9.0, 0.0), vec2(-2.0, 0.0)), (vec2(2.0, 0.0), vec2(9.0, 0.0)), (vec2(0.0, -9.0), vec2(0.0, -2.0)), (vec2(0.0, 2.0), vec2(0.0, 9.0))]
+    {
+        line(p, o + a, o + b);
+    }
+}
+
+fn pen(p: &Painter, o: Pos2, badge: &str) {
+    // Nib pointing to the top-left hotspot.
+    let pts = vec![o, o + vec2(4.0, 12.0), o + vec2(8.0, 16.0), o + vec2(16.0, 8.0), o + vec2(12.0, 4.0)];
+    poly(p, pts, INK, INK);
+    p.circle_filled(o + vec2(6.0, 6.0), 1.4, HALO);
+    line(p, o + vec2(10.0, 14.0), o + vec2(14.0, 18.0));
+    let b = o + vec2(16.0, 14.0);
+    match badge {
+        "o" => {
+            p.circle_stroke(b + vec2(3.0, 3.0), 3.0, Stroke::new(3.0, HALO));
+            p.circle_stroke(b + vec2(3.0, 3.0), 3.0, Stroke::new(1.2, INK));
+        }
+        "+" => {
+            line(p, b + vec2(0.0, 3.0), b + vec2(6.0, 3.0));
+            line(p, b + vec2(3.0, 0.0), b + vec2(3.0, 6.0));
+        }
+        "-" => line(p, b + vec2(0.0, 3.0), b + vec2(6.0, 3.0)),
+        "/" => line(p, b + vec2(0.0, 6.0), b + vec2(5.0, 0.0)),
+        "*" => {
+            line(p, b + vec2(0.0, 0.0), b + vec2(6.0, 6.0));
+            line(p, b + vec2(6.0, 0.0), b + vec2(0.0, 6.0));
+            line(p, b + vec2(3.0, -1.0), b + vec2(3.0, 7.0));
+        }
+        _ => {}
+    }
+}
+
+fn double_arrow(p: &Painter, o: Pos2, dir: egui::Vec2) {
+    let d = dir.normalized() * 8.0;
+    let n = vec2(-d.y, d.x) * 0.45;
+    line(p, o - d, o + d);
+    for (tip, back) in [(o + d, o + d * 0.45), (o - d, o - d * 0.45)] {
+        poly(p, vec![tip, back + n, back - n], INK, INK);
+    }
+}
+
+fn rotate(p: &Painter, o: Pos2) {
+    let pts: Vec<Pos2> = (0..=10)
+        .map(|i| {
+            let a = std::f32::consts::PI * (0.15 + 0.7 * i as f32 / 10.0);
+            o + vec2(a.cos() * 9.0, -a.sin() * 9.0)
+        })
+        .collect();
+    p.add(Shape::line(pts.clone(), Stroke::new(3.0, HALO)));
+    p.add(Shape::line(pts.clone(), Stroke::new(1.2, INK)));
+    for end in [pts[0], pts[pts.len() - 1]] {
+        poly(p, vec![end + vec2(-3.0, -1.0), end + vec2(3.0, -1.0), end + vec2(0.0, 4.0)], INK, INK);
+    }
+}
+
+fn ibeam(p: &Painter, o: Pos2) {
+    line(p, o + vec2(0.0, -8.0), o + vec2(0.0, 8.0));
+    line(p, o + vec2(-3.0, -8.0), o + vec2(3.0, -8.0));
+    line(p, o + vec2(-3.0, 8.0), o + vec2(3.0, 8.0));
+    line(p, o + vec2(-2.0, 3.0), o + vec2(2.0, 3.0));
+}
+
+/// Paint cursor `c` at `p` on the given (foreground) painter. Returns false for cursors that should
+/// stay system cursors (hand, zoom, busy states).
+pub fn paint(painter: &Painter, c: Cursor, p: Pos2) -> bool {
+    match c {
+        Cursor::Arrow => arrow(painter, p, false),
+        Cursor::ArrowHollow => arrow(painter, p, true),
+        Cursor::Move => {
+            arrow(painter, p, false);
+            double_arrow(painter, p + vec2(15.0, 18.0), vec2(1.0, 0.0));
+        }
+        Cursor::Crosshair | Cursor::Eyedropper => crosshair(painter, p),
+        Cursor::ResizeH => double_arrow(painter, p, vec2(1.0, 0.0)),
+        Cursor::ResizeV => double_arrow(painter, p, vec2(0.0, 1.0)),
+        Cursor::ResizeNwSe => double_arrow(painter, p, vec2(1.0, 1.0)),
+        Cursor::ResizeNeSw => double_arrow(painter, p, vec2(1.0, -1.0)),
+        Cursor::Rotate => rotate(painter, p),
+        Cursor::Pen => pen(painter, p, "*"),
+        Cursor::PenAdd => pen(painter, p, "+"),
+        Cursor::PenDelete => pen(painter, p, "-"),
+        Cursor::PenClose => pen(painter, p, "o"),
+        Cursor::PenContinue => pen(painter, p, "/"),
+        Cursor::Text => ibeam(painter, p),
+        _ => return false,
+    }
+    let _ = pos2;
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn arrow_hotspot_is_tip() {
+        let pts = arrow_points(pos2(10.0, 20.0));
+        assert_eq!(pts[0], pos2(10.0, 20.0));
+        assert!(pts.iter().all(|q| q.x >= 10.0 && q.y >= 20.0));
+    }
+}

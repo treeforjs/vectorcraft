@@ -7,3 +7,7 @@ publish = false
 
 [dependencies]
 serde_json = { workspace = true }
+drawcraft-doc = { workspace = true }
+drawcraft-geom = { workspace = true }
+drawcraft-color = { workspace = true }
+drawcraft-render = { workspace = true }

@@ -8,6 +8,7 @@
 pub mod canvas;
 pub mod chrome;
 pub mod control;
+pub mod cursors;
 pub mod dialogs;
 pub mod dock;
 pub mod icon_data;
@@ -329,6 +330,9 @@ impl DrawcraftApp {
         self.last_time = now;
         self.sync_views();
         self.drain_control(ctx);
+        if !self.synthetic.is_empty() {
+            ctx.request_repaint();
+        }
         self.collect_screenshots(ctx);
         self.issue_screenshots(ctx);
         self.drain_inbox();
@@ -354,14 +358,19 @@ impl DrawcraftApp {
 
     /// Inject synthetic events (one press/release step per frame).
     pub fn raw_input_hook(&mut self, raw: &mut egui::RawInput) {
-        if !self.synthetic.is_empty() {
-            let n = self
-                .synthetic
-                .iter()
-                .position(|e| matches!(e, egui::Event::PointerButton { pressed: false, .. } | egui::Event::Key { pressed: false, .. }))
-                .map_or(self.synthetic.len(), |i| i + 1);
-            raw.events.extend(self.synthetic.drain(..n));
+        if self.synthetic.is_empty() {
+            return;
         }
+        // Pointer events go one per frame so egui sees presses, drags and releases as real input;
+        // keyboard sequences go up to the key release.
+        let n = match self.synthetic[0] {
+            egui::Event::PointerMoved(_) | egui::Event::PointerButton { .. } => 1,
+            _ => self.synthetic.iter().position(|e| matches!(e, egui::Event::Key { pressed: false, .. })).map_or(self.synthetic.len(), |i| i + 1),
+        };
+        if let Some(egui::Event::PointerMoved(p) | egui::Event::PointerButton { pos: p, .. }) = self.synthetic.first() {
+            raw.events.push(egui::Event::PointerMoved(*p));
+        }
+        raw.events.extend(self.synthetic.drain(..n));
     }
 
     /// Lay out the whole window.

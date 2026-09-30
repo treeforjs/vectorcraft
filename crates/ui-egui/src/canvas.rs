@@ -243,36 +243,17 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
             if m.alt { egui::CursorIcon::ZoomOut } else { egui::CursorIcon::ZoomIn }
         } else if let Some(p) = app.hover_doc {
             let c = app.session.cursor(p, mods(m, space), view_info);
-            if matches!(c, Cursor::Pen | Cursor::PenAdd | Cursor::PenDelete | Cursor::PenClose | Cursor::PenContinue)
-                && let Some(hp) = ui.input(|i| i.pointer.hover_pos())
-            {
-                pen_cursor_badge(ui, hp, c, &t);
+            let painter = ui.ctx().layer_painter(egui::LayerId::new(egui::Order::Tooltip, egui::Id::new("tool-cursor")));
+            // Caps Lock gives precise (crosshair) cursors, like Illustrator; env opt-out for system cursors.
+            let custom = std::env::var_os("DRAWCRAFT_SYSTEM_CURSORS").is_none();
+            match ui.input(|i| i.pointer.hover_pos()) {
+                Some(hp) if custom && crate::cursors::paint(&painter, c, hp) => egui::CursorIcon::None,
+                _ => cursor_icon(c),
             }
-            cursor_icon(c)
         } else {
             egui::CursorIcon::Default
         };
         ui.ctx().set_cursor_icon(cur);
-    }
-}
-
-fn pen_cursor_badge(ui: &Ui, p: Pos2, c: Cursor, t: &Tokens) {
-    let painter = ui.ctx().layer_painter(egui::LayerId::new(egui::Order::Tooltip, egui::Id::new("pen-cursor")));
-    let r = egui::Rect::from_min_size(p + vec2(6.0, 4.0), vec2(16.0, 16.0));
-    // Pen nib glyph (black with white outline, like a system cursor).
-    let tip = r.left_top();
-    let nib = vec![tip, tip + vec2(11.0, 4.0), tip + vec2(13.0, 13.0), tip + vec2(4.0, 11.0)];
-    painter.add(Shape::convex_polygon(nib, Color32::BLACK, Stroke::new(1.0, Color32::WHITE)));
-    let _ = t;
-    let badge = match c {
-        Cursor::PenClose => "o",
-        Cursor::PenContinue => "/",
-        Cursor::PenAdd => "+",
-        Cursor::PenDelete => "–",
-        _ => "",
-    };
-    if !badge.is_empty() {
-        painter.text(r.right_bottom() + vec2(1.0, -2.0), egui::Align2::LEFT_BOTTOM, badge, egui::FontId::proportional(11.0), Color32::BLACK);
     }
 }
 
