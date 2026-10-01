@@ -257,7 +257,35 @@ pub struct Node {
     pub knockout: bool,
     #[serde(default)]
     pub appearance: Appearance,
+    /// Opacity mask (Transparency panel). Its art lives here, outside the layer tree.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mask: Option<Box<OpacityMask>>,
     pub kind: NodeKind,
+}
+
+/// Opacity mask: the luminance of the mask art sets the object's opacity (white = opaque).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct OpacityMask {
+    /// Mask art in document coordinates.
+    pub art: Arc<Node>,
+    /// Clip: outside the mask art is hidden. Off: outside the mask art stays visible.
+    #[serde(default = "yes")]
+    pub clip: bool,
+    /// Invert the mask's luminance.
+    #[serde(default)]
+    pub invert: bool,
+    /// Disabled masks are kept but not applied.
+    #[serde(default)]
+    pub disabled: bool,
+    /// Linked masks move with the object.
+    #[serde(default = "yes")]
+    pub linked: bool,
+}
+
+impl OpacityMask {
+    pub fn new(art: Node, clip: bool) -> Self {
+        Self { art: Arc::new(art), clip, invert: false, disabled: false, linked: true }
+    }
 }
 
 impl Node {
@@ -272,6 +300,7 @@ impl Node {
             isolate: false,
             knockout: false,
             appearance: Appearance::default(),
+            mask: None,
             kind,
         }
     }
@@ -453,6 +482,11 @@ impl Node {
             }
             NodeKind::Mesh(m) => m.transform(a),
             NodeKind::Repeat(r) => r.transform(a, scale_strokes),
+        }
+        if let Some(m) = &mut self.mask
+            && m.linked
+        {
+            Arc::make_mut(&mut m.art).transform(a, scale_strokes);
         }
     }
     /// Visit this node and all descendants depth first (paint order).

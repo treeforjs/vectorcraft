@@ -1,5 +1,6 @@
 //! Transparency panel: blend mode, opacity (field + slider popup), object/mask thumbnails with the
-//! opacity-mask controls (on the roadmap), Isolate Blending and Knockout Group.
+//! opacity-mask controls (make/release, link, clip, invert; Shift-click the mask to disable it),
+//! Isolate Blending and Knockout Group.
 
 use drawcraft_color::{BlendMode, Paint};
 use egui::{Sense, Stroke, StrokeKind, Ui, vec2};
@@ -49,31 +50,78 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     widgets::divider(ui);
     // Thumbnails and the opacity-mask controls.
     let hide_thumbs: bool = pstate(ui.ctx(), "tr-hide-thumbs");
+    let mask = n.as_ref().and_then(|n| n.mask.as_deref().cloned());
+    let (new_clip, new_invert) = app.session.new_mask_defaults();
     ui.horizontal(|ui| {
         if !hide_thumbs {
             let (r, _) = ui.allocate_exact_size(vec2(60.0, 50.0), Sense::hover());
             ui.painter().rect_filled(r, 0.0, egui::Color32::WHITE);
             ui.painter().rect_stroke(r, 0.0, Stroke::new(1.5, t.border), StrokeKind::Outside);
-            if has {
-                let (f, s) = current_paints(app);
-                let inner = r.shrink2(vec2(6.0, 10.0));
-                widgets::paint_chip(ui, inner, &f);
-                if let Some(c) = s.color()
-                    && !matches!(s, Paint::None)
-                {
-                    ui.painter().rect_stroke(inner, 0.0, Stroke::new(1.0, super::c32(&c)), StrokeKind::Middle);
+            if let Some(n) = &n {
+                let mut bare = n.clone();
+                bare.mask = None;
+                if !node_thumb(app, ui, "tr-obj", &bare, r.shrink(3.0), None) {
+                    let (f, s) = current_paints(app);
+                    let inner = r.shrink2(vec2(6.0, 10.0));
+                    widgets::paint_chip(ui, inner, &f);
+                    if let Some(c) = s.color()
+                        && !matches!(s, Paint::None)
+                    {
+                        ui.painter().rect_stroke(inner, 0.0, Stroke::new(1.0, super::c32(&c)), StrokeKind::Middle);
+                    }
                 }
             }
-            let (m, _) = ui.allocate_exact_size(vec2(50.0, 50.0), Sense::hover());
-            ui.painter().rect_stroke(m, 0.0, Stroke::new(1.0, t.input_border), StrokeKind::Inside);
-            icons::paint(ui, "dc-mask-none", m.shrink(12.0), t.text_disabled);
+            match &mask {
+                Some(m) => {
+                    // Link toggle between the object and its mask.
+                    let (lr, lresp) = ui.allocate_exact_size(vec2(14.0, 50.0), Sense::click());
+                    icons::paint(
+                        ui,
+                        if m.linked { "link" } else { "link-2-off" },
+                        egui::Rect::from_center_size(lr.center(), vec2(12.0, 12.0)),
+                        t.icon,
+                    );
+                    if lresp.on_hover_text(if m.linked { "Unlink the mask" } else { "Link the mask" }).clicked() {
+                        app.run("transparency.setOpacityMask", json!({"linked": !m.linked})).ok();
+                    }
+                    let (mr, mresp) = ui.allocate_exact_size(vec2(50.0, 50.0), Sense::click());
+                    let bg = if m.clip != m.invert { [0, 0, 0, 255] } else { [255, 255, 255, 255] };
+                    ui.painter().rect_filled(mr, 0.0, egui::Color32::from_rgb(bg[0], bg[1], bg[2]));
+                    node_thumb(app, ui, "tr-mask", &m.art, mr.shrink(2.0), Some(bg));
+                    ui.painter().rect_stroke(mr, 0.0, Stroke::new(1.0, t.input_border), StrokeKind::Inside);
+                    if m.disabled {
+                        let red = Stroke::new(2.0, egui::Color32::from_rgb(220, 40, 40));
+                        ui.painter().line_segment([mr.left_top(), mr.right_bottom()], red);
+                        ui.painter().line_segment([mr.right_top(), mr.left_bottom()], red);
+                    }
+                    let shift = ui.input(|i| i.modifiers.shift);
+                    if mresp.on_hover_text("Shift-click to disable or enable the mask").clicked() && shift {
+                        app.run(if m.disabled { "transparency.enableOpacityMask" } else { "transparency.disableOpacityMask" }, json!({})).ok();
+                    }
+                }
+                None => {
+                    let (m, _) = ui.allocate_exact_size(vec2(50.0, 50.0), Sense::hover());
+                    ui.painter().rect_stroke(m, 0.0, Stroke::new(1.0, t.input_border), StrokeKind::Inside);
+                    icons::paint(ui, "dc-mask-none", m.shrink(12.0), t.text_disabled);
+                }
+            }
         }
         ui.vertical(|ui| {
-            ui.add_enabled_ui(false, |ui| widgets::flat_button(ui, "Make Mask", 96.0))
-                .inner
-                .on_disabled_hover_text("Opacity masks are on the roadmap");
-            widgets::check(ui, "Clip", true, false);
-            widgets::check(ui, "Invert Mask", false, false);
+            let can_make = selection_len(app) >= 2;
+            let label = if mask.is_some() { "Release" } else { "Make Mask" };
+            let enabled = mask.is_some() || can_make;
+            let r = ui.add_enabled_ui(enabled, |ui| widgets::flat_button(ui, label, 96.0)).inner;
+            if r.on_disabled_hover_text("Select the art and, on top of it, the mask object").clicked() {
+                let id = if mask.is_some() { "transparency.releaseOpacityMask" } else { "transparency.makeOpacityMask" };
+                app.run(id, json!({})).ok();
+            }
+            let (clip, invert) = mask.as_ref().map(|m| (m.clip, m.invert)).unwrap_or((new_clip, new_invert));
+            if widgets::check(ui, "Clip", clip, mask.is_some()) {
+                app.run("transparency.setOpacityMask", json!({"clip": !clip})).ok();
+            }
+            if widgets::check(ui, "Invert Mask", invert, mask.is_some()) {
+                app.run("transparency.setOpacityMask", json!({"invert": !invert})).ok();
+            }
         });
     });
     if !pstate::<bool>(ui.ctx(), "tr-hide-options") {
@@ -91,7 +139,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-pub fn menu(_app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
     let hide_thumbs: bool = pstate(ui.ctx(), "tr-hide-thumbs");
     let hide_opts: bool = pstate(ui.ctx(), "tr-hide-options");
     if menu_item(ui, if hide_thumbs { "Show Thumbnails" } else { "Hide Thumbnails" }, true, false) {
@@ -101,13 +149,105 @@ pub fn menu(_app: &mut DrawcraftApp, ui: &mut Ui) {
         set_pstate(ui.ctx(), "tr-hide-options", !hide_opts);
     }
     ui.separator();
-    for l in ["Make Opacity Mask", "Release Opacity Mask", "Disable Opacity Mask", "Unlink Opacity Mask"] {
-        menu_item(ui, l, false, false);
+    let mask = first_selected(app).and_then(|n| n.mask.as_deref().cloned());
+    let can_make = selection_len(app) >= 2 && mask.is_none();
+    let items: [(&str, &str, bool); 4] = match &mask {
+        Some(m) => [
+            ("Make Opacity Mask", "transparency.makeOpacityMask", false),
+            ("Release Opacity Mask", "transparency.releaseOpacityMask", true),
+            if m.disabled {
+                ("Enable Opacity Mask", "transparency.enableOpacityMask", true)
+            } else {
+                ("Disable Opacity Mask", "transparency.disableOpacityMask", true)
+            },
+            if m.linked {
+                ("Unlink Opacity Mask", "transparency.unlinkOpacityMask", true)
+            } else {
+                ("Link Opacity Mask", "transparency.linkOpacityMask", true)
+            },
+        ],
+        None => [
+            ("Make Opacity Mask", "transparency.makeOpacityMask", can_make),
+            ("Release Opacity Mask", "", false),
+            ("Disable Opacity Mask", "", false),
+            ("Unlink Opacity Mask", "", false),
+        ],
+    };
+    for (label, id, enabled) in items {
+        if menu_item(ui, label, enabled, false) {
+            app.run(id, json!({})).ok();
+        }
     }
     ui.separator();
-    menu_item(ui, "New Opacity Masks Are Clipping", false, true);
-    menu_item(ui, "New Opacity Masks Are Inverted", false, false);
+    let (clip, invert) = app.session.new_mask_defaults();
+    if menu_item(ui, "New Opacity Masks Are Clipping", true, clip) {
+        app.run("transparency.toggleNewMasksClipping", json!({})).ok();
+    }
+    if menu_item(ui, "New Opacity Masks Are Inverted", true, invert) {
+        app.run("transparency.toggleNewMasksInverted", json!({})).ok();
+    }
     ui.separator();
     menu_item(ui, "Page Isolated Blending", false, false);
     menu_item(ui, "Page Knockout Group", false, false);
+}
+
+/// A rendered thumbnail of `n` (which may live outside the tree, like mask art). One texture per
+/// slot, re-rendered only when the document revision, object or size changes.
+fn node_thumb(app: &DrawcraftApp, ui: &Ui, slot: &str, n: &drawcraft_doc::Node, r: egui::Rect, bg: Option<[u8; 4]>) -> bool {
+    use std::cell::RefCell;
+    thread_local! {
+        static RENDERER: RefCell<drawcraft_render::Renderer> = RefCell::new(drawcraft_render::Renderer::new());
+    }
+    let Some(st) = app.session.active() else { return false };
+    let px = (r.width().min(r.height()) * ui.ctx().pixels_per_point()).round().max(8.0) as u32;
+    let (slot_id, key) = (egui::Id::new(slot), egui::Id::new((st.uid, st.revision, n.id, bg, px)));
+    let cached: Option<(egui::Id, egui::TextureHandle)> = ui.ctx().data(|d| d.get_temp(slot_id));
+    let tex = match cached {
+        Some((k, tex)) if k == key => Some(tex),
+        _ => RENDERER.with(|rr| rr.borrow_mut().render_node_thumbnail(&st.doc, n, px, bg)).map(|img| {
+            let color = egui::ColorImage::from_rgba_premultiplied([img.width as usize, img.height as usize], &img.pixels);
+            let tex = ui.ctx().load_texture(slot, color, egui::TextureOptions::LINEAR);
+            ui.ctx().data_mut(|d| d.insert_temp(slot_id, (key, tex.clone())));
+            tex
+        }),
+    };
+    let Some(tex) = tex else { return false };
+    let side = r.width().min(r.height());
+    let dst = egui::Rect::from_center_size(r.center(), vec2(side, side));
+    ui.painter().image(tex.id(), dst, egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)), egui::Color32::WHITE);
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use drawcraft_engine::Session;
+
+    /// Run the panel and its ≡ menu for one headless frame.
+    fn frame(app: &mut DrawcraftApp) {
+        let ctx = egui::Context::default();
+        let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {
+            show(app, ui);
+            menu(app, ui);
+        });
+        out.textures_delta.clear();
+    }
+
+    #[test]
+    fn panel_draws_with_and_without_a_mask() {
+        let mut app = DrawcraftApp::new(Session::new(), Default::default());
+        let r = |app: &mut DrawcraftApp, id: &str, p: serde_json::Value| app.session.execute(id, &p).unwrap();
+        r(&mut app, "file.new", json!({"width": 100, "height": 100}));
+        frame(&mut app);
+        let a = r(&mut app, "shape.rectangle", json!({"x": 0, "y": 0, "width": 50, "height": 50}))["id"].clone();
+        let b = r(&mut app, "shape.rectangle", json!({"x": 10, "y": 10, "width": 20, "height": 20}))["id"].clone();
+        r(&mut app, "select.set", json!({"ids": [a, b]}));
+        frame(&mut app);
+        r(&mut app, "transparency.makeOpacityMask", json!({}));
+        frame(&mut app);
+        r(&mut app, "transparency.disableOpacityMask", json!({}));
+        r(&mut app, "transparency.unlinkOpacityMask", json!({}));
+        frame(&mut app);
+        assert_eq!(app.session.execute("transparency.opacityMaskInfo", &json!({})).unwrap()[0]["disabled"], true);
+    }
 }

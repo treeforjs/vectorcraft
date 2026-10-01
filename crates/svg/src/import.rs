@@ -166,9 +166,7 @@ impl Importer {
     fn group(&mut self, g: &usvg::Group, acc: Affine) -> Option<Node> {
         let ts = acc * aff(g.transform());
         let label = if g.id().is_empty() { "a group".to_string() } else { format!("'{}'", g.id()) };
-        if g.mask().is_some() {
-            self.warn(format!("mask on {label} ignored"));
-        }
+        let mask = g.mask().and_then(|m| self.opacity_mask(m, ts, &label));
         if !g.filters().is_empty() {
             self.warn(format!("filter on {label} ignored"));
         }
@@ -187,7 +185,11 @@ impl Importer {
             }
             // An id-less wrapper around a single object (usvg adds these for opacity/transform on
             // shapes): fold its opacity and blend into the object.
-            if g.id().is_empty() && children.len() == 1 && (g.blend_mode() == usvg::BlendMode::Normal || children[0].blend == BlendMode::Normal) {
+            if g.id().is_empty()
+                && mask.is_none()
+                && children.len() == 1
+                && (g.blend_mode() == usvg::BlendMode::Normal || children[0].blend == BlendMode::Normal)
+            {
                 let mut c = Arc::unwrap_or_clone(children.into_iter().next().unwrap());
                 c.opacity *= g.opacity().get();
                 if g.blend_mode() != usvg::BlendMode::Normal {
@@ -201,7 +203,24 @@ impl Importer {
         n.opacity = g.opacity().get();
         n.blend = blend(g.blend_mode());
         n.isolate = g.isolate();
+        n.mask = mask;
         Some(n)
+    }
+
+    /// `<mask>` → opacity mask (luminance; alpha masks are approximated by their luminance).
+    fn opacity_mask(&mut self, m: &usvg::Mask, ts: Affine, label: &str) -> Option<Box<drawcraft_doc::OpacityMask>> {
+        if m.kind() == usvg::MaskType::Alpha {
+            self.warn(format!("alpha mask on {label} imported as a luminance opacity mask"));
+        }
+        if m.mask().is_some() {
+            self.warn(format!("nested mask on {label} ignored"));
+        }
+        let children = self.children(m.root(), ts);
+        if children.is_empty() {
+            return None;
+        }
+        let art = self.named("", NodeKind::Group { children, clip: false });
+        Some(Box::new(drawcraft_doc::OpacityMask::new(art, true)))
     }
 
     fn clip_node(&mut self, cp: &usvg::ClipPath, ts: Affine) -> Option<Node> {

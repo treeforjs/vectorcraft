@@ -195,3 +195,65 @@ fn arrowheads_render() {
 
 use drawcraft_doc::Arrowhead;
 use drawcraft_geom::Point;
+
+/// A red 10..90 square masked by a white square covering only its left half (10..50),
+/// plus a mid-grey strip (50..70) — rendered both multi- and single-threaded.
+fn masked_doc(clip: bool, invert: bool) -> Document {
+    let mut d = Document::new(100.0, 100.0);
+    let mut n = rect_node(&mut d, Rect::new(10.0, 10.0, 90.0, 90.0), Paint::solid(Color::rgb(1.0, 0.0, 0.0)), Paint::None, 0.0);
+    let white = rect_node(&mut d, Rect::new(10.0, 10.0, 50.0, 90.0), Paint::solid(Color::WHITE), Paint::None, 0.0);
+    let grey = rect_node(&mut d, Rect::new(50.0, 10.0, 70.0, 90.0), Paint::solid(Color::rgb(0.5, 0.5, 0.5)), Paint::None, 0.0);
+    let gid = d.alloc_id();
+    let art = Node::group(gid, vec![Arc::new(white), Arc::new(grey)]);
+    let mut m = drawcraft_doc::OpacityMask::new(art, clip);
+    m.invert = invert;
+    n.mask = Some(Box::new(m));
+    let l = d.layers[0].id;
+    d.insert(Some(l), 0, n).unwrap();
+    d
+}
+
+#[test]
+fn opacity_mask_uses_luminance_and_clips() {
+    for threads in [0, 2] {
+        let mut r = Renderer::new();
+        r.threads = threads;
+        let opts = RenderOptions { background: Some([255, 255, 255, 255]), ..Default::default() };
+        let img = r.render(&masked_doc(true, false), 100, 100, Affine::IDENTITY, &opts);
+        assert_eq!(img.pixel(30, 50), [255, 0, 0, 255], "white mask → opaque ({threads} threads)");
+        let mid = img.pixel(60, 50);
+        assert!((100..160).contains(&mid[1]), "grey mask → about half opacity, got {mid:?}");
+        assert_eq!(img.pixel(80, 50), [255, 255, 255, 255], "clip hides outside the mask art");
+    }
+}
+
+#[test]
+fn opacity_mask_without_clip_and_inverted() {
+    let opts = RenderOptions { background: Some([255, 255, 255, 255]), ..Default::default() };
+    let img = Renderer::new().render(&masked_doc(false, false), 100, 100, Affine::IDENTITY, &opts);
+    assert_eq!(img.pixel(80, 50), [255, 0, 0, 255], "no clip: outside the mask art stays visible");
+    let img = Renderer::new().render(&masked_doc(true, true), 100, 100, Affine::IDENTITY, &opts);
+    assert_eq!(img.pixel(30, 50), [255, 255, 255, 255], "inverted white → hidden");
+    assert_eq!(img.pixel(80, 50), [255, 0, 0, 255], "inverted clip background → visible");
+}
+
+#[test]
+fn disabled_or_outline_mask_draws_unmasked() {
+    let mut d = masked_doc(true, false);
+    let id = d.layers[0].children().unwrap()[0].id;
+    let n = d.node_mut(id).unwrap();
+    n.mask.as_mut().unwrap().disabled = true;
+    let opts = RenderOptions { background: Some([255, 255, 255, 255]), ..Default::default() };
+    let img = Renderer::new().render(&d, 100, 100, Affine::IDENTITY, &opts);
+    assert_eq!(img.pixel(80, 50), [255, 0, 0, 255]);
+}
+
+#[test]
+fn linked_mask_moves_with_object() {
+    let mut d = masked_doc(true, false);
+    let id = d.layers[0].children().unwrap()[0].id;
+    d.node_mut(id).unwrap().transform(Affine::translate((5.0, 0.0)), false);
+    let opts = RenderOptions { background: Some([255, 255, 255, 255]), ..Default::default() };
+    let img = Renderer::new().render(&d, 100, 100, Affine::IDENTITY, &opts);
+    assert_eq!(img.pixel(52, 50), [255, 0, 0, 255], "mask art moved by 5 too");
+}

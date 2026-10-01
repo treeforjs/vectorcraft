@@ -268,12 +268,21 @@ impl Renderer {
 
     /// Render a single node (thumbnails, previews) fitted into `size`×`size` pixels.
     pub fn render_thumbnail(&mut self, doc: &Document, id: NodeId, size: u32) -> Option<Rendered> {
-        let n = doc.node(id)?;
+        self.render_node_thumbnail(doc, doc.node(id)?, size, None)
+    }
+
+    /// Render any node (also one outside the tree, e.g. opacity-mask art) fitted into
+    /// `size`×`size` pixels, optionally over a solid premultiplied background.
+    pub fn render_node_thumbnail(&mut self, doc: &Document, n: &Node, size: u32, background: Option<[u8; 4]>) -> Option<Rendered> {
         let b = brush_fx::cull_bounds(n)?;
         let s = (size as f64 - 2.0) / b.width().max(b.height()).max(1e-6);
         let view = Affine::translate((size as f64 / 2.0, size as f64 / 2.0)) * Affine::scale(s) * Affine::translate(-b.center().to_vec2());
         let w = size.clamp(1, u16::MAX as u32) as u16;
         let mut ctx = single_threaded_context(w, w);
+        if let Some(bg) = background {
+            ctx.set_paint(peniko::Color::from_rgba8(bg[0], bg[1], bg[2], bg[3]));
+            ctx.fill_rect(&kurbo::Rect::new(0.0, 0.0, w as f64, w as f64));
+        }
         let frame = Frame { doc, view, visible: b.inflate(1.0, 1.0), px: 1.0 / s, opts: &RenderOptions::default() };
         self.draw_node(&mut ctx, &frame, n, true);
         ctx.flush();
@@ -342,6 +351,33 @@ impl Renderer {
             None if !a.is_container() => return,
             None => {}
         }
+        if let Some(m) = a.mask.as_deref()
+            && !m.disabled
+            && !f.opts.outline
+        {
+            let mask = self.opacity_mask(f, m, ctx.width(), ctx.height());
+            ctx.set_transform(Affine::IDENTITY);
+            ctx.push_layer(None, None, None, Some(mask), None);
+            self.draw_arc_body(ctx, f, a);
+            ctx.pop_layer();
+            return;
+        }
+        self.draw_arc_body(ctx, f, a);
+    }
+
+    /// Render an opacity mask's art offscreen and turn its luminance into a coverage mask.
+    fn opacity_mask(&mut self, f: &Frame, m: &drawcraft_doc::OpacityMask, w: u16, h: u16) -> vello_cpu::Mask {
+        let mut mctx = single_threaded_context(w, h);
+        self.draw_node(&mut mctx, f, &m.art, true);
+        mctx.flush();
+        let mut pm = Pixmap::new(w, h);
+        mctx.render(&mut pm, &mut self.resources);
+        let data = pm.data().iter().map(|p| mask_value(p.r, p.g, p.b, p.a, m.clip, m.invert)).collect();
+        vello_cpu::Mask::from_parts(data, w, h)
+    }
+
+    /// Everything [`Self::draw_arc`] does after culling.
+    fn draw_arc_body(&mut self, ctx: &mut RenderContext, f: &Frame, a: &Arc<Node>) {
         // Fast path for plain paths: cached geometry, opacity folded into the paint.
         if let NodeKind::Path { rule, guide: false, .. } = &a.kind
             && !f.opts.outline
@@ -696,6 +732,19 @@ impl Renderer {
 /// Number of visible painted fill/stroke items (opacity folding is exact only for one).
 /// A render context on the calling thread. vello_cpu's `RenderContext::new` defaults to a
 /// multithreaded dispatcher, which panics on filter effects (glows, shadows, blur).
+/// Opacity-mask coverage of one premultiplied pixel: luminance, with the area outside the mask
+/// art black (clip) or white (no clip), optionally inverted.
+fn mask_value(r: u8, g: u8, b: u8, a: u8, clip: bool, invert: bool) -> u8 {
+    let mut l = (0.2126 * r as f32 + 0.7152 * g as f32 + 0.0722 * b as f32) / 255.0;
+    if !clip {
+        l += 1.0 - a as f32 / 255.0;
+    }
+    if invert {
+        l = 1.0 - l;
+    }
+    (l.clamp(0.0, 1.0) * 255.0 + 0.5) as u8
+}
+
 pub(crate) fn single_threaded_context(w: u16, h: u16) -> RenderContext {
     RenderContext::new_with(w, h, vello_cpu::RenderSettings { num_threads: 0, ..Default::default() })
 }

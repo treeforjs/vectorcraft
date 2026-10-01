@@ -15,6 +15,7 @@ mod layer;
 mod live;
 pub(crate) mod menucmds;
 mod object;
+mod opacitymask;
 mod paint;
 mod panelcmds;
 mod path;
@@ -132,6 +133,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(path::specs());
         v.extend(select::specs());
         v.extend(paint::specs());
+        v.extend(opacitymask::specs());
         v.extend(layer::specs());
         v.extend(draw2::specs());
         v.extend(xform::specs());

@@ -543,9 +543,53 @@ impl Writer<'_> {
         }
     }
 
+    /// An object with an opacity mask: `<g mask="url(#…)">` around the unmasked object. The mask
+    /// art goes in `<defs>`; no-clip adds a white backdrop and invert a colour-inverting filter.
+    fn masked(&mut self, n: &Node, m: &drawcraft_doc::OpacityMask) {
+        const BIG: &str = "x=\"-100000\" y=\"-100000\" width=\"200000\" height=\"200000\"";
+        let mid = self.fresh_id("mask");
+        let (body, depth) = (std::mem::take(&mut self.body), self.depth);
+        self.depth = 2;
+        self.node(&m.art);
+        let art = std::mem::replace(&mut self.body, body);
+        self.depth = depth;
+        let inv = m.invert.then(|| {
+            let fid = self.fresh_id("invert");
+            self.def(1, &format!("<filter id=\"{fid}\" filterUnits=\"userSpaceOnUse\" color-interpolation-filters=\"sRGB\" {BIG}>"));
+            self.def(2, "<feColorMatrix type=\"matrix\" values=\"-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0\"/>");
+            self.def(1, "</filter>");
+            fid
+        });
+        self.def(1, &format!("<mask id=\"{mid}\" maskUnits=\"userSpaceOnUse\" {BIG}>"));
+        if let Some(fid) = &inv {
+            self.def(1, &format!("<g filter=\"url(#{fid})\">"));
+        }
+        if !m.clip || m.invert {
+            let c = if m.clip { "black" } else { "white" };
+            self.def(1, &format!("<rect {BIG} fill=\"{c}\"/>"));
+        }
+        self.defs.push_str(&art);
+        if inv.is_some() {
+            self.def(1, "</g>");
+        }
+        self.def(1, "</mask>");
+        self.line(&format!("<g mask=\"url(#{mid})\">"));
+        self.depth += 1;
+        let mut bare = n.clone();
+        bare.mask = None;
+        self.node(&bare);
+        self.depth -= 1;
+        self.line("</g>");
+    }
+
     fn node(&mut self, n: &Node) {
         if !n.visible {
             return;
+        }
+        if let Some(m) = n.mask.as_deref()
+            && !m.disabled
+        {
+            return self.masked(n, m);
         }
         match &n.kind {
             NodeKind::Layer { template: true, .. } => {}

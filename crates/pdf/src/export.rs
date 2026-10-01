@@ -315,6 +315,37 @@ impl Exporter<'_> {
         }
     }
 
+    /// Opacity mask → luminosity soft mask. Outside the art the backdrop is black (clip) or white;
+    /// invert is a white Difference rect on top (luminance is linear, so luma(1 − c) = 1 − luma(c)).
+    fn soft_mask(&mut self, s: &mut Surface, m: &drawcraft_doc::OpacityMask, page: Rect) -> krilla::mask::Mask {
+        let backdrop = to_path(&page.inflate(1.0, 1.0).to_path(0.1));
+        let white = || Fill { paint: rgb::Color::new(255, 255, 255).into(), opacity: NormalizedF32::ONE, rule: krilla::paint::FillRule::NonZero };
+        let mut sb = s.stream_builder();
+        let mut ms = sb.surface();
+        // An opaque backdrop when it matters: white outside the art (no clip), or black for the
+        // inverting Difference pass below to turn white.
+        if let Some(bp) = &backdrop
+            && (!m.clip || m.invert)
+        {
+            let c = if m.clip { rgb::Color::new(0, 0, 0) } else { rgb::Color::new(255, 255, 255) };
+            ms.set_stroke(None);
+            ms.set_fill(Some(Fill { paint: c.into(), opacity: NormalizedF32::ONE, rule: krilla::paint::FillRule::NonZero }));
+            ms.draw_path(bp);
+        }
+        self.node(&mut ms, &m.art, page, true);
+        if let Some(bp) = &backdrop
+            && m.invert
+        {
+            ms.push_blend_mode(krilla::blend::BlendMode::Difference);
+            ms.set_stroke(None);
+            ms.set_fill(Some(white()));
+            ms.draw_path(bp);
+            ms.pop();
+        }
+        ms.finish();
+        krilla::mask::Mask::new(sb.finish(), krilla::mask::MaskType::Luminosity)
+    }
+
     fn node(&mut self, s: &mut Surface, n: &Node, page: Rect, force: bool) {
         if !force && !n.visible {
             return;
@@ -345,6 +376,13 @@ impl Exporter<'_> {
         }
         if n.knockout {
             self.warn("knockout groups are exported as normal groups");
+        }
+        if let Some(m) = n.mask.as_deref()
+            && !m.disabled
+        {
+            let mask = self.soft_mask(s, m, page);
+            s.push_mask(mask);
+            pushes += 1;
         }
         match &n.kind {
             NodeKind::Layer { children, .. } | NodeKind::Group { children, clip: false } => {

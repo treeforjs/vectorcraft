@@ -19,6 +19,10 @@ pub struct MenuState {
     pub saved_selections: Vec<(String, String, Vec<NodeId>)>,
     /// View → Guides → Lock Guides.
     pub guides_locked: bool,
+    /// Transparency panel menu: "New Opacity Masks Are Clipping" turned off.
+    pub new_masks_unclipped: bool,
+    /// Transparency panel menu: "New Opacity Masks Are Inverted".
+    pub new_masks_inverted: bool,
 }
 
 pub fn specs() -> Vec<CommandSpec> {

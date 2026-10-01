@@ -532,3 +532,16 @@ fn creation_date_written() {
     let bytes = export(&d, &PdfOptions { created: Some(1_709_210_096), compress: false, ..Default::default() }).unwrap();
     assert!(String::from_utf8_lossy(&bytes).contains("D:20240229123456"));
 }
+
+#[test]
+fn opacity_mask_exports_as_luminosity_soft_mask() {
+    let mut d = doc(100.0, 100.0);
+    let mut n = rect_node(Rect::new(10.0, 10.0, 90.0, 90.0), Color::rgb(1.0, 0.0, 0.0));
+    let art = rect_node(Rect::new(10.0, 10.0, 50.0, 90.0), Color::WHITE);
+    n.mask = Some(Box::new(drawcraft_doc::OpacityMask::new(art, true)));
+    add(&mut d, n);
+    let bytes = export(&d, &PdfOptions { compress: false, ..Default::default() }).unwrap();
+    let text = String::from_utf8_lossy(&bytes);
+    assert!(text.contains("/SMask"), "soft mask in an ExtGState");
+    assert!(text.contains("/Luminosity"));
+}

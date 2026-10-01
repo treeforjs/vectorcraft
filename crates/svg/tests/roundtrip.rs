@@ -309,8 +309,9 @@ fn stroke_alignment_approximations() {
     let b = rect_node(&mut d, Rect::new(60.0, 0.0, 110.0, 50.0), ap);
     let s = export(&doc_with(vec![a, b]), &ExportOptions::default());
     assert!(s.contains("<clipPath") && s.contains("<mask") && s.contains("stroke-width=\"8\""), "{s}");
-    let (_, warnings) = import_with_report(&s).unwrap();
-    assert!(warnings.iter().any(|w| w.contains("mask")));
+    // The outside stroke's mask comes back as an opacity mask (same pixels, no warning).
+    let (r, warnings) = import_with_report(&s).unwrap();
+    assert!(art(&r).iter().any(|n| n.mask.is_some()), "{warnings:?}");
 }
 
 #[test]
@@ -581,7 +582,8 @@ fn import_clip_mask_and_warnings() {
     let a = art(&d);
     assert!(matches!(a[0].kind, NodeKind::Group { clip: true, .. }));
     assert!(close_rect(a[0].geometric_bounds().unwrap(), Rect::new(25.0, 25.0, 75.0, 75.0), 0.01));
-    assert!(w.iter().any(|w| w.contains("mask")), "{w:?}");
+    assert!(a.iter().any(|n| n.mask.is_some()), "<mask> imports as an opacity mask");
+    assert!(!w.iter().any(|w| w.contains("mask")), "{w:?}");
     assert!(w.iter().any(|w| w.contains("pattern")), "{w:?}");
 }
 
@@ -637,4 +639,46 @@ fn full_document_roundtrip_is_stable() {
     let strip = |s: &str| s.lines().filter(|l| !l.contains("<title>")).collect::<Vec<_>>().join("\n");
     assert_eq!(strip(&s1b), strip(&s2));
     let _ = PathData::default();
+}
+
+fn masked_doc(clip: bool, invert: bool) -> Document {
+    let mut d = Document::new(200.0, 200.0);
+    let red = Appearance::basic(Paint::solid(Color::rgb(1.0, 0.0, 0.0)), Paint::None, 0.0);
+    let white = Appearance::basic(Paint::solid(Color::WHITE), Paint::None, 0.0);
+    let mut n = rect_node(&mut d, Rect::new(10.0, 10.0, 90.0, 90.0), red);
+    let art = rect_node(&mut d, Rect::new(10.0, 10.0, 50.0, 90.0), white);
+    let mut m = drawcraft_doc::OpacityMask::new(art, clip);
+    m.invert = invert;
+    n.mask = Some(Box::new(m));
+    let l = d.layers[0].id;
+    d.insert(Some(l), 0, n).unwrap();
+    d
+}
+
+#[test]
+fn opacity_mask_exports_as_svg_mask_and_imports_back() {
+    let d = masked_doc(true, false);
+    let s = export(&d, &ExportOptions::default());
+    assert!(s.contains("<mask id=\"mask-1\""), "{s}");
+    assert!(s.contains("mask=\"url(#mask-1)\""), "{s}");
+    let back = import(&s).unwrap();
+    let masked: Vec<&Node> = art(&back).into_iter().filter(|n| n.mask.is_some()).collect();
+    assert_eq!(masked.len(), 1, "{s}");
+    let m = masked[0].mask.as_deref().unwrap();
+    assert!(close_rect(m.art.geometric_bounds().unwrap(), Rect::new(10.0, 10.0, 50.0, 90.0), 1e-6));
+    assert!(close_rect(masked[0].geometric_bounds().unwrap(), Rect::new(10.0, 10.0, 90.0, 90.0), 1e-6));
+}
+
+#[test]
+fn unclipped_inverted_mask_exports_backdrop_and_filter() {
+    let s = export(&masked_doc(false, true), &ExportOptions::default());
+    assert!(s.contains("<feColorMatrix"), "{s}");
+    assert!(s.contains("fill=\"white\""), "{s}");
+    let disabled = {
+        let mut d = masked_doc(true, false);
+        let id = d.layers[0].children().unwrap()[0].id;
+        d.node_mut(id).unwrap().mask.as_mut().unwrap().disabled = true;
+        export(&d, &ExportOptions::default())
+    };
+    assert!(!disabled.contains("<mask"), "disabled masks are not exported");
 }
