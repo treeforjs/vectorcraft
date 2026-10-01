@@ -116,6 +116,25 @@ mod tests {
     }
 
     #[test]
+    fn paste_never_lands_in_an_object_that_reused_an_undone_layers_id() {
+        // Found by the model-based test: undo restores the id counter, so a compound path made
+        // after undoing New Layer gets the dead layer's id, which was still the active layer.
+        let mut s = session();
+        let r = s.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap()["id"].clone();
+        s.execute("select.set", &json!({"ids": [r]})).unwrap();
+        s.execute("edit.copy", &json!({})).unwrap();
+        let layer = s.execute("layer.new", &json!({})).unwrap()["id"].as_u64().unwrap();
+        s.execute("edit.undo", &json!({})).unwrap();
+        s.execute("select.set", &json!({"ids": [r]})).unwrap();
+        let c = s.execute("object.compoundPath.make", &json!({})).unwrap()["id"].as_u64().unwrap();
+        assert_eq!(c, layer, "the scenario needs the id to be reused");
+        s.execute("edit.paste", &json!({})).unwrap();
+        let d = &s.doc().unwrap().doc;
+        let compound = d.node(NodeId(c)).unwrap();
+        assert!(compound.children().unwrap().iter().all(|ch| matches!(ch.kind, drawcraft_doc::NodeKind::Path { .. })));
+    }
+
+    #[test]
     fn foreign_svg_and_non_svg_text() {
         let mut s = session();
         let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="red"/><rect width="2" height="2"/></svg>"##;

@@ -13,7 +13,7 @@ mod tooling;
 use std::sync::Arc;
 
 use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{Document, NodeId, Selection};
+use drawcraft_doc::{Document, NodeId, NodeKind, Selection};
 use drawcraft_geom::Affine;
 use drawcraft_tools::{PaintDefaults, Tool};
 use serde_json::Value;
@@ -130,12 +130,14 @@ impl DocState {
     }
     /// Where new art is inserted: the isolation container, else the active layer.
     pub fn insertion_parent(&self) -> Option<NodeId> {
+        // Ids are reused after undo (the id counter is part of the document), so a remembered
+        // layer or isolated group must still be one: a pasted group must never land in a path.
         if let Some(i) = self.isolation
-            && self.doc.node(i).is_some()
+            && self.doc.node(i).is_some_and(|n| matches!(n.kind, NodeKind::Group { .. } | NodeKind::Layer { .. }))
         {
             return Some(i);
         }
-        self.active_layer.filter(|l| self.doc.node(*l).is_some_and(|n| !n.locked)).or_else(|| self.doc.default_layer())
+        self.active_layer.filter(|l| self.doc.node(*l).is_some_and(|n| n.is_layer() && !n.locked)).or_else(|| self.doc.default_layer())
     }
 }
 
