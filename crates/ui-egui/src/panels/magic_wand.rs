@@ -62,3 +62,23 @@ pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
         app.run("magicWand.set", json!({ "reset": true })).ok();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn panel_and_menu_draw_headless() {
+        let mut app = DrawcraftApp::new(drawcraft_engine::Session::new(), Default::default());
+        app.session.execute("file.new", &json!({"width": 100, "height": 100})).unwrap();
+        app.session.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap();
+        for _ in 0..2 {
+            let ctx = egui::Context::default();
+            let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {
+                show(&mut app, ui);
+                menu(&mut app, ui);
+            });
+            out.textures_delta.clear();
+        }
+    }
+}

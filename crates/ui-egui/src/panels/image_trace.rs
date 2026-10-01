@@ -21,13 +21,17 @@ struct TraceUi {
 
 fn presets(app: &mut DrawcraftApp) -> Vec<(String, Value)> {
     let v = app.session.execute("imageTrace.presets", &json!({})).unwrap_or_default();
-    v["presets"].as_array().map(|a| a.iter().map(|p| (p["name"].as_str().unwrap_or("").to_string(), p["params"].clone())).collect()).unwrap_or_default()
+    v["presets"]
+        .as_array()
+        .map(|a| a.iter().map(|p| (p["name"].as_str().unwrap_or("").to_string(), p["params"].clone())).collect())
+        .unwrap_or_default()
 }
 
 /// What the selection is: an Image Trace object, a plain image, or neither.
 fn target(app: &DrawcraftApp) -> (bool, bool) {
     let Some(n) = first_selected(app) else { return (false, false) };
-    let trace = n.name.as_deref() == Some("Image Trace") && n.children().is_some_and(|c| c.first().is_some_and(|i| matches!(i.kind, drawcraft_doc::NodeKind::Image(_))));
+    let trace = n.name.as_deref() == Some("Image Trace")
+        && n.children().is_some_and(|c| c.first().is_some_and(|i| matches!(i.kind, drawcraft_doc::NodeKind::Image(_))));
     (trace, matches!(n.kind, drawcraft_doc::NodeKind::Image(_)))
 }
 
@@ -42,7 +46,11 @@ fn slider(ui: &mut Ui, label: &str, v: &mut f64, range: std::ops::RangeInclusive
     let mut out = (false, false);
     ui.horizontal(|ui| {
         ui.add_sized([74.0, 22.0], egui::Label::new(egui::RichText::new(label).size(12.0)));
-        let r = ui.add(egui::Slider::new(v, range).suffix(suffix).integer());
+        // The theme's widget fill matches the panel, which would hide the rail.
+        let t = crate::theme::Tokens::get(ui.ctx());
+        ui.visuals_mut().widgets.inactive.bg_fill = t.input_border;
+        ui.visuals_mut().selection.bg_fill = t.accent;
+        let r = ui.add(egui::Slider::new(v, range).suffix(suffix).integer().trailing_fill(true));
         out = (r.changed(), r.drag_stopped() || (r.changed() && !r.dragged()));
     });
     out
@@ -79,7 +87,11 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         }
     });
     let bw = st.params["mode"].as_str() == Some("blackAndWhite");
-    let (key, label, range) = if bw { ("threshold", "Threshold", 0.0..=255.0) } else { ("colors", if st.params["mode"] == "grayscale" { "Grays" } else { "Colors" }, 2.0..=256.0) };
+    let (key, label, range) = if bw {
+        ("threshold", "Threshold", 0.0..=255.0)
+    } else {
+        ("colors", if st.params["mode"] == "grayscale" { "Grays" } else { "Colors" }, 2.0..=256.0)
+    };
     let mut v = st.params[key].as_f64().unwrap_or(0.0);
     let (changed, release) = slider(ui, label, &mut v, range, "");
     if changed {
@@ -93,7 +105,9 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         set_pstate(ui.ctx(), "it-advanced-closed", open);
     }
     if open {
-        for (key, label, range, suffix) in [("paths", "Paths", 0.0..=100.0, "%"), ("corners", "Corners", 0.0..=100.0, "%"), ("noise", "Noise", 1.0..=100.0, " px")] {
+        for (key, label, range, suffix) in
+            [("paths", "Paths", 0.0..=100.0, "%"), ("corners", "Corners", 0.0..=100.0, "%"), ("noise", "Noise", 1.0..=100.0, " px")]
+        {
             let mut v = st.params[key].as_f64().unwrap_or(0.0);
             let (changed, release) = slider(ui, label, &mut v, range, suffix);
             if changed {
@@ -151,5 +165,25 @@ pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
     ui.separator();
     if menu_item(ui, "Reset to Default", true, false) {
         set_pstate(ui.ctx(), "image-trace", TraceUi::default());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn panel_and_menu_draw_headless() {
+        let mut app = DrawcraftApp::new(drawcraft_engine::Session::new(), Default::default());
+        app.session.execute("file.new", &json!({"width": 100, "height": 100})).unwrap();
+        app.session.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap();
+        for _ in 0..2 {
+            let ctx = egui::Context::default();
+            let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {
+                show(&mut app, ui);
+                menu(&mut app, ui);
+            });
+            out.textures_delta.clear();
+        }
     }
 }

@@ -7,8 +7,8 @@
 
 use std::collections::BTreeSet;
 
-use drawcraft_doc::{AnchorRef, NodeId, NodeKind};
 use drawcraft_doc::hit::hit_test;
+use drawcraft_doc::{AnchorRef, NodeId, NodeKind};
 use drawcraft_geom::Point;
 use serde_json::{Value, json};
 
