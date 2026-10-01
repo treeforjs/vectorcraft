@@ -126,6 +126,7 @@ pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
         "preferences" => return crate::prefs_dialog::confirm(app),
         "shortcuts" => return crate::shortcut_editor::confirm(app),
         "newWorkspace" | "manageWorkspaces" => return crate::workspaces::confirm(app),
+        "findFont" => return crate::find_font::confirm(app),
         _ => {}
     }
     let copy = d.bool("copy");
@@ -262,6 +263,7 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
         "preferences" => return crate::prefs_dialog::show(app, ctx),
         "shortcuts" => return crate::shortcut_editor::show(app, ctx),
         "newWorkspace" | "manageWorkspaces" => return crate::workspaces::show(app, ctx),
+        "findFont" => return crate::find_font::show(app, ctx),
         _ => {}
     }
     let t = Tokens::get(ctx);

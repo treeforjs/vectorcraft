@@ -60,6 +60,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("file.openRecent9", "Open Recent File 9", "", "{}"),
     ("file.openRecent10", "Open Recent File 10", "", "{}"),
     ("file.clearRecent", "Clear Recent Files", "", "{}"),
+    ("type.findFont", "Find Font…", "", "{} open the Find Font dialog (engine: text.fonts / text.replaceFont / select.font)"),
     ("file.recentFiles", "Recent Files", "", "{} → [path…] most recent first"),
     ("file.export.svg", "Export As SVG…", "", "{path?}"),
     ("file.export.png", "Export As PNG…", "", "{path?, scale?: 1}"),
@@ -168,6 +169,10 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
                 Some(path) => io::open_path(app, &path).map(|_| Value::Null),
                 None => Err("no such recent file".into()),
             }
+        }
+        "type.findFont" => {
+            crate::find_font::open(app);
+            Ok(Value::Null)
         }
         "file.clearRecent" => {
             app.ui.recent_files.clear();
@@ -828,7 +833,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 ),
                 c("Fit Headline", "text.fitHeadline"),
                 Sep,
-                todo("Find Font…"),
+                c("Find Font…", "type.findFont"),
                 sub(
                     "Change Case",
                     vec![

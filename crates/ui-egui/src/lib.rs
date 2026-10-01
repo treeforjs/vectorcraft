@@ -12,6 +12,7 @@ pub mod control;
 pub mod cursors;
 pub mod dialogs;
 pub mod dock;
+pub mod find_font;
 pub mod icon_data;
 pub mod icons;
 pub mod io;
