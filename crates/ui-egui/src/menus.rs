@@ -49,6 +49,18 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("file.saveCopy", "Save a Copy…", "Cmd+Alt+S", "{path?}"),
     ("file.revert", "Revert", "F12", "{}"),
     ("file.place", "Place…", "Cmd+Shift+P", "{path?}"),
+    ("file.openRecent1", "Open Recent File 1", "", "{}"),
+    ("file.openRecent2", "Open Recent File 2", "", "{}"),
+    ("file.openRecent3", "Open Recent File 3", "", "{}"),
+    ("file.openRecent4", "Open Recent File 4", "", "{}"),
+    ("file.openRecent5", "Open Recent File 5", "", "{}"),
+    ("file.openRecent6", "Open Recent File 6", "", "{}"),
+    ("file.openRecent7", "Open Recent File 7", "", "{}"),
+    ("file.openRecent8", "Open Recent File 8", "", "{}"),
+    ("file.openRecent9", "Open Recent File 9", "", "{}"),
+    ("file.openRecent10", "Open Recent File 10", "", "{}"),
+    ("file.clearRecent", "Clear Recent Files", "", "{}"),
+    ("file.recentFiles", "Recent Files", "", "{} → [path…] most recent first"),
     ("file.export.svg", "Export As SVG…", "", "{path?}"),
     ("file.export.png", "Export As PNG…", "", "{path?, scale?: 1}"),
     ("file.exportForScreens", "Export for Screens…", "Cmd+Alt+E", "{path?, scale?}"),
@@ -150,6 +162,18 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
                 None => Err("document has never been saved".into()),
             }
         }
+        id if id.starts_with("file.openRecent") => {
+            let n: usize = id["file.openRecent".len()..].parse().unwrap_or(0);
+            match n.checked_sub(1).and_then(|i| app.ui.recent_files.get(i)).cloned() {
+                Some(path) => io::open_path(app, &path).map(|_| Value::Null),
+                None => Err("no such recent file".into()),
+            }
+        }
+        "file.clearRecent" => {
+            app.ui.recent_files.clear();
+            Ok(Value::Null)
+        }
+        "file.recentFiles" => Ok(json!(app.ui.recent_files)),
         "file.place" => {
             let path = match s("path") {
                 Some(p) => Some(p),
@@ -413,11 +437,32 @@ pub fn dynamic_label(app: &DrawcraftApp, id: &str, label: &str) -> String {
         "view.guides" => if v.guides { "Hide Guides" } else { "Show Guides" }.into(),
         "view.grid" => if v.grid { "Hide Grid" } else { "Show Grid" }.into(),
         "view.guides.lock" => if app.session.guides_locked() { "Unlock Guides" } else { "Lock Guides" }.into(),
+        id if id.starts_with("file.openRecent") => {
+            let n: usize = id["file.openRecent".len()..].parse().unwrap_or(0);
+            n.checked_sub(1)
+                .and_then(|i| app.ui.recent_files.get(i))
+                .map(|p| std::path::Path::new(p).file_name().map_or(p.clone(), |f| f.to_string_lossy().to_string()))
+                .unwrap_or_else(|| "—".into())
+        }
         "edit.undo" => app.session.active().and_then(|d| d.history.undo.last()).map(|h| format!("Undo {}", h.label)).unwrap_or_else(|| "Undo".into()),
         "edit.redo" => app.session.active().and_then(|d| d.history.redo.last()).map(|h| format!("Redo {}", h.label)).unwrap_or_else(|| "Redo".into()),
         _ => label.into(),
     }
 }
+
+/// File → Open Recent Files slots.
+const RECENT_IDS: [&str; 10] = [
+    "file.openRecent1",
+    "file.openRecent2",
+    "file.openRecent3",
+    "file.openRecent4",
+    "file.openRecent5",
+    "file.openRecent6",
+    "file.openRecent7",
+    "file.openRecent8",
+    "file.openRecent9",
+    "file.openRecent10",
+];
 
 /// Effective shortcut of a command: the user's override (Edit → Keyboard Shortcuts) or the default.
 pub fn shortcut_of(id: &str) -> Option<&'static str> {
@@ -444,6 +489,10 @@ pub fn enabled(app: &DrawcraftApp, id: &str) -> bool {
         | "view.fitAll"
         | "view.actualSize" => app.session.active().is_some(),
         "file.revert" => app.session.active().is_some_and(|d| d.path.is_some() && d.is_dirty()),
+        id if id.starts_with("file.openRecent") => {
+            id["file.openRecent".len()..].parse::<usize>().is_ok_and(|n| n >= 1 && n <= app.ui.recent_files.len())
+        }
+        "file.clearRecent" => !app.ui.recent_files.is_empty(),
         "effect.dialog" | "ui.recolorDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "effect.applyLast" => app.last_effect.is_some() && app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "file.export.pdf" => app.session.active().is_some(),
@@ -472,7 +521,12 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("New…", "file.newDialog"),
                 todos("New from Template…", "Cmd+Shift+N"),
                 c("Open…", "file.open"),
-                todo("Open Recent Files"),
+                sub("Open Recent Files", {
+                    let mut v: Vec<Item> = RECENT_IDS.iter().map(|id| c("Recent File", id)).collect();
+                    v.push(Sep);
+                    v.push(c("Clear Recent Files", "file.clearRecent"));
+                    v
+                }),
                 Sep,
                 c("Close", "file.close"),
                 c("Close All", "file.closeAll"),
@@ -629,7 +683,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Create Trim Marks", "object.createTrimMarks"),
                 todo("Flatten Transparency…"),
                 Sep,
-                todo("Make Pixel Perfect"),
+                c("Make Pixel Perfect", "object.makePixelPerfect"),
                 Sep,
                 sub("Slice", vec![todo("Make"), todo("Release"), todo("Create from Guides"), todo("Create from Selection")]),
                 Sep,
@@ -951,7 +1005,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 panel("Brushes", "brushes"),
                 panel("Color", "color"),
                 panel("Color Guide", "colorGuide"),
-                todo("Document Info"),
+                panel("Document Info", "docInfo"),
                 panel("Gradient", "gradient"),
                 panel("Graphic Styles", "graphicStyles"),
                 panel("History", "history"),
@@ -1314,6 +1368,34 @@ fn effect_menu() -> Vec<Item> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn recent_files_track_opens_and_saves() {
+        let dir = std::env::temp_dir().join(format!("dc-recent-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let mut app = DrawcraftApp::new(
+            drawcraft_engine::Session::new(),
+            crate::Services {
+                read: Some(Box::new(|p: &str| std::fs::read(p).map_err(|e| e.to_string()))),
+                write: Some(Box::new(|p: &str, b: &[u8]| std::fs::write(p, b).map_err(|e| e.to_string()))),
+                ..Default::default()
+            },
+        );
+        app.run("file.new", json!({"width": 100, "height": 100})).unwrap();
+        let (a, b) = (dir.join("a.drawcraft"), dir.join("b.drawcraft"));
+        for p in [&a, &b, &a] {
+            app.run("file.saveAs", json!({"path": p.to_string_lossy()})).unwrap();
+        }
+        assert_eq!(app.ui.recent_files, [a.to_string_lossy(), b.to_string_lossy()]);
+        assert_eq!(dynamic_label(&app, "file.openRecent2", ""), "b.drawcraft");
+        assert!(enabled(&app, "file.openRecent2") && !enabled(&app, "file.openRecent3"));
+        app.run("file.openRecent2", json!({})).unwrap();
+        assert_eq!(app.session.documents().len(), 2);
+        assert_eq!(app.ui.recent_files[0], b.to_string_lossy(), "reopening moves it to the top");
+        app.run("file.clearRecent", json!({})).unwrap();
+        assert!(app.ui.recent_files.is_empty() && app.run("file.openRecent1", json!({})).is_err());
+        let _ = std::fs::remove_dir_all(dir);
+    }
 
     #[test]
     fn every_bound_menu_command_exists() {

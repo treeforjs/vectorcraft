@@ -94,7 +94,8 @@ impl NativeMenu {
                             | "view.boundingBox"
                             | "view.transparencyGrid"
                             | "window.workspace.reset"
-                    ) {
+                    ) || cmd.starts_with("file.openRecent")
+                    {
                         i.set_text(menus::dynamic_label(app, cmd, ""));
                     }
                 }

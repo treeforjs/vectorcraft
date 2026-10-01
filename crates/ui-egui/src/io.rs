@@ -126,7 +126,9 @@ pub fn open_path(app: &mut DrawcraftApp, path: &str) -> Result<(), String> {
     let read = app.services.read.as_ref().ok_or("no file reader")?;
     let bytes = read(path)?;
     let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or(path.to_string());
-    open_bytes(app, &name, &bytes, Some(path.to_string()))
+    open_bytes(app, &name, &bytes, Some(path.to_string()))?;
+    note_recent(app, path);
+    Ok(())
 }
 
 fn write_out(app: &mut DrawcraftApp, path: &str, bytes: &[u8]) -> Result<(), String> {
@@ -164,7 +166,16 @@ pub fn save(app: &mut DrawcraftApp, path: Option<String>, save_as: bool) -> Resu
         st.saved_revision = st.revision;
     }
     app.status(format!("Saved {path}"));
+    note_recent(app, &path);
     Ok(path)
+}
+
+/// Put `path` at the top of File → Open Recent Files (capped by Preferences → Recent Files).
+pub fn note_recent(app: &mut DrawcraftApp, path: &str) {
+    let r = &mut app.ui.recent_files;
+    r.retain(|p| p != path);
+    r.insert(0, path.to_string());
+    r.truncate((app.session.prefs.recent_files_count as usize).clamp(1, 10));
 }
 
 /// Export the document as SVG / PDF / PNG / JPEG / WebP.

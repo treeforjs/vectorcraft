@@ -11,6 +11,7 @@ pub mod brushes;
 pub mod character;
 pub mod color;
 pub mod color_guide;
+pub mod doc_info;
 pub mod glyphs;
 pub mod gradient;
 pub mod graphic_styles;
@@ -78,6 +79,7 @@ pub fn show_icon_panel(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "symbols" => symbols::show(app, ui),
         "patternOptions" => pattern_options::show(app, ui),
         "imageTrace" => image_trace::show(app, ui),
+        "docInfo" => doc_info::show(app, ui),
         "charStyles" => text_styles::show(app, ui, text_styles::Kind::Char),
         "paraStyles" => text_styles::show(app, ui, text_styles::Kind::Para),
         "magicWand" => magic_wand::show(app, ui),
@@ -113,6 +115,7 @@ pub fn panel_menu_items(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "symbols" => symbols::menu(app, ui),
         "patternOptions" => pattern_options::menu(app, ui),
         "imageTrace" => image_trace::menu(app, ui),
+        "docInfo" => doc_info::menu(app, ui),
         "charStyles" => text_styles::menu(app, ui, text_styles::Kind::Char),
         "paraStyles" => text_styles::menu(app, ui, text_styles::Kind::Para),
         "magicWand" => magic_wand::menu(app, ui),

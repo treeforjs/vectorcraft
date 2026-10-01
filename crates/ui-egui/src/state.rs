@@ -81,6 +81,7 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("history", "History", "history"),
     ("actions", "Actions", "dc-actions"),
     ("info", "Info", "info"),
+    ("docInfo", "Document Info", "dc-list-view"),
     ("navigator", "Navigator", "map"),
     ("separations", "Separations Preview", "printer"),
     ("imageTrace", "Image Trace", "image"),
@@ -216,6 +217,9 @@ pub struct UiState {
     /// User-saved workspaces (New Workspace…).
     #[serde(default)]
     pub custom_workspaces: Vec<crate::workspaces::Workspace>,
+    /// File → Open Recent Files, most recent first.
+    #[serde(default)]
+    pub recent_files: Vec<String>,
     /// Engine preferences (Edit → Preferences), persisted alongside the UI state.
     #[serde(default)]
     pub engine_prefs: Value,
@@ -267,6 +271,7 @@ impl Default for UiState {
             shortcut_set: default_shortcut_set(),
             workspace: default_workspace(),
             custom_workspaces: vec![],
+            recent_files: vec![],
             engine_prefs: Value::Null,
         }
     }

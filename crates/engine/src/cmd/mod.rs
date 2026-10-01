@@ -7,6 +7,7 @@ mod colorcmds;
 pub mod colormgmt;
 mod create;
 pub(crate) mod distortcmds;
+mod docinfo;
 mod docmenu;
 mod draw2;
 mod edit;
@@ -153,6 +154,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(textedit::specs());
         v.extend(textstyles::specs());
         v.extend(docmenu::specs());
+        v.extend(docinfo::specs());
         v.extend(panelcmds::specs());
         v.extend(buildcmds::specs());
         v.extend(brushsym::specs());
