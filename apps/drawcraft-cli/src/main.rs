@@ -5,11 +5,14 @@
 //! drawcraft-cli run [--in file.drawcraft|file.svg] [--cmd id [--params '{json}']]... [--export out.svg|.png|.pdf|.jpg|.webp|.drawcraft]... [--scale 2]
 //! drawcraft-cli commands
 //! drawcraft-cli bench FILE [--size 2880x1800] [--iters 5]
+//! drawcraft-cli perf [--paths 50000]
 //! ```
 #![forbid(unsafe_code)]
 
 use std::io::Write;
 use std::process::ExitCode;
+
+mod perf;
 
 use drawcraft_mcp::{Backend, DEFAULT_ADDR, Headless, Remote, Server};
 use serde_json::{Value, json};
@@ -32,6 +35,10 @@ USAGE:
   drawcraft-cli bench FILE [--size WxH] [--iters N]
       Render FILE (.drawcraft/.svg) fitted to WxH (default 2880x1800) and print ms per frame
       (warm), multithreaded and single-threaded.
+
+  drawcraft-cli perf [--paths N]
+      Check the performance budgets (render, pan, hit test, save/load, SVG, Pathfinder) on a
+      synthetic N-path document (default 50000). Exits non-zero if a budget is exceeded.
 ";
 
 fn main() -> ExitCode {
@@ -41,6 +48,7 @@ fn main() -> ExitCode {
         Some("run") => run(&args[1..]),
         Some("commands") => commands(),
         Some("bench") => bench(&args[1..]),
+        Some("perf") => perf::run(&args[1..]),
         Some("-h" | "--help" | "help") | None => {
             print!("{USAGE}");
             Ok(())
