@@ -1,11 +1,11 @@
-//! `drawcraft-cli`: DrawCraft from the command line.
+//! `vectorcraft-cli`: VectorCraft from the command line.
 //!
 //! ```text
-//! drawcraft-cli mcp [--connect 127.0.0.1:7979 | --headless]
-//! drawcraft-cli run [--in file.drawcraft|file.svg] [--cmd id [--params '{json}']]... [--export out.svg|.png|.pdf|.jpg|.webp|.drawcraft]... [--scale 2]
-//! drawcraft-cli commands
-//! drawcraft-cli bench FILE [--size 2880x1800] [--iters 5]
-//! drawcraft-cli perf [--paths 50000]
+//! vectorcraft-cli mcp [--connect 127.0.0.1:7979 | --headless]
+//! vectorcraft-cli run [--in file.vectorcraft|file.svg] [--cmd id [--params '{json}']]... [--export out.svg|.png|.pdf|.jpg|.webp|.vectorcraft]... [--scale 2]
+//! vectorcraft-cli commands
+//! vectorcraft-cli bench FILE [--size 2880x1800] [--iters 5]
+//! vectorcraft-cli perf [--paths 50000]
 //! ```
 #![forbid(unsafe_code)]
 
@@ -14,29 +14,29 @@ use std::process::ExitCode;
 
 mod perf;
 
-use drawcraft_mcp::{Backend, DEFAULT_ADDR, Headless, Remote, Server};
 use serde_json::{Value, json};
+use vectorcraft_mcp::{Backend, DEFAULT_ADDR, Headless, Remote, Server};
 
 const USAGE: &str = "\
-drawcraft-cli — DrawCraft automation
+vectorcraft-cli — VectorCraft automation
 
 USAGE:
-  drawcraft-cli mcp [--connect ADDR | --headless]
+  vectorcraft-cli mcp [--connect ADDR | --headless]
       Run the MCP server on stdio. Default: connect to a running app at 127.0.0.1:7979
-      (drawcraft --control 7979), falling back to a headless in-process session.
+      (vectorcraft --control 7979), falling back to a headless in-process session.
 
-  drawcraft-cli run [--in FILE] [--cmd ID [--params JSON]]... [--export FILE]... [--scale N]
-      Headless batch: open FILE (.drawcraft/.svg) or start a new document, run commands in
-      order, export (.svg, .png, .pdf, .jpg, .webp, .drawcraft by extension). Prints one JSON result per step.
+  vectorcraft-cli run [--in FILE] [--cmd ID [--params JSON]]... [--export FILE]... [--scale N]
+      Headless batch: open FILE (.vectorcraft/.svg) or start a new document, run commands in
+      order, export (.svg, .png, .pdf, .jpg, .webp, .vectorcraft by extension). Prints one JSON result per step.
 
-  drawcraft-cli commands
+  vectorcraft-cli commands
       Print the command catalogue as JSON.
 
-  drawcraft-cli bench FILE [--size WxH] [--iters N]
-      Render FILE (.drawcraft/.svg) fitted to WxH (default 2880x1800) and print ms per frame
+  vectorcraft-cli bench FILE [--size WxH] [--iters N]
+      Render FILE (.vectorcraft/.svg) fitted to WxH (default 2880x1800) and print ms per frame
       (warm), multithreaded and single-threaded.
 
-  drawcraft-cli perf [--paths N]
+  vectorcraft-cli perf [--paths N]
       Check the performance budgets (render, pan, hit test, save/load, SVG, Pathfinder) on a
       synthetic N-path document (default 50000). Exits non-zero if a budget is exceeded.
 ";
@@ -54,7 +54,7 @@ fn main() -> ExitCode {
             Ok(())
         }
         Some("-V" | "--version") => {
-            println!("drawcraft-cli {}", env!("CARGO_PKG_VERSION"));
+            println!("vectorcraft-cli {}", env!("CARGO_PKG_VERSION"));
             Ok(())
         }
         Some(other) => Err(format!("unknown subcommand `{other}`\n\n{USAGE}")),
@@ -62,7 +62,7 @@ fn main() -> ExitCode {
     match r {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("drawcraft-cli: {e}");
+            eprintln!("vectorcraft-cli: {e}");
             ExitCode::FAILURE
         }
     }
@@ -93,7 +93,7 @@ fn mcp(args: &[String]) -> Result<(), String> {
             Err(_) => Box::new(Headless::with_document()),
         }
     };
-    eprintln!("drawcraft-cli: MCP server on stdio ({})", backend.describe());
+    eprintln!("vectorcraft-cli: MCP server on stdio ({})", backend.describe());
     let stdin = std::io::stdin();
     let stdout = std::io::stdout();
     Server::new(backend).serve(stdin.lock(), stdout.lock()).map_err(|e| e.to_string())
@@ -188,13 +188,13 @@ fn bench(args: &[String]) -> Result<(), String> {
     let doc = hl.session.doc().map_err(|e| e.to_string())?.doc.clone();
     let b = doc.artboards.first().map(|a| a.rect).ok_or("document has no artboard")?;
     let z = (w as f64 / b.width()).min(h as f64 / b.height()) * 0.95;
-    let view = drawcraft_geom::Affine::translate((w as f64 / 2.0, h as f64 / 2.0))
-        * drawcraft_geom::Affine::scale(z)
-        * drawcraft_geom::Affine::translate(-b.center().to_vec2());
-    let opts = drawcraft_render::RenderOptions::default();
+    let view = vectorcraft_geom::Affine::translate((w as f64 / 2.0, h as f64 / 2.0))
+        * vectorcraft_geom::Affine::scale(z)
+        * vectorcraft_geom::Affine::translate(-b.center().to_vec2());
+    let opts = vectorcraft_render::RenderOptions::default();
     println!("{file}: {} nodes, {w}x{h}", doc.layers.iter().map(|l| l.count()).sum::<usize>());
-    for threads in [drawcraft_render::default_threads(), 0] {
-        let mut r = drawcraft_render::Renderer::new();
+    for threads in [vectorcraft_render::default_threads(), 0] {
+        let mut r = vectorcraft_render::Renderer::new();
         r.threads = threads;
         r.render(&doc, w, h, view, &opts);
         let t = std::time::Instant::now();

@@ -1,8 +1,8 @@
 //! Raster (painted) effects: descriptions for the renderer.
 
-use drawcraft_doc::Effect;
-use drawcraft_doc::color::{BlendMode, Color};
 use serde_json::Value;
+use vectorcraft_doc::Effect;
+use vectorcraft_doc::color::{BlendMode, Color};
 
 use crate::merged_params;
 use crate::util::*;

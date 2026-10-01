@@ -1,8 +1,8 @@
-//! Text objects (model only; layout and glyph outlines live in `drawcraft-text`).
+//! Text objects (model only; layout and glyph outlines live in `vectorcraft-text`).
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_geom::{Affine, PathData, Point, Rect};
 use serde::{Deserialize, Serialize};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_geom::{Affine, PathData, Point, Rect};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Justify {

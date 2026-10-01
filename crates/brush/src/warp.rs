@@ -6,8 +6,8 @@
 
 use std::sync::Arc;
 
-use drawcraft_doc::{Node, NodeKind};
-use drawcraft_geom::{Affine, BezPath, PathData, PathEl, Point, Rect, SubPath};
+use vectorcraft_doc::{Node, NodeKind};
+use vectorcraft_geom::{Affine, BezPath, PathData, PathEl, Point, Rect, SubPath};
 
 use crate::track::{Rng, Track, seed_of, tracks};
 use crate::{ArtBrush, ArtScale, Direction, PatternBrush, PatternFit, Scatter, tolerance};

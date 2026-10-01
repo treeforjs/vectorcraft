@@ -5,10 +5,10 @@
 //! reshape, marquee to select anchors. Group Selection: click selects the leaf; each further click
 //! on it adds the next enclosing group.
 
-use drawcraft_doc::hit::hit_test;
-use drawcraft_doc::{AnchorRef, NodeId, NodeKind};
-use drawcraft_geom::{Point, Rect};
 use serde_json::{Value, json};
+use vectorcraft_doc::hit::hit_test;
+use vectorcraft_doc::{AnchorRef, NodeId, NodeKind};
+use vectorcraft_geom::{Point, Rect};
 
 use crate::bbox::move_delta;
 use crate::select::matrix_json;
@@ -171,7 +171,7 @@ impl Tool for DirectSelectionTool {
                 let d = move_delta(start, p, ev.mods.shift);
                 out.push(Action::Preview(
                     "object.transform".into(),
-                    json!({"matrix": matrix_json(drawcraft_geom::Affine::translate(d)), "copy": ev.mods.alt}),
+                    json!({"matrix": matrix_json(vectorcraft_geom::Affine::translate(d)), "copy": ev.mods.alt}),
                 ));
                 out
             }
@@ -231,7 +231,7 @@ impl Tool for DirectSelectionTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     #[test]
     fn click_anchor_selects_it() {

@@ -6,15 +6,15 @@ use egui::Ui;
 use serde_json::{Value, json};
 
 use super::{pstate, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::widgets::{self, menu_item};
 
-fn options(app: &mut DrawcraftApp) -> Value {
+fn options(app: &mut VectorcraftApp) -> Value {
     app.session.execute("magicWand.options", &json!({})).unwrap_or_default()
 }
 
 /// One row: checkbox + tolerance field.
-fn row(app: &mut DrawcraftApp, ui: &mut Ui, o: &Value, label: &str, flag: &str, tol: Option<(&str, &str, f64)>) {
+fn row(app: &mut VectorcraftApp, ui: &mut Ui, o: &Value, label: &str, flag: &str, tol: Option<(&str, &str, f64)>) {
     let on = o[flag].as_bool().unwrap_or(false);
     ui.horizontal(|ui| {
         ui.set_min_height(26.0);
@@ -35,7 +35,7 @@ fn row(app: &mut DrawcraftApp, ui: &mut Ui, o: &Value, label: &str, flag: &str, 
     });
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let o = options(app);
     row(app, ui, &o, "Fill Color", "fillColor", Some(("fillTolerance", "", 255.0)));
     if !pstate::<bool>(ui.ctx(), "wand-hide-stroke") {
@@ -50,7 +50,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     for (label, key) in [("Stroke Options", "wand-hide-stroke"), ("Transparency Options", "wand-hide-transparency")] {
         let hidden: bool = pstate(ui.ctx(), key);
         if menu_item(ui, &format!("{} {label}", if hidden { "Show" } else { "Hide" }), true, false) {
@@ -69,7 +69,7 @@ mod tests {
 
     #[test]
     fn panel_and_menu_draw_headless() {
-        let mut app = DrawcraftApp::new(drawcraft_engine::Session::new(), Default::default());
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
         app.session.execute("file.new", &json!({"width": 100, "height": 100})).unwrap();
         app.session.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap();
         for _ in 0..2 {

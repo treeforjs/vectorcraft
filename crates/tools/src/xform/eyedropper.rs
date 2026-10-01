@@ -4,10 +4,10 @@
 //! paint defaults (`appearance.copyFrom`). Shift-click: sample only the colour under the cursor into
 //! the active fill/stroke (`paint.sampleColor`).
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::hit::{HitKind, hit_test};
-use drawcraft_geom::Point;
 use serde_json::json;
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::hit::{HitKind, hit_test};
+use vectorcraft_geom::Point;
 
 use super::paint_owner;
 use crate::{Action, Cursor, Mods, PointerEvent, PointerKind, Tool, ToolContext};
@@ -15,14 +15,14 @@ use crate::{Action, Cursor, Mods, PointerEvent, PointerKind, Tool, ToolContext};
 pub struct EyedropperTool;
 
 /// The colour of `paint` at `p` (gradients are sampled along their vector).
-pub fn paint_color_at(paint: &Paint, bounds: Option<drawcraft_geom::Rect>, p: Point) -> Option<Color> {
+pub fn paint_color_at(paint: &Paint, bounds: Option<vectorcraft_geom::Rect>, p: Point) -> Option<Color> {
     match paint {
         Paint::Solid { color, .. } => Some(*color),
         Paint::Gradient(g) => {
             let geom = g.resolve(bounds?);
             let v = geom.end - geom.start;
             let t = match g.gradient.kind {
-                drawcraft_color::GradientKind::Radial => (p - geom.start).hypot() / v.hypot().max(1e-9),
+                vectorcraft_color::GradientKind::Radial => (p - geom.start).hypot() / v.hypot().max(1e-9),
                 _ => (p - geom.start).dot(v) / v.hypot2().max(1e-9),
             };
             Some(g.gradient.sample(t.clamp(0.0, 1.0) as f32).0)
@@ -40,13 +40,13 @@ impl Tool for EyedropperTool {
         if ev.kind != PointerKind::Down {
             return vec![];
         }
-        let opts = drawcraft_doc::hit::HitOptions { path_only: false, ..cx.hit_options() };
+        let opts = vectorcraft_doc::hit::HitOptions { path_only: false, ..cx.hit_options() };
         let Some(h) = hit_test(cx.doc, ev.pos, opts) else { return vec![] };
         let src = paint_owner(cx.doc, h.leaf);
         let Some(n) = cx.doc.node(src) else { return vec![] };
         if ev.mods.shift {
             let (fill, stroke) = match &n.kind {
-                drawcraft_doc::NodeKind::Text(t) => {
+                vectorcraft_doc::NodeKind::Text(t) => {
                     let st = t.runs.first().map(|r| r.style.clone());
                     (st.as_ref().map(|s| s.fill.clone()).unwrap_or_default(), st.map(|s| s.stroke).unwrap_or_default())
                 }
@@ -70,7 +70,7 @@ impl Tool for EyedropperTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     #[test]
     fn click_copies_appearance_shift_samples_color() {
@@ -92,9 +92,9 @@ mod tests {
 
     #[test]
     fn gradient_sampled_along_vector() {
-        let g = drawcraft_color::GradientPaint::new(drawcraft_color::Gradient::default());
+        let g = vectorcraft_color::GradientPaint::new(vectorcraft_color::Gradient::default());
         let paint = Paint::Gradient(Box::new(g));
-        let r = drawcraft_geom::Rect::new(0.0, 0.0, 100.0, 10.0);
+        let r = vectorcraft_geom::Rect::new(0.0, 0.0, 100.0, 10.0);
         assert_eq!(paint_color_at(&paint, Some(r), Point::new(0.0, 5.0)).unwrap().to_hex(), "#ffffff");
         assert_eq!(paint_color_at(&paint, Some(r), Point::new(100.0, 5.0)).unwrap().to_hex(), "#000000");
     }

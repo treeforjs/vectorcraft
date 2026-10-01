@@ -2,12 +2,12 @@
 
 ## Web build
 
-`apps/drawcraft-web` runs the same `DrawcraftApp` in the browser through eframe's web runner. The renderer is wgpu: WebGPU where the browser has it, WebGL2 otherwise. It is Rust only; the only JavaScript is the glue wasm-bindgen generates.
+`apps/vectorcraft-web` runs the same `VectorcraftApp` in the browser through eframe's web runner. The renderer is wgpu: WebGPU where the browser has it, WebGL2 otherwise. It is Rust only; the only JavaScript is the glue wasm-bindgen generates.
 
 ```sh
 brew install trunk                 # or: cargo install trunk --locked
 rustup target add wasm32-unknown-unknown
-cd apps/drawcraft-web
+cd apps/vectorcraft-web
 trunk build --release              # writes ../../dist/web (index.html, .js glue, .wasm)
 trunk serve --release              # dev server on http://127.0.0.1:8766
 ```
@@ -16,7 +16,7 @@ Any static file server works for `dist/web`, for example `python3 -m http.server
 
 URL flag: `?webgl` forces the WebGL2 backend.
 
-How the web shell (`apps/drawcraft-web/src/web.rs`) differs from desktop:
+How the web shell (`apps/vectorcraft-web/src/web.rs`) differs from desktop:
 
 - **Open** sets `Services::open_async`, which shows `rfd::AsyncFileDialog`. The bytes arrive in `Services::inbox`, which the app drains every frame.
 - **Save / Save As / Export** go through `Services::download`: a Blob, an object URL and a temporary `<a download>`, all created from Rust. There is no save dialog, so the suggested name becomes the download name.

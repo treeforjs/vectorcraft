@@ -51,10 +51,10 @@ fn batch_rolls_back_on_error() {
 fn serialize_and_reopen() {
     let mut s = session();
     s.execute("shape.ellipse", &json!({"x": 10, "y": 10, "width": 80, "height": 40})).unwrap();
-    let b64 = s.execute("document.serialize", &json!({"format": "drawcraft"})).unwrap()["dataBase64"].as_str().unwrap().to_string();
+    let b64 = s.execute("document.serialize", &json!({"format": "vectorcraft"})).unwrap()["dataBase64"].as_str().unwrap().to_string();
     let svg = s.execute("document.serialize", &json!({"format": "svg"})).unwrap()["text"].as_str().unwrap().to_string();
     assert!(svg.contains("<svg"));
-    s.execute("document.open", &json!({"name": "copy.drawcraft", "dataBase64": b64})).unwrap();
+    s.execute("document.open", &json!({"name": "copy.vectorcraft", "dataBase64": b64})).unwrap();
     assert_eq!(s.documents().len(), 2);
     assert_eq!(s.doc().unwrap().doc.node_count(), 2);
     let png = s.execute("document.serialize", &json!({"format": "png", "scale": 0.5})).unwrap()["dataBase64"].as_str().unwrap().to_string();
@@ -67,7 +67,7 @@ fn save_and_open_path() {
     s.execute("shape.rectangle", &json!({"x": 10, "y": 10, "width": 80, "height": 40})).unwrap();
     let dir = std::env::temp_dir().join(format!("dc-test-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
-    let path = dir.join("t.drawcraft");
+    let path = dir.join("t.vectorcraft");
     s.execute("document.save", &json!({"path": path.to_string_lossy()})).unwrap();
     assert!(!s.doc().unwrap().is_dirty());
     s.execute("document.open", &json!({"path": path.to_string_lossy()})).unwrap();
@@ -145,7 +145,7 @@ fn recolor_maps_fills_strokes_gradients() {
     s.execute("recolor.apply", &json!({"map": {"#FF0000": "#00ff00"}})).unwrap();
     let n = s.doc().unwrap().doc.node(NodeId(a)).unwrap().clone();
     match n.appearance.fill_paint() {
-        drawcraft_color::Paint::Gradient(g) => assert_eq!(g.gradient.stops[0].color.to_hex(), "#00ff00"),
+        vectorcraft_color::Paint::Gradient(g) => assert_eq!(g.gradient.stops[0].color.to_hex(), "#00ff00"),
         other => panic!("{other:?}"),
     }
 }

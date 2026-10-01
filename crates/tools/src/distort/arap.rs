@@ -15,8 +15,8 @@
 //! - Artwork points (anchors and handles) follow the mesh through barycentric coordinates in
 //!   their rest triangle.
 
-use drawcraft_geom::kurbo::ParamCurveNearest;
-use drawcraft_geom::{BezPath, Point, Rect, Shape, Vec2};
+use vectorcraft_geom::kurbo::ParamCurveNearest;
+use vectorcraft_geom::{BezPath, Point, Rect, Shape, Vec2};
 
 /// Banded symmetric positive definite matrix (lower band stored row by row).
 #[derive(Clone, Debug)]
@@ -282,12 +282,12 @@ fn closed_winding(o: &BezPath, p: Point) -> i32 {
     };
     for el in o.elements() {
         match el {
-            drawcraft_geom::PathEl::MoveTo(_) => {
+            vectorcraft_geom::PathEl::MoveTo(_) => {
                 flush(&mut cur, closed, &mut total);
                 closed = false;
                 cur.push(*el);
             }
-            drawcraft_geom::PathEl::ClosePath => {
+            vectorcraft_geom::PathEl::ClosePath => {
                 closed = true;
                 cur.push(*el);
             }
@@ -468,7 +468,7 @@ pub fn auto_pins(mesh: &Mesh, count: usize) -> Vec<Point> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use drawcraft_geom::shapes;
+    use vectorcraft_geom::shapes;
 
     #[test]
     fn band_cholesky_solves_spd_systems() {

@@ -1,6 +1,6 @@
-# drawcraft-pathops
+# vectorcraft-pathops
 
-Path operations for DrawCraft: booleans, the Pathfinder panel, Shape Builder regions, offset path, outline stroke, simplify and the other Object → Path commands. Everything takes and returns `drawcraft_geom::PathData`.
+Path operations for VectorCraft: booleans, the Pathfinder panel, Shape Builder regions, offset path, outline stroke, simplify and the other Object → Path commands. Everything takes and returns `vectorcraft_geom::PathData`.
 
 ## Booleans (curve-preserving)
 

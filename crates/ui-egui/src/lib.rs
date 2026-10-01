@@ -1,6 +1,6 @@
-//! DrawCraft's egui frontend: an Illustrator-style UI over `drawcraft-engine`.
+//! VectorCraft's egui frontend: an Illustrator-style UI over `vectorcraft-engine`.
 //!
-//! The UI is thin: every action goes through [`DrawcraftApp::run`], which dispatches UI commands
+//! The UI is thin: every action goes through [`VectorcraftApp::run`], which dispatches UI commands
 //! (view/window) here and everything else to the engine. The same entry point serves menus,
 //! shortcuts, the ⌘K palette and the control channel ([`control`]).
 #![forbid(unsafe_code)]
@@ -32,8 +32,8 @@ pub mod workspaces;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 
-use drawcraft_engine::{Session, ViewInfo};
 use serde_json::{Value, json};
+use vectorcraft_engine::{Session, ViewInfo};
 
 pub use control::{ControlRequest, ControlResponse};
 pub use state::{UiState, View};
@@ -66,7 +66,7 @@ pub struct Services {
 
 /// Cached canvas raster.
 pub struct CanvasCache {
-    pub renderer: drawcraft_render::Renderer,
+    pub renderer: vectorcraft_render::Renderer,
     pub texture: Option<egui::TextureHandle>,
     pub key: Option<CacheKey>,
     pub last_ms: f64,
@@ -96,7 +96,7 @@ pub struct Perf {
     pub fps: f64,
 }
 
-pub struct DrawcraftApp {
+pub struct VectorcraftApp {
     pub session: Session,
     pub ui: UiState,
     pub views: Vec<View>,
@@ -125,7 +125,7 @@ pub struct DrawcraftApp {
     /// Canvas rect of the last frame (screen points), for control-channel coordinate mapping.
     pub canvas_rect: Option<egui::Rect>,
     /// Hover position in document coordinates.
-    pub hover_doc: Option<drawcraft_geom::Point>,
+    pub hover_doc: Option<vectorcraft_geom::Point>,
     /// System clipboard: SVG to publish next frame, the last SVG we published (so pasting it back
     /// uses the lossless internal clipboard) and text that arrived with a Paste event.
     clipboard_out: Option<String>,
@@ -133,7 +133,7 @@ pub struct DrawcraftApp {
     pub(crate) clipboard_in: Option<String>,
 }
 
-impl DrawcraftApp {
+impl VectorcraftApp {
     pub fn new(session: Session, services: Services) -> Self {
         let views = session.documents().iter().map(|_| View::default()).collect();
         Self {
@@ -142,7 +142,7 @@ impl DrawcraftApp {
             views,
             services,
             canvas: CanvasCache {
-                renderer: drawcraft_render::Renderer::new(),
+                renderer: vectorcraft_render::Renderer::new(),
                 texture: None,
                 key: None,
                 last_ms: 0.0,
@@ -233,7 +233,7 @@ impl DrawcraftApp {
     /// clipboard (centred in the view). Our own published SVG keeps the lossless internal copy.
     fn adopt_system_clipboard(&mut self) {
         let text = self.clipboard_in.take().or_else(|| self.services.clipboard_read.as_mut().and_then(|f| f()));
-        let Some(text) = text.filter(|t| drawcraft_engine::cmd::clipboard::looks_like_svg(t)) else { return };
+        let Some(text) = text.filter(|t| vectorcraft_engine::cmd::clipboard::looks_like_svg(t)) else { return };
         if self.clipboard_published.as_deref() == Some(text.as_str()) {
             return;
         }
@@ -250,7 +250,7 @@ impl DrawcraftApp {
         if let Err(e) = self.session.select_tool(id, v) {
             self.ui.status = e.to_string();
         }
-        if let Some(g) = drawcraft_tools::catalog::group_of(id)
+        if let Some(g) = vectorcraft_tools::catalog::group_of(id)
             && let Some(slot) = self.ui.group_tool.get_mut(g)
         {
             *slot = id.to_string();
@@ -361,7 +361,7 @@ pub fn now_ms() -> f64 {
 
 /// eframe isn't a dependency of this crate (the host owns the event loop); these entry points are
 /// called from the host's `eframe::App` impl.
-impl DrawcraftApp {
+impl VectorcraftApp {
     /// Per-frame logic before layout (control channel, shortcuts, inbox).
     pub fn logic(&mut self, ctx: &egui::Context) {
         if !self.styled {

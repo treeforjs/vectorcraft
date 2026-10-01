@@ -2,8 +2,8 @@
 //!
 //! These live in the engine so every frontend (UI, CLI, MCP headless) shares them.
 
-use drawcraft_doc::Document;
 use serde_json::{Value, json};
+use vectorcraft_doc::Document;
 
 use super::*;
 use crate::EngineError;
@@ -15,13 +15,13 @@ pub fn specs() -> Vec<CommandSpec> {
             "Open Document",
             [],
             None,
-            "{path} or {name, dataBase64} → {index}; .drawcraft, .svg, .pdf, .ai (PDF-compatible)",
+            "{path} or {name, dataBase64} → {index}; .vectorcraft, .svg, .pdf, .ai (PDF-compatible)",
             always,
             open
         ),
-        cmd!("document.save", "Save Document", [], None, "{path?} native .drawcraft (default: the document's path) → {path}", has_doc, save),
-        cmd!(query "document.serialize", "Serialize Document", [], None, "{format: drawcraft|svg|pdf|png} → {dataBase64 | text}", has_doc, serialize),
-        cmd!("document.export", "Export Document", [], None, "{format: svg|png|pdf|drawcraft, path, scale?: 1, artboard?: 0}", has_doc, export),
+        cmd!("document.save", "Save Document", [], None, "{path?} native .vectorcraft (default: the document's path) → {path}", has_doc, save),
+        cmd!(query "document.serialize", "Serialize Document", [], None, "{format: vectorcraft|svg|pdf|png} → {dataBase64 | text}", has_doc, serialize),
+        cmd!("document.export", "Export Document", [], None, "{format: svg|png|pdf|vectorcraft, path, scale?: 1, artboard?: 0}", has_doc, export),
         cmd!(
             "document.exportForScreens",
             "Export for Screens",
@@ -37,17 +37,18 @@ pub fn specs() -> Vec<CommandSpec> {
 
 fn load(name: &str, bytes: &[u8]) -> Result<Document> {
     let lower = name.to_ascii_lowercase();
-    if lower.ends_with(".drawcraft") || drawcraft_format::sniff(bytes) {
-        return drawcraft_format::load(bytes).map_err(|e| EngineError::Other(e.to_string()));
+    if vectorcraft_format::is_native_name(&lower) || vectorcraft_format::sniff(bytes) {
+        return vectorcraft_format::load(bytes).map_err(|e| EngineError::Other(e.to_string()));
     }
     if lower.ends_with(".svg") || bytes.starts_with(b"<?xml") || bytes.starts_with(b"<svg") {
         let s = std::str::from_utf8(bytes).map_err(|_| EngineError::Other("SVG is not UTF-8".into()))?;
-        let mut d = drawcraft_svg::import(s).map_err(|e| EngineError::Other(e.to_string()))?;
+        let mut d = vectorcraft_svg::import(s).map_err(|e| EngineError::Other(e.to_string()))?;
         d.title = std::path::Path::new(name).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| name.to_string());
         return Ok(d);
     }
     if lower.ends_with(".pdf") || lower.ends_with(".ai") || bytes.starts_with(b"%PDF") {
-        let r = drawcraft_pdf::import_with_report(bytes, &drawcraft_pdf::ImportOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?;
+        let r =
+            vectorcraft_pdf::import_with_report(bytes, &vectorcraft_pdf::ImportOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?;
         let mut d = r.document;
         d.title = std::path::Path::new(name).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| name.to_string());
         return Ok(d);
@@ -59,14 +60,14 @@ fn open(s: &mut Session, p: &Value) -> Result<Value> {
     let (name, bytes, path) = match (str_param(p, "path"), str_param(p, "dataBase64")) {
         (Some(path), _) => (path.to_string(), std::fs::read(path).map_err(|e| EngineError::Other(format!("{path}: {e}")))?, Some(path.to_string())),
         (None, Some(b64)) => (
-            str_param(p, "name").unwrap_or("untitled.drawcraft").to_string(),
-            drawcraft_format::base64_decode(b64).ok_or_else(|| bad("document.open", "bad base64"))?,
+            str_param(p, "name").unwrap_or("untitled.vectorcraft").to_string(),
+            vectorcraft_format::base64_decode(b64).ok_or_else(|| bad("document.open", "bad base64"))?,
             None,
         ),
         _ => return Err(bad("document.open", "give path or dataBase64")),
     };
     let doc = load(&name, &bytes)?;
-    let native = name.to_ascii_lowercase().ends_with(".drawcraft");
+    let native = vectorcraft_format::is_native_name(&name);
     let i = s.add_document(doc, if native { path } else { None });
     Ok(json!({ "index": i }))
 }
@@ -76,23 +77,23 @@ fn save(s: &mut Session, p: &Value) -> Result<Value> {
         .map(str::to_string)
         .or_else(|| s.active().and_then(|d| d.path.clone()))
         .ok_or_else(|| bad("document.save", "no path"))?;
-    let bytes = drawcraft_format::save_file(&s.doc()?.doc);
+    let bytes = vectorcraft_format::save_file(&s.doc()?.doc);
     std::fs::write(&path, bytes).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
     let st = s.doc_mut()?;
     st.path = Some(path.clone());
-    st.saved_revision = st.revision;
+    st.mark_saved();
     Ok(json!({ "path": path }))
 }
 
 pub(crate) fn encode(s: &Session, format: &str, scale: f64, artboard: usize) -> Result<Vec<u8>> {
     let doc = &s.doc()?.doc;
     Ok(match format {
-        "drawcraft" => drawcraft_format::save_file(doc),
-        "svg" => drawcraft_svg::export(doc, &drawcraft_svg::ExportOptions { artboard: Some(artboard), ..Default::default() }).into_bytes(),
-        "pdf" => drawcraft_pdf::export(doc, &drawcraft_pdf::PdfOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?,
+        "vectorcraft" => vectorcraft_format::save_file(doc),
+        "svg" => vectorcraft_svg::export(doc, &vectorcraft_svg::ExportOptions { artboard: Some(artboard), ..Default::default() }).into_bytes(),
+        "pdf" => vectorcraft_pdf::export(doc, &vectorcraft_pdf::PdfOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?,
         "png" | "jpg" | "jpeg" | "webp" => {
             let r = doc.artboards.get(artboard).map(|a| a.rect).ok_or_else(|| EngineError::Other("no such artboard".into()))?;
-            let img = drawcraft_render::Renderer::new().render_region(doc, r, scale.clamp(0.01, 64.0), format != "png" && format != "webp");
+            let img = vectorcraft_render::Renderer::new().render_region(doc, r, scale.clamp(0.01, 64.0), format != "png" && format != "webp");
             match format {
                 "png" => img.to_png(),
                 "webp" => img.to_webp(),
@@ -104,12 +105,12 @@ pub(crate) fn encode(s: &Session, format: &str, scale: f64, artboard: usize) -> 
 }
 
 fn serialize(s: &mut Session, p: &Value) -> Result<Value> {
-    let f = str_param(p, "format").unwrap_or("drawcraft");
+    let f = str_param(p, "format").unwrap_or("vectorcraft");
     let bytes = encode(s, f, f64_or(p, "scale", 1.0), p.get("artboard").and_then(Value::as_u64).unwrap_or(0) as usize)?;
     if f == "svg" {
         return Ok(json!({ "text": String::from_utf8_lossy(&bytes) }));
     }
-    Ok(json!({ "dataBase64": drawcraft_format::base64_encode(&bytes) }))
+    Ok(json!({ "dataBase64": vectorcraft_format::base64_encode(&bytes) }))
 }
 
 fn export(s: &mut Session, p: &Value) -> Result<Value> {

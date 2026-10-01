@@ -9,7 +9,7 @@ use serde_json::{Map, Value, json};
 
 use super::character::{text_editing, text_style};
 use super::{pstate, selection_len, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
 
@@ -32,7 +32,7 @@ impl Kind {
 }
 
 /// (name, attrs, uses) for every style, Normal first.
-fn styles(app: &mut DrawcraftApp, kind: Kind) -> Vec<(String, Map<String, Value>, u64)> {
+fn styles(app: &mut VectorcraftApp, kind: Kind) -> Vec<(String, Map<String, Value>, u64)> {
     let v = app.session.execute(&format!("{}.list", kind.prefix()), &json!({})).unwrap_or_default();
     v["styles"]
         .as_array()
@@ -51,7 +51,7 @@ fn styles(app: &mut DrawcraftApp, kind: Kind) -> Vec<(String, Map<String, Value>
 }
 
 /// The selection's style name (Normal when none) and its attributes, if text is selected.
-fn current(app: &DrawcraftApp, kind: Kind) -> Option<(Option<String>, Map<String, Value>)> {
+fn current(app: &VectorcraftApp, kind: Kind) -> Option<(Option<String>, Map<String, Value>)> {
     let (c, p) = text_style(app)?;
     let v = match kind {
         Kind::Char => serde_json::to_value(&c),
@@ -64,7 +64,7 @@ fn current(app: &DrawcraftApp, kind: Kind) -> Option<(Option<String>, Map<String
 }
 
 /// Parameters targeting the selection: the Type tool's selected characters, or the selected objects.
-fn target(app: &DrawcraftApp, kind: Kind, mut p: Value) -> Value {
+fn target(app: &VectorcraftApp, kind: Kind, mut p: Value) -> Value {
     if let Some((id, a, b)) = text_editing(app) {
         p["id"] = json!(id.0);
         if kind == Kind::Char && b > a {
@@ -75,7 +75,7 @@ fn target(app: &DrawcraftApp, kind: Kind, mut p: Value) -> Value {
     p
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui, kind: Kind) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui, kind: Kind) {
     let t = Tokens::get(ui.ctx());
     let all = styles(app, kind);
     let cur = current(app, kind);
@@ -127,7 +127,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui, kind: Kind) {
     });
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui, kind: Kind) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui, kind: Kind) {
     let sel: Option<String> = pstate(ui.ctx(), kind.key());
     let normal = if kind == Kind::Char { "[Normal Character Style]" } else { "[Normal Paragraph Style]" };
     let user = sel.as_ref().is_some_and(|s| s != normal);
@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn panels_draw_and_apply_headless() {
-        let mut app = DrawcraftApp::new(drawcraft_engine::Session::new(), Default::default());
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
         app.session.execute("file.new", &json!({"width": 100, "height": 100})).unwrap();
         let id = app.session.execute("text.create", &json!({"x": 10, "y": 40, "text": "Hi"})).unwrap()["id"].clone();
         app.session.execute("select.set", &json!({"ids": [id]})).unwrap();

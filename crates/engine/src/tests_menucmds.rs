@@ -1,9 +1,9 @@
 //! Menu long-tail commands (Object/Edit/Select/Type/View/File), driven through `Session::execute`.
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{ColorMode, LiveShape, Node, NodeKind, TextKind};
-use drawcraft_geom::Rect;
 use serde_json::{Value, json};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{ColorMode, LiveShape, Node, NodeKind, TextKind};
+use vectorcraft_geom::Rect;
 
 use super::*;
 
@@ -308,7 +308,7 @@ fn blend_make_release_options() {
     assert_eq!(undo_len(&s), n + 1);
     let gn = node(&s, g);
     assert!(matches!(gn.kind, NodeKind::Blend { .. }), "live blend");
-    let ch = drawcraft_doc::live::expand_live(&gn);
+    let ch = vectorcraft_doc::live::expand_live(&gn);
     assert_eq!(ch.len(), 5);
     // Middle step: halfway in position, size and colour.
     let mid = &ch[2];
@@ -318,7 +318,7 @@ fn blend_make_release_options() {
     assert!((c[0] - 0.5).abs() < 1e-3);
     // Options: 1 step.
     s.execute("object.blend.options", &json!({"steps": 1})).unwrap();
-    assert_eq!(drawcraft_doc::live::expand_live(&node(&s, g)).len(), 3);
+    assert_eq!(vectorcraft_doc::live::expand_live(&node(&s, g)).len(), 3);
     // Release: keys only, back in the layer.
     let r = s.execute("object.blend.release", &json!({})).unwrap();
     assert_eq!(r["ids"].as_array().unwrap().len(), 2);

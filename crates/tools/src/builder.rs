@@ -1,7 +1,7 @@
 //! Shape Builder (Shift+M), Live Paint Bucket (K) and Live Paint Selection (Shift+L).
 //!
 //! The tools only emit commands (`shapeBuilder.merge`, `livePaint.fill`, `livePaint.strokeEdge`,
-//! `select.*`); the planar arrangement comes from `drawcraft_pathops::regions`.
+//! `select.*`); the planar arrangement comes from `vectorcraft_pathops::regions`.
 //!
 //! **Live Paint groups** are ordinary groups (no special node kind): the group's name starts with
 //! [`LIVE_PAINT_PREFIX`]; its first child is a hidden group named [`SOURCES_NAME`] holding the
@@ -12,10 +12,10 @@
 
 use std::sync::Arc;
 
-use drawcraft_doc::{Document, Node, NodeId, NodeKind};
-use drawcraft_geom::{BezPath, FillRule, PathData, Point, Rect, Shape as _};
-use drawcraft_pathops as po;
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, Node, NodeId, NodeKind};
+use vectorcraft_geom::{BezPath, FillRule, PathData, Point, Rect, Shape as _};
+use vectorcraft_pathops as po;
 
 use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext, json_ids};
 
@@ -561,8 +561,8 @@ pub fn create(id: &str) -> Option<Box<dyn Tool>> {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::{Appearance, Selection};
-    use drawcraft_geom::shapes;
+    use vectorcraft_doc::{Appearance, Selection};
+    use vectorcraft_geom::shapes;
 
     fn two_rects() -> (Document, NodeId, NodeId) {
         let mut d = Document::new(500.0, 500.0);

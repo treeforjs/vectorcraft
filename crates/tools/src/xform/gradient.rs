@@ -5,10 +5,10 @@
 //! the object under the pointer. The overlay is the gradient annotator: a bar from a round start
 //! handle to a square end handle, with a tick for each colour stop.
 
-use drawcraft_color::Paint;
-use drawcraft_doc::hit::hit_test;
-use drawcraft_geom::{Point, Vec2};
 use serde_json::{Value, json};
+use vectorcraft_color::Paint;
+use vectorcraft_doc::hit::hit_test;
+use vectorcraft_geom::{Point, Vec2};
 
 use super::paint_owner;
 use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext, ToolKey};
@@ -81,7 +81,7 @@ impl Tool for GradientTool {
                     }
                     out.push(Action::Begin("Gradient".into()));
                 }
-                let end = if ev.mods.shift { start + drawcraft_geom::constrain_angle(p - start, 45.0) } else { p };
+                let end = if ev.mods.shift { start + vectorcraft_geom::constrain_angle(p - start, 45.0) } else { p };
                 self.drag = Some((start, end, true));
                 out.push(Action::Preview("paint.setGradientGeom".into(), json!({ "start": [start.x, start.y], "end": [end.x, end.y] })));
                 out
@@ -123,7 +123,7 @@ impl Tool for GradientTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     #[test]
     fn drag_sets_gradient_vector_and_constrains() {

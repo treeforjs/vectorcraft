@@ -1,7 +1,7 @@
 {
-  "format": "drawcraft",
+  "format": "vectorcraft",
   "version": 1,
-  "generator": "DrawCraft 0.1.0",
+  "generator": "VectorCraft 0.1.0",
   "document": {
     "version": 1,
     "title": "Dusk Poster",
@@ -6581,7 +6581,7 @@
                 ],
                 "runs": [
                   {
-                    "text": "Made in DrawCraft — vectors, pure Rust",
+                    "text": "Made in VectorCraft — vectors, pure Rust",
                     "style": {
                       "font_family": "Source Sans 3",
                       "font_style": "Regular",

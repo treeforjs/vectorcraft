@@ -1,12 +1,12 @@
-//! End-to-end MCP over stdio against the built `drawcraft-cli mcp --headless` binary.
+//! End-to-end MCP over stdio against the built `vectorcraft-cli mcp --headless` binary.
 
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 
-use drawcraft_testkit::raster::Image;
 use serde_json::{Value, json};
+use vectorcraft_testkit::raster::Image;
 
-const BIN: &str = env!("CARGO_BIN_EXE_drawcraft-cli");
+const BIN: &str = env!("CARGO_BIN_EXE_vectorcraft-cli");
 
 struct Mcp {
     child: Child,
@@ -23,7 +23,7 @@ impl Mcp {
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
             .spawn()
-            .expect("spawn drawcraft-cli");
+            .expect("spawn vectorcraft-cli");
         let stdin = child.stdin.take();
         let stdout = BufReader::new(child.stdout.take().unwrap());
         Self { child, stdin, stdout, next: 1 }
@@ -69,18 +69,18 @@ impl Mcp {
         self.tool_json("run_command", json!({"command": command, "params": params}))
     }
     fn document(&mut self) -> Value {
-        let v = self.request("resources/read", json!({"uri": "drawcraft://document/json"}));
+        let v = self.request("resources/read", json!({"uri": "vectorcraft://document/json"}));
         serde_json::from_str(v["result"]["contents"][0]["text"].as_str().unwrap()).unwrap()
     }
     fn art_count(&mut self) -> usize {
-        let d: drawcraft_testkit::doc::Document = serde_json::from_value(self.document()).unwrap();
+        let d: vectorcraft_testkit::doc::Document = serde_json::from_value(self.document()).unwrap();
         d.node_count() - d.layers.len()
     }
     fn initialize(&mut self) {
         let v =
             self.request("initialize", json!({"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "e2e", "version": "0"}}));
         let r = &v["result"];
-        assert_eq!(r["serverInfo"]["name"], "drawcraft");
+        assert_eq!(r["serverInfo"]["name"], "vectorcraft");
         assert!(r["protocolVersion"].is_string());
         assert!(r["capabilities"]["tools"].is_object());
         self.notify("notifications/initialized");
@@ -99,7 +99,7 @@ impl Drop for Mcp {
 }
 
 fn tmp(name: &str) -> String {
-    drawcraft_testkit::temp_dir("cli-mcp-e2e").join(name).to_string_lossy().to_string()
+    vectorcraft_testkit::temp_dir("cli-mcp-e2e").join(name).to_string_lossy().to_string()
 }
 
 #[test]
@@ -161,9 +161,9 @@ fn draw_inspect_batch_undo_redo() {
     let after = m.document();
     assert_ne!(before, after);
     m.tool("undo", json!({}));
-    assert!(drawcraft_testkit::invariants::json_approx_eq(&m.document(), &before, 1e-12));
+    assert!(vectorcraft_testkit::invariants::json_approx_eq(&m.document(), &before, 1e-12));
     m.tool("redo", json!({}));
-    assert!(drawcraft_testkit::invariants::json_approx_eq(&m.document(), &after, 1e-12));
+    assert!(vectorcraft_testkit::invariants::json_approx_eq(&m.document(), &after, 1e-12));
 
     // Tool errors are reported in-band, and the server keeps working.
     let v = m.request("tools/call", json!({"name": "run_command", "arguments": {"command": "no.such.command"}}));
@@ -183,9 +183,9 @@ fn screenshot_is_a_decodable_png() {
     let r = m.tool("screenshot", json!({"scale": 0.5, "path": path}));
     let img = r["content"].as_array().unwrap().iter().find(|c| c["type"] == "image").expect("image content").clone();
     assert_eq!(img["mimeType"], "image/png");
-    let png = drawcraft_testkit::format::base64_decode(img["data"].as_str().unwrap()).expect("base64");
+    let png = vectorcraft_testkit::format::base64_decode(img["data"].as_str().unwrap()).expect("base64");
     let decoded = Image::from_png(&png).expect("decodable PNG");
-    let doc: drawcraft_testkit::doc::Document = serde_json::from_value(m.document()).unwrap();
+    let doc: vectorcraft_testkit::doc::Document = serde_json::from_value(m.document()).unwrap();
     let ab = doc.artboards[0].rect;
     assert_eq!(decoded.width, (ab.width() * 0.5).round() as u32);
     assert_eq!(decoded.height, (ab.height() * 0.5).round() as u32);
@@ -208,11 +208,11 @@ fn export_formats_and_reopen() {
     let original = m.document();
     let n = m.art_count();
 
-    let dc = tmp("e2e.drawcraft");
+    let dc = tmp("e2e.vectorcraft");
     let svg = tmp("e2e.svg");
     let pdf = tmp("e2e.pdf");
     let png = tmp("e2e.png");
-    m.tool("export", json!({"format": "drawcraft", "path": dc}));
+    m.tool("export", json!({"format": "vectorcraft", "path": dc}));
     m.tool("export", json!({"path": svg}));
     m.tool("export", json!({"path": png, "scale": 0.25}));
     m.run("document.export", json!({"format": "pdf", "path": pdf}));
@@ -220,9 +220,9 @@ fn export_formats_and_reopen() {
     assert!(std::fs::read_to_string(&svg).unwrap().contains("<svg"));
     Image::from_png(&std::fs::read(&png).unwrap()).expect("exported PNG decodes");
 
-    // Re-open each: .drawcraft reproduces the document; SVG and PDF bring the art back.
+    // Re-open each: .vectorcraft reproduces the document; SVG and PDF bring the art back.
     m.tool("open_file", json!({"path": dc}));
-    assert!(drawcraft_testkit::invariants::json_approx_eq(&m.document(), &original, 1e-12));
+    assert!(vectorcraft_testkit::invariants::json_approx_eq(&m.document(), &original, 1e-12));
     m.tool("open_file", json!({"path": svg}));
     assert!(m.art_count() >= n, "svg re-open lost art");
     m.run("document.open", json!({"path": pdf}));
@@ -231,10 +231,10 @@ fn export_formats_and_reopen() {
     assert!(docs.is_object());
 
     // save_file writes the native format to a new path and it loads.
-    let saved = tmp("saved.drawcraft");
+    let saved = tmp("saved.vectorcraft");
     m.tool("save_file", json!({"path": saved}));
-    let d = drawcraft_testkit::format::load(&std::fs::read(&saved).unwrap()).unwrap();
-    drawcraft_testkit::invariants::check_document(&d).unwrap();
+    let d = vectorcraft_testkit::format::load(&std::fs::read(&saved).unwrap()).unwrap();
+    vectorcraft_testkit::invariants::check_document(&d).unwrap();
     m.close();
 }
 

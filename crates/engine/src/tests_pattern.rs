@@ -1,10 +1,10 @@
 //! Pattern swatches, pattern editing mode and Repeat, driven through `Session::execute`.
 
-use drawcraft_color::Paint;
-use drawcraft_doc::pattern::{PATTERN_EDIT_LAYER, RepeatKind, TileType};
-use drawcraft_doc::{Node, NodeKind};
-use drawcraft_geom::{Point, Rect};
 use serde_json::{Value, json};
+use vectorcraft_color::Paint;
+use vectorcraft_doc::pattern::{PATTERN_EDIT_LAYER, RepeatKind, TileType};
+use vectorcraft_doc::{Node, NodeKind};
+use vectorcraft_geom::{Point, Rect};
 
 use super::*;
 
@@ -30,7 +30,7 @@ fn sel(s: &mut Session, ids: &[NodeId]) {
     s.execute("select.set", &json!({"ids": ids.iter().map(|i| i.0).collect::<Vec<_>>()})).unwrap();
 }
 
-fn doc(s: &Session) -> &drawcraft_doc::Document {
+fn doc(s: &Session) -> &vectorcraft_doc::Document {
     &s.doc().unwrap().doc
 }
 
@@ -246,9 +246,9 @@ fn hit_testing_in_edit_mode_only_reaches_tile_layer() {
     sel(&mut s, &[r]);
     s.execute("object.pattern.make", &json!({"name": "P"})).unwrap();
     let d = doc(&s);
-    let opt = drawcraft_doc::hit::HitOptions::default();
-    assert!(drawcraft_doc::hit::hit_test(d, Point::new(220.0, 220.0), opt).is_none());
-    let h = drawcraft_doc::hit::hit_test(d, Point::new(5.0, 5.0), opt).unwrap();
+    let opt = vectorcraft_doc::hit::HitOptions::default();
+    assert!(vectorcraft_doc::hit::hit_test(d, Point::new(220.0, 220.0), opt).is_none());
+    let h = vectorcraft_doc::hit::hit_test(d, Point::new(5.0, 5.0), opt).unwrap();
     assert_ne!(h.leaf, r);
     let _ = other;
 }
@@ -262,8 +262,8 @@ fn save_load_roundtrip_keeps_patterns_and_repeats() {
     let r = rect(&mut s, 300.0, 50.0, 10.0, 10.0);
     sel(&mut s, &[r]);
     s.execute("object.repeat.radial", &json!({"instances": 6})).unwrap();
-    let bytes = drawcraft_format::save(doc(&s), false);
-    let back = drawcraft_format::load(&bytes).unwrap();
+    let bytes = vectorcraft_format::save(doc(&s), false);
+    let back = vectorcraft_format::load(&bytes).unwrap();
     assert_eq!(back.patterns, doc(&s).patterns);
     assert_eq!(back.node(big).unwrap().appearance.fill_paint(), node(&s, big).appearance.fill_paint());
     assert!(back.layers[0].children().unwrap().iter().any(|n| matches!(n.kind, NodeKind::Repeat(_))));
@@ -275,7 +275,7 @@ fn svg_export_writes_pattern_def() {
     make_dots(&mut s);
     let big = rect(&mut s, 100.0, 100.0, 50.0, 50.0);
     s.execute("paint.setFill", &json!({"ids": [big.0], "swatch": "Dots"})).unwrap();
-    let svg = drawcraft_svg::export(doc(&s), &drawcraft_svg::ExportOptions::default());
+    let svg = vectorcraft_svg::export(doc(&s), &vectorcraft_svg::ExportOptions::default());
     assert!(svg.contains("<pattern id=\"pattern-1\""), "{svg}");
     assert!(svg.contains("patternUnits=\"userSpaceOnUse\""));
     assert!(svg.contains("width=\"20\" height=\"20\""));
@@ -292,7 +292,7 @@ fn pdf_export_expands_pattern_fills() {
     make_dots(&mut s);
     let big = rect(&mut s, 100.0, 100.0, 50.0, 50.0);
     s.execute("paint.setFill", &json!({"ids": [big.0], "swatch": "Dots"})).unwrap();
-    let rep = drawcraft_pdf::export_with_report(doc(&s), &Default::default()).unwrap();
+    let rep = vectorcraft_pdf::export_with_report(doc(&s), &Default::default()).unwrap();
     assert!(rep.warnings.iter().all(|w| !w.contains("pattern")), "{:?}", rep.warnings);
     assert!(rep.bytes.len() > 500);
 }
@@ -429,10 +429,10 @@ fn repeat_hit_test_uses_instances() {
     sel(&mut s, &[r]);
     s.execute("object.repeat.radial", &json!({"instances": 4, "radius": 50})).unwrap();
     let d = doc(&s);
-    let opt = drawcraft_doc::hit::HitOptions::default();
-    assert!(drawcraft_doc::hit::hit_test(d, Point::new(250.0, 150.0), opt).is_some());
+    let opt = vectorcraft_doc::hit::HitOptions::default();
+    assert!(vectorcraft_doc::hit::hit_test(d, Point::new(250.0, 150.0), opt).is_some());
     // The empty centre of the ring is not the repeat.
-    assert!(drawcraft_doc::hit::hit_test(d, Point::new(200.0, 150.0), opt).is_none());
+    assert!(vectorcraft_doc::hit::hit_test(d, Point::new(200.0, 150.0), opt).is_none());
 }
 
 #[test]

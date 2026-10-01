@@ -5,11 +5,11 @@ use egui::{CornerRadius, Sense, Stroke, Ui, vec2};
 
 use crate::state::{DockTab, ICON_PANEL_GROUPS, ICON_PANELS};
 use crate::theme::{self, Tokens};
-use crate::{DrawcraftApp, icons, panels, widgets};
+use crate::{VectorcraftApp, icons, panels, widgets};
 
 const ICON_COL: f32 = 38.0;
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     // Main tabbed group.
     egui::Panel::right("dock")
@@ -74,7 +74,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
 }
 
 /// An icon panel popped out next to the icon column.
-pub fn floating_panel(app: &mut DrawcraftApp, ctx: &egui::Context) {
+pub fn floating_panel(app: &mut VectorcraftApp, ctx: &egui::Context) {
     let Some(id) = app.ui.open_panel.clone() else { return };
     let Some((_, label, _)) = ICON_PANELS.iter().find(|p| p.0 == id) else { return };
     let t = Tokens::get(ctx);

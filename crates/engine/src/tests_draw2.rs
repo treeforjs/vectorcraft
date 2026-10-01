@@ -1,9 +1,9 @@
 //! Drawing / path-editing tools driven through the session (tools → actions → `path.*` commands).
 
-use drawcraft_doc::{NodeId, NodeKind};
-use drawcraft_geom::{FillRule, PathData, Point};
-use drawcraft_tools::{Mods, PointerEvent, PointerKind, ToolKey};
 use serde_json::json;
+use vectorcraft_doc::{NodeId, NodeKind};
+use vectorcraft_geom::{FillRule, PathData, Point};
+use vectorcraft_tools::{Mods, PointerEvent, PointerKind, ToolKey};
 
 use super::*;
 use crate::tooling::{UiRequest, ViewInfo};
@@ -68,7 +68,7 @@ fn near(a: Point, b: Point) -> bool {
 }
 
 fn area(pd: &PathData) -> f64 {
-    drawcraft_pathops::area(pd, FillRule::NonZero)
+    vectorcraft_pathops::area(pd, FillRule::NonZero)
 }
 
 #[test]
@@ -152,7 +152,7 @@ fn curvature_clicks_build_smooth_path() {
     assert_eq!(ps.len(), 1);
     let sp = &ps[0].1.subpaths[0];
     assert_eq!(sp.anchors.len(), 3);
-    assert_eq!(sp.anchors[1].kind, drawcraft_geom::AnchorKind::Smooth);
+    assert_eq!(sp.anchors[1].kind, vectorcraft_geom::AnchorKind::Smooth);
     // Alt-click the middle point → corner.
     s.pointer(&PointerEvent::new(PointerKind::Down, 200.0, 200.0).with_mods(Mods { alt: true, ..Default::default() }), v).unwrap();
     s.pointer(&PointerEvent::new(PointerKind::Up, 200.0, 200.0), v).unwrap();
@@ -219,7 +219,7 @@ fn anchor_point_tool_converts() {
     let id = rect(&mut s, 100.0, 100.0, 100.0, 100.0);
     drag(&mut s, "anchorPoint", &[(100.0, 100.0), (130.0, 80.0)], Mods::default());
     let a = path(&s, id).subpaths[0].anchors[0];
-    assert_eq!(a.kind, drawcraft_geom::AnchorKind::Smooth);
+    assert_eq!(a.kind, vectorcraft_geom::AnchorKind::Smooth);
     assert_eq!(a.h_out, Point::new(130.0, 80.0));
     assert_eq!(a.h_in, Point::new(70.0, 120.0));
     // Click the smooth anchor → corner again.

@@ -4,9 +4,9 @@
 
 use std::sync::{Arc, OnceLock};
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{Appearance, AppearanceItem, FillLayer, Node, NodeId, NodeKind};
-use drawcraft_geom::{Anchor, FillRule, PathData, Point, Rect, SubPath, shapes};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{Appearance, AppearanceItem, FillLayer, Node, NodeId, NodeKind};
+use vectorcraft_geom::{Anchor, FillRule, PathData, Point, Rect, SubPath, shapes};
 
 use crate::{ArtBrush, ArtScale, Bristle, BristleShape, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternBrush, PatternFit, Scatter};
 

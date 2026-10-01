@@ -3,16 +3,16 @@
 use serde_json::json;
 
 use crate::theme::Tokens;
-use crate::{DrawcraftApp, menus};
+use crate::{VectorcraftApp, menus};
 
-pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
+pub fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
     if !app.ui.palette_open {
         return;
     }
     let t = Tokens::get(ctx);
     let q = app.ui.palette_query.to_lowercase();
     let mut items: Vec<(String, String, String)> = vec![]; // (label, kind/id, shortcut)
-    for c in drawcraft_engine::command_specs() {
+    for c in vectorcraft_engine::command_specs() {
         let path = c.menu.join(" › ");
         let label = if path.is_empty() { c.label.to_string() } else { format!("{path} › {}", c.label) };
         items.push((label, c.id.to_string(), menus::shortcut_of(c.id).unwrap_or("").to_string()));
@@ -20,7 +20,7 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
     for c in menus::UI_COMMANDS {
         items.push((c.1.to_string(), c.0.to_string(), menus::shortcut_of(c.0).unwrap_or("").to_string()));
     }
-    for tool in drawcraft_tools::catalog::all_tools() {
+    for tool in vectorcraft_tools::catalog::all_tools() {
         items.push((tool.label.to_string(), format!("tool:{}", tool.id), crate::shortcut_editor::tool_shortcut(tool.id).unwrap_or("").to_string()));
     }
     let matches: Vec<&(String, String, String)> = items

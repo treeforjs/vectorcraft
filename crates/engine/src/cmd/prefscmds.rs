@@ -376,7 +376,7 @@ impl Session {
         let grid_changed = p.gridline_every != self.prefs.gridline_every || p.grid_subdivisions != self.prefs.grid_subdivisions;
         let history_changed = p.history_states != self.prefs.history_states;
         self.prefs = p;
-        drawcraft_render::set_default_threads(u16::try_from(self.prefs.render_threads).ok());
+        vectorcraft_render::set_default_threads(u16::try_from(self.prefs.render_threads).ok());
         for st in &mut self.docs {
             if history_changed {
                 st.history.limit = self.prefs.history_states as usize;

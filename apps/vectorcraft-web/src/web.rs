@@ -2,15 +2,15 @@
 
 use std::sync::{Arc, Mutex};
 
-use drawcraft_engine::Session;
-use drawcraft_ui_egui::{DrawcraftApp, Services};
+use vectorcraft_engine::Session;
+use vectorcraft_ui_egui::{Services, VectorcraftApp};
 use wasm_bindgen::JsCast as _;
 
 type Inbox = Arc<Mutex<Vec<(String, Vec<u8>)>>>;
 
-const OPEN_EXTS: &[&str] = &["drawcraft", "svg", "png", "jpg", "jpeg", "gif", "webp"];
-const CANVAS_ID: &str = "drawcraft_canvas";
-const LOADING_ID: &str = "drawcraft_loading";
+const OPEN_EXTS: &[&str] = &["vectorcraft", "drawcraft", "svg", "png", "jpg", "jpeg", "gif", "webp"];
+const CANVAS_ID: &str = "vectorcraft_canvas";
+const LOADING_ID: &str = "vectorcraft_loading";
 
 pub fn start() {
     eframe::WebLogger::init(log::LevelFilter::Info).ok();
@@ -35,10 +35,10 @@ pub fn start() {
                 options,
                 Box::new(move |cc| {
                     if let Some(rs) = &cc.wgpu_render_state {
-                        log::info!("drawcraft-web: wgpu backend {:?}", rs.adapter.get_info().backend);
+                        log::info!("vectorcraft-web: wgpu backend {:?}", rs.adapter.get_info().backend);
                     }
                     let inbox: Inbox = Arc::default();
-                    let app = DrawcraftApp::new(Session::new(), services(inbox.clone(), cc.egui_ctx.clone()));
+                    let app = VectorcraftApp::new(Session::new(), services(inbox.clone(), cc.egui_ctx.clone()));
                     Ok(Box::new(WebShell { app, inbox }))
                 }),
             )
@@ -46,7 +46,7 @@ pub fn start() {
         if let Some(el) = document.get_element_by_id(LOADING_ID) {
             match result {
                 Ok(()) => el.remove(),
-                Err(e) => el.set_inner_html(&format!("<p>DrawCraft failed to start: {e:?}</p><p>A browser with WebGPU or WebGL2 is required.</p>")),
+                Err(e) => el.set_inner_html(&format!("<p>VectorCraft failed to start: {e:?}</p><p>A browser with WebGPU or WebGL2 is required.</p>")),
             }
         }
     });
@@ -59,7 +59,7 @@ fn query() -> String {
 /// Wraps the app to read dropped files asynchronously (browsers can't read them synchronously)
 /// and feed them through the inbox.
 struct WebShell {
-    app: DrawcraftApp,
+    app: VectorcraftApp,
     inbox: Inbox,
 }
 
@@ -120,7 +120,7 @@ fn services(inbox: Inbox, ctx: egui::Context) -> Services {
 /// Trigger a browser download of `bytes` named after the last component of `path`.
 fn download(path: &str, bytes: &[u8]) -> Result<(), String> {
     let js = |e: wasm_bindgen::JsValue| format!("{e:?}");
-    let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "drawcraft".into());
+    let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "vectorcraft".into());
     let window = web_sys::window().ok_or("no window")?;
     let document = window.document().ok_or("no document")?;
     let parts = js_sys::Array::of1(&js_sys::Uint8Array::from(bytes));
@@ -150,7 +150,7 @@ fn mime_for(name: &str) -> &'static str {
         Some("png") => "image/png",
         Some("jpg" | "jpeg") => "image/jpeg",
         Some("pdf") => "application/pdf",
-        Some("drawcraft") => "application/json",
+        Some("vectorcraft" | "drawcraft") => "application/json",
         _ => "application/octet-stream",
     }
 }

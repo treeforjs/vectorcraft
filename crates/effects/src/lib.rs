@@ -1,4 +1,4 @@
-//! DrawCraft live effects (Illustrator's Effect menu).
+//! VectorCraft live effects (Illustrator's Effect menu).
 //!
 //! Effects live in appearance stacks as [`Effect`] `{id, params, visible}` records. This crate
 //! interprets them:
@@ -24,9 +24,9 @@ mod warp;
 #[cfg(test)]
 mod tests;
 
-use drawcraft_doc::Effect;
-use drawcraft_geom::{BezPath, PathData, Rect};
 use serde_json::{Map, Value, json};
+use vectorcraft_doc::Effect;
+use vectorcraft_geom::{BezPath, PathData, Rect};
 
 pub use raster::{RasterFx, outset, raster_effects};
 pub use warp::{WarpStyle, warp_point};
@@ -306,14 +306,14 @@ fn apply_one(id: &str, p: &Value, path: &PathData, b: Rect, ctx: &GeomContext) -
             if off.abs() < 1e-9 {
                 return path.clone();
             }
-            drawcraft_pathops::offset_path(path, off, join(p, "joins"), num(p, "miterLimit", 4.0).clamp(1.0, 500.0))
+            vectorcraft_pathops::offset_path(path, off, join(p, "joins"), num(p, "miterLimit", 4.0).clamp(1.0, 500.0))
         }
         "path.outlineStroke" => {
             let w = p.get("width").and_then(Value::as_f64).unwrap_or(ctx.stroke_width);
             if w <= 0.0 {
                 return path.clone();
             }
-            drawcraft_pathops::outline_stroke(path, w, drawcraft_pathops::Cap::Butt, join(p, "joins"), num(p, "miterLimit", 10.0).max(1.0))
+            vectorcraft_pathops::outline_stroke(path, w, vectorcraft_pathops::Cap::Butt, join(p, "joins"), num(p, "miterLimit", 10.0).max(1.0))
         }
         "convertToShape.rectangle" | "convertToShape.roundedRectangle" | "convertToShape.ellipse" => stylize::convert_to_shape(id, b, p),
         "stylize.roundCorners" => stylize::round_corners(path, num(p, "radius", 10.0)),

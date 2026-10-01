@@ -1,7 +1,7 @@
 use serde_json::json;
 
 use super::*;
-use drawcraft_tools::{PointerEvent, PointerKind};
+use vectorcraft_tools::{PointerEvent, PointerKind};
 
 fn session() -> Session {
     let mut s = Session::new();
@@ -122,7 +122,7 @@ fn fill_and_stroke_commands() {
     assert_eq!(n.appearance.fill_paint().color().unwrap().to_hex(), "#ff0000");
     let st = n.appearance.stroke().unwrap();
     assert_eq!(st.width, 4.0);
-    assert_eq!(st.cap, drawcraft_doc::LineCap::Round);
+    assert_eq!(st.cap, vectorcraft_doc::LineCap::Round);
     assert_eq!(st.dash.as_ref().unwrap().pattern, vec![3.0, 2.0]);
     s.execute("paint.swap", &json!({})).unwrap();
     assert_eq!(s.doc().unwrap().doc.node(a).unwrap().appearance.stroke_paint().color().unwrap().to_hex(), "#ff0000");
@@ -255,14 +255,14 @@ fn direct_selection_moves_one_anchor() {
     s.pointer(&PointerEvent::new(PointerKind::Drag, 90.0, 90.0), v).unwrap();
     s.pointer(&PointerEvent::new(PointerKind::Up, 90.0, 90.0), v).unwrap();
     let p = s.doc().unwrap().doc.node(a).unwrap().path_data().unwrap().clone();
-    assert_eq!(p.subpaths[0].anchors[0].p, drawcraft_geom::Point::new(90.0, 90.0));
-    assert_eq!(p.subpaths[0].anchors[1].p, drawcraft_geom::Point::new(200.0, 100.0));
+    assert_eq!(p.subpaths[0].anchors[0].p, vectorcraft_geom::Point::new(90.0, 90.0));
+    assert_eq!(p.subpaths[0].anchors[1].p, vectorcraft_geom::Point::new(200.0, 100.0));
 }
 
 #[test]
 fn text_create_has_bounds() {
     let mut s = session();
-    let r = s.execute("text.create", &json!({"x": 10, "y": 50, "text": "Hello DrawCraft", "size": 24})).unwrap();
+    let r = s.execute("text.create", &json!({"x": 10, "y": 50, "text": "Hello VectorCraft", "size": 24})).unwrap();
     let n = s.doc().unwrap().doc.node(NodeId(r["id"].as_u64().unwrap())).unwrap().clone();
     let b = n.geometric_bounds().unwrap();
     assert!(b.width() > 100.0, "{b:?}");

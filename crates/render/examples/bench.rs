@@ -1,9 +1,9 @@
-//! `cargo run --release -p drawcraft-render --example bench` — render timing on synthetic documents.
+//! `cargo run --release -p vectorcraft-render --example bench` — render timing on synthetic documents.
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{Appearance, Document, Node};
-use drawcraft_geom::{Affine, Point, Rect, shapes};
-use drawcraft_render::{RenderOptions, Renderer};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{Appearance, Document, Node};
+use vectorcraft_geom::{Affine, Point, Rect, shapes};
+use vectorcraft_render::{RenderOptions, Renderer};
 
 fn rng(seed: &mut u64) -> f64 {
     *seed ^= *seed << 13;
@@ -42,12 +42,12 @@ fn main() {
         let x = rng(&mut seed) * 1500.0;
         let y = rng(&mut seed) * 1150.0 + 20.0;
         let id = d.alloc_id();
-        let t = drawcraft_doc::TextObject::point(
+        let t = vectorcraft_doc::TextObject::point(
             Point::new(x, y),
-            &format!("Label {i} — DrawCraft"),
-            drawcraft_doc::CharStyle { size: 10.0 + (i % 5) as f64 * 4.0, ..Default::default() },
+            &format!("Label {i} — VectorCraft"),
+            vectorcraft_doc::CharStyle { size: 10.0 + (i % 5) as f64 * 4.0, ..Default::default() },
         );
-        d.insert(Some(l), usize::MAX, Node::new(id, drawcraft_doc::NodeKind::Text(Box::new(t)))).unwrap();
+        d.insert(Some(l), usize::MAX, Node::new(id, vectorcraft_doc::NodeKind::Text(Box::new(t)))).unwrap();
     }
     let mut r = Renderer::new();
     if let Ok(t) = std::env::var("THREADS") {

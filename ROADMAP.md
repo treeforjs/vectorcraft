@@ -1,6 +1,6 @@
-# DrawCraft Roadmap
+# VectorCraft Roadmap
 
-DrawCraft is a clean-room, open-source, pure-Rust reimplementation of the Adobe Illustrator workflow. It runs on macOS, Windows, Linux and the web (WASM), and agents can drive it fully over a JSON control channel and MCP.
+VectorCraft is a clean-room, open-source, pure-Rust reimplementation of the Adobe Illustrator workflow. It runs on macOS, Windows, Linux and the web (WASM), and agents can drive it fully over a JSON control channel and MCP.
 
 This file tracks **how far we are and what's left**. Estimates are wall-clock hours of continuous agent work (Claude Opus 5.5 lead plus 4–6 parallel agents). They were made by counting the remaining work, not measured, and are updated as work lands.
 
@@ -22,7 +22,7 @@ _Last updated: 2026-10-01._
   - Actions panel (record/playback, persisted), generic parameter dialogs for every "…" command.
   - JSON-lines control channel with real egui pointer and keyboard injection.
   - MCP server with 19 tools, which can attach to the running app or run headless.
-  - Headless CLI (`drawcraft-cli`).
+  - Headless CLI (`vectorcraft-cli`).
   - Actions panel that records and plays back commands.
 - **UI:** Illustrator 2026 layout restyled to measured values:
   - Medium Dark theme, categorized and Advanced toolbars, 35 pt document tabs, 33 pt panel tabs.
@@ -45,7 +45,7 @@ _Last updated: 2026-10-01._
 - **Advanced art:** live Blends (steps/distance/smooth colour, spine), Envelope Distort (warp/mesh/top object), Gradient Mesh, Shape Builder, Live Paint, Image Trace (12 presets), pattern swatches with pattern editing mode, live Repeat (radial/grid/mirror).
 - **Colour, type and file workflows:** Recolor Artwork (dialog with harmonies), Edit Colors, Find & Replace, Change Case, Smart Punctuation, Guides, Lock/Hide Above, Transform Each, Rasterize.
 - **Formats:**
-  - `.drawcraft` (lossless JSON), SVG import/export, PDF export/import (including PDF-compatible `.ai`).
+  - `.vectorcraft` (lossless JSON), SVG import/export, PDF export/import (including PDF-compatible `.ai`).
   - PNG, JPEG and WebP export, Export for Screens, Place.
 - **Performance:** 20k shapes + 1k texts render in 27 ms per full-retina frame (7.8 ms zoomed), 7× faster than the first version. The UI thread never blocks. The web build is 7.1 MB gzipped.
 - **Tests:** ~700 automated tests: model-based property tests, a junk-parameter sweep over every command, golden renders, and MCP end-to-end tests over stdio.
@@ -59,7 +59,7 @@ _Last updated: 2026-10-01._
 | M2 | Drawing tools + smart guides | ✅ mostly done (Shaper, Pen modifier nuances) | 5–10 |
 | M3 | Paint & appearance (swatches, color, gradient, stroke, appearance, transparency, styles) | 🟡 panels done; opacity masks done (make/release, clip, invert, disable, link; render + SVG `<mask>` in/out + PDF soft mask); mask-editing mode, freeform gradients pending | 6–10 |
 | M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 Export for Screens (PNG/JPG/WebP/SVG/PDF × scales) done; headless CLI/MCP export every format; system clipboard: copy puts SVG markup on it, paste takes SVG from other apps (Ctrl/Cmd+C/X/V now also work off macOS); PNG/PDF clipboard flavours, EPS/DXF pending | 8–12 |
-| M5 | Performance | 🟡 background render + caches + MT done; `drawcraft-cli bench` and `drawcraft-cli perf` (budget suite); file format v2 opens 3× faster (50k paths: 722 → 244 ms); raster effects (glows, shadows, blur, feather) no longer force the whole frame single-threaded (filtered offscreen per effect, verified equal to the single-threaded reference); effect-heavy demos need a clean-machine benchmark; dirty-region rendering, GPU backend spike pending | 10–20 |
+| M5 | Performance | 🟡 background render + caches + MT done; `vectorcraft-cli bench` and `vectorcraft-cli perf` (budget suite); file format v2 opens 3× faster (50k paths: 722 → 244 ms); raster effects (glows, shadows, blur, feather) no longer force the whole frame single-threaded (filtered offscreen per effect, verified equal to the single-threaded reference); effect-heavy demos need a clean-machine benchmark; dirty-region rendering, GPU backend spike pending | 10–20 |
 | M6 | Path operations (Pathfinder, Shape Builder, offset…) | ✅ mostly done (Shape Builder edge erase, large-offset bug open) | 3–6 |
 | M7 | Type (point/area/path, editing, styles, OpenType, threading, glyphs) | 🟡 Character/Paragraph Styles, Area Type Options, threaded text, Fit Headline, Glyphs done; OpenType/Tabs panels, text wrap, Find Font, spell check pending | 12–20 |
 | M8 | Transform & distort (Puppet Warp, Liquify tools, Envelopes, Blends, Perspective Grid) | 🟡 live Blends, Envelopes (warp/mesh/top object), Width tool, Liquify tools, Puppet Warp and Perspective Grid landed; fidelity pass pending | 8–12 |

@@ -1,10 +1,10 @@
 //! Opacity masks (Transparency panel): make, release, enable/disable, link/unlink, clip, invert.
 //!
-//! The mask art is stored on the masked object ([`drawcraft_doc::OpacityMask`]), outside the
+//! The mask art is stored on the masked object ([`vectorcraft_doc::OpacityMask`]), outside the
 //! layer tree, so it is never hit-tested or selected. Its luminance sets the object's opacity.
 
-use drawcraft_doc::{Node, NodeId, OpacityMask};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Node, NodeId, OpacityMask};
 
 use super::edit::selected_roots;
 use super::*;
@@ -306,8 +306,8 @@ mod tests {
         select(&mut s, &[a, b]);
         s.execute("transparency.makeOpacityMask", &json!({"invert": true})).unwrap();
         let d = s.doc().unwrap().doc.clone();
-        let bytes = drawcraft_format::save(&d, false);
-        let back = drawcraft_format::load(&bytes).unwrap();
+        let bytes = vectorcraft_format::save(&d, false);
+        let back = vectorcraft_format::load(&bytes).unwrap();
         assert_eq!(back.node(NodeId(a)).unwrap().mask, d.node(NodeId(a)).unwrap().mask);
     }
 }

@@ -2,9 +2,9 @@
 //! Options, Fill with Placeholder Text, Insert Special/Whitespace/Break characters) and the text
 //! commands of the Edit menu (Find and Replace, Find Next, Paste without Formatting).
 
-use drawcraft_doc::{CharStyle, Document, Justify, NodeId, NodeKind, TextKind, TextRun};
-use drawcraft_geom::{Affine, Rect, shapes};
 use serde_json::{Value, json};
+use vectorcraft_doc::{CharStyle, Document, Justify, NodeId, NodeKind, TextKind, TextRun};
+use vectorcraft_geom::{Affine, Rect, shapes};
 
 use super::typecmd::refresh_bounds;
 use super::*;
@@ -286,7 +286,7 @@ fn to_area(s: &mut Session, p: &Value) -> Result<Value> {
             if !matches!(t.kind, TextKind::Point) {
                 continue;
             }
-            let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+            let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
             let b = if lay.bounds.area() > 0.0 { lay.bounds } else { t.estimate_bounds() };
             let size = t.first_style().size;
             // A little slack on the right so the text doesn't rewrap.
@@ -326,7 +326,7 @@ fn to_point(s: &mut Session, p: &Value) -> Result<Value> {
             let Some(NodeKind::Text(t)) = d.node_mut(*id).map(|n| &mut n.kind) else { continue };
             let TextKind::Area { frame } = &t.kind else { continue };
             let fb = frame.bounds().unwrap_or_default();
-            let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+            let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
             let plain = t.plain_text();
             let baseline = lay.lines.first().map(|l| l.baseline).unwrap_or(fb.y0 + t.first_style().size * 0.8);
             // Soft wraps → explicit breaks (replace the space before the wrap when there is one).
@@ -391,7 +391,7 @@ fn path_options(s: &mut Session, p: &Value) -> Result<Value> {
 
 // ---------- placeholder / insert ----------
 
-/// DrawCraft's own placeholder copy (not the classical Latin text).
+/// VectorCraft's own placeholder copy (not the classical Latin text).
 pub(crate) const PLACEHOLDER: &str = "Sample copy flows here while the layout takes shape. Swap these words for real text once the \
 design is settled. Every line is only a stand-in that shows size, rhythm and colour. Headlines, captions and body text all \
 start as rough drafts like this one. Keep going until the frame is full and the page feels balanced.";
@@ -589,7 +589,7 @@ fn find_next(s: &mut Session, p: &Value) -> Result<Value> {
 
 // ---------- Paste without Formatting ----------
 
-fn strip_formatting(n: &mut drawcraft_doc::Node) {
+fn strip_formatting(n: &mut vectorcraft_doc::Node) {
     if let NodeKind::Text(t) = &mut n.kind {
         let text = t.plain_text();
         t.runs = vec![TextRun { text, style: CharStyle::default() }];

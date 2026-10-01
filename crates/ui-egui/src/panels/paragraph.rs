@@ -1,12 +1,12 @@
 //! Paragraph panel: seven alignment buttons, indents, space before/after and Hyphenate.
 
-use drawcraft_doc::{Justify, Unit};
 use egui::{Ui, vec2};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Justify, Unit};
 
 use super::character::text_style;
 use super::{pstate, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
 
@@ -21,11 +21,11 @@ pub const ALIGNMENTS: [(Justify, &str, &str, &str); 7] = [
 ];
 
 /// Paragraph attributes apply to the whole text object (ending a Type tool typing session first).
-fn format(app: &mut DrawcraftApp, p: Value) {
+fn format(app: &mut VectorcraftApp, p: Value) {
     para_cmd(app, "text.setFormat", p);
 }
 
-fn para_cmd(app: &mut DrawcraftApp, cmd: &str, mut p: Value) {
+fn para_cmd(app: &mut VectorcraftApp, cmd: &str, mut p: Value) {
     if let Some((id, _, _)) = super::character::text_editing(app) {
         super::character::end_typing(app);
         p["ids"] = json!([id.0]);
@@ -33,7 +33,7 @@ fn para_cmd(app: &mut DrawcraftApp, cmd: &str, mut p: Value) {
     app.run(cmd, p).ok();
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let Some((_, para)) = text_style(app) else {
         super::empty_state(ui, "pilcrow", "No text selected", "Select a text object to edit its paragraph attributes.");
@@ -85,7 +85,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let has = text_style(app).is_some();
     let hidden: bool = pstate(ui.ctx(), "pa-hide-options");
     if menu_item(ui, if hidden { "Show Options" } else { "Hide Options" }, true, false) {

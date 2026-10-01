@@ -5,9 +5,9 @@
 //! first point to close; Backspace/Delete removes the last touched point; Esc/Enter ends the path.
 //! A rubber band shows the curve to the cursor.
 
-use drawcraft_doc::NodeId;
-use drawcraft_geom::Point;
 use serde_json::{Value, json};
+use vectorcraft_doc::NodeId;
+use vectorcraft_geom::Point;
 
 use super::{FEEDBACK, catmull_rom};
 use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext, ToolKey};
@@ -174,7 +174,7 @@ impl Tool for CurvatureTool {
             let mut pts = self.pts.clone();
             pts.push((h, false));
             let sp = catmull_rom(&pts, false);
-            let mut bp = drawcraft_geom::BezPath::new();
+            let mut bp = vectorcraft_geom::BezPath::new();
             sp.to_bezpath_into(&mut bp);
             o.push(Overlay::Path { path: bp, color: FEEDBACK, width: 1.0, dashed: false });
         }
@@ -192,7 +192,7 @@ impl Tool for CurvatureTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     #[test]
     fn first_click_creates_then_notify_tracks_path() {

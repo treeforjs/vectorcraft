@@ -1,10 +1,10 @@
 //! Rich text editing: range edit/style commands, the Type tools through the session, area and
 //! on-path type from paths, Fit Headline, Convert To Area/Point Type.
 
-use drawcraft_doc::{NodeId, NodeKind, TextKind, TextObject};
-use drawcraft_geom::Point;
-use drawcraft_tools::{Mods, PointerEvent, PointerKind, ToolKey};
 use serde_json::{Value, json};
+use vectorcraft_doc::{NodeId, NodeKind, TextKind, TextObject};
+use vectorcraft_geom::Point;
+use vectorcraft_tools::{Mods, PointerEvent, PointerKind, ToolKey};
 
 use super::*;
 
@@ -127,8 +127,8 @@ fn type_tool_selection_replace_and_delete() {
     s.select_tool("type", v).unwrap();
     // Click at the start of the text to edit it.
     let t = obj(&s, id);
-    let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), &t);
-    let (a, b) = drawcraft_text::caret_position(&lay, 6);
+    let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), &t);
+    let (a, b) = vectorcraft_text::caret_position(&lay, 6);
     let p = t.xf * a.midpoint(b);
     click(&mut s, p.x + 0.1, p.y);
     assert!(s.tool_wants_text());
@@ -203,12 +203,12 @@ fn area_type_from_a_circle_keeps_glyphs_inside() {
     let mut s = session();
     let e = s.execute("shape.ellipse", &json!({"x": 100, "y": 100, "width": 240, "height": 240})).unwrap();
     let pid = e["id"].as_u64().unwrap();
-    let r = s.execute("text.createInPath", &json!({"path": pid, "mode": "area", "text": drawcraft_engine_placeholder()})).unwrap();
+    let r = s.execute("text.createInPath", &json!({"path": pid, "mode": "area", "text": vectorcraft_engine_placeholder()})).unwrap();
     let id = NodeId(r["id"].as_u64().unwrap());
     assert!(s.doc().unwrap().doc.node(NodeId(pid)).is_none(), "the path became the frame");
     let t = obj(&s, id);
     assert!(matches!(t.kind, TextKind::Area { .. }));
-    let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), &t);
+    let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), &t);
     assert!(lay.lines.len() > 5);
     let c = Point::new(220.0, 220.0);
     for g in lay.glyphs.iter().filter(|g| !g.outline.elements().is_empty()) {
@@ -221,7 +221,7 @@ fn area_type_from_a_circle_keeps_glyphs_inside() {
     assert!(s.execute("text.createInPath", &json!({"path": 9999})).is_err());
 }
 
-fn drawcraft_engine_placeholder() -> String {
+fn vectorcraft_engine_placeholder() -> String {
     "Type flows inside any closed shape, line by line, trimmed to the shape's edges at each band. ".repeat(4)
 }
 
@@ -236,7 +236,7 @@ fn type_on_path_starts_where_clicked() {
     let t = obj(&s, NodeId(r["id"].as_u64().unwrap()));
     let TextKind::OnPath { start, .. } = t.kind else { panic!() };
     assert!((start - 0.25).abs() < 0.01, "{start}");
-    let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), &t);
+    let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), &t);
     let g0 = &lay.glyphs[0];
     assert!((g0.origin.y - 300.0).abs() < 1e-6 && (g0.origin.x - 200.0).abs() < 1.0, "{:?}", g0.origin);
 }
@@ -271,7 +271,7 @@ fn fit_headline_fills_the_frame_width() {
     let r = s.execute("type.fitHeadline", &json!({"ids": [id.0]})).unwrap();
     assert!(r["tracking"][0].as_f64().unwrap() > 100.0, "{r}");
     let t = obj(&s, id);
-    let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), &t);
+    let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), &t);
     let l0 = &lay.lines[0];
     assert_eq!(&t.plain_text()[l0.start..l0.end], "Headline", "still one line");
     assert!((l0.x1 - l0.x0 - 400.0).abs() < 1.0, "{}", l0.x1 - l0.x0);
@@ -282,7 +282,7 @@ fn fit_headline_fills_the_frame_width() {
 }
 
 fn first_glyph_doc_pos(t: &TextObject) -> Point {
-    let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+    let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
     t.xf * lay.glyphs[0].origin
 }
 
@@ -308,7 +308,7 @@ fn convert_area_point_keeps_text_in_place_for_every_alignment() {
         let t = obj(&s, id);
         let back = first_glyph_doc_pos(&t);
         assert!((back - before).hypot() < 0.01, "{j} (area again): {before:?} → {back:?}");
-        let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), &t);
+        let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), &t);
         assert!(!lay.overflow);
     }
 }

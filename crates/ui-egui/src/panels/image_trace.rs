@@ -6,7 +6,7 @@ use egui::Ui;
 use serde_json::{Value, json};
 
 use super::{first_selected, pstate, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::widgets::{self, menu_item};
 
 const MODES: [(&str, &str); 3] = [("blackAndWhite", "Black and White"), ("grayscale", "Grayscale"), ("color", "Color")];
@@ -22,7 +22,7 @@ struct TraceUi {
     synced: Value,
 }
 
-fn presets(app: &mut DrawcraftApp) -> Vec<(String, Value)> {
+fn presets(app: &mut VectorcraftApp) -> Vec<(String, Value)> {
     let v = app.session.execute("imageTrace.presets", &json!({})).unwrap_or_default();
     v["presets"]
         .as_array()
@@ -31,14 +31,14 @@ fn presets(app: &mut DrawcraftApp) -> Vec<(String, Value)> {
 }
 
 /// What the selection is: an Image Trace object (with its stored settings), a plain image, or neither.
-fn target(app: &DrawcraftApp) -> (bool, bool, Option<Value>) {
+fn target(app: &VectorcraftApp) -> (bool, bool, Option<Value>) {
     let Some(n) = first_selected(app) else { return (false, false, None) };
     let trace = n.name.as_deref() == Some("Image Trace")
-        && n.children().is_some_and(|c| c.first().is_some_and(|i| matches!(i.kind, drawcraft_doc::NodeKind::Image(_))));
-    (trace, matches!(n.kind, drawcraft_doc::NodeKind::Image(_)), n.trace.map(|t| *t))
+        && n.children().is_some_and(|c| c.first().is_some_and(|i| matches!(i.kind, vectorcraft_doc::NodeKind::Image(_))));
+    (trace, matches!(n.kind, vectorcraft_doc::NodeKind::Image(_)), n.trace.map(|t| *t))
 }
 
-fn trace(app: &mut DrawcraftApp, st: &mut TraceUi) {
+fn trace(app: &mut VectorcraftApp, st: &mut TraceUi) {
     let preset = if st.preset == "Custom" { "Default" } else { st.preset.as_str() };
     match app.run("imageTrace.make", json!({ "preset": preset, "params": st.params })) {
         Ok(r) => st.info = Some((r["paths"].as_u64().unwrap_or(0), r["anchors"].as_u64().unwrap_or(0), r["colors"].as_u64().unwrap_or(0))),
@@ -60,7 +60,7 @@ fn slider(ui: &mut Ui, label: &str, v: &mut f64, range: std::ops::RangeInclusive
     out
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let all = presets(app);
     let mut st: TraceUi = pstate(ui.ctx(), "image-trace");
     if st.params.is_null() {
@@ -163,7 +163,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     set_pstate(ui.ctx(), "image-trace", st);
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let (is_trace, _, _) = target(app);
     if menu_item(ui, "Release", is_trace, false) {
         app.run("imageTrace.release", json!({})).ok();
@@ -183,7 +183,7 @@ mod tests {
 
     #[test]
     fn panel_and_menu_draw_headless() {
-        let mut app = DrawcraftApp::new(drawcraft_engine::Session::new(), Default::default());
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
         app.session.execute("file.new", &json!({"width": 100, "height": 100})).unwrap();
         app.session.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap();
         for _ in 0..2 {

@@ -2,9 +2,9 @@
 
 use std::sync::Arc;
 
-use drawcraft_color::BlendMode;
-use drawcraft_geom::{Affine, FillRule, PathData, Point, Rect, shapes};
 use serde::{Deserialize, Serialize};
+use vectorcraft_color::BlendMode;
+use vectorcraft_geom::{Affine, FillRule, PathData, Point, Rect, shapes};
 
 use crate::appearance::Appearance;
 use crate::live::{BlendSpec, EnvelopeKind, GradientMesh};
@@ -402,13 +402,13 @@ impl Node {
             NodeKind::Layer { children, .. } | NodeKind::Group { children, .. } | NodeKind::Compound { children, .. } => children
                 .iter()
                 .filter(|c| c.visible || !matches!(self.kind, NodeKind::Layer { .. }))
-                .fold(None, |acc, c| drawcraft_geom::union_opt(acc, c.geometric_bounds())),
+                .fold(None, |acc, c| vectorcraft_geom::union_opt(acc, c.geometric_bounds())),
             NodeKind::Text(t) => t.bounds(),
             NodeKind::Image(im) => Some(im.xf.transform_rect_bbox(Rect::new(0.0, 0.0, im.width as f64, im.height as f64))),
             NodeKind::SymbolInstance { xf, .. } => Some(xf.transform_rect_bbox(Rect::new(-10.0, -10.0, 10.0, 10.0))),
             NodeKind::Blend { children, spec } => {
                 let b = crate::live::nodes_bounds(children);
-                drawcraft_geom::union_opt(b, spec.spine.as_ref().and_then(|s| s.bounds()))
+                vectorcraft_geom::union_opt(b, spec.spine.as_ref().and_then(|s| s.bounds()))
             }
             NodeKind::Envelope { content, kind, .. } => crate::live::envelope_bounds(content, kind),
             NodeKind::Mesh(m) => m.bounds(),
@@ -420,12 +420,12 @@ impl Node {
         match &self.kind {
             NodeKind::Group { children, clip: true } => children.first().and_then(|c| c.geometric_bounds()),
             NodeKind::Layer { children, .. } | NodeKind::Group { children, .. } => {
-                children.iter().fold(None, |acc, c| drawcraft_geom::union_opt(acc, c.visual_bounds()))
+                children.iter().fold(None, |acc, c| vectorcraft_geom::union_opt(acc, c.visual_bounds()))
             }
             NodeKind::Blend { children, spec } => {
-                let b = children.iter().fold(None, |acc, c| drawcraft_geom::union_opt(acc, c.visual_bounds()));
+                let b = children.iter().fold(None, |acc, c| vectorcraft_geom::union_opt(acc, c.visual_bounds()));
                 let o = crate::live::max_outset(children);
-                drawcraft_geom::union_opt(b, spec.spine.as_ref().and_then(|s| s.bounds()).map(|r| r.inflate(o, o)))
+                vectorcraft_geom::union_opt(b, spec.spine.as_ref().and_then(|s| s.bounds()).map(|r| r.inflate(o, o)))
             }
             NodeKind::Envelope { content, .. } | NodeKind::Repeat(RepeatSpec { source: content, .. }) => {
                 let o = crate::live::max_outset(content);
@@ -512,7 +512,7 @@ impl Node {
 
 fn transform_paints(ap: &mut Appearance, a: Affine) {
     use crate::appearance::AppearanceItem;
-    use drawcraft_color::Paint;
+    use vectorcraft_color::Paint;
     for it in &mut ap.items {
         let p = match it {
             AppearanceItem::Fill(f) => &mut f.paint,

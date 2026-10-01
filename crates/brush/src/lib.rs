@@ -1,4 +1,4 @@
-//! DrawCraft brushes: definitions (calligraphic, scatter, art, pattern, bristle), the default
+//! VectorCraft brushes: definitions (calligraphic, scatter, art, pattern, bristle), the default
 //! library, and the geometry that turns a brushed stroke into filled art.
 //!
 //! Brush definitions live in the document under `Document::unknown["brushes"]` (a JSON array of
@@ -18,10 +18,10 @@ mod warp;
 
 use std::sync::Arc;
 
-use drawcraft_color::Paint;
-use drawcraft_doc::{Appearance, AppearanceItem, Document, FillLayer, Node, NodeId, NodeKind, StrokeLayer};
-use drawcraft_geom::{BezPath, Rect};
 use serde::{Deserialize, Serialize};
+use vectorcraft_color::Paint;
+use vectorcraft_doc::{Appearance, AppearanceItem, Document, FillLayer, Node, NodeId, NodeKind, StrokeLayer};
+use vectorcraft_geom::{BezPath, Rect};
 
 pub use colorize::{colorize, tint_node};
 pub use defaults::defaults;
@@ -85,7 +85,7 @@ pub enum Colorization {
     /// Black and white stay; mid tones become the stroke colour, darker ones shades of it.
     TintsAndShades,
     /// The key colour becomes the stroke colour; other colours rotate by the same hue offset.
-    HueShift { key: drawcraft_color::Color },
+    HueShift { key: vectorcraft_color::Color },
 }
 
 /// Calligraphic brush: an elliptical nib swept along the path. Sizes are at 1 pt stroke weight
@@ -376,7 +376,7 @@ pub fn node_pieces(doc: &Document, n: &Node) -> Option<Vec<Node>> {
         any = true;
         for mut p in stroke_pieces(b, &bp, st) {
             p.opacity *= st.opacity;
-            if st.blend != drawcraft_color::BlendMode::Normal {
+            if st.blend != vectorcraft_color::BlendMode::Normal {
                 p.blend = st.blend;
             }
             out.push(p);
@@ -431,7 +431,7 @@ pub fn expand(doc: &Document, n: &Node) -> Option<Node> {
 }
 
 /// A filled path node painted with `paint` (brush output).
-pub(crate) fn filled(path: drawcraft_geom::PathData, paint: &Paint) -> Node {
+pub(crate) fn filled(path: vectorcraft_geom::PathData, paint: &Paint) -> Node {
     Node::path(NodeId(0), path, Appearance { items: vec![AppearanceItem::Fill(FillLayer::new(paint.clone()))], effects: vec![] })
 }
 
@@ -446,7 +446,7 @@ pub fn preview_path(w: f64, h: f64) -> BezPath {
 
 /// Union of the geometric bounds of `nodes`.
 pub fn pieces_bounds(nodes: &[Node]) -> Option<Rect> {
-    nodes.iter().fold(None, |acc, n| drawcraft_geom::union_opt(acc, n.visual_bounds()))
+    nodes.iter().fold(None, |acc, n| vectorcraft_geom::union_opt(acc, n.visual_bounds()))
 }
 
 #[cfg(test)]

@@ -1,16 +1,16 @@
 //! Window chrome: application bar (menus), Control bar, document tabs, status bar.
 
-use drawcraft_color::Paint;
-use drawcraft_doc::NodeKind;
 use egui::{CornerRadius, Sense, Stroke, StrokeKind, Ui, vec2};
 use serde_json::json;
+use vectorcraft_color::Paint;
+use vectorcraft_doc::NodeKind;
 
 use crate::state::{ZOOM_STOPS, zoom_label};
 use crate::theme::{self, Tokens};
 use crate::widgets::{self, paint_chip};
-use crate::{DrawcraftApp, icons, menus};
+use crate::{VectorcraftApp, icons, menus};
 
-pub fn app_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let left = if app.integrated_titlebar { 78 } else { 8 };
     egui::Panel::top("app_bar").exact_size(44.0).frame(egui::Frame::NONE.fill(t.app_bar).inner_margin(egui::Margin { left, right: 14, top: 0, bottom: 0 }).stroke(Stroke::new(1.0, t.border))).show(ui, |ui| {
@@ -25,7 +25,7 @@ pub fn app_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
             ui.add_space(2.0);
             if app.native_menu {
                 let full = ui.max_rect();
-                ui.painter().text(full.center(), egui::Align2::CENTER_CENTER, "DrawCraft", egui::FontId::proportional(13.5), t.text);
+                ui.painter().text(full.center(), egui::Align2::CENTER_CENTER, "VectorCraft", egui::FontId::proportional(13.5), t.text);
             } else {
                 menus::menu_bar(app, ui);
             }
@@ -70,7 +70,7 @@ fn chip_button(ui: &mut Ui, paint: &Paint, stroke_style: bool, tip: &str) -> egu
 }
 
 /// The Control bar (Window → Control), context-sensitive like Illustrator's.
-pub fn control_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn control_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     egui::Panel::top("control_bar")
         .exact_size(34.0)
@@ -121,7 +121,7 @@ pub fn control_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
                 if ui.link(egui::RichText::new("Stroke:").size(12.0).color(t.text).underline()).clicked() {
                     app.ui.open_panel = Some("stroke".into());
                 }
-                if let Some(w) = widgets::num_field(ui, "cb-stroke", Some(weight), drawcraft_doc::Unit::Points, 64.0) {
+                if let Some(w) = widgets::num_field(ui, "cb-stroke", Some(weight), vectorcraft_doc::Unit::Points, 64.0) {
                     app.run("stroke.set", json!({"weight": w})).ok();
                 }
                 ui.add_space(4.0);
@@ -179,7 +179,7 @@ pub fn control_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
 }
 
 /// Document tab strip: "Name* @ 66.67% (RGB/Preview)".
-pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn doc_tabs(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let (strip, _) = ui.allocate_exact_size(vec2(ui.available_width(), 35.0), Sense::hover());
     ui.painter().rect_filled(strip, 0.0, t.tab_strip);
@@ -190,7 +190,7 @@ pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
     let active = app.session.active_index();
     for (i, d) in app.session.documents().iter().enumerate() {
         let zoom = app.views.get(i).map(|v| v.zoom).unwrap_or(1.0);
-        let mode = if d.doc.color_mode == drawcraft_doc::ColorMode::Cmyk { "CMYK" } else { "RGB" };
+        let mode = if d.doc.color_mode == vectorcraft_doc::ColorMode::Cmyk { "CMYK" } else { "RGB" };
         let vm = if app.ui.view.outline { "Outline" } else { "Preview" };
         let title = format!("{}{} @ {} ({mode}/{vm})", d.title(), if d.is_dirty() { "*" } else { "" }, zoom_label(zoom).replace('%', " %"));
         let is_active = Some(i) == active;
@@ -276,7 +276,7 @@ pub fn doc_tabs(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-pub fn status_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn status_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     egui::Panel::bottom("status_bar")
         .exact_size(24.0)
@@ -324,7 +324,7 @@ pub fn status_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
                     widgets::icon_button(ui, icon, "", false, 18.0);
                 }
                 ui.separator();
-                let tool = drawcraft_tools::tool_info(app.session.tool_id()).map(|t| t.label.trim_end_matches(" Tool")).unwrap_or("");
+                let tool = vectorcraft_tools::tool_info(app.session.tool_id()).map(|t| t.label.trim_end_matches(" Tool")).unwrap_or("");
                 ui.label(egui::RichText::new(tool).size(11.5).color(t.text_dim));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.label(
@@ -425,7 +425,7 @@ fn hint_for(tool: &str) -> &'static [(&'static str, bool)] {
     }
 }
 
-pub fn hint_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn hint_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     egui::Panel::bottom("hint_bar")
         .exact_size(28.0)

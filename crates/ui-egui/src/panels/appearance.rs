@@ -4,15 +4,15 @@
 
 use std::sync::OnceLock;
 
-use drawcraft_color::{BlendMode, Paint};
-use drawcraft_doc::{AppearanceItem, Effect, Node};
 use egui::{Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
 use serde_json::{Value, json};
+use vectorcraft_color::{BlendMode, Paint};
+use vectorcraft_doc::{AppearanceItem, Effect, Node};
 
 use super::{first_selected, pstate, set_pstate};
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
 const ROW: f32 = 30.0;
 const EYE_W: f32 = 26.0;
@@ -29,7 +29,7 @@ pub enum Sel {
 fn catalog() -> &'static [(String, String, Vec<String>)] {
     static C: OnceLock<Vec<(String, String, Vec<String>)>> = OnceLock::new();
     C.get_or_init(|| {
-        drawcraft_effects::effect_catalog()
+        vectorcraft_effects::effect_catalog()
             .into_iter()
             .map(|e| (e.id.to_string(), e.label.trim_end_matches('…').to_string(), e.menu.iter().map(|s| s.to_string()).collect()))
             .collect()
@@ -114,7 +114,7 @@ fn link(ui: &mut Ui, pos: egui::Pos2, id: impl std::hash::Hash + std::fmt::Debug
     resp.clicked()
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let node = first_selected(app);
     let sel: Sel = pstate(ui.ctx(), "ap-sel");
@@ -146,7 +146,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
 }
 
 /// The defaults for new art when nothing is selected (read-only rows).
-fn default_stack(app: &mut DrawcraftApp, ui: &mut Ui) {
+fn default_stack(app: &mut VectorcraftApp, ui: &mut Ui) {
     let p = app.session.paint.clone();
     for (lbl, paint, w) in [("Stroke:", p.stroke, Some(p.stroke_width)), ("Fill:", p.fill, None)] {
         let (r, _) = row(ui, false);
@@ -162,7 +162,7 @@ fn default_stack(app: &mut DrawcraftApp, ui: &mut Ui) {
     text(ui, r.left_center() + vec2(EYE_W + 24.0, 0.0), "Opacity: Default", false);
 }
 
-fn stack(app: &mut DrawcraftApp, ui: &mut Ui, n: &Node, sel: Sel) {
+fn stack(app: &mut VectorcraftApp, ui: &mut Ui, n: &Node, sel: Sel) {
     let t = Tokens::get(ui.ctx());
     let items: Vec<(usize, AppearanceItem)> = n.appearance.items.iter().cloned().enumerate().rev().collect();
     let mut drop: Option<(usize, usize)> = None;
@@ -202,7 +202,7 @@ fn stack(app: &mut DrawcraftApp, ui: &mut Ui, n: &Node, sel: Sel) {
         if is_stroke {
             let fr = Rect::from_min_size(pos2(r.left() + EYE_W + 104.0, r.center().y - 12.0), vec2(56.0, 24.0));
             let mut child = ui.new_child(egui::UiBuilder::new().max_rect(fr).layout(egui::Layout::left_to_right(egui::Align::Center)));
-            if let Some(w) = widgets::num_field(&mut child, ("ap-w", i), Some(width), drawcraft_doc::Unit::Points, 56.0) {
+            if let Some(w) = widgets::num_field(&mut child, ("ap-w", i), Some(width), vectorcraft_doc::Unit::Points, 56.0) {
                 app.run("appearance.setItem", json!({"index": i, "weight": w})).ok();
             }
         }
@@ -270,13 +270,13 @@ fn target_index(rows: &[(usize, Rect)], y: f32) -> usize {
     })
 }
 
-fn sub_row(_app: &mut DrawcraftApp, ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug + Copy, label: &str, visible: bool, depth: usize) {
+fn sub_row(_app: &mut VectorcraftApp, ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug + Copy, label: &str, visible: bool, depth: usize) {
     let (r, _) = row(ui, false);
     eye(ui, r, (id, "eye"), visible, false);
     text(ui, r.left_center() + vec2(EYE_W + 24.0 + depth as f32 * 12.0, 0.0), label, false);
 }
 
-fn effect_row(app: &mut DrawcraftApp, ui: &mut Ui, k: usize, e: &Effect, selected: bool) {
+fn effect_row(app: &mut VectorcraftApp, ui: &mut Ui, k: usize, e: &Effect, selected: bool) {
     let t = Tokens::get(ui.ctx());
     let open: bool = pstate(ui.ctx(), &format!("ap-fx-open-{k}"));
     let (r, resp) = row(ui, selected);
@@ -305,9 +305,9 @@ fn effect_row(app: &mut DrawcraftApp, ui: &mut Ui, k: usize, e: &Effect, selecte
 
 /// Inline editor for an applied effect's parameters (numbers, booleans, strings, colours);
 /// edits go through `effect.setParams`.
-fn effect_editor(app: &mut DrawcraftApp, ui: &mut Ui, k: usize, e: &Effect) {
+fn effect_editor(app: &mut VectorcraftApp, ui: &mut Ui, k: usize, e: &Effect) {
     let t = Tokens::get(ui.ctx());
-    let defaults = drawcraft_effects::effect_catalog().into_iter().find(|c| c.id == e.id).map(|c| c.defaults).unwrap_or(Value::Null);
+    let defaults = vectorcraft_effects::effect_catalog().into_iter().find(|c| c.id == e.id).map(|c| c.defaults).unwrap_or(Value::Null);
     let mut params = defaults.as_object().cloned().unwrap_or_default();
     if let Some(cur) = e.params.as_object() {
         for (key, v) in cur {
@@ -372,7 +372,7 @@ pub fn humanize(key: &str) -> String {
 }
 
 /// Small swatch grid inside the appearance chip popup.
-fn swatch_picker(app: &mut DrawcraftApp, ui: &mut Ui, index: usize) {
+fn swatch_picker(app: &mut VectorcraftApp, ui: &mut Ui, index: usize) {
     let Some(st) = app.session.active() else { return };
     let mut all: Vec<(String, Paint)> = st.doc.swatches.iter().map(|s| (s.name.clone(), s.paint.clone())).collect();
     for g in &st.doc.swatch_groups {
@@ -397,7 +397,7 @@ fn swatch_picker(app: &mut DrawcraftApp, ui: &mut Ui, index: usize) {
     }
 }
 
-fn bottom(app: &mut DrawcraftApp, ui: &mut Ui, node: Option<&Node>, sel: Sel) {
+fn bottom(app: &mut VectorcraftApp, ui: &mut Ui, node: Option<&Node>, sel: Sel) {
     let has = node.is_some();
     widgets::bottom_bar(ui, |ui| {
         if widgets::icon_button_enabled(ui, "dc-new-stroke", "Add New Stroke", false, has, 24.0).clicked() {
@@ -429,7 +429,7 @@ fn bottom(app: &mut DrawcraftApp, ui: &mut Ui, node: Option<&Node>, sel: Sel) {
     });
 }
 
-fn delete_selected(app: &mut DrawcraftApp, ui: &Ui, sel: Sel) {
+fn delete_selected(app: &mut VectorcraftApp, ui: &Ui, sel: Sel) {
     let ok = match sel {
         Sel::Item(i) => app.run("appearance.removeItem", json!({"index": i})).is_ok(),
         Sel::Effect(k) => app.run("effect.remove", json!({"index": k})).is_ok(),
@@ -441,7 +441,7 @@ fn delete_selected(app: &mut DrawcraftApp, ui: &Ui, sel: Sel) {
 }
 
 /// The fx menu: effects grouped by their Effect-menu submenu; opens the effect dialog.
-fn fx_menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+fn fx_menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let mut groups: Vec<(String, Vec<(String, String)>)> = vec![];
     for (id, label, menu) in catalog() {
         let g = menu.get(1).cloned().unwrap_or_else(|| "Other".into());
@@ -462,7 +462,7 @@ fn fx_menu(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let node = first_selected(app);
     let has = node.is_some();
     let sel: Sel = pstate(ui.ctx(), "ap-sel");

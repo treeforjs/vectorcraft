@@ -2,8 +2,8 @@
 
 use std::ops::Range;
 
-use drawcraft_doc::{CharStyle, Justify, ParaStyle, TextKind, TextObject};
 use kurbo::{Affine, BezPath, ParamCurve, ParamCurveArclen, PathEl, PathSeg, Point, Rect, Shape, Vec2};
+use vectorcraft_doc::{CharStyle, Justify, ParaStyle, TextKind, TextObject};
 
 use crate::composer::{Breakpoint, compose};
 use crate::fontdb::FontDb;

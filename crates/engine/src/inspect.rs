@@ -1,11 +1,11 @@
 //! Agent-friendly document summaries and view-models for panels.
 
-use drawcraft_doc::{Node, NodeKind};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Node, NodeKind};
 
 use crate::Session;
 
-fn rect_json(r: Option<drawcraft_geom::Rect>) -> Value {
+fn rect_json(r: Option<vectorcraft_geom::Rect>) -> Value {
     match r {
         Some(r) => json!({ "x": r.x0, "y": r.y0, "width": r.width(), "height": r.height() }),
         None => Value::Null,

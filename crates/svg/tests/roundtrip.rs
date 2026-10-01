@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use drawcraft_color::{BlendMode, Color, Gradient, GradientGeom, GradientKind, GradientPaint, Paint};
-use drawcraft_doc::{
+use vectorcraft_color::{BlendMode, Color, Gradient, GradientGeom, GradientKind, GradientPaint, Paint};
+use vectorcraft_doc::{
     Appearance, AppearanceItem, CharStyle, Dash, Document, FillLayer, ImageBlob, ImageObject, LineCap, LineJoin, Node, NodeId, NodeKind, StrokeAlign,
     StrokeLayer, TextObject,
 };
-use drawcraft_geom::{Affine, FillRule, PathData, Point, Rect, shapes};
-use drawcraft_svg::{ExportOptions, Styling, export, import, import_with_report};
+use vectorcraft_geom::{Affine, FillRule, PathData, Point, Rect, shapes};
+use vectorcraft_svg::{ExportOptions, Styling, export, import, import_with_report};
 
 fn doc_with(nodes: Vec<Node>) -> Document {
     let mut d = Document::new(200.0, 200.0);
@@ -647,7 +647,7 @@ fn masked_doc(clip: bool, invert: bool) -> Document {
     let white = Appearance::basic(Paint::solid(Color::WHITE), Paint::None, 0.0);
     let mut n = rect_node(&mut d, Rect::new(10.0, 10.0, 90.0, 90.0), red);
     let art = rect_node(&mut d, Rect::new(10.0, 10.0, 50.0, 90.0), white);
-    let mut m = drawcraft_doc::OpacityMask::new(art, clip);
+    let mut m = vectorcraft_doc::OpacityMask::new(art, clip);
     m.invert = invert;
     n.mask = Some(Box::new(m));
     let l = d.layers[0].id;

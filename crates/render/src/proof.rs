@@ -18,10 +18,10 @@
 use std::borrow::Cow;
 use std::sync::{Arc, RwLock};
 
-use drawcraft_color::cms::{self, Cms, PROCESS_PLATES};
-pub use drawcraft_color::cms::{Intent, ProofSetup, ProofTarget};
-use drawcraft_color::{BlendMode, Color, Paint};
-use drawcraft_doc::{AppearanceItem, Document, Node, NodeId, NodeKind};
+use vectorcraft_color::cms::{self, Cms, PROCESS_PLATES};
+pub use vectorcraft_color::cms::{Intent, ProofSetup, ProofTarget};
+use vectorcraft_color::{BlendMode, Color, Paint};
+use vectorcraft_doc::{AppearanceItem, Document, Node, NodeId, NodeKind};
 
 use crate::RenderOptions;
 

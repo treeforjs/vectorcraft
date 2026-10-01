@@ -2,10 +2,10 @@
 
 use std::sync::Arc;
 
-use drawcraft_color::{Gradient, GradientGeom, GradientPaint, Paint};
-use drawcraft_doc::{Appearance, Node, NodeId, NodeKind};
-use drawcraft_geom::{Affine, Point, Rect, Vec2};
 use serde_json::{Value, json};
+use vectorcraft_color::{Gradient, GradientGeom, GradientPaint, Paint};
+use vectorcraft_doc::{Appearance, Node, NodeId, NodeKind};
+use vectorcraft_geom::{Affine, Point, Rect, Vec2};
 
 use super::edit::selected_roots;
 use super::*;
@@ -112,8 +112,8 @@ impl Projective {
 fn warp_paints(ap: &mut Appearance, pr: &Projective) {
     for it in &mut ap.items {
         let p = match it {
-            drawcraft_doc::AppearanceItem::Fill(f) => &mut f.paint,
-            drawcraft_doc::AppearanceItem::Stroke(s) => &mut s.paint,
+            vectorcraft_doc::AppearanceItem::Fill(f) => &mut f.paint,
+            vectorcraft_doc::AppearanceItem::Stroke(s) => &mut s.paint,
         };
         if let Paint::Gradient(g) = p
             && let Some(geom) = &mut g.geom

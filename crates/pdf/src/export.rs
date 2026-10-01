@@ -1,10 +1,7 @@
-//! Document → PDF (krilla). Mirrors the tree walk of `drawcraft-render`.
+//! Document → PDF (krilla). Mirrors the tree walk of `vectorcraft-render`.
 
 use std::collections::HashMap;
 
-use drawcraft_color::{BlendMode, Color, GradientKind, Paint};
-use drawcraft_doc::{AppearanceItem, Arrowhead, Document, LineCap, LineJoin, Node, NodeKind, StrokeAlign, StrokeLayer, TextObject};
-use drawcraft_geom::{Affine, BezPath, FillRule, Rect};
 use krilla::color::{cmyk, luma, rgb};
 use krilla::configure::{Archival, ConfigurationBuilder, PdfVersion};
 use krilla::geom::{Path, PathBuilder, Size, Transform};
@@ -15,6 +12,9 @@ use krilla::page::PageSettings;
 use krilla::paint::{Fill, LinearGradient, RadialGradient, SpreadMethod, Stop, Stroke, StrokeDash};
 use krilla::surface::Surface;
 use kurbo::{ParamCurve, ParamCurveDeriv, PathEl, Shape, Vec2};
+use vectorcraft_color::{BlendMode, Color, GradientKind, Paint};
+use vectorcraft_doc::{AppearanceItem, Arrowhead, Document, LineCap, LineJoin, Node, NodeKind, StrokeAlign, StrokeLayer, TextObject};
+use vectorcraft_geom::{Affine, BezPath, FillRule, Rect};
 
 use crate::{Compatibility, ExportReport, PdfError, PdfOptions};
 
@@ -57,7 +57,7 @@ pub fn export_with_report(doc: &Document, opts: &PdfOptions) -> Result<ExportRep
 
     let mut pdf = krilla::Document::new_with(settings);
     let title = opts.title.clone().unwrap_or_else(|| doc.title.clone());
-    let mut meta = Metadata::new().creator("DrawCraft".into()).producer("DrawCraft".into());
+    let mut meta = Metadata::new().creator("VectorCraft".into()).producer("VectorCraft".into());
     if !title.is_empty() {
         meta = meta.title(title);
     }
@@ -187,7 +187,7 @@ fn color(c: &Color) -> krilla::color::Color {
     match *c {
         Color::Rgb { r, g, b } => rgb::Color::new(q(r), q(g), q(b)).into(),
         Color::Cmyk { c, m, y, k } => cmyk::Color::new(q(c), q(m), q(y), q(k)).into(),
-        // DrawCraft grey is ink coverage (0 = white); PDF DeviceGray is lightness.
+        // VectorCraft grey is ink coverage (0 = white); PDF DeviceGray is lightness.
         Color::Gray { k } => luma::Color::new(q(1.0 - k)).into(),
     }
 }
@@ -200,8 +200,8 @@ impl Exporter<'_> {
     /// A colour for the page: in CMYK documents RGB colours are separated into DeviceCMYK through
     /// the active colour settings, so the file carries press values.
     fn col(&mut self, c: &Color) -> krilla::color::Color {
-        if self.doc.color_mode == drawcraft_doc::ColorMode::Cmyk && matches!(c, Color::Rgb { .. }) {
-            let cms = drawcraft_color::cms::active();
+        if self.doc.color_mode == vectorcraft_doc::ColorMode::Cmyk && matches!(c, Color::Rgb { .. }) {
+            let cms = vectorcraft_color::cms::active();
             let [cc, m, y, k] = cms.to_cmyk(c, cms.settings().intent);
             return cmyk::Color::new(q(cc), q(m), q(y), q(k)).into();
         }
@@ -216,7 +216,7 @@ impl Exporter<'_> {
             .and_then(|n| self.doc.swatches.iter().find(|s| s.spot && s.name == n))
             .and_then(|s| s.paint.color().map(|sc| (s.name.clone(), sc)));
         let Some((name, sc)) = spot else { return self.col(c) };
-        let cms = drawcraft_color::cms::active();
+        let cms = vectorcraft_color::cms::active();
         let intent = cms.settings().intent;
         let full = cms.to_cmyk(&sc, intent);
         let total: f32 = full.iter().sum();
@@ -317,7 +317,7 @@ impl Exporter<'_> {
 
     /// Opacity mask → luminosity soft mask. Outside the art the backdrop is black (clip) or white;
     /// invert is a white Difference rect on top (luminance is linear, so luma(1 − c) = 1 − luma(c)).
-    fn soft_mask(&mut self, s: &mut Surface, m: &drawcraft_doc::OpacityMask, page: Rect) -> krilla::mask::Mask {
+    fn soft_mask(&mut self, s: &mut Surface, m: &vectorcraft_doc::OpacityMask, page: Rect) -> krilla::mask::Mask {
         let backdrop = to_path(&page.inflate(1.0, 1.0).to_path(0.1));
         let white = || Fill { paint: rgb::Color::new(255, 255, 255).into(), opacity: NormalizedF32::ONE, rule: krilla::paint::FillRule::NonZero };
         let mut sb = s.stream_builder();
@@ -444,7 +444,7 @@ impl Exporter<'_> {
             }
             // Live blends/envelopes/meshes export their evaluated (expanded) form.
             NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) | NodeKind::Repeat(_) => {
-                let g = drawcraft_doc::live::expand_deep(n, None);
+                let g = vectorcraft_doc::live::expand_deep(n, None);
                 for c in g.children().into_iter().flatten() {
                     self.node(s, c, page, false);
                 }
@@ -589,7 +589,7 @@ impl Exporter<'_> {
     }
 
     fn text(&mut self, s: &mut Surface, n: &Node, t: &TextObject) {
-        let layout = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+        let layout = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
         let tb = t.xf.transform_rect_bbox(layout.bounds);
         s.push_transform(&xf(t.xf));
         for (i, run) in t.runs.iter().enumerate() {
@@ -668,7 +668,7 @@ impl Exporter<'_> {
         img
     }
 
-    fn image(&mut self, s: &mut Surface, im: &drawcraft_doc::ImageObject) {
+    fn image(&mut self, s: &mut Surface, im: &vectorcraft_doc::ImageObject) {
         let Some(img) = self.load_image(&im.key) else { return };
         let Some(size) = Size::from_wh(im.width.max(1) as f32, im.height.max(1) as f32) else { return };
         s.push_transform(&xf(im.xf));

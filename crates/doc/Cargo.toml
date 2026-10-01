@@ -1,16 +1,16 @@
 [package]
-name = "drawcraft-doc"
+name = "vectorcraft-doc"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DrawCraft document model: artboards, layers, objects, appearance (pure data + serde)"
+description = "VectorCraft document model: artboards, layers, objects, appearance (pure data + serde)"
 
 [lints]
 workspace = true
 
 [dependencies]
-drawcraft-geom = { workspace = true }
-drawcraft-color = { workspace = true }
+vectorcraft-geom = { workspace = true }
+vectorcraft-color = { workspace = true }
 kurbo = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

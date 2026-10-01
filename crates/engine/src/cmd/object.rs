@@ -3,10 +3,10 @@
 
 use std::sync::Arc;
 
-use drawcraft_color::{BlendMode, Paint};
-use drawcraft_doc::{Appearance, Document, Node, NodeId, NodeKind};
-use drawcraft_geom::{Affine, FillRule, Point, Rect, Vec2};
 use serde_json::{Value, json};
+use vectorcraft_color::{BlendMode, Paint};
+use vectorcraft_doc::{Appearance, Document, Node, NodeId, NodeKind};
+use vectorcraft_geom::{Affine, FillRule, Point, Rect, Vec2};
 
 use super::edit::{duplicate_in, selected_roots};
 use super::*;
@@ -270,7 +270,7 @@ fn arrange(s: &mut Session, how: Arrange) -> Result<Value> {
     };
     s.edit(label, |d, _| {
         // Arrange within each parent independently (selections may span layers/groups).
-        let mut by_parent: Vec<(Option<drawcraft_doc::NodeId>, Vec<drawcraft_doc::NodeId>)> = vec![];
+        let mut by_parent: Vec<(Option<vectorcraft_doc::NodeId>, Vec<vectorcraft_doc::NodeId>)> = vec![];
         for id in &ids {
             let par = d.parent_of(*id);
             match by_parent.iter_mut().find(|(p, _)| *p == par) {
@@ -746,7 +746,7 @@ fn set_bounds(s: &mut Session, p: &Value) -> Result<Value> {
     let ids = selected_roots(s)?;
     let b = s.doc()?.doc.bounds_of(&ids, false).ok_or_else(|| EngineError::Other("no bounds".into()))?;
     let refi = p.get("reference").and_then(Value::as_u64).unwrap_or(4) as usize;
-    let rp = drawcraft_geom::reference_point(b, refi);
+    let rp = vectorcraft_geom::reference_point(b, refi);
     let mut w = f64_or(p, "width", b.width());
     let mut h = f64_or(p, "height", b.height());
     if bool_or(p, "proportional", false) {
@@ -784,12 +784,12 @@ fn set_live_shape(s: &mut Session, p: &Value) -> Result<Value> {
         for id in &ids {
             let Some(NodeKind::Path { path, live: Some(live), .. }) = d.node_mut(*id).map(|n| &mut n.kind) else { continue };
             match live {
-                drawcraft_doc::LiveShape::Rectangle { radii, .. } => {
+                vectorcraft_doc::LiveShape::Rectangle { radii, .. } => {
                     if let Some(r) = p.get("radius").and_then(Value::as_f64) {
                         *radii = [r.max(0.0); 4];
                     }
                 }
-                drawcraft_doc::LiveShape::Polygon { sides, .. } => {
+                vectorcraft_doc::LiveShape::Polygon { sides, .. } => {
                     if let Some(n) = p.get("sides").and_then(Value::as_u64) {
                         *sides = n.clamp(3, 1000) as u32;
                     }

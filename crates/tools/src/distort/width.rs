@@ -7,9 +7,9 @@
 //! point. Gestures preview `stroke.widthPoint.set {id, t, left, right, index?}` (side widths in
 //! points) and commit on release; Delete runs `stroke.widthPoint.remove {id, index}`.
 
-use drawcraft_doc::{Document, NodeId, NodeKind, StrokeLayer};
-use drawcraft_geom::{Point, Vec2};
 use serde_json::json;
+use vectorcraft_doc::{Document, NodeId, NodeKind, StrokeLayer};
+use vectorcraft_geom::{Point, Vec2};
 
 use super::pathutil::{eval_fraction, left_normal, nearest_fraction};
 use super::{BLUE, diamond};
@@ -190,7 +190,7 @@ impl Tool for WidthTool {
                         if let Some(NodeKind::Path { path, .. }) = cx.doc.node(d.spot.id).map(|n| &n.kind)
                             && let Some(sp) = path.subpaths.get(d.spot.sub)
                         {
-                            let one = drawcraft_geom::PathData::single(sp.clone());
+                            let one = vectorcraft_geom::PathData::single(sp.clone());
                             if let Some((_, t, q, tan, _)) = nearest_fraction(&one, p) {
                                 d.t = t;
                                 d.spot.p = q;
@@ -270,8 +270,8 @@ impl Tool for WidthTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::{Appearance, Node, Selection, WidthProfile};
-    use drawcraft_geom::{PathData, SubPath};
+    use vectorcraft_doc::{Appearance, Node, Selection, WidthProfile};
+    use vectorcraft_geom::{PathData, SubPath};
 
     fn doc_line() -> (Document, NodeId) {
         let mut d = Document::new(500.0, 500.0);

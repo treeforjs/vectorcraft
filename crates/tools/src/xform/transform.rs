@@ -5,9 +5,9 @@
 //! at release makes a copy). Alt-click sets the point and opens the tool's dialog; double-click
 //! or Return opens the dialog too.
 
-use drawcraft_doc::NodeId;
-use drawcraft_geom::{Affine, Point, Rect, Vec2};
 use serde_json::{Value, json};
+use vectorcraft_doc::NodeId;
+use vectorcraft_geom::{Affine, Point, Rect, Vec2};
 
 use super::target_overlays;
 use crate::bbox::rotate_for_drag;
@@ -104,10 +104,10 @@ impl TransformTool {
             TransformKind::Reflect => {
                 let mut v = p - o;
                 if shift {
-                    v = drawcraft_geom::constrain_angle(v, 45.0);
+                    v = vectorcraft_geom::constrain_angle(v, 45.0);
                 }
                 let theta = if v.hypot() < 1e-9 { std::f64::consts::FRAC_PI_2 } else { v.y.atan2(v.x) };
-                (reflect_matrix(o, theta), format!("{:.1}°", drawcraft_geom::normalize_deg(-theta.to_degrees())))
+                (reflect_matrix(o, theta), format!("{:.1}°", vectorcraft_geom::normalize_deg(-theta.to_degrees())))
             }
             TransformKind::Scale => {
                 let d0 = start - o;
@@ -274,7 +274,7 @@ impl Tool for TransformTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     fn ev(kind: PointerKind, x: f64, y: f64) -> PointerEvent {
         PointerEvent::new(kind, x, y)

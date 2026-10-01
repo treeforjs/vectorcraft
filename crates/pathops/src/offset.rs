@@ -1,7 +1,7 @@
 //! Offset Path and Outline Stroke.
 
-use drawcraft_geom::{FillRule, PathData, SubPath};
 use kurbo::{BezPath, PathEl, Stroke, StrokeOpts};
+use vectorcraft_geom::{FillRule, PathData, SubPath};
 
 pub use kurbo::{Cap, Join};
 

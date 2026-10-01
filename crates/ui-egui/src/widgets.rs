@@ -1,8 +1,8 @@
 //! Shared widgets in Illustrator's panel style. Colours come from theme tokens.
 
-use drawcraft_color::Paint;
-use drawcraft_doc::Unit;
 use egui::{Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2, pos2, vec2};
+use vectorcraft_color::Paint;
+use vectorcraft_doc::Unit;
 
 use crate::icons;
 use crate::theme::{self, Tokens};
@@ -184,7 +184,7 @@ pub fn paint_chip(ui: &Ui, rect: Rect, paint: &Paint) {
             p.rect_filled(rect, 0.0, Color32::from_rgb(r, g, b));
         }
         Paint::Gradient(gp) => {
-            if gp.gradient.kind == drawcraft_color::GradientKind::Radial {
+            if gp.gradient.kind == vectorcraft_color::GradientKind::Radial {
                 // Outer colour fills the corners beyond the largest circle.
                 let (c, _) = gp.gradient.sample(1.0);
                 let [r, g, b, _] = c.to_rgba8(1.0);
@@ -197,7 +197,7 @@ pub fn paint_chip(ui: &Ui, rect: Rect, paint: &Paint) {
                 let (c, _) = gp.gradient.sample(tt);
                 let [r, g, b, _] = c.to_rgba8(1.0);
                 let rr = Rect::from_min_size(pos2(rect.left() + i as f32 * w, rect.top()), vec2(w + 0.5, rect.height()));
-                if gp.gradient.kind == drawcraft_color::GradientKind::Radial {
+                if gp.gradient.kind == vectorcraft_color::GradientKind::Radial {
                     let (c, _) = gp.gradient.sample(1.0 - tt);
                     let [r, g, b, _] = c.to_rgba8(1.0);
                     let s = rect.width().min(rect.height()) * tt / 2.0;

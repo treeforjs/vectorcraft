@@ -1,6 +1,6 @@
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{Appearance, Document, Node, NodeId, NodeKind, StrokeLayer};
-use drawcraft_geom::{BezPath, Point, Rect, shapes};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{Appearance, Document, Node, NodeId, NodeKind, StrokeLayer};
+use vectorcraft_geom::{BezPath, Point, Rect, shapes};
 
 use super::*;
 
@@ -20,7 +20,7 @@ fn calli(angle: f64, roundness: f64, size: f64) -> Brush {
 }
 
 fn bounds(nodes: &[Node]) -> Rect {
-    nodes.iter().fold(None, |a, n| drawcraft_geom::union_opt(a, n.geometric_bounds())).unwrap()
+    nodes.iter().fold(None, |a, n| vectorcraft_geom::union_opt(a, n.geometric_bounds())).unwrap()
 }
 
 fn near(a: f64, b: f64, tol: f64) -> bool {
@@ -81,7 +81,7 @@ fn closed_calligraphic_makes_a_ring() {
     let out = stroke_pieces(&calli(0.0, 100.0, 6.0), &bp, &stroke(1.0));
     let pd = out[0].path_data().unwrap();
     assert_eq!(pd.subpaths.len(), 2);
-    let poly_area = |sp: &drawcraft_geom::SubPath| {
+    let poly_area = |sp: &vectorcraft_geom::SubPath| {
         let a = &sp.anchors;
         (0..a.len()).map(|i| a[i].p.x * a[(i + 1) % a.len()].p.y - a[(i + 1) % a.len()].p.x * a[i].p.y).sum::<f64>() / 2.0
     };

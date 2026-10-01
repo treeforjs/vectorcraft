@@ -17,10 +17,10 @@
 
 use std::collections::BTreeMap;
 
-use drawcraft_doc::{Document, NodeId};
-use drawcraft_geom::{Point, Rect};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, NodeId};
+use vectorcraft_geom::{Point, Rect};
 
 use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext};
 
@@ -606,7 +606,7 @@ impl Tool for PerspectiveSelectionTool {
                 {
                     return vec![Action::Exec("perspective.plane.set".into(), json!({"plane": pl.id()}))];
                 }
-                let Some(h) = drawcraft_doc::hit::hit_test(cx.doc, p, cx.hit_options()) else {
+                let Some(h) = vectorcraft_doc::hit::hit_test(cx.doc, p, cx.hit_options()) else {
                     return vec![Action::Exec("select.set".into(), json!({"ids": []}))];
                 };
                 let top = h.top_object(cx.isolation);
@@ -671,7 +671,7 @@ impl Tool for PerspectiveSelectionTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     fn grid(kind: u8) -> PerspectiveGrid {
         PerspectiveGrid::preset(kind, Rect::new(0.0, 0.0, 800.0, 600.0))

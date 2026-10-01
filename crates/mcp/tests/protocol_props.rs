@@ -2,13 +2,13 @@
 //! survives junk arguments, JSON-RPC framing always answers correctly, and random editing through
 //! MCP keeps the document valid.
 
-use drawcraft_doc::Document;
-use drawcraft_mcp::{Headless, Server, tool_definitions};
-use drawcraft_testkit::catch_quiet;
-use drawcraft_testkit::invariants::{check_document, doc_json};
-use drawcraft_testkit::strategies::{arb_ops, junk_values};
 use proptest::prelude::*;
 use serde_json::{Value, json};
+use vectorcraft_doc::Document;
+use vectorcraft_mcp::{Headless, Server, tool_definitions};
+use vectorcraft_testkit::catch_quiet;
+use vectorcraft_testkit::invariants::{check_document, doc_json};
+use vectorcraft_testkit::strategies::{arb_ops, junk_values};
 
 fn server() -> Server {
     Server::new(Box::new(Headless::with_document()))
@@ -29,7 +29,7 @@ fn call(s: &mut Server, name: &str, args: Value) -> Value {
 }
 
 fn document(s: &mut Server) -> Document {
-    let v = rpc(s, 2, "resources/read", json!({"uri": "drawcraft://document/json"}));
+    let v = rpc(s, 2, "resources/read", json!({"uri": "vectorcraft://document/json"}));
     let text = v["result"]["contents"][0]["text"].as_str().unwrap_or_else(|| panic!("{v}"));
     serde_json::from_str(text).expect("document JSON")
 }
@@ -96,8 +96,8 @@ fn tool_definitions_are_valid() {
 
 #[test]
 fn every_tool_survives_empty_and_junk_arguments() {
-    let dir = drawcraft_testkit::temp_dir("mcp-junk");
-    let safe = dir.join("junk.drawcraft").to_string_lossy().to_string();
+    let dir = vectorcraft_testkit::temp_dir("mcp-junk");
+    let safe = dir.join("junk.vectorcraft").to_string_lossy().to_string();
     let mut failures = vec![];
     for t in tool_definitions() {
         let name = t["name"].as_str().unwrap().to_string();
@@ -210,7 +210,7 @@ proptest! {
     #[test]
     fn run_command_sequences_match_local_session(ops in arb_ops(5..40)) {
         let mut srv = server();
-        let mut local = drawcraft_testkit::fixtures::session_with(612.0, 792.0);
+        let mut local = vectorcraft_testkit::fixtures::session_with(612.0, 792.0);
         // Match the headless default document.
         let d_remote = doc_json(&document(&mut srv));
         let d_local = doc_json(&local.doc().unwrap().doc);
@@ -226,7 +226,7 @@ proptest! {
         check_document(&got).map_err(TestCaseError::fail)?;
         { let (g, l) = (doc_json(&got), doc_json(&local.doc().unwrap().doc)); // 1e-12: JSON text round trips aren't bit-exact (serde_json without float_roundtrip; see
         // crates/format/tests/prop_format.rs::bug_f64_bit_exact_roundtrip).
-        prop_assert!(drawcraft_testkit::invariants::json_approx_eq(&g, &l, 1e-12), "MCP and local sessions diverged: {}", drawcraft_testkit::invariants::first_diff(&l, &g, "$")); }
+        prop_assert!(vectorcraft_testkit::invariants::json_approx_eq(&g, &l, 1e-12), "MCP and local sessions diverged: {}", vectorcraft_testkit::invariants::first_diff(&l, &g, "$")); }
     }
 }
 
@@ -235,8 +235,8 @@ proptest! {
 /// so an agent can continue it in the next call; that case is not listed.)
 #[test]
 fn tools_never_leave_interactions_open() {
-    use drawcraft_mcp::call_tool;
-    use drawcraft_testkit::invariants::check_session;
+    use vectorcraft_mcp::call_tool;
+    use vectorcraft_testkit::invariants::check_session;
     let cases = [
         ("pointer_gesture", json!({"tool": "rectangle", "events": [{"kind": "down", "x": 10, "y": 10}, {"kind": "bogus", "x": 50, "y": 50}]})),
         ("pointer_gesture", json!({"tool": "pen", "events": [{"kind": "down", "x": 10, "y": 10}, {"kind": "drag", "x": "a", "y": 50}]})),

@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{AppearanceItem, Node};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{AppearanceItem, Node};
 
 use crate::Colorization;
 
@@ -88,7 +88,7 @@ pub fn tint_node(n: &mut Node, color: &Color, amount: f32) {
             *swatch = None;
         }
     }
-    if let drawcraft_doc::NodeKind::Text(t) = &mut n.kind {
+    if let vectorcraft_doc::NodeKind::Text(t) = &mut n.kind {
         for r in &mut t.runs {
             if let Paint::Solid { color: c, .. } = &mut r.style.fill {
                 *c = c.lerp(color, amount);

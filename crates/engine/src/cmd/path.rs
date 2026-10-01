@@ -2,9 +2,9 @@
 
 use std::collections::BTreeSet;
 
-use drawcraft_doc::{NodeId, NodeKind};
-use drawcraft_geom::{Anchor, AnchorKind, PathData, Point, SubPath, Vec2};
 use serde_json::{Value, json};
+use vectorcraft_doc::{NodeId, NodeKind};
+use vectorcraft_geom::{Anchor, AnchorKind, PathData, Point, SubPath, Vec2};
 
 use super::create::anchor_from_json;
 use super::*;
@@ -91,7 +91,7 @@ pub fn specs() -> Vec<CommandSpec> {
     ]
 }
 
-fn path_mut(d: &mut drawcraft_doc::Document, id: NodeId) -> Result<&mut PathData> {
+fn path_mut(d: &mut vectorcraft_doc::Document, id: NodeId) -> Result<&mut PathData> {
     let n = d.node_mut(id).ok_or(EngineError::NoNode(id))?;
     match &mut n.kind {
         NodeKind::Path { path, live, .. } => {
@@ -160,7 +160,7 @@ pub(crate) fn move_anchors(s: &mut Session, p: &Value) -> Result<Value> {
                 }
                 None => {
                     if let Some(n) = doc.node_mut(*id) {
-                        n.transform(drawcraft_geom::Affine::translate(d), false);
+                        n.transform(vectorcraft_geom::Affine::translate(d), false);
                     }
                 }
             }

@@ -4,12 +4,12 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use drawcraft_doc::{Appearance, Document, Node, color::Color, color::Paint};
 use egui::{Sense, Ui, vec2};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Appearance, Document, Node, color::Color, color::Paint};
 
 use super::{first_selected, pstate, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
 
@@ -17,7 +17,7 @@ const KINDS: [(&str, &str); 5] =
     [("calligraphic", "Calligraphic"), ("scatter", "Scatter"), ("art", "Art"), ("bristle", "Bristle"), ("pattern", "Pattern")];
 
 /// (name, type) of every brush in the active document's library.
-pub fn brushes(app: &mut DrawcraftApp) -> (Vec<(String, String)>, Option<String>) {
+pub fn brushes(app: &mut VectorcraftApp) -> (Vec<(String, String)>, Option<String>) {
     let Ok(v) = app.run("brush.list", json!({})) else { return (vec![], None) };
     let list = v["brushes"]
         .as_array()
@@ -30,7 +30,7 @@ pub fn brushes(app: &mut DrawcraftApp) -> (Vec<(String, String)>, Option<String>
 /// definition's JSON.
 fn preview(ui: &Ui, def: &Value, size: egui::Vec2) -> Option<egui::TextureHandle> {
     thread_local! {
-        static RENDERER: RefCell<drawcraft_render::Renderer> = RefCell::new(drawcraft_render::Renderer::new());
+        static RENDERER: RefCell<vectorcraft_render::Renderer> = RefCell::new(vectorcraft_render::Renderer::new());
         static CACHE: RefCell<HashMap<String, egui::TextureHandle>> = RefCell::new(HashMap::new());
     }
     let ppp = ui.ctx().pixels_per_point() as f64;
@@ -45,14 +45,14 @@ fn preview(ui: &Ui, def: &Value, size: egui::Vec2) -> Option<egui::TextureHandle
     let mut ap = Appearance::basic(Paint::None, Paint::solid(Color::BLACK), 1.0);
     ap.stroke_mut()?.brush = Some(name);
     // A gentle S-curve across the swatch.
-    let mut bp = drawcraft_geom::BezPath::new();
+    let mut bp = vectorcraft_geom::BezPath::new();
     let (x0, x1) = (h * 0.5, w - h * 0.5);
     bp.move_to((x0, h * 0.5));
     bp.curve_to((x0 + (x1 - x0) * 0.35, h * 0.1), (x0 + (x1 - x0) * 0.65, h * 0.9), (x1, h * 0.5));
     let id = doc.alloc_id();
     let l = doc.layers[0].id;
-    doc.insert(Some(l), 0, Node::path(id, drawcraft_geom::PathData::from_bezpath(&bp), ap)).ok()?;
-    let img = RENDERER.with(|r| r.borrow_mut().render_region(&doc, drawcraft_geom::Rect::new(0.0, 0.0, w, h), ppp, false));
+    doc.insert(Some(l), 0, Node::path(id, vectorcraft_geom::PathData::from_bezpath(&bp), ap)).ok()?;
+    let img = RENDERER.with(|r| r.borrow_mut().render_region(&doc, vectorcraft_geom::Rect::new(0.0, 0.0, w, h), ppp, false));
     let color = egui::ColorImage::from_rgba_premultiplied([img.width as usize, img.height as usize], &img.pixels);
     let tex = ui.ctx().load_texture(format!("brush-{key}"), color, egui::TextureOptions::LINEAR);
     CACHE.with(|c| {
@@ -65,11 +65,11 @@ fn preview(ui: &Ui, def: &Value, size: egui::Vec2) -> Option<egui::TextureHandle
     Some(tex)
 }
 
-fn selected_brush(app: &DrawcraftApp) -> Option<String> {
+fn selected_brush(app: &VectorcraftApp) -> Option<String> {
     first_selected(app).and_then(|n| n.appearance.stroke().and_then(|s| s.brush.clone()))
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let (list, current) = brushes(app);
     let sel_brush = selected_brush(app);
@@ -169,7 +169,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let sel = selected_brush(app);
     let (_, current) = brushes(app);
     let target = sel.clone().or(current);

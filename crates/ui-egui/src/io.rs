@@ -2,10 +2,10 @@
 
 use std::sync::Arc;
 
-use drawcraft_doc::{Document, ImageBlob, ImageObject, Node, NodeKind};
-use drawcraft_geom::Affine;
+use vectorcraft_doc::{Document, ImageBlob, ImageObject, Node, NodeKind};
+use vectorcraft_geom::Affine;
 
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 
 fn ext(name: &str) -> String {
     std::path::Path::new(name).extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default()
@@ -78,25 +78,25 @@ fn hash(b: &[u8]) -> u64 {
 }
 
 /// Open bytes as a new document.
-pub fn open_bytes(app: &mut DrawcraftApp, name: &str, bytes: &[u8], path: Option<String>) -> Result<(), String> {
+pub fn open_bytes(app: &mut VectorcraftApp, name: &str, bytes: &[u8], path: Option<String>) -> Result<(), String> {
     let e = ext(name);
-    let (doc, keep_path) = if e == "drawcraft" || drawcraft_format::sniff(bytes) {
-        let mut d = drawcraft_format::load(bytes).map_err(|e| e.to_string())?;
+    let (doc, keep_path) = if vectorcraft_format::is_native_ext(&e) || vectorcraft_format::sniff(bytes) {
+        let mut d = vectorcraft_format::load(bytes).map_err(|e| e.to_string())?;
         if d.title.is_empty() {
             d.title = name.to_string();
         }
         (d, true)
     } else if e == "svg" || bytes.starts_with(b"<?xml") || bytes.starts_with(b"<svg") {
         let s = std::str::from_utf8(bytes).map_err(|_| "SVG is not UTF-8".to_string())?;
-        let (mut d, warnings) = drawcraft_svg::import_with_report(s).map_err(|e| e.to_string())?;
+        let (mut d, warnings) = vectorcraft_svg::import_with_report(s).map_err(|e| e.to_string())?;
         d.title = name.to_string();
         if !warnings.is_empty() {
             app.status(format!("Opened with {} warning(s): {}", warnings.len(), warnings.first().cloned().unwrap_or_default()));
         }
         (d, false)
     } else if e == "pdf" || e == "ai" || bytes.starts_with(b"%PDF") {
-        let drawcraft_pdf::ImportReport { document: mut d, warnings } =
-            drawcraft_pdf::import_with_report(bytes, &drawcraft_pdf::ImportOptions::default()).map_err(|e| e.to_string())?;
+        let vectorcraft_pdf::ImportReport { document: mut d, warnings } =
+            vectorcraft_pdf::import_with_report(bytes, &vectorcraft_pdf::ImportOptions::default()).map_err(|e| e.to_string())?;
         d.title = name.to_string();
         if !warnings.is_empty() {
             app.status(format!("Opened with {} note(s): {}", warnings.len(), warnings.first().cloned().unwrap_or_default()));
@@ -105,7 +105,7 @@ pub fn open_bytes(app: &mut DrawcraftApp, name: &str, bytes: &[u8], path: Option
     } else if ["png", "jpg", "jpeg", "gif", "webp"].contains(&e.as_str()) {
         (image_doc(name, bytes)?, false)
     } else {
-        return Err(format!("DrawCraft can't open .{e} files yet"));
+        return Err(format!("VectorCraft can't open .{e} files yet"));
     };
     app.session.add_document(doc, if keep_path { path } else { None });
     app.sync_views();
@@ -113,7 +113,7 @@ pub fn open_bytes(app: &mut DrawcraftApp, name: &str, bytes: &[u8], path: Option
 }
 
 /// File → Open…
-pub fn open_dialog(app: &mut DrawcraftApp) -> Result<(), String> {
+pub fn open_dialog(app: &mut VectorcraftApp) -> Result<(), String> {
     if let Some(f) = app.services.open_async.as_mut() {
         f();
         return Ok(());
@@ -122,7 +122,7 @@ pub fn open_dialog(app: &mut DrawcraftApp) -> Result<(), String> {
     open_path(app, &path)
 }
 
-pub fn open_path(app: &mut DrawcraftApp, path: &str) -> Result<(), String> {
+pub fn open_path(app: &mut VectorcraftApp, path: &str) -> Result<(), String> {
     let read = app.services.read.as_ref().ok_or("no file reader")?;
     let bytes = read(path)?;
     let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or(path.to_string());
@@ -131,7 +131,7 @@ pub fn open_path(app: &mut DrawcraftApp, path: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn write_out(app: &mut DrawcraftApp, path: &str, bytes: &[u8]) -> Result<(), String> {
+fn write_out(app: &mut VectorcraftApp, path: &str, bytes: &[u8]) -> Result<(), String> {
     if let Some(dl) = app.services.download.as_mut() {
         let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or(path.to_string());
         dl(&name, bytes);
@@ -141,29 +141,29 @@ fn write_out(app: &mut DrawcraftApp, path: &str, bytes: &[u8]) -> Result<(), Str
     w(path, bytes)
 }
 
-fn suggested(app: &DrawcraftApp, ext: &str) -> String {
+fn suggested(app: &VectorcraftApp, ext: &str) -> String {
     let t = app.session.active().map(|d| d.title()).unwrap_or_else(|| "Untitled".into());
     let stem = std::path::Path::new(&t).file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or(t);
     format!("{stem}.{ext}")
 }
 
 /// File → Save / Save As (native format).
-pub fn save(app: &mut DrawcraftApp, path: Option<String>, save_as: bool) -> Result<String, String> {
+pub fn save(app: &mut VectorcraftApp, path: Option<String>, save_as: bool) -> Result<String, String> {
     let st = app.session.active().ok_or("no document")?;
     let existing = if save_as { None } else { st.path.clone() };
     let path = match path.or(existing) {
         Some(p) => p,
-        None if app.services.download.is_some() => suggested(app, "drawcraft"),
+        None if app.services.download.is_some() => suggested(app, "vectorcraft"),
         None => {
-            let s = suggested(app, "drawcraft");
+            let s = suggested(app, "vectorcraft");
             app.services.pick_save.as_mut().and_then(|f| f(&s)).ok_or("cancelled")?
         }
     };
-    let bytes = drawcraft_format::save_file(&app.session.active().unwrap().doc);
+    let bytes = vectorcraft_format::save_file(&app.session.active().unwrap().doc);
     write_out(app, &path, &bytes)?;
     if let Some(st) = app.session.active_mut() {
         st.path = Some(path.clone());
-        st.saved_revision = st.revision;
+        st.mark_saved();
     }
     app.status(format!("Saved {path}"));
     note_recent(app, &path);
@@ -171,7 +171,7 @@ pub fn save(app: &mut DrawcraftApp, path: Option<String>, save_as: bool) -> Resu
 }
 
 /// Put `path` at the top of File → Open Recent Files (capped by Preferences → Recent Files).
-pub fn note_recent(app: &mut DrawcraftApp, path: &str) {
+pub fn note_recent(app: &mut VectorcraftApp, path: &str) {
     let r = &mut app.ui.recent_files;
     r.retain(|p| p != path);
     r.insert(0, path.to_string());
@@ -179,7 +179,7 @@ pub fn note_recent(app: &mut DrawcraftApp, path: &str) {
 }
 
 /// Export the document as SVG / PDF / PNG / JPEG / WebP.
-pub fn export(app: &mut DrawcraftApp, format: &str, path: Option<String>, scale: f64) -> Result<String, String> {
+pub fn export(app: &mut VectorcraftApp, format: &str, path: Option<String>, scale: f64) -> Result<String, String> {
     let st = app.session.active().ok_or("no document")?;
     let doc = st.doc.clone();
     let path = match path {
@@ -191,8 +191,8 @@ pub fn export(app: &mut DrawcraftApp, format: &str, path: Option<String>, scale:
         }
     };
     let bytes = match format {
-        "svg" => drawcraft_svg::export(&doc, &drawcraft_svg::ExportOptions { artboard: Some(0), ..Default::default() }).into_bytes(),
-        "pdf" => drawcraft_pdf::export(&doc, &drawcraft_pdf::PdfOptions::default()).map_err(|e| e.to_string())?,
+        "svg" => vectorcraft_svg::export(&doc, &vectorcraft_svg::ExportOptions { artboard: Some(0), ..Default::default() }).into_bytes(),
+        "pdf" => vectorcraft_pdf::export(&doc, &vectorcraft_pdf::PdfOptions::default()).map_err(|e| e.to_string())?,
         "png" | "jpg" | "jpeg" | "webp" => {
             let r = doc.artboards.first().map(|a| a.rect).ok_or("no artboard")?;
             let img = app.canvas.renderer.render_region(&doc, r, scale, format == "jpg" || format == "jpeg");
@@ -210,11 +210,11 @@ pub fn export(app: &mut DrawcraftApp, format: &str, path: Option<String>, scale:
 }
 
 /// File → Place… (embed an image or SVG into the active document).
-pub fn place_bytes(app: &mut DrawcraftApp, name: &str, bytes: &[u8]) -> Result<(), String> {
+pub fn place_bytes(app: &mut VectorcraftApp, name: &str, bytes: &[u8]) -> Result<(), String> {
     let e = ext(name);
     if e == "svg" {
         let s = std::str::from_utf8(bytes).map_err(|_| "SVG is not UTF-8".to_string())?;
-        let src = drawcraft_svg::import(s).map_err(|e| e.to_string())?;
+        let src = vectorcraft_svg::import(s).map_err(|e| e.to_string())?;
         let nodes: Vec<Node> = src.layers.iter().flat_map(|l| l.children().cloned().unwrap_or_default()).map(|n| (*n).clone()).collect();
         app.session.clipboard = nodes;
         // Straight to the engine: `app.run` would let the system clipboard replace these nodes.

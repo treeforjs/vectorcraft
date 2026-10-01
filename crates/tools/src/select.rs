@@ -2,10 +2,10 @@
 //! bounding-box scale (Shift proportional, Alt from centre) and rotate (outside corners, Shift 45°),
 //! double-click to enter isolation mode.
 
-use drawcraft_doc::NodeId;
-use drawcraft_doc::hit::{hit_test, marquee};
-use drawcraft_geom::{Affine, Point, Rect};
 use serde_json::{Value, json};
+use vectorcraft_doc::NodeId;
+use vectorcraft_doc::hit::{hit_test, marquee};
+use vectorcraft_geom::{Affine, Point, Rect};
 
 use crate::bbox::{Handle, hit_handle, in_rotate_zone, move_delta, rotate_for_drag, scale_for_drag};
 use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext, json_ids};
@@ -77,10 +77,10 @@ impl Tool for SelectionTool {
                 self.state = State::Idle;
                 if let Some(h) = hit_test(cx.doc, p, cx.hit_options()) {
                     let top = h.top_object(cx.isolation);
-                    if cx.doc.node(top).is_some_and(|n| matches!(n.kind, drawcraft_doc::NodeKind::Group { .. })) {
+                    if cx.doc.node(top).is_some_and(|n| matches!(n.kind, vectorcraft_doc::NodeKind::Group { .. })) {
                         return vec![Action::Exec("object.isolate".into(), json!({ "id": top.0 }))];
                     }
-                    if cx.doc.node(top).is_some_and(|n| matches!(n.kind, drawcraft_doc::NodeKind::Text(_))) {
+                    if cx.doc.node(top).is_some_and(|n| matches!(n.kind, vectorcraft_doc::NodeKind::Text(_))) {
                         return vec![Action::SwitchTool("type".into())];
                     }
                 } else if cx.isolation.is_some() {
@@ -136,7 +136,7 @@ impl Tool for SelectionTool {
                 }
                 let mut d = move_delta(start, p, m.shift);
                 if !began {
-                    let sel_ids: Vec<drawcraft_doc::NodeId> = cx.selection.objects.clone();
+                    let sel_ids: Vec<vectorcraft_doc::NodeId> = cx.selection.objects.clone();
                     self.start_bounds = cx.doc.bounds_of(&sel_ids, false);
                     self.targets = cx.smart_guides.then(|| crate::guides::Targets::collect(cx.doc, &sel_ids, None));
                 }
@@ -248,7 +248,7 @@ fn handle_cursor(h: Handle) -> Cursor {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     fn ev(kind: PointerKind, x: f64, y: f64) -> PointerEvent {
         PointerEvent::new(kind, x, y)

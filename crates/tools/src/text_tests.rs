@@ -1,9 +1,9 @@
-//! Type tool state-machine tests (the engine side is covered in drawcraft-engine's
+//! Type tool state-machine tests (the engine side is covered in vectorcraft-engine's
 //! `tests_textedit`).
 
 use super::*;
 use crate::testutil::{cx, paint};
-use drawcraft_doc::{CharStyle, Document, Node, Selection};
+use vectorcraft_doc::{CharStyle, Document, Node, Selection};
 
 fn doc_with_text(text: &str) -> (Document, NodeId) {
     let mut d = Document::new(500.0, 500.0);
@@ -140,8 +140,8 @@ fn double_and_triple_click_select_word_and_paragraph() {
     let (d, id, mut tool) = editing("Alpha beta\ngamma");
     let (sel, p) = (Selection::default(), paint());
     let t = TypeTool::text(&cx(&d, &sel, &p), id).unwrap().clone();
-    let lay = drawcraft_text::layout(FontDb::global(), &t);
-    let (top, bot) = drawcraft_text::caret_position(&lay, 7);
+    let lay = vectorcraft_text::layout(FontDb::global(), &t);
+    let (top, bot) = vectorcraft_text::caret_position(&lay, 7);
     let at = t.xf * top.midpoint(bot);
     let c = cx(&d, &sel, &p);
     for k in [PointerKind::Down, PointerKind::Up, PointerKind::Down, PointerKind::Up, PointerKind::DoubleClick] {
@@ -159,9 +159,9 @@ fn drag_selects_and_overlay_highlights() {
     let (sel, p) = (Selection::default(), paint());
     let c = cx(&d, &sel, &p);
     let t = TypeTool::text(&c, id).unwrap().clone();
-    let lay = drawcraft_text::layout(FontDb::global(), &t);
+    let lay = vectorcraft_text::layout(FontDb::global(), &t);
     let pt = |b: usize| {
-        let (a, bb) = drawcraft_text::caret_position(&lay, b);
+        let (a, bb) = vectorcraft_text::caret_position(&lay, b);
         t.xf * a.midpoint(bb)
     };
     let (a, b) = (pt(7), pt(9));

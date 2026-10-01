@@ -34,27 +34,27 @@ pub mod text_styles;
 pub mod transform;
 pub mod transparency;
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{Node, NodeKind};
 use egui::{Rect, Sense, Ui, vec2};
 use serde_json::{Value, json};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{Node, NodeKind};
 
 use crate::theme::Tokens;
 use crate::widgets::{Live, dim_label};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
 /// The first selected node (cloned), if any.
-pub fn first_selected(app: &DrawcraftApp) -> Option<Node> {
+pub fn first_selected(app: &VectorcraftApp) -> Option<Node> {
     let st = app.session.active()?;
     st.selection.objects.first().and_then(|id| st.doc.node(*id)).cloned()
 }
 
 /// Number of selected objects.
-pub(crate) fn selection_len(app: &DrawcraftApp) -> usize {
+pub(crate) fn selection_len(app: &VectorcraftApp) -> usize {
     app.session.active().map(|d| d.selection.len()).unwrap_or(0)
 }
 
-pub fn show_icon_panel(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
+pub fn show_icon_panel(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) {
     match id {
         "swatches" => swatches::show(app, ui),
         "color" => color::show(app, ui),
@@ -92,7 +92,7 @@ pub fn show_icon_panel(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
 }
 
 /// Items of a panel's (≡) menu. Unimplemented Illustrator items are listed disabled.
-pub fn panel_menu_items(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
+pub fn panel_menu_items(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) {
     match id {
         "swatches" => swatches::menu(app, ui),
         "color" => color::menu(app, ui),
@@ -129,7 +129,7 @@ pub fn panel_menu_items(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
 }
 
 /// The ≡ panel-menu button drawn into `rect` (the right end of a panel's title/tab strip).
-pub fn panel_menu(app: &mut DrawcraftApp, ui: &mut Ui, id: &str, rect: Rect) {
+pub fn panel_menu(app: &mut VectorcraftApp, ui: &mut Ui, id: &str, rect: Rect) {
     let t = Tokens::get(ui.ctx());
     let resp = ui.interact(rect, ui.id().with(("panel-menu", id)), Sense::click());
     icons::paint(ui, "menu", rect.shrink(1.0), if resp.hovered() { t.text_strong } else { t.text_dim });
@@ -140,7 +140,7 @@ pub fn panel_menu(app: &mut DrawcraftApp, ui: &mut Ui, id: &str, rect: Rect) {
     });
 }
 
-pub fn libraries(_app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn libraries(_app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     ui.add_space(20.0);
     ui.vertical_centered(|ui| {
@@ -157,13 +157,13 @@ pub fn libraries(_app: &mut DrawcraftApp, ui: &mut Ui) {
 // ---------- shared helpers ----------
 
 /// The paint command for the active proxy (Fill or Stroke).
-pub(crate) fn paint_target(app: &DrawcraftApp) -> &'static str {
+pub(crate) fn paint_target(app: &VectorcraftApp) -> &'static str {
     if app.session.fill_active { "paint.setFill" } else { "paint.setStroke" }
 }
 
 /// Fill and stroke as the proxies show them: the first selected object's (text uses its first
 /// run's style), else the defaults for new art.
-pub(crate) fn current_paints(app: &DrawcraftApp) -> (Paint, Paint) {
+pub(crate) fn current_paints(app: &VectorcraftApp) -> (Paint, Paint) {
     match first_selected(app) {
         Some(n) => match &n.kind {
             NodeKind::Text(t) => {
@@ -177,13 +177,13 @@ pub(crate) fn current_paints(app: &DrawcraftApp) -> (Paint, Paint) {
 }
 
 /// The paint behind the active proxy.
-pub(crate) fn active_paint(app: &DrawcraftApp) -> Paint {
+pub(crate) fn active_paint(app: &VectorcraftApp) -> Paint {
     let (f, s) = current_paints(app);
     if app.session.fill_active { f } else { s }
 }
 
 /// Draw the Fill/Stroke proxy and handle its clicks through commands.
-pub(crate) fn proxy(app: &mut DrawcraftApp, ui: &mut Ui, size: f32) {
+pub(crate) fn proxy(app: &mut VectorcraftApp, ui: &mut Ui, size: f32) {
     let (f, s) = current_paints(app);
     let (a, b, swap, def) = crate::widgets::fill_stroke_proxy(ui, &f, &s, app.session.fill_active, size);
     if (a && !app.session.fill_active) || (b && app.session.fill_active) {
@@ -199,7 +199,7 @@ pub(crate) fn proxy(app: &mut DrawcraftApp, ui: &mut Ui, size: f32) {
 
 /// Run `cmd` live: while dragging, preview on top of an interaction snapshot; on release, commit
 /// it as one undo step. Falls back to a plain run when no document is open.
-pub(crate) fn live_run(app: &mut DrawcraftApp, label: &str, cmd: &str, params: Value, phase: Live) {
+pub(crate) fn live_run(app: &mut VectorcraftApp, label: &str, cmd: &str, params: Value, phase: Live) {
     match phase {
         Live::Idle => {}
         Live::Dragging | Live::Released => {
@@ -239,7 +239,7 @@ pub(crate) fn push_recent(ctx: &egui::Context, c: Color) {
 }
 
 /// "Recent Colors" header + a row of chips; clicking one applies it to the active proxy.
-pub(crate) fn recent_colors_row(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub(crate) fn recent_colors_row(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     crate::widgets::subheader(ui, "Recent Colors");
     let recent = recent_colors(ui.ctx());
@@ -314,7 +314,7 @@ mod tests {
         assert_eq!(paint_params(&Paint::None), json!({"none": true}));
         let p = paint_params(&Paint::solid(Color::cmyk(0.1, 0.2, 0.3, 0.4)));
         assert!((p["color"]["k"].as_f64().unwrap() - 0.4).abs() < 1e-6);
-        let g = Paint::Gradient(Box::new(drawcraft_color::GradientPaint::new(Default::default())));
+        let g = Paint::Gradient(Box::new(vectorcraft_color::GradientPaint::new(Default::default())));
         let p = paint_params(&g);
         assert_eq!(p["gradient"]["kind"], "linear");
         assert_eq!(p["gradient"]["stops"].as_array().unwrap().len(), 2);

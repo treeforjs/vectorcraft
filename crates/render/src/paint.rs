@@ -1,13 +1,13 @@
 //! Paint conversion (solid, gradients, patterns), arrowheads and image decoding.
 
-use drawcraft_color::{GradientKind, Paint};
-use drawcraft_doc::{Arrowhead, Document, StrokeLayer};
-use drawcraft_geom::{Affine, BezPath, Point, Rect, Shape, Vec2};
+use vectorcraft_color::{GradientKind, Paint};
+use vectorcraft_doc::{Arrowhead, Document, StrokeLayer};
+use vectorcraft_geom::{Affine, BezPath, Point, Rect, Shape, Vec2};
 use vello_cpu::RenderContext;
 use vello_cpu::kurbo::{self, ParamCurve, ParamCurveDeriv};
 use vello_cpu::peniko::{self, ColorStop};
 
-fn color(c: &drawcraft_color::Color, alpha: f32) -> peniko::Color {
+fn color(c: &vectorcraft_color::Color, alpha: f32) -> peniko::Color {
     let [r, g, b, a] = c.to_rgba8(alpha);
     peniko::Color::from_rgba8(r, g, b, a)
 }

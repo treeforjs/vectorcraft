@@ -1,15 +1,15 @@
-# DrawCraft MCP server
+# VectorCraft MCP server
 
-`drawcraft-cli mcp` runs a [Model Context Protocol](https://modelcontextprotocol.io) server on stdio
+`vectorcraft-cli mcp` runs a [Model Context Protocol](https://modelcontextprotocol.io) server on stdio
 (newline-delimited JSON-RPC 2.0, protocol `2025-06-18`; `2025-03-26` and `2024-11-05` also accepted). Agents use it to
-draw, inspect and look at DrawCraft documents.
+draw, inspect and look at VectorCraft documents.
 
 It has two backends:
 
 | Mode | How | What works |
 |---|---|---|
-| **Remote** | `drawcraft-cli mcp --connect 127.0.0.1:7979` (the app must run with `drawcraft --control 7979`) | Everything. Tool calls are forwarded over the [control protocol](control-protocol.md), so you watch the app change live. |
-| **Headless** | `drawcraft-cli mcp --headless` | An in-process engine session with a CPU renderer. Everything except the UI-only tools (`inspect_ui`, `type_text`, `open_panel`, `screenshot {window:true}`). |
+| **Remote** | `vectorcraft-cli mcp --connect 127.0.0.1:7979` (the app must run with `vectorcraft --control 7979`) | Everything. Tool calls are forwarded over the [control protocol](control-protocol.md), so you watch the app change live. |
+| **Headless** | `vectorcraft-cli mcp --headless` | An in-process engine session with a CPU renderer. Everything except the UI-only tools (`inspect_ui`, `type_text`, `open_panel`, `screenshot {window:true}`). |
 
 With no flag, the server tries `127.0.0.1:7979` and falls back to headless. Logs go to stderr; stdout carries
 only protocol messages.
@@ -17,20 +17,20 @@ only protocol messages.
 ## Build and register
 
 ```sh
-cargo build --release -p drawcraft-cli
-claude mcp add drawcraft -- "$PWD/target/release/drawcraft-cli" mcp
+cargo build --release -p vectorcraft-cli
+claude mcp add vectorcraft -- "$PWD/target/release/vectorcraft-cli" mcp
 # or pin a mode:
-claude mcp add drawcraft-headless -- "$PWD/target/release/drawcraft-cli" mcp --headless
-claude mcp add drawcraft-app -- "$PWD/target/release/drawcraft-cli" mcp --connect 127.0.0.1:7979
+claude mcp add vectorcraft-headless -- "$PWD/target/release/vectorcraft-cli" mcp --headless
+claude mcp add vectorcraft-app -- "$PWD/target/release/vectorcraft-cli" mcp --connect 127.0.0.1:7979
 ```
 
 Other clients use the same command in their JSON config:
 
 ```json
-{"mcpServers": {"drawcraft": {"command": "/abs/path/target/release/drawcraft-cli", "args": ["mcp"]}}}
+{"mcpServers": {"vectorcraft": {"command": "/abs/path/target/release/vectorcraft-cli", "args": ["mcp"]}}}
 ```
 
-For a live session, start the app first: `cargo run --release -p drawcraft -- --control 7979`.
+For a live session, start the app first: `cargo run --release -p vectorcraft -- --control 7979`.
 
 ## Tools
 
@@ -57,9 +57,9 @@ or a full `paint.setFill` params object (`{"gradient": …}`, `{"swatch": "name"
 | `invoke_menu` | `{command, params?}` | Invokes a menu item by command id. Includes UI commands such as `view.*` and `window.*` in remote mode. |
 | `open_panel` | `{panel}` | Remote only. |
 | `screenshot` | `{path?, scale?, artboard?, window?}` | Returns MCP image content (`image/png`, base64) plus a text block. Renders the artboard; `window:true` captures the app window (remote only). |
-| `open_file` | `{path}` | Opens `.drawcraft` or `.svg` as a new active document. |
-| `save_file` | `{path?}` | Saves in the native `.drawcraft` format. |
-| `export` | `{path, format?, scale?}` | `svg`, `png` or `drawcraft`. When `format` is omitted, it comes from the path's extension. |
+| `open_file` | `{path}` | Opens `.vectorcraft` or `.svg` as a new active document. |
+| `save_file` | `{path?}` | Saves in the native `.vectorcraft` format. |
+| `export` | `{path, format?, scale?}` | `svg`, `png` or `vectorcraft`. When `format` is omitted, it comes from the path's extension. |
 | `undo` / `redo` | `{}` | |
 
 Errors (unknown tool, bad arguments, a disabled or failing command) come back as a normal result with
@@ -69,8 +69,8 @@ Errors (unknown tool, bad arguments, a disabled or failing command) come back as
 
 | URI | Content |
 |---|---|
-| `drawcraft://document` | `document.inspect` summary (JSON) |
-| `drawcraft://document/json` | The complete document model (JSON) |
+| `vectorcraft://document` | `document.inspect` summary (JSON) |
+| `vectorcraft://document/json` | The complete document model (JSON) |
 
 ## Examples
 
@@ -108,19 +108,19 @@ printf '%s\n' \
   '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
   '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"draw_shape","arguments":{"shape":"ellipse","x":10,"y":10,"width":100,"height":80,"fill":"#ff0000"}}}' \
   '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"inspect_document","arguments":{}}}' \
-  | target/release/drawcraft-cli mcp --headless
+  | target/release/vectorcraft-cli mcp --headless
 ```
 
 ## Headless batch CLI
 
 ```sh
-drawcraft-cli commands                          # command catalogue (JSON)
-drawcraft-cli run --in in.svg \
+vectorcraft-cli commands                          # command catalogue (JSON)
+vectorcraft-cli run --in in.svg \
   --cmd select.all --cmd paint.setFill --params '{"color":"#ff0000"}' \
   --export out.svg --export out.png --scale 2
-drawcraft-cli run --cmd file.new --params '{"width":800,"height":600}' \
+vectorcraft-cli run --cmd file.new --params '{"width":800,"height":600}' \
   --cmd shape.star --params '{"cx":400,"cy":300,"radius1":200,"radius2":90}' \
-  --export star.drawcraft
+  --export star.vectorcraft
 ```
 
 `run` prints one JSON line per step (`open`, `cmd`, `export`) and exits non-zero on the first failure. `--params`

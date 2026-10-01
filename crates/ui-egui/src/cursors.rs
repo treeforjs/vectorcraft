@@ -2,8 +2,8 @@
 //! halo, hotspot at `p`, Illustrator's visual grammar: solid arrow (Selection), hollow arrow (Direct
 //! Selection), pen nib with state badges, crosshair for drawing tools, curved arrows for rotate.
 
-use drawcraft_tools::Cursor;
 use egui::{Color32, Painter, Pos2, Shape, Stroke, pos2, vec2};
+use vectorcraft_tools::Cursor;
 
 const INK: Color32 = Color32::BLACK;
 const HALO: Color32 = Color32::WHITE;

@@ -19,10 +19,10 @@
 
 use std::sync::mpsc::Sender;
 
-use drawcraft_tools::{Mods, PointerEvent, PointerKind};
 use serde_json::{Value, json};
+use vectorcraft_tools::{Mods, PointerEvent, PointerKind};
 
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::canvas::Xf;
 
 pub type ControlResponse = Value;
@@ -58,7 +58,7 @@ fn wrap(r: Result<Value, String>) -> Outcome {
     }
 }
 
-pub fn all_commands(app: &DrawcraftApp) -> Value {
+pub fn all_commands(app: &VectorcraftApp) -> Value {
     let mut v: Vec<Value> = app.session.commands().into_iter().map(|c| serde_json::to_value(c).unwrap_or_default()).collect();
     for (id, label, sc, params) in crate::menus::UI_COMMANDS {
         v.push(json!({"id": id, "label": label, "shortcut": sc, "params": params, "enabled": crate::menus::enabled(app, id), "ui": true}));
@@ -66,7 +66,7 @@ pub fn all_commands(app: &DrawcraftApp) -> Value {
     Value::Array(v)
 }
 
-pub fn inspect(app: &DrawcraftApp, ctx: &egui::Context) -> Value {
+pub fn inspect(app: &VectorcraftApp, ctx: &egui::Context) -> Value {
     let r = ctx.content_rect();
     json!({
         "tool": app.session.tool_id(),
@@ -97,7 +97,7 @@ fn key_from(name: &str) -> Option<egui::Key> {
     })
 }
 
-pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest) -> Outcome {
+pub fn handle(app: &mut VectorcraftApp, ctx: &egui::Context, req: &ControlRequest) -> Outcome {
     let p = &req.params;
     let s = |k: &str| p.get(k).and_then(Value::as_str);
     match req.method.as_str() {
@@ -112,7 +112,7 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest)
         "ui.inspect" => ok(inspect(app, ctx)),
         "ui.menu.list" => ok(serde_json::to_value(crate::menus::menu_entries(app)).unwrap_or_default()),
         "ui.tool.select" => wrap(app.run("tool.select", json!({"tool": s("tool").unwrap_or("")}))),
-        "ui.tool.list" => ok(serde_json::to_value(drawcraft_tools::TOOL_GROUPS).unwrap_or_default()),
+        "ui.tool.list" => ok(serde_json::to_value(vectorcraft_tools::TOOL_GROUPS).unwrap_or_default()),
         "ui.pointer" => {
             let Some(events) = p.get("events").and_then(Value::as_array) else { return err("missing `events`") };
             let base_mods: Mods = p.get("mods").and_then(|m| serde_json::from_value(m.clone()).ok()).unwrap_or_default();
@@ -135,7 +135,7 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest)
                         None => return err("no canvas yet"),
                     }
                 } else {
-                    drawcraft_geom::Point::new(x, y)
+                    vectorcraft_geom::Point::new(x, y)
                 };
                 let mods = e.get("mods").and_then(|m| serde_json::from_value(m.clone()).ok()).unwrap_or(base_mods);
                 crate::canvas::dispatch(app, &PointerEvent { kind, pos, mods, pressure: 1.0 }, view);
@@ -287,7 +287,7 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest)
                     Some(w) => wrap(w(path, &png).map(|_| json!({"path": path, "width": img.width, "height": img.height}))),
                     None => err("no writer"),
                 },
-                None => ok(json!({"width": img.width, "height": img.height, "pngBase64": drawcraft_format::base64_encode(&png)})),
+                None => ok(json!({"width": img.width, "height": img.height, "pngBase64": vectorcraft_format::base64_encode(&png)})),
             }
         }
         "app.open" => wrap(app.run("file.open", json!({"path": s("path")}))),
@@ -307,13 +307,13 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest)
     }
 }
 
-pub fn save_screenshot(app: &mut DrawcraftApp, image: &egui::ColorImage, path: Option<&str>) -> Value {
+pub fn save_screenshot(app: &mut VectorcraftApp, image: &egui::ColorImage, path: Option<&str>) -> Value {
     let [w, h] = image.size;
     let Some(path) = path else {
         return json!({"ok": true, "result": {"width": w, "height": h}});
     };
     let rgba: Vec<u8> = image.pixels.iter().flat_map(|c| c.to_array()).collect();
-    let img = drawcraft_render::Rendered { width: w as u32, height: h as u32, pixels: rgba };
+    let img = vectorcraft_render::Rendered { width: w as u32, height: h as u32, pixels: rgba };
     let png = img.to_png();
     match app.services.write.as_mut() {
         Some(wr) => match wr(path, &png) {

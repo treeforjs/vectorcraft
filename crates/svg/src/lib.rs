@@ -1,4 +1,4 @@
-//! DrawCraft SVG import and export.
+//! VectorCraft SVG import and export.
 //!
 //! * [`export`] writes a [`Document`] as SVG 1.1 with our own writer (presentation attributes,
 //!   inline styles or internal CSS classes; gradients in `<defs>` with `userSpaceOnUse`; clip groups as
@@ -28,8 +28,8 @@
 mod export;
 mod import;
 
-pub use drawcraft_doc::Document;
-pub use drawcraft_doc::TextObject;
+pub use vectorcraft_doc::Document;
+pub use vectorcraft_doc::TextObject;
 
 /// How style properties are written (Illustrator's "Styling" option).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

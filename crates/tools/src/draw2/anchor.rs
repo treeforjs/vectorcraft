@@ -6,9 +6,9 @@
 //! handle → move it independently; drag a segment → reshape the curve.
 //! Scissors: click a path to split it there.
 
-use drawcraft_doc::NodeId;
-use drawcraft_geom::Point;
 use serde_json::json;
+use vectorcraft_doc::NodeId;
+use vectorcraft_geom::Point;
 
 use super::{hit_anchor, hit_segment};
 use crate::{Action, Cursor, Mods, PointerEvent, PointerKind, Tool, ToolContext};
@@ -198,7 +198,7 @@ impl Tool for AnchorTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     #[test]
     fn add_and_delete_anchor_clicks() {

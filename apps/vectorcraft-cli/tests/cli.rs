@@ -3,10 +3,10 @@ use std::process::{Command, Stdio};
 
 use serde_json::{Value, json};
 
-const BIN: &str = env!("CARGO_BIN_EXE_drawcraft-cli");
+const BIN: &str = env!("CARGO_BIN_EXE_vectorcraft-cli");
 
 fn tmp(name: &str) -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join(format!("drawcraft-cli-test-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("vectorcraft-cli-test-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     dir.join(name)
 }
@@ -24,7 +24,7 @@ fn commands_prints_catalogue() {
 fn run_batch_exports() {
     let svg = tmp("batch.svg");
     let png = tmp("batch.png");
-    let dc = tmp("batch.drawcraft");
+    let dc = tmp("batch.vectorcraft");
     let out = Command::new(BIN)
         .args(["run", "--cmd", "file.new", "--params", r#"{"width":200,"height":100}"#])
         .args(["--cmd", "shape.ellipse", "--params", r#"{"x":10,"y":10,"width":80,"height":60}"#])
@@ -76,7 +76,7 @@ fn mcp_headless_over_stdio() {
     assert!(out.status.success());
     let replies: Vec<Value> = String::from_utf8(out.stdout).unwrap().lines().map(|l| serde_json::from_str(l).unwrap()).collect();
     assert_eq!(replies.iter().map(|r| r["id"].as_u64().unwrap()).collect::<Vec<_>>(), [1, 2, 3, 4]);
-    assert_eq!(replies[0]["result"]["serverInfo"]["name"], "drawcraft");
+    assert_eq!(replies[0]["result"]["serverInfo"]["name"], "vectorcraft");
     assert_eq!(replies[2]["result"]["isError"], false);
     assert_eq!(replies[3]["result"]["content"][0]["type"], "image");
 }

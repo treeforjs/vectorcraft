@@ -1,9 +1,9 @@
-//! DrawCraft renderer: document → premultiplied RGBA pixels.
+//! VectorCraft renderer: document → premultiplied RGBA pixels.
 //!
 //! The backend is `vello_cpu` (SIMD, sparse strips). Callers give a *view transform* mapping
 //! document points to output pixels; the renderer culls by bounds, evaluates appearance stacks
 //! (multiple fills/strokes, opacity, blend modes, stroke alignment, dashes), clip groups,
-//! gradients, images and text (via `drawcraft-text` glyph outlines).
+//! gradients, images and text (via `vectorcraft-text` glyph outlines).
 #![forbid(unsafe_code)]
 
 mod brush_fx;
@@ -17,15 +17,15 @@ mod width;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use drawcraft_doc::{AppearanceItem, Document, LineCap, LineJoin, Node, NodeId, NodeKind, StrokeAlign, StrokeLayer, TextObject};
-use drawcraft_geom::{Affine, BezPath, FillRule, Rect, Shape};
+use vectorcraft_doc::{AppearanceItem, Document, LineCap, LineJoin, Node, NodeId, NodeKind, StrokeAlign, StrokeLayer, TextObject};
+use vectorcraft_geom::{Affine, BezPath, FillRule, Rect, Shape};
 use vello_cpu::kurbo;
 use vello_cpu::peniko::{self, BlendMode, Compose, Mix};
 use vello_cpu::{Pixmap, RenderContext, Resources};
 
-pub use drawcraft_effects as effects;
 pub use live::expand_live;
 pub use pattern::render_pattern_swatch;
+pub use vectorcraft_effects as effects;
 pub use vello_cpu;
 pub use width::width_outline;
 
@@ -344,7 +344,7 @@ impl Renderer {
                 let mut acc: Option<Rect> = None;
                 for c in children {
                     if c.visible {
-                        acc = drawcraft_geom::union_opt(acc, self.bounds_of(c));
+                        acc = vectorcraft_geom::union_opt(acc, self.bounds_of(c));
                     }
                 }
                 acc
@@ -405,7 +405,7 @@ impl Renderer {
     }
 
     /// Render an opacity mask's art offscreen and turn its luminance into a coverage mask.
-    fn opacity_mask(&mut self, f: &Frame, m: &drawcraft_doc::OpacityMask, w: u16, h: u16) -> vello_cpu::Mask {
+    fn opacity_mask(&mut self, f: &Frame, m: &vectorcraft_doc::OpacityMask, w: u16, h: u16) -> vello_cpu::Mask {
         let mut mctx = single_threaded_context(w, h);
         self.draw_node(&mut mctx, &Frame { mt: false, ..*f }, &m.art, true);
         mctx.flush();
@@ -420,7 +420,7 @@ impl Renderer {
         // Fast path for plain paths: cached geometry, opacity folded into the paint.
         if let NodeKind::Path { rule, guide: false, .. } = &a.kind
             && !f.opts.outline
-            && a.blend == drawcraft_color::BlendMode::Normal
+            && a.blend == vectorcraft_color::BlendMode::Normal
             && !a.isolate
             && !fx::has_fx(a)
             && (a.opacity >= 1.0 || painted_items(a) == 1)
@@ -436,7 +436,7 @@ impl Renderer {
         }
         if let NodeKind::Text(t) = &a.kind
             && a.opacity >= 1.0
-            && a.blend == drawcraft_color::BlendMode::Normal
+            && a.blend == vectorcraft_color::BlendMode::Normal
             && !fx::has_fx(a)
         {
             let g = self.text_geom_of(a, t);
@@ -444,7 +444,7 @@ impl Renderer {
             self.stats.drawn += 1;
             return;
         }
-        if drawcraft_doc::live::is_live(a) {
+        if vectorcraft_doc::live::is_live(a) {
             return self.draw_live(ctx, f, a);
         }
         self.draw_node(ctx, f, a, true);
@@ -469,7 +469,7 @@ impl Renderer {
         let mut layers = 0;
         let template_dim = matches!(n.kind, NodeKind::Layer { template: true, .. }) && f.opts.dim_templates;
         let opacity = if template_dim { n.opacity * 0.5 } else { n.opacity };
-        if !outline && (opacity < 1.0 || n.blend != drawcraft_color::BlendMode::Normal || n.isolate) {
+        if !outline && (opacity < 1.0 || n.blend != vectorcraft_color::BlendMode::Normal || n.isolate) {
             ctx.set_transform(Affine::IDENTITY);
             ctx.push_layer(None, Some(blend_mode(n.blend)), Some(opacity), None, None);
             layers += 1;
@@ -551,7 +551,7 @@ impl Renderer {
             return;
         }
         // Bounds only matter to gradients and patterns (their geometry is relative to the object).
-        let solid = |p: &drawcraft_color::Paint| matches!(p, drawcraft_color::Paint::Solid { .. } | drawcraft_color::Paint::None);
+        let solid = |p: &vectorcraft_color::Paint| matches!(p, vectorcraft_color::Paint::Solid { .. } | vectorcraft_color::Paint::None);
         let needs_bounds = n.appearance.items.iter().any(|i| match i {
             AppearanceItem::Fill(fl) => !solid(&fl.paint),
             AppearanceItem::Stroke(st) => !solid(&st.paint),
@@ -563,7 +563,7 @@ impl Renderer {
                     if !fl.visible || fl.paint.is_none() {
                         continue;
                     }
-                    let layered = fl.opacity < 1.0 || fl.blend != drawcraft_color::BlendMode::Normal;
+                    let layered = fl.opacity < 1.0 || fl.blend != vectorcraft_color::BlendMode::Normal;
                     if layered {
                         ctx.set_transform(Affine::IDENTITY);
                         ctx.push_layer(None, Some(blend_mode(fl.blend)), Some(fl.opacity), None, None);
@@ -592,9 +592,9 @@ impl Renderer {
     }
 
     /// Multiply the folded object opacity into a solid paint.
-    fn fold_alpha(&self, ctx: &mut RenderContext, p: &drawcraft_color::Paint) {
+    fn fold_alpha(&self, ctx: &mut RenderContext, p: &vectorcraft_color::Paint) {
         if self.alpha < 1.0
-            && let drawcraft_color::Paint::Solid { color, .. } = p
+            && let vectorcraft_color::Paint::Solid { color, .. } = p
         {
             let [r, g, b, a] = color.to_rgba8(self.alpha);
             ctx.set_paint(peniko::Color::from_rgba8(r, g, b, a));
@@ -602,7 +602,7 @@ impl Renderer {
     }
 
     fn draw_stroke(&mut self, ctx: &mut RenderContext, f: &Frame, bp: &BezPath, rule: FillRule, st: &StrokeLayer, bounds: Rect) {
-        let layered = st.opacity < 1.0 || st.blend != drawcraft_color::BlendMode::Normal || st.align == StrokeAlign::Outside;
+        let layered = st.opacity < 1.0 || st.blend != vectorcraft_color::BlendMode::Normal || st.align == StrokeAlign::Outside;
         if layered {
             ctx.set_transform(Affine::IDENTITY);
             ctx.push_layer(None, Some(blend_mode(st.blend)), Some(st.opacity), None, None);
@@ -770,7 +770,7 @@ impl Renderer {
         }
     }
 
-    fn draw_image(&mut self, ctx: &mut RenderContext, f: &Frame, im: &drawcraft_doc::ImageObject) {
+    fn draw_image(&mut self, ctx: &mut RenderContext, f: &Frame, im: &vectorcraft_doc::ImageObject) {
         let rect = Rect::new(0.0, 0.0, im.width as f64, im.height as f64);
         if f.opts.outline {
             let mut p = rect.to_path(0.1);
@@ -823,11 +823,11 @@ fn painted_items(n: &Node) -> usize {
         .items
         .iter()
         .filter(|i| match i {
-            AppearanceItem::Fill(f) => f.visible && !f.paint.is_none() && matches!(f.paint, drawcraft_color::Paint::Solid { .. }),
-            AppearanceItem::Stroke(s) => s.visible && !s.paint.is_none() && s.width > 0.0 && matches!(s.paint, drawcraft_color::Paint::Solid { .. }) && s.dash.is_none(),
+            AppearanceItem::Fill(f) => f.visible && !f.paint.is_none() && matches!(f.paint, vectorcraft_color::Paint::Solid { .. }),
+            AppearanceItem::Stroke(s) => s.visible && !s.paint.is_none() && s.width > 0.0 && matches!(s.paint, vectorcraft_color::Paint::Solid { .. }) && s.dash.is_none(),
         })
         .count()
-        .max(if n.appearance.items.iter().any(|i| matches!(i, AppearanceItem::Fill(f) if f.visible && !matches!(f.paint, drawcraft_color::Paint::Solid { .. } | drawcraft_color::Paint::None)) || matches!(i, AppearanceItem::Stroke(s) if s.visible && !matches!(s.paint, drawcraft_color::Paint::Solid { .. } | drawcraft_color::Paint::None))) { 2 } else { 0 })
+        .max(if n.appearance.items.iter().any(|i| matches!(i, AppearanceItem::Fill(f) if f.visible && !matches!(f.paint, vectorcraft_color::Paint::Solid { .. } | vectorcraft_color::Paint::None)) || matches!(i, AppearanceItem::Stroke(s) if s.visible && !matches!(s.paint, vectorcraft_color::Paint::Solid { .. } | vectorcraft_color::Paint::None))) { 2 } else { 0 })
 }
 
 /// Preferred rasterizer thread count set by the app (Preferences → Performance); negative = automatic.
@@ -850,8 +850,8 @@ pub fn default_threads() -> u16 {
         if o >= 0 {
             return o.min(64) as u16;
         }
-        if std::env::var_os("DRAWCRAFT_RENDER_THREADS").is_some() {
-            return std::env::var("DRAWCRAFT_RENDER_THREADS").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
+        if std::env::var_os("VECTORCRAFT_RENDER_THREADS").is_some() {
+            return std::env::var("VECTORCRAFT_RENDER_THREADS").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
         }
         std::thread::available_parallelism().map(|n| (n.get().saturating_sub(1)).min(4) as u16).unwrap_or(0)
     }
@@ -865,7 +865,7 @@ struct TextGeom {
 }
 
 fn text_geom(t: &TextObject) -> TextGeom {
-    let layout = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+    let layout = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
     let mut runs = vec![BezPath::new(); t.runs.len()];
     let mut all = BezPath::new();
     for g in &layout.glyphs {
@@ -888,8 +888,8 @@ fn fill_rule(r: FillRule) -> peniko::Fill {
     }
 }
 
-pub(crate) fn blend_mode(b: drawcraft_color::BlendMode) -> BlendMode {
-    use drawcraft_color::BlendMode as B;
+pub(crate) fn blend_mode(b: vectorcraft_color::BlendMode) -> BlendMode {
+    use vectorcraft_color::BlendMode as B;
     let mix = match b {
         B::Normal => Mix::Normal,
         B::Darken => Mix::Darken,

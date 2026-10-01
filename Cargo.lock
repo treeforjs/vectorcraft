@@ -824,311 +824,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d8b14ccef22fc6f5a8f4d7d768562a182c04ce9a3b3157b91390b52ddfdf1a76"
 
 [[package]]
-name = "drawcraft"
-version = "0.1.0"
-dependencies = [
- "arboard",
- "drawcraft-engine",
- "drawcraft-ui-egui",
- "eframe",
- "egui",
- "log",
- "muda",
- "rfd",
- "serde_json",
-]
-
-[[package]]
-name = "drawcraft-brush"
-version = "0.1.0"
-dependencies = [
- "drawcraft-color",
- "drawcraft-doc",
- "drawcraft-geom",
- "kurbo 0.13.1",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "drawcraft-cli"
-version = "0.1.0"
-dependencies = [
- "drawcraft-color",
- "drawcraft-doc",
- "drawcraft-engine",
- "drawcraft-format",
- "drawcraft-geom",
- "drawcraft-mcp",
- "drawcraft-render",
- "drawcraft-svg",
- "drawcraft-testkit",
- "serde_json",
-]
-
-[[package]]
-name = "drawcraft-color"
-version = "0.1.0"
-dependencies = [
- "kurbo 0.13.1",
- "moxcms",
- "proptest",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "drawcraft-doc"
-version = "0.1.0"
-dependencies = [
- "drawcraft-color",
- "drawcraft-geom",
- "kurbo 0.13.1",
- "proptest",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "drawcraft-effects"
-version = "0.1.0"
-dependencies = [
- "drawcraft-doc",
- "drawcraft-geom",
- "drawcraft-pathops",
- "kurbo 0.13.1",
- "serde_json",
-]
-
-[[package]]
-name = "drawcraft-engine"
-version = "0.1.0"
-dependencies = [
- "drawcraft-brush",
- "drawcraft-color",
- "drawcraft-doc",
- "drawcraft-format",
- "drawcraft-geom",
- "drawcraft-pathops",
- "drawcraft-pdf",
- "drawcraft-render",
- "drawcraft-svg",
- "drawcraft-testkit",
- "drawcraft-text",
- "drawcraft-tools",
- "drawcraft-trace",
- "kurbo 0.13.1",
- "log",
- "proptest",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "drawcraft-format"
-version = "0.1.0"
-dependencies = [
- "drawcraft-doc",
- "drawcraft-geom",
- "drawcraft-testkit",
- "proptest",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "drawcraft-geom"
-version = "0.1.0"
-dependencies = [
- "drawcraft-testkit",
- "kurbo 0.13.1",
- "proptest",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "drawcraft-mcp"
-version = "0.1.0"
-dependencies = [
- "drawcraft-doc",
- "drawcraft-engine",
- "drawcraft-format",
- "drawcraft-geom",
- "drawcraft-render",
- "drawcraft-svg",
- "drawcraft-testkit",
- "drawcraft-tools",
- "log",
- "proptest",
- "serde_json",
-]
-
-[[package]]
-name = "drawcraft-pathops"
-version = "0.1.0"
-dependencies = [
- "drawcraft-geom",
- "drawcraft-testkit",
- "kurbo 0.13.1",
- "linesweeper",
- "proptest",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "drawcraft-pdf"
-version = "0.1.0"
-dependencies = [
- "drawcraft-color",
- "drawcraft-doc",
- "drawcraft-geom",
- "drawcraft-text",
- "hayro-interpret",
- "hayro-syntax",
- "image",
- "krilla",
- "kurbo 0.13.1",
- "log",
- "smallvec",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "drawcraft-render"
-version = "0.1.0"
-dependencies = [
- "drawcraft-brush",
- "drawcraft-color",
- "drawcraft-doc",
- "drawcraft-effects",
- "drawcraft-geom",
- "drawcraft-testkit",
- "drawcraft-text",
- "image",
- "log",
- "proptest",
- "serde_json",
- "vello_common 0.2.0",
- "vello_cpu 0.2.0",
-]
-
-[[package]]
-name = "drawcraft-svg"
-version = "0.1.0"
-dependencies = [
- "drawcraft-color",
- "drawcraft-doc",
- "drawcraft-geom",
- "drawcraft-testkit",
- "image",
- "kurbo 0.13.1",
- "proptest",
- "svgtypes 0.16.1",
- "thiserror 2.0.21",
- "usvg 0.48.1",
-]
-
-[[package]]
-name = "drawcraft-testkit"
-version = "0.1.0"
-dependencies = [
- "drawcraft-color",
- "drawcraft-doc",
- "drawcraft-engine",
- "drawcraft-format",
- "drawcraft-geom",
- "drawcraft-render",
- "drawcraft-svg",
- "image",
- "kurbo 0.13.1",
- "proptest",
- "serde_json",
-]
-
-[[package]]
-name = "drawcraft-text"
-version = "0.1.0"
-dependencies = [
- "drawcraft-doc",
- "drawcraft-geom",
- "harfrust 0.13.3",
- "kurbo 0.13.1",
- "log",
- "skrifa 0.47.0",
-]
-
-[[package]]
-name = "drawcraft-tools"
-version = "0.1.0"
-dependencies = [
- "drawcraft-color",
- "drawcraft-doc",
- "drawcraft-geom",
- "drawcraft-pathops",
- "drawcraft-text",
- "kurbo 0.13.1",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "drawcraft-trace"
-version = "0.1.0"
-dependencies = [
- "drawcraft-geom",
- "drawcraft-pathops",
- "image",
- "kurbo 0.13.1",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "drawcraft-ui-egui"
-version = "0.1.0"
-dependencies = [
- "drawcraft-color",
- "drawcraft-doc",
- "drawcraft-effects",
- "drawcraft-engine",
- "drawcraft-format",
- "drawcraft-geom",
- "drawcraft-pdf",
- "drawcraft-render",
- "drawcraft-svg",
- "drawcraft-text",
- "drawcraft-tools",
- "egui",
- "egui_extras",
- "log",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "drawcraft-web"
-version = "0.1.0"
-dependencies = [
- "drawcraft-engine",
- "drawcraft-ui-egui",
- "eframe",
- "egui",
- "js-sys",
- "log",
- "rfd",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
-
-[[package]]
 name = "ecolor"
 version = "0.36.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4151,6 +3846,311 @@ dependencies = [
 ]
 
 [[package]]
+name = "vectorcraft"
+version = "0.1.0"
+dependencies = [
+ "arboard",
+ "eframe",
+ "egui",
+ "log",
+ "muda",
+ "rfd",
+ "serde_json",
+ "vectorcraft-engine",
+ "vectorcraft-ui-egui",
+]
+
+[[package]]
+name = "vectorcraft-brush"
+version = "0.1.0"
+dependencies = [
+ "kurbo 0.13.1",
+ "serde",
+ "serde_json",
+ "vectorcraft-color",
+ "vectorcraft-doc",
+ "vectorcraft-geom",
+]
+
+[[package]]
+name = "vectorcraft-cli"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "vectorcraft-color",
+ "vectorcraft-doc",
+ "vectorcraft-engine",
+ "vectorcraft-format",
+ "vectorcraft-geom",
+ "vectorcraft-mcp",
+ "vectorcraft-render",
+ "vectorcraft-svg",
+ "vectorcraft-testkit",
+]
+
+[[package]]
+name = "vectorcraft-color"
+version = "0.1.0"
+dependencies = [
+ "kurbo 0.13.1",
+ "moxcms",
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "vectorcraft-doc"
+version = "0.1.0"
+dependencies = [
+ "kurbo 0.13.1",
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "vectorcraft-color",
+ "vectorcraft-geom",
+]
+
+[[package]]
+name = "vectorcraft-effects"
+version = "0.1.0"
+dependencies = [
+ "kurbo 0.13.1",
+ "serde_json",
+ "vectorcraft-doc",
+ "vectorcraft-geom",
+ "vectorcraft-pathops",
+]
+
+[[package]]
+name = "vectorcraft-engine"
+version = "0.1.0"
+dependencies = [
+ "kurbo 0.13.1",
+ "log",
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "vectorcraft-brush",
+ "vectorcraft-color",
+ "vectorcraft-doc",
+ "vectorcraft-format",
+ "vectorcraft-geom",
+ "vectorcraft-pathops",
+ "vectorcraft-pdf",
+ "vectorcraft-render",
+ "vectorcraft-svg",
+ "vectorcraft-testkit",
+ "vectorcraft-text",
+ "vectorcraft-tools",
+ "vectorcraft-trace",
+]
+
+[[package]]
+name = "vectorcraft-format"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "vectorcraft-doc",
+ "vectorcraft-geom",
+ "vectorcraft-testkit",
+]
+
+[[package]]
+name = "vectorcraft-geom"
+version = "0.1.0"
+dependencies = [
+ "kurbo 0.13.1",
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "vectorcraft-testkit",
+]
+
+[[package]]
+name = "vectorcraft-mcp"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "proptest",
+ "serde_json",
+ "vectorcraft-doc",
+ "vectorcraft-engine",
+ "vectorcraft-format",
+ "vectorcraft-geom",
+ "vectorcraft-render",
+ "vectorcraft-svg",
+ "vectorcraft-testkit",
+ "vectorcraft-tools",
+]
+
+[[package]]
+name = "vectorcraft-pathops"
+version = "0.1.0"
+dependencies = [
+ "kurbo 0.13.1",
+ "linesweeper",
+ "proptest",
+ "thiserror 2.0.21",
+ "vectorcraft-geom",
+ "vectorcraft-testkit",
+]
+
+[[package]]
+name = "vectorcraft-pdf"
+version = "0.1.0"
+dependencies = [
+ "hayro-interpret",
+ "hayro-syntax",
+ "image",
+ "krilla",
+ "kurbo 0.13.1",
+ "log",
+ "smallvec",
+ "thiserror 2.0.21",
+ "vectorcraft-color",
+ "vectorcraft-doc",
+ "vectorcraft-geom",
+ "vectorcraft-text",
+]
+
+[[package]]
+name = "vectorcraft-render"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "log",
+ "proptest",
+ "serde_json",
+ "vectorcraft-brush",
+ "vectorcraft-color",
+ "vectorcraft-doc",
+ "vectorcraft-effects",
+ "vectorcraft-geom",
+ "vectorcraft-testkit",
+ "vectorcraft-text",
+ "vello_common 0.2.0",
+ "vello_cpu 0.2.0",
+]
+
+[[package]]
+name = "vectorcraft-svg"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "kurbo 0.13.1",
+ "proptest",
+ "svgtypes 0.16.1",
+ "thiserror 2.0.21",
+ "usvg 0.48.1",
+ "vectorcraft-color",
+ "vectorcraft-doc",
+ "vectorcraft-geom",
+ "vectorcraft-testkit",
+]
+
+[[package]]
+name = "vectorcraft-testkit"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "kurbo 0.13.1",
+ "proptest",
+ "serde_json",
+ "vectorcraft-color",
+ "vectorcraft-doc",
+ "vectorcraft-engine",
+ "vectorcraft-format",
+ "vectorcraft-geom",
+ "vectorcraft-render",
+ "vectorcraft-svg",
+]
+
+[[package]]
+name = "vectorcraft-text"
+version = "0.1.0"
+dependencies = [
+ "harfrust 0.13.3",
+ "kurbo 0.13.1",
+ "log",
+ "skrifa 0.47.0",
+ "vectorcraft-doc",
+ "vectorcraft-geom",
+]
+
+[[package]]
+name = "vectorcraft-tools"
+version = "0.1.0"
+dependencies = [
+ "kurbo 0.13.1",
+ "serde",
+ "serde_json",
+ "vectorcraft-color",
+ "vectorcraft-doc",
+ "vectorcraft-geom",
+ "vectorcraft-pathops",
+ "vectorcraft-text",
+]
+
+[[package]]
+name = "vectorcraft-trace"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "kurbo 0.13.1",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "vectorcraft-geom",
+ "vectorcraft-pathops",
+]
+
+[[package]]
+name = "vectorcraft-ui-egui"
+version = "0.1.0"
+dependencies = [
+ "egui",
+ "egui_extras",
+ "log",
+ "serde",
+ "serde_json",
+ "vectorcraft-color",
+ "vectorcraft-doc",
+ "vectorcraft-effects",
+ "vectorcraft-engine",
+ "vectorcraft-format",
+ "vectorcraft-geom",
+ "vectorcraft-pdf",
+ "vectorcraft-render",
+ "vectorcraft-svg",
+ "vectorcraft-text",
+ "vectorcraft-tools",
+]
+
+[[package]]
+name = "vectorcraft-web"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "egui",
+ "js-sys",
+ "log",
+ "rfd",
+ "vectorcraft-engine",
+ "vectorcraft-ui-egui",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
 name = "vello_common"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5086,11 +5086,11 @@ checksum = "9440ea3e5aeabb0ac63af70daf835274065238cdd0cec83418f417eae38bacee"
 name = "xtask"
 version = "0.1.0"
 dependencies = [
- "drawcraft-color",
- "drawcraft-doc",
- "drawcraft-geom",
- "drawcraft-render",
  "serde_json",
+ "vectorcraft-color",
+ "vectorcraft-doc",
+ "vectorcraft-geom",
+ "vectorcraft-render",
 ]
 
 [[package]]

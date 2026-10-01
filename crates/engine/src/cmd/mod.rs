@@ -30,16 +30,16 @@ mod select;
 mod textedit;
 pub mod textstyles;
 pub(crate) mod threads;
-mod typecmd;
+pub(crate) mod typecmd;
 mod typemenu;
 pub mod wand;
 mod xform;
 
-use drawcraft_color::Color;
-use drawcraft_doc::NodeId;
-use drawcraft_geom::{Affine, Point};
 use serde::Serialize;
 use serde_json::Value;
+use vectorcraft_color::Color;
+use vectorcraft_doc::NodeId;
+use vectorcraft_geom::{Affine, Point};
 
 use crate::{EngineError, Result, Session};
 

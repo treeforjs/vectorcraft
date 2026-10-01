@@ -2,17 +2,17 @@
 //! through the CMS, gamut checks, View → Proof Setup / Proof Colors / Overprint Preview, the
 //! Separations Preview panel, Overprint Black and spot swatches.
 //!
-//! Colour settings and the proof view are process-wide (`drawcraft_color::cms::active`,
-//! `drawcraft_render::proof::view`). A document's assigned profiles are stored in
+//! Colour settings and the proof view are process-wide (`vectorcraft_color::cms::active`,
+//! `vectorcraft_render::proof::view`). A document's assigned profiles are stored in
 //! `Document.unknown["colorProfiles"]` (`{rgb?, cmyk?}`) and become active when assigned.
 
 use std::collections::BTreeMap;
 
-use drawcraft_color::cms::{self, ColorSettings, Intent, Model, ProofTarget};
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::ColorMode;
-use drawcraft_render::proof::{self, OVERPRINT_KEY};
 use serde_json::{Value, json};
+use vectorcraft_color::cms::{self, ColorSettings, Intent, Model, ProofTarget};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::ColorMode;
+use vectorcraft_render::proof::{self, OVERPRINT_KEY};
 
 use super::*;
 
@@ -145,14 +145,10 @@ fn settings_json(st: &ColorSettings) -> Value {
 }
 
 /// Colour settings/proof changes don't edit the document, but the canvas must redraw: bump the
-/// revisions without marking documents dirty.
+/// revisions (which never mark documents dirty).
 fn touch_all(s: &mut Session) {
     for d in &mut s.docs {
-        let clean = d.revision == d.saved_revision;
         d.revision += 1;
-        if clean {
-            d.saved_revision = d.revision;
-        }
     }
 }
 
@@ -191,7 +187,7 @@ fn load_profile(_: &mut Session, _: &Value) -> Result<Value> {
 }
 
 /// The document's assigned profiles (`None` = working space).
-pub fn doc_profiles(d: &drawcraft_doc::Document) -> (Option<String>, Option<String>) {
+pub fn doc_profiles(d: &vectorcraft_doc::Document) -> (Option<String>, Option<String>) {
     let o = d.unknown.get(PROFILES_KEY);
     let get = |k: &str| o.and_then(|o| o.get(k)).and_then(Value::as_str).map(str::to_string);
     (get("rgb"), get("cmyk"))
@@ -317,7 +313,7 @@ fn gamut_check(s: &mut Session, p: &Value) -> Result<Value> {
     } else {
         let st = s.doc()?;
         let ids = targets(s, p)?;
-        let mut collect = |n: &drawcraft_doc::Node| {
+        let mut collect = |n: &vectorcraft_doc::Node| {
             let mut n = n.clone();
             proof::map_node_colors(&mut n, &mut |c, _| {
                 cols.push(*c);
@@ -451,10 +447,10 @@ fn overprint_black(s: &mut Session, p: &Value) -> Result<Value> {
     let mut hits: Vec<u64> = vec![];
     for id in &ids {
         if let Some(n) = doc.node(*id) {
-            n.walk(&mut |m: &drawcraft_doc::Node| {
+            n.walk(&mut |m: &vectorcraft_doc::Node| {
                 let bl = m.appearance.items.iter().any(|it| match it {
-                    drawcraft_doc::AppearanceItem::Fill(l) => l.paint.color().is_some_and(|c| black_only(&c)),
-                    drawcraft_doc::AppearanceItem::Stroke(l) => l.paint.color().is_some_and(|c| black_only(&c)),
+                    vectorcraft_doc::AppearanceItem::Fill(l) => l.paint.color().is_some_and(|c| black_only(&c)),
+                    vectorcraft_doc::AppearanceItem::Stroke(l) => l.paint.color().is_some_and(|c| black_only(&c)),
                 });
                 if bl {
                     hits.push(m.id.0);

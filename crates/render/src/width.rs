@@ -6,8 +6,8 @@
 //! projecting caps (the round cap blends the two side widths); closed subpaths become two loops
 //! of opposite orientation filled with the non-zero rule.
 
-use drawcraft_doc::{LineCap, StrokeAlign, StrokeLayer, WidthProfile};
-use drawcraft_geom::kurbo::{self, BezPath, PathEl, Point, Vec2};
+use vectorcraft_doc::{LineCap, StrokeAlign, StrokeLayer, WidthProfile};
+use vectorcraft_geom::kurbo::{self, BezPath, PathEl, Point, Vec2};
 
 /// The outline to fill instead of stroking, when `st` has a width profile (and no dashes).
 pub(crate) fn outline_for(bp: &BezPath, st: &StrokeLayer, tol: f64) -> Option<BezPath> {
@@ -255,7 +255,7 @@ mod tests {
         let a = area(&width_outline(&c, 10.0, &p, LineCap::Butt, 0.001));
         let want = 2.0 * std::f64::consts::PI * 50.0 * 10.0;
         assert!((a - want).abs() / want < 0.01, "{a} vs {want}");
-        let st = StrokeLayer { profile: None, ..StrokeLayer::new(drawcraft_color::Paint::solid(drawcraft_color::Color::BLACK), 4.0) };
+        let st = StrokeLayer { profile: None, ..StrokeLayer::new(vectorcraft_color::Paint::solid(vectorcraft_color::Color::BLACK), 4.0) };
         assert!(outline_for(&c, &st, 0.1).is_none());
     }
 }

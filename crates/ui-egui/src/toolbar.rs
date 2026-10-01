@@ -2,12 +2,12 @@
 //! Draw, Modify, Type, Navigate, Color). Window → Toolbars → Advanced shows every tool group.
 //! Bottom: fill/stroke proxy, colour/gradient/none, drawing modes, screen mode, Edit Toolbar.
 
-use drawcraft_tools::{TOOL_GROUPS, ToolInfo, tool_info};
 use egui::{Color32, CornerRadius, Sense, Stroke, Ui, pos2, vec2};
 use serde_json::json;
+use vectorcraft_tools::{TOOL_GROUPS, ToolInfo, tool_info};
 
 use crate::theme::{self, Tokens};
-use crate::{DrawcraftApp, icons, widgets};
+use crate::{VectorcraftApp, icons, widgets};
 
 const PITCH: f32 = 30.0;
 const WIDTH: f32 = 48.0;
@@ -55,7 +55,7 @@ fn tip(t: &ToolInfo) -> String {
 }
 
 /// Slots of the current layout: (category label for the first slot of a category, tool ids).
-fn slots(app: &DrawcraftApp) -> Vec<(Option<&'static str>, Vec<&'static str>)> {
+fn slots(app: &VectorcraftApp) -> Vec<(Option<&'static str>, Vec<&'static str>)> {
     if app.ui.toolbar_advanced {
         TOOL_GROUPS.iter().map(|g| (None, g.iter().map(|t| t.id).collect())).collect()
     } else {
@@ -64,7 +64,7 @@ fn slots(app: &DrawcraftApp) -> Vec<(Option<&'static str>, Vec<&'static str>)> {
 }
 
 /// Remember the tool shown in the slot that contains `id`.
-pub fn remember(app: &mut DrawcraftApp, id: &str) {
+pub fn remember(app: &mut VectorcraftApp, id: &str) {
     for (_, s) in slots(app) {
         if s.contains(&id) {
             app.ui.slot_tool.insert(s[0].to_string(), id.to_string());
@@ -72,7 +72,7 @@ pub fn remember(app: &mut DrawcraftApp, id: &str) {
     }
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let all = slots(app);
     let avail = ui.available_height();
@@ -177,7 +177,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     flyout(app, ui.ctx());
 }
 
-fn bottom_controls(app: &mut DrawcraftApp, ui: &mut Ui, t: &Tokens) {
+fn bottom_controls(app: &mut VectorcraftApp, ui: &mut Ui, t: &Tokens) {
     let (fill, stroke) = match app.session.active().and_then(|d| d.selection.objects.first().and_then(|id| d.doc.node(*id))) {
         Some(n) if !n.is_container() => (n.appearance.fill_paint(), n.appearance.stroke_paint()),
         _ => (app.session.paint.fill.clone(), app.session.paint.stroke.clone()),
@@ -203,19 +203,19 @@ fn bottom_controls(app: &mut DrawcraftApp, ui: &mut Ui, t: &Tokens) {
         ui.add_space((ui.available_width() - 27.0) / 2.0);
         ui.spacing_mut().item_spacing.x = 2.0;
         let s = 7.5;
-        let last = app.session.paint.fill.color().unwrap_or(drawcraft_color::Color::BLACK);
+        let last = app.session.paint.fill.color().unwrap_or(vectorcraft_color::Color::BLACK);
         let (r, resp) = ui.allocate_exact_size(vec2(s, s), Sense::click());
-        widgets::paint_chip(ui, r, &drawcraft_color::Paint::solid(last));
+        widgets::paint_chip(ui, r, &vectorcraft_color::Paint::solid(last));
         if resp.on_hover_text("Color (,)").clicked() {
             app.run(target, json!({"color": last.to_hex()})).ok();
         }
         let (r, resp) = ui.allocate_exact_size(vec2(s, s), Sense::click());
-        widgets::paint_chip(ui, r, &drawcraft_color::Paint::Gradient(Box::new(drawcraft_color::GradientPaint::new(Default::default()))));
+        widgets::paint_chip(ui, r, &vectorcraft_color::Paint::Gradient(Box::new(vectorcraft_color::GradientPaint::new(Default::default()))));
         if resp.on_hover_text("Gradient (.)").clicked() {
             app.run(target, json!({"gradient": {"kind": "linear"}})).ok();
         }
         let (r, resp) = ui.allocate_exact_size(vec2(s, s), Sense::click());
-        widgets::paint_chip(ui, r, &drawcraft_color::Paint::None);
+        widgets::paint_chip(ui, r, &vectorcraft_color::Paint::None);
         if resp.on_hover_text("None (/)").clicked() {
             app.run(target, json!({"none": true})).ok();
         }
@@ -225,9 +225,9 @@ fn bottom_controls(app: &mut DrawcraftApp, ui: &mut Ui, t: &Tokens) {
         let modes = ["dc-draw-normal", "dc-draw-behind", "dc-draw-inside"];
         let names = ["Draw Normal", "Draw Behind", "Draw Inside"];
         let m = match app.session.draw_mode {
-            drawcraft_engine::DrawMode::Normal => 0,
-            drawcraft_engine::DrawMode::Behind => 1,
-            drawcraft_engine::DrawMode::Inside => 2,
+            vectorcraft_engine::DrawMode::Normal => 0,
+            vectorcraft_engine::DrawMode::Behind => 1,
+            vectorcraft_engine::DrawMode::Inside => 2,
         };
         if widgets::icon_button(ui, modes[m], &format!("{} (Shift+D)", names[m]), m != 0, 26.0).clicked() {
             app.run("view.drawMode", json!({})).ok();
@@ -242,7 +242,7 @@ fn bottom_controls(app: &mut DrawcraftApp, ui: &mut Ui, t: &Tokens) {
     let _ = t;
 }
 
-fn flyout(app: &mut DrawcraftApp, ctx: &egui::Context) {
+fn flyout(app: &mut VectorcraftApp, ctx: &egui::Context) {
     if app.ui.flyout.is_none() {
         return;
     }

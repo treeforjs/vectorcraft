@@ -1,11 +1,11 @@
 //! Keyboard shortcuts: command shortcuts from the registry, single-key tool shortcuts, arrows,
 //! and tool keys (Enter/Esc/↑/↓ while drawing).
 
-use drawcraft_tools::{Mods, ToolKey};
 use egui::{Key, KeyboardShortcut, Modifiers};
 use serde_json::json;
+use vectorcraft_tools::{Mods, ToolKey};
 
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 
 /// Parse "Cmd+Shift+]" into an egui shortcut. `Cmd` is Command on macOS and Ctrl elsewhere.
 pub fn parse(s: &str) -> Option<KeyboardShortcut> {
@@ -46,7 +46,7 @@ pub fn parse(s: &str) -> Option<KeyboardShortcut> {
 /// Every command shortcut in effect (user overrides from Edit → Keyboard Shortcuts win).
 fn all_shortcuts() -> Vec<(KeyboardShortcut, &'static str)> {
     let mut v: Vec<(KeyboardShortcut, &'static str)> = vec![];
-    for c in drawcraft_engine::command_specs() {
+    for c in vectorcraft_engine::command_specs() {
         if let Some(sc) = crate::menus::shortcut_of(c.id).and_then(parse) {
             v.push((sc, c.id));
         }
@@ -63,7 +63,7 @@ fn all_shortcuts() -> Vec<(KeyboardShortcut, &'static str)> {
     v
 }
 
-pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
+pub fn handle(app: &mut VectorcraftApp, ctx: &egui::Context) {
     if app.ui.dialog.is_some() || app.ui.palette_open {
         if crate::shortcut_editor::is_recording(app) {
             return;
@@ -208,7 +208,7 @@ mod tests {
     use super::*;
 
     /// One headless frame delivering `events` to the shortcut handler.
-    fn frame(app: &mut DrawcraftApp, events: Vec<egui::Event>) -> egui::FullOutput {
+    fn frame(app: &mut VectorcraftApp, events: Vec<egui::Event>) -> egui::FullOutput {
         let ctx = egui::Context::default();
         let mut out = ctx.run_ui(egui::RawInput { events, ..Default::default() }, |ui| {
             handle(app, ui.ctx());
@@ -220,7 +220,7 @@ mod tests {
 
     #[test]
     fn copy_and_paste_events_use_the_system_clipboard() {
-        let mut app = DrawcraftApp::new(drawcraft_engine::Session::new(), Default::default());
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
         app.session.execute("file.new", &json!({"width": 200, "height": 200})).unwrap();
         let id = app.session.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap()["id"].clone();
         app.session.execute("select.set", &json!({"ids": [id]})).unwrap();
@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn all_registered_shortcuts_parse() {
-        for c in drawcraft_engine::command_specs() {
+        for c in vectorcraft_engine::command_specs() {
             if let Some(s) = c.shortcut
                 && s != "D"
                 && s != "X"

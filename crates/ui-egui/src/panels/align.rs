@@ -1,12 +1,12 @@
 //! Align panel: Align Objects, Distribute Objects, Distribute Spacing (with a spacing value when
 //! aligning to a key object) and Align To (selection / key object / artboard).
 
-use drawcraft_doc::Unit;
 use egui::Ui;
 use serde_json::{Value, json};
+use vectorcraft_doc::Unit;
 
 use super::{pstate, selection_len, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::widgets::{self, menu_item};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -53,7 +53,7 @@ pub const DISTRIBUTE: [(&str, &str, &str, &str); 6] = [
     ("dc-dist-right", "Horizontal Distribute Right", "horizontal", "right"),
 ];
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let n = selection_len(app);
     let to: AlignTo = pstate(ui.ctx(), "align-to");
     widgets::subheader(ui, "Align Objects:");
@@ -124,7 +124,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let hidden: bool = pstate(ui.ctx(), "align-hide-options");
     if menu_item(ui, if hidden { "Show Options" } else { "Hide Options" }, true, false) {
         set_pstate(ui.ctx(), "align-hide-options", !hidden);

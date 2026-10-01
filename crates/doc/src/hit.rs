@@ -1,7 +1,7 @@
 //! Hit testing over the document tree.
 
-use drawcraft_geom::hit::{fill_contains, stroke_contains};
-use drawcraft_geom::{Point, Rect};
+use vectorcraft_geom::hit::{fill_contains, stroke_contains};
+use vectorcraft_geom::{Point, Rect};
 
 use crate::{Document, Node, NodeId, NodeKind};
 
@@ -82,7 +82,7 @@ fn hit_children(parent: &Node, p: Point, opt: HitOptions, chain: &mut Vec<NodeId
     if let NodeKind::Group { clip: true, .. } = parent.kind
         && let Some(clip) = children.first()
         && let Some(path) = clip.path_data()
-        && !fill_contains(&path.to_bezpath(), drawcraft_geom::FillRule::NonZero, p)
+        && !fill_contains(&path.to_bezpath(), vectorcraft_geom::FillRule::NonZero, p)
     {
         return None;
     }
@@ -123,7 +123,7 @@ fn hit_leaf(n: &Node, p: Point, opt: HitOptions) -> Option<HitKind> {
             None
         }
         NodeKind::Compound { children, rule } => {
-            let mut bp = drawcraft_geom::BezPath::new();
+            let mut bp = vectorcraft_geom::BezPath::new();
             for c in children {
                 if let Some(pd) = c.path_data() {
                     bp.extend(pd.to_bezpath());
@@ -143,7 +143,7 @@ fn hit_leaf(n: &Node, p: Point, opt: HitOptions) -> Option<HitKind> {
             if stroke_contains(&bp, 0.0, opt.tol, p) {
                 return Some(HitKind::Outline);
             }
-            (!opt.path_only && fill_contains(&bp, drawcraft_geom::FillRule::NonZero, p)).then_some(HitKind::Fill)
+            (!opt.path_only && fill_contains(&bp, vectorcraft_geom::FillRule::NonZero, p)).then_some(HitKind::Fill)
         }
         _ => None,
     }
@@ -171,7 +171,7 @@ pub fn marquee(doc: &Document, r: Rect, scope: Option<NodeId>, leaves: bool) -> 
     };
     fn touches(n: &Node, r: Rect) -> bool {
         match &n.kind {
-            NodeKind::Path { path, .. } => drawcraft_geom::hit::intersects_rect(path, r),
+            NodeKind::Path { path, .. } => vectorcraft_geom::hit::intersects_rect(path, r),
             NodeKind::Layer { children, .. } | NodeKind::Group { children, .. } | NodeKind::Compound { children, .. } => {
                 children.iter().any(|c| c.visible && touches(c, r))
             }
@@ -211,9 +211,9 @@ pub fn marquee(doc: &Document, r: Rect, scope: Option<NodeId>, leaves: bool) -> 
 mod tests {
     use super::*;
     use crate::{Appearance, Node};
-    use drawcraft_color::{Color, Paint};
-    use drawcraft_geom::shapes;
     use std::sync::Arc;
+    use vectorcraft_color::{Color, Paint};
+    use vectorcraft_geom::shapes;
 
     #[test]
     fn hits_topmost() {

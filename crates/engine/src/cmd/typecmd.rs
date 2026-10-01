@@ -3,9 +3,9 @@
 
 use std::sync::Arc;
 
-use drawcraft_doc::{Document, Justify, Node, NodeId, NodeKind, TextObject};
-use drawcraft_geom::PathData;
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, Justify, Node, NodeId, NodeKind, TextObject};
+use vectorcraft_geom::PathData;
 
 use super::edit::selected_roots;
 use super::pathops::{num_param, shape_node, text_style_appearance};
@@ -63,7 +63,7 @@ pub fn specs() -> Vec<CommandSpec> {
 
 /// Recompute the layout bounds cache after a text edit.
 pub(crate) fn refresh_bounds(t: &mut TextObject) {
-    let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+    let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
     t.cached_bounds = Some(lay.bounds);
 }
 
@@ -94,7 +94,7 @@ fn create_outlines(s: &mut Session, _: &Value) -> Result<Value> {
         for tid in texts {
             let Some(n) = d.node(tid).cloned() else { continue };
             let NodeKind::Text(t) = &n.kind else { continue };
-            let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+            let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
             let mut children = vec![];
             for g in &lay.glyphs {
                 let path = PathData::from_bezpath(&g.outline).transformed(t.xf);
@@ -144,7 +144,7 @@ fn set_text(s: &mut Session, p: &Value) -> Result<Value> {
         for id in &ids {
             let Some(NodeKind::Text(t)) = d.node_mut(*id).map(|n| &mut n.kind) else { continue };
             let style = t.first_style();
-            t.runs = vec![drawcraft_doc::TextRun { text: text.clone(), style }];
+            t.runs = vec![vectorcraft_doc::TextRun { text: text.clone(), style }];
             refresh_bounds(t);
         }
         Ok(())
@@ -185,8 +185,8 @@ fn set_style(s: &mut Session, p: &Value) -> Result<Value> {
     };
     let fill = match p.get("fill") {
         None | Some(Value::Null) => None,
-        Some(Value::String(n)) if n.eq_ignore_ascii_case("none") => Some(drawcraft_color::Paint::None),
-        Some(v) => Some(drawcraft_color::Paint::solid(color_value(v).ok_or_else(|| bad(C, "bad fill colour"))?)),
+        Some(Value::String(n)) if n.eq_ignore_ascii_case("none") => Some(vectorcraft_color::Paint::None),
+        Some(v) => Some(vectorcraft_color::Paint::solid(color_value(v).ok_or_else(|| bad(C, "bad fill colour"))?)),
     };
     let features = super::textedit::features_param(p, C)?;
     if font.is_none()
@@ -244,7 +244,7 @@ fn area_options(s: &mut Session, p: &Value) -> Result<Value> {
         let d = &s.doc()?.doc;
         text_targets(s, p, C)?
             .into_iter()
-            .filter(|i| matches!(d.node(*i).map(|n| &n.kind), Some(NodeKind::Text(t)) if matches!(t.kind, drawcraft_doc::TextKind::Area { .. })))
+            .filter(|i| matches!(d.node(*i).map(|n| &n.kind), Some(NodeKind::Text(t)) if matches!(t.kind, vectorcraft_doc::TextKind::Area { .. })))
             .collect()
     };
     let first = ids.first().ok_or_else(|| bad(C, "select area type (text in a frame)"))?;
@@ -265,7 +265,7 @@ fn area_options(s: &mut Session, p: &Value) -> Result<Value> {
     if !changed {
         return Ok(v);
     }
-    let mut opts: drawcraft_doc::AreaOptions = serde_json::from_value(v).map_err(|e| bad(C, e.to_string()))?;
+    let mut opts: vectorcraft_doc::AreaOptions = serde_json::from_value(v).map_err(|e| bad(C, e.to_string()))?;
     opts.rows = opts.rows.clamp(1, 100);
     opts.columns = opts.columns.clamp(1, 100);
     opts.gutter = opts.gutter.clamp(0.0, 10_000.0);
@@ -300,7 +300,7 @@ mod area_tests {
         let q = s.execute("text.areaOptions", &json!({})).unwrap();
         assert_eq!((q["rows"].as_u64(), q["columns"].as_u64()), (Some(1), Some(1)));
         let lay = |s: &Session| match &s.doc().unwrap().doc.node(NodeId(id)).unwrap().kind {
-            NodeKind::Text(t) => drawcraft_text::layout(drawcraft_text::FontDb::global(), t),
+            NodeKind::Text(t) => vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t),
             _ => panic!(),
         };
         assert_eq!(lay(&s).frames.len(), 1);
@@ -321,8 +321,8 @@ mod area_tests {
 fn headline_fit(t: &TextObject, tracking: f64) -> Option<(f64, f64, usize)> {
     let mut probe = t.clone();
     let para_end = probe.plain_text().find('\n').unwrap_or(usize::MAX);
-    drawcraft_text::edit::style_range(&mut probe.runs, 0, para_end.min(drawcraft_text::edit::runs_len(&t.runs)), |st| st.tracking = tracking);
-    let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), &probe);
+    vectorcraft_text::edit::style_range(&mut probe.runs, 0, para_end.min(vectorcraft_text::edit::runs_len(&t.runs)), |st| st.tracking = tracking);
+    let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), &probe);
     let cell = lay.frames.first()?;
     let line = lay.lines.first()?;
     let avail = cell.width() - 2.0 * t.area.inset - t.para.left_indent - t.para.right_indent;
@@ -336,7 +336,7 @@ fn fit_headline(s: &mut Session, p: &Value) -> Result<Value> {
     let mut plans = vec![];
     for id in &ids {
         let Some(NodeKind::Text(t)) = d.node(*id).map(|n| &n.kind) else { continue };
-        if !matches!(t.kind, drawcraft_doc::TextKind::Area { .. }) {
+        if !matches!(t.kind, vectorcraft_doc::TextKind::Area { .. }) {
             continue;
         }
         // Largest tracking that keeps the first paragraph on one line (bisection).
@@ -355,8 +355,8 @@ fn fit_headline(s: &mut Session, p: &Value) -> Result<Value> {
     s.edit("Fit Headline", |d, _| {
         for (id, tr) in &plans {
             if let Some(NodeKind::Text(t)) = d.node_mut(*id).map(|n| &mut n.kind) {
-                let end = t.plain_text().find('\n').unwrap_or(usize::MAX).min(drawcraft_text::edit::runs_len(&t.runs));
-                drawcraft_text::edit::style_range(&mut t.runs, 0, end, |st| st.tracking = *tr);
+                let end = t.plain_text().find('\n').unwrap_or(usize::MAX).min(vectorcraft_text::edit::runs_len(&t.runs));
+                vectorcraft_text::edit::style_range(&mut t.runs, 0, end, |st| st.tracking = *tr);
                 refresh_bounds(t);
             }
         }

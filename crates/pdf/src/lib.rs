@@ -1,4 +1,4 @@
-//! DrawCraft PDF export and import.
+//! VectorCraft PDF export and import.
 //!
 //! - [`export`] writes one PDF page per artboard with `krilla`: vector paths (fills, strokes with
 //!   caps/joins/miter/dashes, non-zero/even-odd), opacity and blend modes (transparency groups),
@@ -16,7 +16,7 @@ mod import;
 pub use export::{export, export_with_report};
 pub use import::{import, import_with_report};
 
-use drawcraft_doc::Document;
+use vectorcraft_doc::Document;
 
 /// PDF standard / version to target.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

@@ -1,10 +1,10 @@
-//! Pathfinder panel: Shape Modes (+ Expand) and Pathfinders, with icons drawn for DrawCraft.
+//! Pathfinder panel: Shape Modes (+ Expand) and Pathfinders, with icons drawn for VectorCraft.
 
 use egui::Ui;
 use serde_json::json;
 
 use super::{pstate, selection_len, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::widgets::{self, menu_item};
 
 pub const SHAPE_MODES: [(&str, &str, &str); 4] = [
@@ -23,13 +23,13 @@ pub const PATHFINDERS: [(&str, &str, &str); 6] = [
     ("dc-pf-minus-back", "Minus Back", "minusBack"),
 ];
 
-fn run(app: &mut DrawcraftApp, ui: &Ui, op: &str, label: &str) {
+fn run(app: &mut VectorcraftApp, ui: &Ui, op: &str, label: &str) {
     if app.run(&format!("object.pathfinder.{op}"), json!({})).is_ok() {
         set_pstate(ui.ctx(), "pf-last", Some((op.to_string(), label.to_string())));
     }
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let n = selection_len(app);
     let t = crate::theme::Tokens::get(ui.ctx());
     widgets::subheader(ui, "Shape Modes:");
@@ -60,7 +60,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     menu_item(ui, "Trap…", false, false);
     let last: Option<(String, String)> = pstate(ui.ctx(), "pf-last");
     let label = last.as_ref().map(|(_, l)| format!("Repeat {l}")).unwrap_or_else(|| "Repeat Pathfinder".into());

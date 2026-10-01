@@ -1,11 +1,11 @@
 //! Rich text editing commands: range edits and range styling (what the Type tool and the
 //! Character panel use while editing), creating area / on-path type from a path, and Fit Headline.
 
-use drawcraft_color::Paint;
-use drawcraft_doc::{Appearance, CharStyle, Node, NodeId, NodeKind, TextKind, TextObject, TextRun};
-use drawcraft_geom::Affine;
-use drawcraft_text::edit;
 use serde_json::{Value, json};
+use vectorcraft_color::Paint;
+use vectorcraft_doc::{Appearance, CharStyle, Node, NodeId, NodeKind, TextKind, TextObject, TextRun};
+use vectorcraft_geom::Affine;
+use vectorcraft_text::edit;
 
 use super::typecmd::refresh_bounds;
 use super::*;
@@ -60,7 +60,7 @@ pub fn specs() -> Vec<CommandSpec> {
     ]
 }
 
-fn text_mut(d: &mut drawcraft_doc::Document, id: NodeId) -> Option<&mut TextObject> {
+fn text_mut(d: &mut vectorcraft_doc::Document, id: NodeId) -> Option<&mut TextObject> {
     match d.node_mut(id).map(|n| &mut n.kind) {
         Some(NodeKind::Text(t)) => Some(t),
         _ => None,
@@ -144,10 +144,10 @@ pub(crate) struct CharChange {
 pub(crate) fn features_param(p: &Value, cmd: &str) -> Result<Option<Vec<String>>> {
     let Some(v) = p.get("features").filter(|v| !v.is_null()) else { return Ok(None) };
     let tags: Vec<&str> = v.as_array().ok_or_else(|| bad(cmd, "features must be a list of tags"))?.iter().filter_map(Value::as_str).collect();
-    if let Some(t) = tags.iter().find(|t| !drawcraft_text::OtFeatures::known_tag(t)) {
+    if let Some(t) = tags.iter().find(|t| !vectorcraft_text::OtFeatures::known_tag(t)) {
         return Err(bad(cmd, format!("unknown OpenType feature `{t}` (liga, calt, dlig, smcp, frac, onum, tnum, ordn, swsh; prefix - to turn off)")));
     }
-    Ok(Some(drawcraft_text::OtFeatures::default().with_tags(tags).to_tags()))
+    Ok(Some(vectorcraft_text::OtFeatures::default().with_tags(tags).to_tags()))
 }
 
 fn paint_param(p: &Value, k: &str, cmd: &str) -> Result<Option<Paint>> {
@@ -220,9 +220,9 @@ impl CharChange {
             st.font_family = f.clone();
             // Keep the style when the new family has it, else its closest match.
             if self.style.is_none() {
-                let styles = drawcraft_text::FontDb::global().styles(f);
+                let styles = vectorcraft_text::FontDb::global().styles(f);
                 if !styles.is_empty() && !styles.iter().any(|s| s.eq_ignore_ascii_case(&st.font_style)) {
-                    st.font_style = drawcraft_text::FontDb::global().face(f, &st.font_style).style.clone();
+                    st.font_style = vectorcraft_text::FontDb::global().face(f, &st.font_style).style.clone();
                 }
             }
         }
@@ -322,12 +322,12 @@ fn create_in_path(s: &mut Session, p: &Value) -> Result<Value> {
     if let Some(f) = str_param(p, "font") {
         style.font_family = f.to_string();
     }
-    if !s.paint.fill.is_none() && s.paint.fill != Paint::solid(drawcraft_color::Color::WHITE) {
+    if !s.paint.fill.is_none() && s.paint.fill != Paint::solid(vectorcraft_color::Color::WHITE) {
         style.fill = s.paint.fill.clone();
     }
     let text = str_param(p, "text").unwrap_or("").to_string();
     let start = match point_param(p, "at") {
-        Some(at) if on_path => drawcraft_text::path_fraction_at(&path.to_bezpath(), at).0,
+        Some(at) if on_path => vectorcraft_text::path_fraction_at(&path.to_bezpath(), at).0,
         _ => 0.0,
     };
     let kind = if on_path { TextKind::OnPath { path: path.clone(), start } } else { TextKind::Area { frame: path.clone() } };
@@ -376,7 +376,7 @@ fn headline_tracking(t: &TextObject, target: f64) -> Option<f64> {
         for r in &mut h.runs {
             r.style.tracking = tr;
         }
-        let l = drawcraft_text::layout(drawcraft_text::FontDb::global(), &h);
+        let l = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), &h);
         l.lines.first().map_or(0.0, |li| li.x1 - li.x0)
     };
     // Width is linear in tracking: w(tr) = w0 + tr * slope.
@@ -405,7 +405,7 @@ fn fit_headline(s: &mut Session, p: &Value) -> Result<Value> {
     s.edit("Fit Headline", |d, _| {
         for id in &ids {
             let Some(t) = text_mut(d, *id) else { continue };
-            let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+            let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
             let Some(first) = lay.lines.first() else { continue };
             let target = first.avail.1 - first.avail.0;
             let Some(tr) = headline_tracking(t, target) else { continue };

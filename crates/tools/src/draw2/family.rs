@@ -4,8 +4,8 @@
 //! without dragging asks the UI for the options dialog. While dragging, ↑/↓ change the spiral's
 //! segments, the grid rows or the concentric dividers; ←/→ change grid columns / radial dividers.
 
-use drawcraft_geom::{Point, Rect, Vec2};
 use serde_json::{Value, json};
+use vectorcraft_geom::{Point, Rect, Vec2};
 
 use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext, ToolKey};
 
@@ -219,7 +219,7 @@ impl Tool for FamilyTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     #[test]
     fn grid_drag_and_arrows() {

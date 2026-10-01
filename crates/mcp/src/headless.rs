@@ -1,10 +1,10 @@
 //! An in-process engine session that answers the control-channel methods itself.
 
-use drawcraft_engine::{Session, UiRequest, ViewInfo};
-use drawcraft_geom::Point;
-use drawcraft_render::Renderer;
-use drawcraft_tools::{Mods, PointerEvent, PointerKind, TOOL_GROUPS, ToolKey};
 use serde_json::{Value, json};
+use vectorcraft_engine::{Session, UiRequest, ViewInfo};
+use vectorcraft_geom::Point;
+use vectorcraft_render::Renderer;
+use vectorcraft_tools::{Mods, PointerEvent, PointerKind, TOOL_GROUPS, ToolKey};
 
 use crate::backend::Backend;
 
@@ -25,10 +25,10 @@ impl Default for Headless {
 /// Commands the desktop app adds on top of the engine; the headless backend implements them too so
 /// `run_command` behaves the same in both modes.
 const HOST_COMMANDS: &[(&str, &str, &str)] = &[
-    ("file.open", "Open…", "{path} open a .drawcraft or .svg file as a new document"),
-    ("file.save", "Save", "{path?} save as .drawcraft (default: the document's path)"),
+    ("file.open", "Open…", "{path} open a .vectorcraft or .svg file as a new document"),
+    ("file.save", "Save", "{path?} save as .vectorcraft (default: the document's path)"),
     ("file.saveAs", "Save As…", "{path}"),
-    ("file.export", "Export…", "{format?: svg|png|drawcraft, path, scale?, artboard?}"),
+    ("file.export", "Export…", "{format?: svg|png|vectorcraft, path, scale?, artboard?}"),
     ("tool.select", "Select Tool", "{tool} e.g. selection, directSelection, pen, rectangle, ellipse, polygon, star, lineSegment"),
 ];
 
@@ -126,7 +126,7 @@ impl Headless {
 
     fn select_tool(&mut self, p: &Value) -> Result<Value, String> {
         let t = s(p, "tool").ok_or("missing `tool`")?;
-        if drawcraft_tools::tool_info(t).is_none() {
+        if vectorcraft_tools::tool_info(t).is_none() {
             return Err(format!("unknown tool `{t}` (see ui.tool.list)"));
         }
         self.session.select_tool(t, self.view).map_err(|e| e.to_string())?;
@@ -181,7 +181,7 @@ impl Headless {
             self.apply_ui_requests(reqs, &mut out)?;
             return Ok(json!({"handledBy": "tool", "requests": out}));
         }
-        if let Some(c) = drawcraft_engine::command_specs().iter().find(|c| c.shortcut.is_some_and(|sc| shortcut_matches(sc, key, mods))) {
+        if let Some(c) = vectorcraft_engine::command_specs().iter().find(|c| c.shortcut.is_some_and(|sc| shortcut_matches(sc, key, mods))) {
             let r = self.exec(c.id, &json!({}))?;
             return Ok(json!({"handledBy": "command", "command": c.id, "result": r}));
         }
@@ -211,31 +211,31 @@ impl Headless {
                 std::fs::write(path, &png).map_err(|e| format!("write {path}: {e}"))?;
                 Ok(json!({"path": path, "width": img.width, "height": img.height}))
             }
-            None => Ok(json!({"width": img.width, "height": img.height, "pngBase64": drawcraft_format::base64_encode(&png)})),
+            None => Ok(json!({"width": img.width, "height": img.height, "pngBase64": vectorcraft_format::base64_encode(&png)})),
         }
     }
 
-    /// `app.open {path}`: `.drawcraft` or `.svg` as a new active document.
+    /// `app.open {path}`: `.vectorcraft` or `.svg` as a new active document.
     pub fn open(&mut self, p: &Value) -> Result<Value, String> {
         let path = s(p, "path").ok_or("missing `path`")?;
         let bytes = std::fs::read(path).map_err(|e| format!("read {path}: {e}"))?;
         let name = file_name(path);
         let e = ext_of(path);
         let mut warnings = vec![];
-        let (doc, keep_path) = if e == "drawcraft" || drawcraft_format::sniff(&bytes) {
-            let mut d = drawcraft_format::load(&bytes).map_err(|e| e.to_string())?;
+        let (doc, keep_path) = if vectorcraft_format::is_native_ext(&e) || vectorcraft_format::sniff(&bytes) {
+            let mut d = vectorcraft_format::load(&bytes).map_err(|e| e.to_string())?;
             if d.title.is_empty() {
                 d.title = name.clone();
             }
             (d, true)
         } else if e == "svg" || bytes.starts_with(b"<?xml") || bytes.starts_with(b"<svg") {
             let text = std::str::from_utf8(&bytes).map_err(|_| "SVG is not UTF-8".to_string())?;
-            let (mut d, w) = drawcraft_svg::import_with_report(text).map_err(|e| e.to_string())?;
+            let (mut d, w) = vectorcraft_svg::import_with_report(text).map_err(|e| e.to_string())?;
             d.title = name.clone();
             warnings = w;
             (d, false)
         } else {
-            return Err(format!("headless mode can open .drawcraft and .svg files, not .{e}"));
+            return Err(format!("headless mode can open .vectorcraft and .svg files, not .{e}"));
         };
         let index = self.session.add_document(doc, keep_path.then(|| path.to_string()));
         Ok(json!({"index": index, "title": name, "warnings": warnings}))
@@ -245,16 +245,16 @@ impl Headless {
     pub fn save(&mut self, p: &Value) -> Result<Value, String> {
         let st = self.session.active().ok_or("no document")?;
         let path = s(p, "path").map(str::to_string).or_else(|| st.path.clone()).ok_or("missing `path` (document was never saved)")?;
-        let bytes = drawcraft_format::save_file(&st.doc);
+        let bytes = vectorcraft_format::save_file(&st.doc);
         std::fs::write(&path, bytes).map_err(|e| format!("write {path}: {e}"))?;
         if let Some(st) = self.session.active_mut() {
             st.path = Some(path.clone());
-            st.saved_revision = st.revision;
+            st.mark_saved();
         }
         Ok(json!({"path": path}))
     }
 
-    /// `app.export {format?, path, scale?, artboard?}`: svg | png | pdf | jpg | webp | drawcraft (format defaults to the extension).
+    /// `app.export {format?, path, scale?, artboard?}`: svg | png | pdf | jpg | webp | vectorcraft (format defaults to the extension).
     pub fn export(&mut self, p: &Value) -> Result<Value, String> {
         let path = s(p, "path").ok_or("missing `path`")?;
         let fmt = s(p, "format").map(str::to_ascii_lowercase).unwrap_or_else(|| ext_of(path));
@@ -263,7 +263,7 @@ impl Headless {
         let bytes = match fmt.as_str() {
             "svg" => {
                 let ab = p.get("artboard").and_then(Value::as_u64).unwrap_or(0) as usize;
-                drawcraft_svg::export(&doc, &drawcraft_svg::ExportOptions { artboard: Some(ab), ..Default::default() }).into_bytes()
+                vectorcraft_svg::export(&doc, &vectorcraft_svg::ExportOptions { artboard: Some(ab), ..Default::default() }).into_bytes()
             }
             "png" => {
                 let idx = p.get("artboard").and_then(Value::as_u64).unwrap_or(0) as usize;
@@ -271,7 +271,7 @@ impl Headless {
                 let scale = p.get("scale").and_then(Value::as_f64).unwrap_or(1.0).clamp(0.01, 16.0);
                 self.renderer.render_region(&doc, r, scale, false).to_png()
             }
-            "drawcraft" => drawcraft_format::save_file(&doc),
+            "vectorcraft" => vectorcraft_format::save_file(&doc),
             // pdf, jpg, webp…: the engine's exporter (same bytes as the app).
             other => {
                 let params = json!({"path": path, "format": other, "scale": p.get("scale"), "artboard": p.get("artboard")});
@@ -310,7 +310,7 @@ impl Backend for Headless {
             "app.export" => self.export(p),
             "app.quit" => Ok(Value::Null),
             m if m.starts_with("ui.") => {
-                Err(format!("`{m}` needs the desktop app (start `drawcraft --control 7979` and use `drawcraft-cli mcp --connect`)"))
+                Err(format!("`{m}` needs the desktop app (start `vectorcraft --control 7979` and use `vectorcraft-cli mcp --connect`)"))
             }
             other => Err(format!("unknown method `{other}`")),
         }

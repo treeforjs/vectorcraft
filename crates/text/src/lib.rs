@@ -1,6 +1,6 @@
-//! DrawCraft text: font database, shaping, layout, glyph outlines.
+//! VectorCraft text: font database, shaping, layout, glyph outlines.
 //!
-//! API contract used by `drawcraft-render`, `drawcraft-tools` and the UI:
+//! API contract used by `vectorcraft-render`, `vectorcraft-tools` and the UI:
 //! - [`FontDb::global`]: process-wide database preloaded with the bundled OFL fonts.
 //! - [`layout`]: lays out a [`TextObject`] into glyph outlines in *text space* (apply `t.xf` to
 //!   get document coordinates), plus line and caret information.
@@ -18,13 +18,13 @@ mod layout;
 mod shape;
 pub mod thread;
 
-pub use drawcraft_doc::TextObject;
 pub use features::OtFeatures;
 pub use fontdb::{FALLBACK_FAMILY, FontDb, FontFace};
 use kurbo::{BezPath, Point, Rect, Vec2};
 pub use layout::{layout, layout_with};
+pub use vectorcraft_doc::TextObject;
 
-pub use drawcraft_doc::FirstBaseline;
+pub use vectorcraft_doc::FirstBaseline;
 
 /// Paragraph composer (Paragraph panel menu).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

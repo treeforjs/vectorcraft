@@ -1,14 +1,14 @@
 //! System clipboard interchange: the copied objects as SVG markup (what other apps paste), and
 //! SVG markup from other apps turned into clipboard objects (pasted with the Paste commands).
 //!
-//! The UI owns the platform clipboard; these commands only convert. Within DrawCraft the
+//! The UI owns the platform clipboard; these commands only convert. Within VectorCraft the
 //! internal clipboard stays lossless (live effects, masks, symbols); SVG is the outside format.
 
 use std::sync::Arc;
 
-use drawcraft_doc::{Document, Node, NodeId};
-use drawcraft_geom::{Affine, Point};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, Node, NodeId};
+use vectorcraft_geom::{Affine, Point};
 
 use super::*;
 
@@ -41,12 +41,12 @@ impl Session {
         }
         // The active document supplies swatches, symbols, patterns and image blobs.
         let mut d = self.active().map(|st| (*st.doc).clone()).unwrap_or_else(|| Document::new(100.0, 100.0));
-        let mut layer = Node::layer(NodeId(u64::MAX), "Clipboard", drawcraft_doc::LayerColor::Preset(0));
+        let mut layer = Node::layer(NodeId(u64::MAX), "Clipboard", vectorcraft_doc::LayerColor::Preset(0));
         if let Some(ch) = layer.children_mut() {
             *ch = self.clipboard.iter().cloned().map(Arc::new).collect();
         }
         d.layers = vec![Arc::new(layer)];
-        Some(drawcraft_svg::export(&d, &drawcraft_svg::ExportOptions { artboard: None, object_ids: false, ..Default::default() }))
+        Some(vectorcraft_svg::export(&d, &vectorcraft_svg::ExportOptions { artboard: None, object_ids: false, ..Default::default() }))
     }
 }
 
@@ -56,7 +56,7 @@ fn export_svg(s: &mut Session, _: &Value) -> Result<Value> {
 
 fn import_svg(s: &mut Session, p: &Value) -> Result<Value> {
     let svg = str_param(p, "svg").ok_or_else(|| bad("clipboard.importSvg", "missing svg"))?;
-    let src = drawcraft_svg::import(svg).map_err(|e| bad("clipboard.importSvg", e.to_string()))?;
+    let src = vectorcraft_svg::import(svg).map_err(|e| bad("clipboard.importSvg", e.to_string()))?;
     let mut nodes: Vec<Node> = src.layers.iter().flat_map(|l| l.children().cloned().unwrap_or_default()).map(|n| (*n).clone()).collect();
     if nodes.is_empty() {
         return Err(bad("clipboard.importSvg", "the SVG has no drawable objects"));
@@ -105,7 +105,7 @@ mod tests {
         s.execute("edit.copy", &json!({})).unwrap();
         let svg = s.execute("clipboard.exportSvg", &json!({})).unwrap()["svg"].as_str().unwrap().to_string();
         assert!(looks_like_svg(&svg) && svg.contains("#12ab34"), "{svg}");
-        // As if pasted into another DrawCraft window.
+        // As if pasted into another VectorCraft window.
         let mut t = session();
         assert_eq!(t.execute("clipboard.importSvg", &json!({"svg": svg, "center": [200, 150]})).unwrap()["count"], 1);
         t.execute("edit.pasteInPlace", &json!({})).unwrap();
@@ -131,7 +131,7 @@ mod tests {
         s.execute("edit.paste", &json!({})).unwrap();
         let d = &s.doc().unwrap().doc;
         let compound = d.node(NodeId(c)).unwrap();
-        assert!(compound.children().unwrap().iter().all(|ch| matches!(ch.kind, drawcraft_doc::NodeKind::Path { .. })));
+        assert!(compound.children().unwrap().iter().all(|ch| matches!(ch.kind, vectorcraft_doc::NodeKind::Path { .. })));
     }
 
     #[test]

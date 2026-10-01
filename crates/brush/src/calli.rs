@@ -5,9 +5,9 @@
 //! support point in direction `d` is `(a²(u·d)u + b²(v·d)v) / √(a²(u·d)² + b²(v·d)²)`, so the
 //! stroke's local width across direction `n` is `2·√(a²(u·n)² + b²(v·n)²)`.
 
-use drawcraft_color::Paint;
-use drawcraft_doc::Node;
-use drawcraft_geom::{BezPath, PathData, Point, SubPath, Vec2};
+use vectorcraft_color::Paint;
+use vectorcraft_doc::Node;
+use vectorcraft_geom::{BezPath, PathData, Point, SubPath, Vec2};
 
 use crate::track::{Rng, Track, normal, seed_of, tracks};
 use crate::{Bristle, BristleShape, Calligraphic, filled, tolerance};

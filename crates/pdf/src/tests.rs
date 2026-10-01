@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use drawcraft_color::{BlendMode, Color, Gradient, GradientKind, GradientPaint, Paint};
-use drawcraft_doc::{
+use vectorcraft_color::{BlendMode, Color, Gradient, GradientKind, GradientPaint, Paint};
+use vectorcraft_doc::{
     Appearance, AppearanceItem, Artboard, CharStyle, Dash, Document, ImageBlob, ImageObject, LineCap, LineJoin, Node, NodeId, NodeKind, TextObject,
 };
-use drawcraft_geom::{Affine, FillRule, PathData, Point, Rect, shapes};
+use vectorcraft_geom::{Affine, FillRule, PathData, Point, Rect, shapes};
 
 use crate::*;
 
@@ -68,7 +68,7 @@ fn metadata_creator_and_title() {
     let mut d = doc(100.0, 100.0);
     d.title = "Poster".into();
     let s = uncompressed(&d);
-    assert!(s.contains("DrawCraft"));
+    assert!(s.contains("VectorCraft"));
     assert!(s.contains("Poster"));
 }
 
@@ -178,7 +178,7 @@ fn roundtrip_stroke_params_merge_fill_and_stroke() {
 #[test]
 fn roundtrip_open_path_and_even_odd() {
     let mut d = doc(200.0, 200.0);
-    let mut bp = drawcraft_geom::BezPath::new();
+    let mut bp = vectorcraft_geom::BezPath::new();
     bp.move_to((10.0, 10.0));
     bp.curve_to((50.0, 0.0), (80.0, 100.0), (150.0, 60.0));
     add(&mut d, Node::path(NodeId(0), PathData::from_bezpath(&bp), Appearance::basic(Paint::None, Paint::solid(Color::BLACK), 2.0)));
@@ -202,7 +202,7 @@ fn roundtrip_open_path_and_even_odd() {
 trait Exact {
     fn bounding_box_exact(&self) -> Rect;
 }
-impl Exact for drawcraft_geom::BezPath {
+impl Exact for vectorcraft_geom::BezPath {
     fn bounding_box_exact(&self) -> Rect {
         kurbo::Shape::bounding_box(self)
     }
@@ -348,7 +348,7 @@ fn text_exported_as_outlines() {
     let l = leaves(&r.document);
     assert!(!l.is_empty());
     assert!(l.iter().all(|n| matches!(n.kind, NodeKind::Path { .. })));
-    let b = l.iter().fold(None, |acc, n| drawcraft_geom::union_opt(acc, n.geometric_bounds())).unwrap();
+    let b = l.iter().fold(None, |acc, n| vectorcraft_geom::union_opt(acc, n.geometric_bounds())).unwrap();
     assert!(b.x0 >= 9.0 && b.x1 < 120.0 && b.y1 <= 56.0 && b.y0 > 25.0, "{b:?}");
 }
 
@@ -503,14 +503,14 @@ fn stroke_alignment_and_arrowheads_export() {
         shapes::rectangle(Rect::new(20.0, 20.0, 120.0, 120.0)),
         Appearance::basic(Paint::None, Paint::solid(Color::BLACK), 6.0),
     );
-    p.appearance.stroke_mut().unwrap().align = drawcraft_doc::StrokeAlign::Inside;
+    p.appearance.stroke_mut().unwrap().align = vectorcraft_doc::StrokeAlign::Inside;
     add(&mut d, p);
     let mut line = Node::path(
         NodeId(0),
         shapes::line(Point::new(10.0, 150.0), Point::new(150.0, 150.0)),
         Appearance::basic(Paint::None, Paint::solid(Color::BLACK), 2.0),
     );
-    line.appearance.stroke_mut().unwrap().end_arrow = Some(drawcraft_doc::Arrowhead::Triangle);
+    line.appearance.stroke_mut().unwrap().end_arrow = Some(vectorcraft_doc::Arrowhead::Triangle);
     add(&mut d, line);
     let r = export_with_report(&d, &PdfOptions::default()).unwrap();
     let out = import(&r.bytes).unwrap();
@@ -538,7 +538,7 @@ fn opacity_mask_exports_as_luminosity_soft_mask() {
     let mut d = doc(100.0, 100.0);
     let mut n = rect_node(Rect::new(10.0, 10.0, 90.0, 90.0), Color::rgb(1.0, 0.0, 0.0));
     let art = rect_node(Rect::new(10.0, 10.0, 50.0, 90.0), Color::WHITE);
-    n.mask = Some(Box::new(drawcraft_doc::OpacityMask::new(art, true)));
+    n.mask = Some(Box::new(vectorcraft_doc::OpacityMask::new(art, true)));
     add(&mut d, n);
     let bytes = export(&d, &PdfOptions { compress: false, ..Default::default() }).unwrap();
     let text = String::from_utf8_lossy(&bytes);

@@ -3,20 +3,20 @@
 //! Overlap, Copies, Dim Copies, Show Tile Edge; Save a Copy / Done / Cancel. Outside editing
 //! mode it lists the document's patterns with an Edit button.
 
-use drawcraft_doc::pattern::{PatternDef, RepeatKind, TileType};
-use drawcraft_doc::{NodeKind, Unit};
 use egui::Ui;
 use serde_json::{Value, json};
+use vectorcraft_doc::pattern::{PatternDef, RepeatKind, TileType};
+use vectorcraft_doc::{NodeKind, Unit};
 
 use super::{pstate, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::widgets::{self, menu_item};
 
 const TILE_LABELS: [&str; 5] = ["Grid", "Brick by Row", "Brick by Column", "Hex by Column", "Hex by Row"];
 const BRICK: [(&str, f64); 4] = [("1/2", 0.5), ("1/3", 1.0 / 3.0), ("1/4", 0.25), ("1/5", 0.2)];
 const COPIES: [(&str, u32); 4] = [("3 x 3", 3), ("5 x 5", 5), ("7 x 7", 7), ("9 x 9", 9)];
 
-fn editing(app: &DrawcraftApp) -> Option<(PatternDef, Unit)> {
+fn editing(app: &VectorcraftApp) -> Option<(PatternDef, Unit)> {
     let st = app.session.active()?;
     let pe = st.doc.pattern_edit.as_ref()?;
     Some((st.doc.pattern(&pe.pattern)?.clone(), st.doc.units))
@@ -31,14 +31,14 @@ fn row(ui: &mut Ui, label: &str, add: impl FnOnce(&mut Ui)) {
     });
 }
 
-fn set(app: &mut DrawcraftApp, name: &str, mut p: Value) {
+fn set(app: &mut VectorcraftApp, name: &str, mut p: Value) {
     p["name"] = json!(name);
     if let Err(e) = app.run("pattern.options", p) {
         app.status(e);
     }
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     if app.session.active().is_none() {
         super::empty_state(ui, "swatch-book", "No document", "Open a document to edit its patterns.");
         return;
@@ -157,7 +157,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
 }
 
 /// Not editing: the document's patterns, one to pick and edit.
-fn idle(app: &mut DrawcraftApp, ui: &mut Ui) {
+fn idle(app: &mut VectorcraftApp, ui: &mut Ui) {
     let names: Vec<String> = app.session.active().map(|st| st.doc.patterns.iter().map(|p| p.name.clone()).collect()).unwrap_or_default();
     widgets::dim_label(ui, "Pattern options are available in pattern editing mode.");
     ui.add_space(4.0);
@@ -182,7 +182,7 @@ fn idle(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let editing = editing(app).is_some();
     if menu_item(ui, "Save a Copy", editing, false) {
         app.run("object.pattern.saveCopy", json!({})).ok();
@@ -196,7 +196,7 @@ pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
 }
 
 /// Current values of the selected repeat as Repeat Options dialog fields.
-pub fn repeat_fields(app: &DrawcraftApp) -> Option<Value> {
+pub fn repeat_fields(app: &VectorcraftApp) -> Option<Value> {
     let st = app.session.active()?;
     let spec = st.selection.objects.iter().find_map(|id| {
         st.doc.ancestry(*id)?.into_iter().rev().find_map(|a| match &st.doc.node(a)?.kind {

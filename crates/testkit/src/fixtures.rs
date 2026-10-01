@@ -2,11 +2,11 @@
 
 use std::sync::Arc;
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{Appearance, Document, Node, NodeId, NodeKind};
-use drawcraft_engine::Session;
-use drawcraft_geom::{PathData, Rect, shapes};
 use serde_json::{Value, json};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{Appearance, Document, Node, NodeId, NodeKind};
+use vectorcraft_engine::Session;
+use vectorcraft_geom::{PathData, Rect, shapes};
 
 /// Execute a command and panic with context on error.
 #[track_caller]
@@ -108,7 +108,7 @@ pub fn rich_session() -> Session {
     exec(&mut s, "effect.apply", json!({"effect": "distort.roughen", "params": {"size": 3, "detail": 5, "seed": 7}}));
     let l = id_of(&exec(&mut s, "shape.line", json!({"x1": 20, "y1": 300, "x2": 200, "y2": 350})));
     exec(&mut s, "stroke.set", json!({"weight": 3, "endArrow": "Arrow"}));
-    let _ = id_of(&exec(&mut s, "text.create", json!({"x": 250, "y": 300, "text": "DrawCraft", "size": 30})));
+    let _ = id_of(&exec(&mut s, "text.create", json!({"x": 250, "y": 300, "text": "VectorCraft", "size": 30})));
     exec(&mut s, "layer.new", json!({"name": "Top"}));
     let d = rect(&mut s, 350.0, 200.0, 80.0, 80.0);
     let e = ellipse(&mut s, 380.0, 230.0, 80.0, 80.0);

@@ -14,11 +14,11 @@
 
 use std::sync::{Arc, Mutex};
 
-use drawcraft_doc::hit::hit_test;
-use drawcraft_doc::{NodeId, NodeKind, TextKind, TextObject, TextRun};
-use drawcraft_geom::{BezPath, Point, Rect, Shape};
-use drawcraft_text::{FontDb, TextLayout, edit};
 use serde_json::{Value, json};
+use vectorcraft_doc::hit::hit_test;
+use vectorcraft_doc::{NodeId, NodeKind, TextKind, TextObject, TextRun};
+use vectorcraft_geom::{BezPath, Point, Rect, Shape};
+use vectorcraft_text::{FontDb, TextLayout, edit};
 
 use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext, ToolKey};
 
@@ -84,7 +84,7 @@ impl TypeTool {
         {
             return l.clone();
         }
-        let l = Arc::new(drawcraft_text::layout(FontDb::global(), t));
+        let l = Arc::new(vectorcraft_text::layout(FontDb::global(), t));
         *c = Some((t.clone(), l.clone()));
         l
     }
@@ -187,7 +187,7 @@ impl TypeTool {
             TextKind::Area { frame } => frame.bounds().is_some_and(|b| b.inflate(tol, tol).contains(local)),
             _ => lay.bounds.inflate(tol, tol).contains(local),
         };
-        inside.then(|| drawcraft_text::hit_byte(&lay, local))
+        inside.then(|| vectorcraft_text::hit_byte(&lay, local))
     }
 
     fn select_word_or_para(&mut self, cx: &ToolContext, para: bool) {
@@ -199,7 +199,7 @@ impl TypeTool {
 
     /// Path under `p` for the Area Type / Type on a Path tools.
     fn path_at(cx: &ToolContext, p: Point, closed: bool) -> Option<NodeId> {
-        let h = hit_test(cx.doc, p, drawcraft_doc::hit::HitOptions { tol: cx.tol(4.0), outline: true, path_only: false })?;
+        let h = hit_test(cx.doc, p, vectorcraft_doc::hit::HitOptions { tol: cx.tol(4.0), outline: true, path_only: false })?;
         match &cx.doc.node(h.leaf)?.kind {
             NodeKind::Path { path, .. } if !closed || path.is_closed() => Some(h.leaf),
             _ => None,
@@ -213,7 +213,7 @@ impl TypeTool {
             && let Some(NodeKind::Text(t)) = cx.doc.node(h.leaf).map(|n| &n.kind)
         {
             let lay = self.layout(t);
-            let byte = drawcraft_text::hit_byte(&lay, t.xf.inverse() * start);
+            let byte = vectorcraft_text::hit_byte(&lay, t.xf.inverse() * start);
             self.start_editing(h.leaf, byte);
             self.clicks = (Some(start), 1);
             out.push(Action::Exec("select.set".into(), json!({"ids": [h.leaf.0]})));
@@ -247,7 +247,7 @@ impl TypeTool {
         // The out port: bottom-right of the frame (end of the path for type on a path).
         let port = match &t.kind {
             TextKind::Area { frame } => frame.bounds().map(|b| t.xf * Point::new(b.x1, b.y1)),
-            TextKind::OnPath { path, .. } => path.to_bezpath().segments().last().map(|s| t.xf * drawcraft_geom::ParamCurve::end(&s)),
+            TextKind::OnPath { path, .. } => path.to_bezpath().segments().last().map(|s| t.xf * vectorcraft_geom::ParamCurve::end(&s)),
             TextKind::Point => None,
         };
         let Some(c) = port else { return };
@@ -321,7 +321,7 @@ impl Tool for TypeTool {
                 if self.selecting {
                     if let Some(t) = self.current(cx) {
                         let lay = self.layout(&t);
-                        self.caret = drawcraft_text::hit_byte(&lay, t.xf.inverse() * ev.pos);
+                        self.caret = vectorcraft_text::hit_byte(&lay, t.xf.inverse() * ev.pos);
                         self.clicks = (None, 0);
                     }
                 } else if self.press.is_some() {
@@ -416,7 +416,7 @@ impl Tool for TypeTool {
             ToolKey::Up | ToolKey::Down => {
                 let d = if key == ToolKey::Up { -1 } else { 1 };
                 let from = if a != b && !mods.shift { if d < 0 { a } else { b } } else { self.caret };
-                let x = self.goal_x.unwrap_or_else(|| drawcraft_text::caret_position(&lay, from).0.x);
+                let x = self.goal_x.unwrap_or_else(|| vectorcraft_text::caret_position(&lay, from).0.x);
                 let to = if mods.cmd {
                     // Cmd+Up/Down: paragraph start / end.
                     let p = edit::paragraph_at(&text, from);
@@ -428,18 +428,18 @@ impl Tool for TypeTool {
                         p.end
                     }
                 } else {
-                    drawcraft_text::caret_vertical(&lay, from, d, x)
+                    vectorcraft_text::caret_vertical(&lay, from, d, x)
                 };
                 let out = self.move_to(to, mods.shift);
                 self.goal_x = Some(x);
                 out
             }
             ToolKey::Home => {
-                let to = if mods.cmd { 0 } else { drawcraft_text::line_home(&lay, self.caret) };
+                let to = if mods.cmd { 0 } else { vectorcraft_text::line_home(&lay, self.caret) };
                 self.move_to(to, mods.shift)
             }
             ToolKey::End => {
-                let to = if mods.cmd { len } else { drawcraft_text::line_end_of(&lay, self.caret) };
+                let to = if mods.cmd { len } else { vectorcraft_text::line_end_of(&lay, self.caret) };
                 self.move_to(to, mods.shift)
             }
             _ => vec![],
@@ -525,10 +525,10 @@ impl Tool for TypeTool {
         }
         let (a, b) = (self.caret.min(self.anchor).min(len), self.caret.max(self.anchor).min(len));
         if a == b {
-            let (p, q) = drawcraft_text::caret_position(&lay, self.caret.min(len));
+            let (p, q) = vectorcraft_text::caret_position(&lay, self.caret.min(len));
             o.push(Overlay::Line { a: t.xf * p, b: t.xf * q, color: [0, 0, 0], dashed: false });
         } else {
-            for q in drawcraft_text::selection_quads(&lay, a, b) {
+            for q in vectorcraft_text::selection_quads(&lay, a, b) {
                 o.push(Overlay::Highlight { quad: q.map(|p| t.xf * p), color: [60, 120, 255, 90] });
             }
         }

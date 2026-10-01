@@ -2,9 +2,9 @@
 
 use std::collections::BTreeMap;
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{AppearanceItem, Node, NodeKind};
 use serde_json::{Value, json};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{AppearanceItem, Node, NodeKind};
 
 use super::*;
 

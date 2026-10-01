@@ -1,6 +1,6 @@
-//! DrawCraft in the browser.
+//! VectorCraft in the browser.
 //!
-//! Runs the same [`drawcraft_ui_egui::DrawcraftApp`] as the desktop app through eframe's web
+//! Runs the same [`vectorcraft_ui_egui::VectorcraftApp`] as the desktop app through eframe's web
 //! runner (wgpu: WebGPU where available, WebGL2 otherwise). Build with `trunk build --release`
 //! from this directory; see `docs/development.md` ("Web build").
 //!
@@ -23,5 +23,5 @@ fn main() {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    eprintln!("drawcraft-web only runs in the browser: build it with `trunk build --release` in apps/drawcraft-web");
+    eprintln!("vectorcraft-web only runs in the browser: build it with `trunk build --release` in apps/vectorcraft-web");
 }

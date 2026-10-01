@@ -2,14 +2,14 @@
 //! stops and midpoint diamonds (click below the ramp adds a stop, drag a stop off to remove it),
 //! and stop Opacity / Location fields. Stop colours are edited with the Color panel.
 
-use drawcraft_color::{Color, Gradient, GradientKind, GradientPaint, GradientStop, Paint};
 use egui::{Color32, Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
 use serde_json::{Value, json};
+use vectorcraft_color::{Color, Gradient, GradientKind, GradientPaint, GradientStop, Paint};
 
 use super::{active_paint, color_json, live_run, pstate, set_pstate};
 use crate::theme::Tokens;
 use crate::widgets::{self, Live, menu_item};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
 /// Minimum number of stops (Illustrator won't delete below two).
 pub const MIN_STOPS: usize = 2;
@@ -96,14 +96,14 @@ pub fn stops_json(stops: &[GradientStop]) -> Value {
 
 // ---------- UI ----------
 
-fn current(app: &DrawcraftApp) -> Option<GradientPaint> {
+fn current(app: &VectorcraftApp) -> Option<GradientPaint> {
     match active_paint(app) {
         Paint::Gradient(g) => Some(*g),
         _ => None,
     }
 }
 
-fn edit(app: &mut DrawcraftApp, params: Value, phase: Live) {
+fn edit(app: &mut VectorcraftApp, params: Value, phase: Live) {
     let mut p = params;
     p["stroke"] = json!(!app.session.fill_active);
     live_run(app, "Gradient", "paint.editGradient", p, phase);
@@ -118,7 +118,7 @@ enum Drag {
     Mid(usize),
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let gp = current(app);
     let fallback = GradientPaint::new(Gradient::default());
@@ -241,7 +241,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
 }
 
 /// The gradient slider: ramp, stops below, midpoint diamonds above.
-fn ramp(app: &mut DrawcraftApp, ui: &mut Ui, g: &Gradient, is_grad: bool) {
+fn ramp(app: &mut VectorcraftApp, ui: &mut Ui, g: &Gradient, is_grad: bool) {
     let t = Tokens::get(ui.ctx());
     let w = ui.available_width();
     let (area, _) = ui.allocate_exact_size(vec2(w, 50.0), Sense::hover());
@@ -389,7 +389,7 @@ fn ramp(app: &mut DrawcraftApp, ui: &mut Ui, g: &Gradient, is_grad: bool) {
     }
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let g = current(app);
     menu_item(ui, "Hide Options", false, false);
     if menu_item(ui, "Add to Swatches", g.is_some(), false)

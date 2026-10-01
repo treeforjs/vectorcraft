@@ -5,8 +5,8 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
-use drawcraft_doc::{CharStyle, ColorMode, Guide, Node, NodeId, NodeKind, TextKind};
 use serde_json::{Value, json};
+use vectorcraft_doc::{CharStyle, ColorMode, Guide, Node, NodeId, NodeKind, TextKind};
 
 use super::colorcmds::{map_node_colors, to_cmyk};
 use super::edit::selected_roots;
@@ -344,7 +344,7 @@ fn make_guides(s: &mut Session, _: &Value) -> Result<Value> {
     Ok(json!({ "count": n }))
 }
 
-fn guide_paths(d: &drawcraft_doc::Document) -> Vec<NodeId> {
+fn guide_paths(d: &vectorcraft_doc::Document) -> Vec<NodeId> {
     let mut v = vec![];
     d.walk(|n| {
         if matches!(n.kind, NodeKind::Path { guide: true, .. }) {
@@ -456,11 +456,11 @@ fn color_mode(s: &mut Session, p: &Value) -> Result<Value> {
     if s.doc()?.doc.color_mode == mode {
         return ok();
     }
-    let f = move |c: drawcraft_color::Color| match mode {
+    let f = move |c: vectorcraft_color::Color| match mode {
         ColorMode::Cmyk => to_cmyk(c),
         ColorMode::Rgb => {
             let [r, g, b] = c.to_rgb();
-            drawcraft_color::Color::rgb(r, g, b)
+            vectorcraft_color::Color::rgb(r, g, b)
         }
     };
     s.edit("Document Color Mode", |d, _| {
@@ -470,7 +470,7 @@ fn color_mode(s: &mut Session, p: &Value) -> Result<Value> {
                 map_node_colors(Arc::make_mut(l), &f, true, true);
             }
             for sw in &mut d.swatches {
-                if let drawcraft_color::Paint::Solid { color, .. } = &mut sw.paint {
+                if let vectorcraft_color::Paint::Solid { color, .. } = &mut sw.paint {
                     *color = f(*color);
                 }
             }

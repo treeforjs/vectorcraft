@@ -1,9 +1,9 @@
 //! Tests for Pathfinder, Object → Path and Type commands.
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{Appearance, NodeKind};
-use drawcraft_geom::{FillRule, PathData, Rect};
 use serde_json::{Value, json};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{Appearance, NodeKind};
+use vectorcraft_geom::{FillRule, PathData, Rect};
 
 use super::*;
 
@@ -22,7 +22,7 @@ fn ids(v: &Value) -> Vec<NodeId> {
     v["ids"].as_array().unwrap().iter().map(|x| NodeId(x.as_u64().unwrap())).collect()
 }
 
-fn node(s: &Session, id: NodeId) -> drawcraft_doc::Node {
+fn node(s: &Session, id: NodeId) -> vectorcraft_doc::Node {
     s.doc().unwrap().doc.node(id).cloned().unwrap()
 }
 
@@ -39,7 +39,7 @@ fn path_of(s: &Session, id: NodeId) -> (PathData, FillRule) {
 
 fn area_of(s: &Session, id: NodeId) -> f64 {
     let (p, r) = path_of(s, id);
-    drawcraft_pathops::area(&p, r)
+    vectorcraft_pathops::area(&p, r)
 }
 
 fn bounds(s: &Session, id: NodeId) -> Rect {
@@ -366,7 +366,7 @@ fn set_style_size_changes_bounds() {
     assert!(b1.width() > b0.width() * 1.8, "{b0:?} → {b1:?}");
     let NodeKind::Text(tx) = node(&s, t).kind else { panic!() };
     assert_eq!(tx.first_style().size, 24.0);
-    assert_eq!(tx.para.justify, drawcraft_doc::Justify::Center);
+    assert_eq!(tx.para.justify, vectorcraft_doc::Justify::Center);
     assert_eq!(tx.first_style().fill, Paint::solid(Color::rgb(1.0, 0.0, 0.0)));
     assert!(s.execute("text.setStyle", &json!({"justify": "diagonal"})).is_err());
     assert!(s.execute("text.setStyle", &json!({})).is_err());

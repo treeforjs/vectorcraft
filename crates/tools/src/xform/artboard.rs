@@ -5,8 +5,8 @@
 //! (Shift proportional, Alt from centre), drag on the pasteboard draws a new artboard, Delete removes
 //! the active one and Escape returns to the Selection tool.
 
-use drawcraft_geom::{Point, Rect, Vec2};
 use serde_json::{Value, json};
+use vectorcraft_geom::{Point, Rect, Vec2};
 
 use super::{BLUE, polygon, rect_corners};
 use crate::bbox::{Handle, hit_handle, move_delta, scale_for_drag};
@@ -232,7 +232,7 @@ impl Tool for ArtboardTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     fn ev(kind: PointerKind, x: f64, y: f64) -> PointerEvent {
         PointerEvent::new(kind, x, y)

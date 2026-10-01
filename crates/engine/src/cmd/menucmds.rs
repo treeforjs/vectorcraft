@@ -4,10 +4,10 @@
 
 use std::sync::Arc;
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{Appearance, ImageObject, LiveShape, Node, NodeId, NodeKind};
-use drawcraft_geom::{Affine, Anchor, PathData, Point, Rect, Vec2, shapes};
 use serde_json::{Value, json};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{Appearance, ImageObject, LiveShape, Node, NodeId, NodeKind};
+use vectorcraft_geom::{Affine, Anchor, PathData, Point, Rect, Vec2, shapes};
 
 use super::edit::{duplicate_in, selected_roots};
 use super::*;
@@ -79,7 +79,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Reset Bounding Box",
             ["Object", "Transform"],
             None,
-            "{} no-op: DrawCraft bounding boxes are always axis-aligned to the document → {changed: 0}",
+            "{} no-op: VectorCraft bounding boxes are always axis-aligned to the document → {changed: 0}",
             has_selection,
             |_, _| Ok(json!({ "changed": 0 }))
         ),
@@ -277,7 +277,7 @@ fn transform_each(s: &mut Session, p: &Value) -> Result<Value> {
                 k_mv = mv * (rng.next() * 2.0 - 1.0);
                 k_rot = rot * (rng.next() * 2.0 - 1.0);
             }
-            let o = drawcraft_geom::reference_point(b, refi);
+            let o = vectorcraft_geom::reference_point(b, refi);
             let refl = Affine::scale_non_uniform(if ry { -1.0 } else { 1.0 }, if rx { -1.0 } else { 1.0 });
             let m = Affine::translate((k_mh, k_mv))
                 * about(o, Affine::rotate(-k_rot.to_radians()) * refl * Affine::scale_non_uniform(k_sh / 100.0, k_sv / 100.0));
@@ -358,9 +358,9 @@ fn drop_live(n: &mut Node) {
 const MAX_PIXELS: f64 = 64.0e6;
 
 /// A copy of `doc` whose only content is `nodes` (paint order), for offscreen rendering.
-fn isolated_doc(doc: &drawcraft_doc::Document, nodes: Vec<Node>) -> drawcraft_doc::Document {
+fn isolated_doc(doc: &vectorcraft_doc::Document, nodes: Vec<Node>) -> vectorcraft_doc::Document {
     let mut tmp = doc.clone();
-    let mut layer = Node::layer(NodeId(u64::MAX), "raster", drawcraft_doc::LayerColor::Preset(0));
+    let mut layer = Node::layer(NodeId(u64::MAX), "raster", vectorcraft_doc::LayerColor::Preset(0));
     if let Some(ch) = layer.children_mut() {
         *ch = nodes.into_iter().map(Arc::new).collect();
     }
@@ -368,7 +368,7 @@ fn isolated_doc(doc: &drawcraft_doc::Document, nodes: Vec<Node>) -> drawcraft_do
     tmp
 }
 
-fn unique_key(d: &drawcraft_doc::Document, stem: &str) -> String {
+fn unique_key(d: &vectorcraft_doc::Document, stem: &str) -> String {
     let mut i = d.images.len() + 1;
     loop {
         let k = format!("{stem}-{i}");
@@ -379,11 +379,11 @@ fn unique_key(d: &drawcraft_doc::Document, stem: &str) -> String {
     }
 }
 
-fn render_png(doc: &drawcraft_doc::Document, region: Rect, scale: f64, white: bool) -> Result<(Vec<u8>, u32, u32)> {
+fn render_png(doc: &vectorcraft_doc::Document, region: Rect, scale: f64, white: bool) -> Result<(Vec<u8>, u32, u32)> {
     if region.width() * region.height() * scale * scale > MAX_PIXELS || region.width() * scale > 65535.0 || region.height() * scale > 65535.0 {
         return Err(EngineError::Other("image would be too large; lower the resolution".into()));
     }
-    let mut r = drawcraft_render::Renderer::new();
+    let mut r = vectorcraft_render::Renderer::new();
     let img = r.render_region(doc, region, scale, white);
     Ok((img.to_png(), img.width, img.height))
 }
@@ -416,7 +416,7 @@ fn rasterize(s: &mut Session, p: &Value) -> Result<Value> {
     let id = s.edit("Rasterize", |d, sel| {
         let (par, idx, _) = d.position(top).ok_or(EngineError::NoNode(top))?;
         let key = unique_key(d, "raster");
-        d.images.insert(key.clone(), drawcraft_doc::ImageBlob { mime: "image/png".into(), bytes: Arc::new(png) });
+        d.images.insert(key.clone(), vectorcraft_doc::ImageBlob { mime: "image/png".into(), bytes: Arc::new(png) });
         let id = d.alloc_id();
         let xf = Affine::translate(region.origin().to_vec2()) * Affine::scale(1.0 / scale);
         let node = Node::new(id, NodeKind::Image(ImageObject { key, width: w, height: h, xf, link: None }));
@@ -489,7 +489,7 @@ fn crop_image(s: &mut Session, p: &Value) -> Result<Value> {
     let (png, w, h) = render_png(&tmp, region, scale, false)?;
     s.edit("Crop Image", |d, _| {
         let key = unique_key(d, "crop");
-        d.images.insert(key.clone(), drawcraft_doc::ImageBlob { mime: "image/png".into(), bytes: Arc::new(png) });
+        d.images.insert(key.clone(), vectorcraft_doc::ImageBlob { mime: "image/png".into(), bytes: Arc::new(png) });
         if let Some(n) = d.node_mut(id) {
             n.kind = NodeKind::Image(ImageObject {
                 key,
@@ -636,7 +636,7 @@ fn convert_to_artboards(s: &mut Session, _: &Value) -> Result<Value> {
                 continue;
             }
             let aid = d.next_artboard_id();
-            d.artboards.push(drawcraft_doc::Artboard {
+            d.artboards.push(vectorcraft_doc::Artboard {
                 id: aid,
                 name: format!("Artboard {aid}"),
                 rect: b,

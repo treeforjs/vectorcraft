@@ -1,13 +1,13 @@
 //! The menu bar (Illustrator's menu tree) and UI-level commands.
 //!
-//! Items bound to a command id run through [`DrawcraftApp::run`]. Items not implemented yet are
+//! Items bound to a command id run through [`VectorcraftApp::run`]. Items not implemented yet are
 //! listed (disabled, with their shortcut) so the full surface is visible and discoverable; the
 //! parity tracker drives them to "done".
 
 use serde::Serialize;
 use serde_json::{Value, json};
 
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::io;
 use crate::state::{DockTab, ICON_PANELS, next_zoom};
 use crate::theme::{self, Brightness, Tokens};
@@ -73,7 +73,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("shortcuts.list", "List Keyboard Shortcuts", "", "{query?} → [{id, label, group, shortcut, default, overridden}]"),
     ("shortcuts.conflicts", "Keyboard Shortcut Conflicts", "", "{} → [{shortcut, ids}]"),
     ("shortcuts.reset", "Reset Keyboard Shortcuts", "", "{}"),
-    ("shortcuts.preset", "Keyboard Shortcut Set", "", "{name: \"DrawCraft Defaults\" | \"Illustrator Defaults\"}"),
+    ("shortcuts.preset", "Keyboard Shortcut Set", "", "{name: \"VectorCraft Defaults\" | \"Illustrator Defaults\"}"),
     ("shortcuts.export", "Export Keyboard Shortcuts…", "", "{path?}"),
     ("shortcuts.import", "Import Keyboard Shortcuts…", "", "{path? | data?}"),
     ("view.outline", "Outline", "Cmd+Y", "{} toggle Outline/Preview"),
@@ -120,13 +120,13 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("ui.recolorDialog", "Recolor Artwork…", "", "{} open Recolor Artwork (engine: recolor.colors / recolor.apply)"),
     ("effect.applyLast", "Apply Last Effect", "Cmd+Shift+E", "{}"),
     ("file.export.pdf", "Save as PDF…", "", "{path?}"),
-    ("help.about", "About DrawCraft", "", "{}"),
+    ("help.about", "About VectorCraft", "", "{}"),
     ("help.commandPalette", "Search Commands…", "Cmd+Shift+/", "{}"),
-    ("app.quit", "Quit DrawCraft", "Cmd+Q", "{}"),
+    ("app.quit", "Quit VectorCraft", "Cmd+Q", "{}"),
 ];
 
 /// Handle a UI command. `None` = not a UI command (the engine handles it).
-pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Result<Value, String>> {
+pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<Result<Value, String>> {
     if let Some(r) = crate::panels::character::intercept_text_command(app, id) {
         return Some(r);
     }
@@ -199,7 +199,7 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
             let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
             app.ui.dialog = Some(crate::state::Dialog::new(
                 "exportForScreens",
-                json!({"boards": vec![true; n], "formats": [{"format": "png", "scale": 1, "suffix": ""}, {"format": "png", "scale": 2, "suffix": "@2x"}], "folder": format!("{home}/Desktop/DrawCraft Export"), "prefix": ""}),
+                json!({"boards": vec![true; n], "formats": [{"format": "png", "scale": 1, "suffix": ""}, {"format": "png", "scale": 2, "suffix": "@2x"}], "folder": format!("{home}/Desktop/VectorCraft Export"), "prefix": ""}),
             ));
             Ok(Value::Null)
         }
@@ -246,7 +246,7 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
         "view.setZoom" => {
             let z = p.get("zoom").and_then(Value::as_f64).unwrap_or(100.0) / 100.0;
             let center =
-                p.get("center").and_then(Value::as_array).and_then(|a| Some(drawcraft_geom::Point::new(a.first()?.as_f64()?, a.get(1)?.as_f64()?)));
+                p.get("center").and_then(Value::as_array).and_then(|a| Some(vectorcraft_geom::Point::new(a.first()?.as_f64()?, a.get(1)?.as_f64()?)));
             match app.view_mut() {
                 Some(v) => {
                     v.zoom = z.clamp(0.0313, 640.0);
@@ -326,7 +326,7 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
         },
         "window.newWindow" => Err("multiple windows land with M11.5".into()),
         "tool.select" => match s("tool") {
-            Some(t) if drawcraft_tools::tool_info(&t).is_some() => {
+            Some(t) if vectorcraft_tools::tool_info(&t).is_some() => {
                 app.select_tool(&t);
                 Ok(json!({"tool": app.session.tool_id()}))
             }
@@ -340,7 +340,7 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
         }
         "effect.dialog" => {
             let id = s("effect").unwrap_or_default();
-            match drawcraft_effects::effect_catalog().into_iter().find(|e| e.id == id) {
+            match vectorcraft_effects::effect_catalog().into_iter().find(|e| e.id == id) {
                 Some(e) => {
                     let mut fields = e.defaults.as_object().cloned().unwrap_or_default();
                     fields.insert("__effect".into(), json!(e.id));
@@ -392,7 +392,7 @@ pub fn run_ui_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Res
 }
 
 /// Checked state for toggle items.
-pub fn checked(app: &DrawcraftApp, id: &str, p: &Value) -> Option<bool> {
+pub fn checked(app: &VectorcraftApp, id: &str, p: &Value) -> Option<bool> {
     let v = &app.ui.view;
     Some(match id {
         "view.outline" => v.outline,
@@ -417,11 +417,11 @@ pub fn checked(app: &DrawcraftApp, id: &str, p: &Value) -> Option<bool> {
         }
         "window.workspace" => p.get("name").and_then(Value::as_str) == Some(app.ui.workspace.as_str()),
         "window.brightness" => p.get("brightness").and_then(Value::as_str).and_then(Brightness::parse) == Some(app.ui.brightness),
-        "view.proofColors" => drawcraft_render::proof::view().proof_colors,
-        "view.overprintPreview" => drawcraft_render::proof::view().overprint,
-        "view.proofSetup" => p.get("target").and_then(Value::as_str) == Some(drawcraft_render::proof::view().setup.target.id().as_str()),
+        "view.proofColors" => vectorcraft_render::proof::view().proof_colors,
+        "view.overprintPreview" => vectorcraft_render::proof::view().overprint,
+        "view.proofSetup" => p.get("target").and_then(Value::as_str) == Some(vectorcraft_render::proof::view().setup.target.id().as_str()),
         "file.documentColorMode" | "object.convertDocumentColorMode" => {
-            let cmyk = app.session.active().is_some_and(|d| d.doc.color_mode == drawcraft_engine::doc::ColorMode::Cmyk);
+            let cmyk = app.session.active().is_some_and(|d| d.doc.color_mode == vectorcraft_engine::doc::ColorMode::Cmyk);
             p.get("mode").and_then(Value::as_str) == Some(if cmyk { "cmyk" } else { "rgb" })
         }
         _ => return None,
@@ -429,7 +429,7 @@ pub fn checked(app: &DrawcraftApp, id: &str, p: &Value) -> Option<bool> {
 }
 
 /// Label for toggles whose text flips (Outline/Preview, Hide/Show …).
-pub fn dynamic_label(app: &DrawcraftApp, id: &str, label: &str) -> String {
+pub fn dynamic_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
     let v = &app.ui.view;
     match id {
         "view.outline" => if v.outline { "Preview" } else { "Outline" }.into(),
@@ -475,8 +475,8 @@ pub fn shortcut_of(id: &str) -> Option<&'static str> {
 }
 
 /// Is a command currently enabled?
-pub fn enabled(app: &DrawcraftApp, id: &str) -> bool {
-    if let Some(c) = drawcraft_engine::find_command(id) {
+pub fn enabled(app: &VectorcraftApp, id: &str) -> bool {
+    if let Some(c) = vectorcraft_engine::find_command(id) {
         return (c.enabled)(&app.session).is_ok();
     }
     match id {
@@ -509,15 +509,15 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
     let panel = |label: &'static str, id: &'static str| cp(label, "window.panel", json!({ "panel": id }));
     vec![
         (
-            "DrawCraft",
+            "VectorCraft",
             vec![
-                c("About DrawCraft", "help.about"),
+                c("About VectorCraft", "help.about"),
                 Sep,
                 c("Settings…", "edit.preferences"),
                 Sep,
                 sub("UI Brightness", Brightness::ALL.iter().map(|b| cp(b.label(), "window.brightness", json!({"brightness": b.id()}))).collect()),
                 Sep,
-                c("Quit DrawCraft", "app.quit"),
+                c("Quit VectorCraft", "app.quit"),
             ],
         ),
         (
@@ -1058,12 +1058,12 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 sub("Symbol Libraries", vec![todo("Arrows"), todo("Charts"), todo("Web Buttons and Bars")]),
             ],
         ),
-        ("Help", vec![c("Search Commands…", "help.commandPalette"), todos("DrawCraft Help…", "F1"), Sep, c("About DrawCraft", "help.about")]),
+        ("Help", vec![c("Search Commands…", "help.commandPalette"), todos("VectorCraft Help…", "F1"), Sep, c("About VectorCraft", "help.about")]),
     ]
 }
 
 /// Render the menu bar.
-pub fn menu_bar(app: &mut DrawcraftApp, ui: &mut egui::Ui) {
+pub fn menu_bar(app: &mut VectorcraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     let mut clicked: Option<(String, Value)> = None;
     let tree = menu_tree();
@@ -1085,7 +1085,7 @@ pub fn menu_bar(app: &mut DrawcraftApp, ui: &mut egui::Ui) {
     }
 }
 
-fn render_items(app: &DrawcraftApp, ui: &mut egui::Ui, items: &[Item], clicked: &mut Option<(String, Value)>) {
+fn render_items(app: &VectorcraftApp, ui: &mut egui::Ui, items: &[Item], clicked: &mut Option<(String, Value)>) {
     let t = Tokens::get(ui.ctx());
     for it in items {
         match it {
@@ -1148,7 +1148,7 @@ pub fn click_target(label: &str, id: &str, p: &Value) -> (String, Value) {
 }
 
 /// Invoke a menu/command id with UI side effects (dialogs for "…" commands that need input).
-pub fn invoke(app: &mut DrawcraftApp, id: &str, p: Value) {
+pub fn invoke(app: &mut VectorcraftApp, id: &str, p: Value) {
     // Commands whose menu item opens a dialog in Illustrator.
     let dialog = match id {
         "object.move" => Some(("move", json!({"dx": "0 pt", "dy": "0 pt"}))),
@@ -1229,8 +1229,8 @@ pub struct MenuEntry {
 }
 
 /// Flattened menu for `ui.menu.list`.
-pub fn menu_entries(app: &DrawcraftApp) -> Vec<MenuEntry> {
-    fn walk(app: &DrawcraftApp, path: Vec<String>, items: &[Item], out: &mut Vec<MenuEntry>) {
+pub fn menu_entries(app: &VectorcraftApp) -> Vec<MenuEntry> {
+    fn walk(app: &VectorcraftApp, path: Vec<String>, items: &[Item], out: &mut Vec<MenuEntry>) {
         for it in items {
             match it {
                 Item::Cmd(l, id, p) => out.push(MenuEntry {
@@ -1322,7 +1322,7 @@ fn insert_items(list: &[(&'static str, &'static str)]) -> Vec<Item> {
 /// doesn't allocate forever).
 fn font_items() -> Vec<Item> {
     static NAMES: std::sync::Mutex<Vec<&'static str>> = std::sync::Mutex::new(Vec::new());
-    let fams = drawcraft_text::FontDb::global().families();
+    let fams = vectorcraft_text::FontDb::global().families();
     let Ok(mut names) = NAMES.lock() else { return vec![] };
     fams.iter()
         .map(|f| {
@@ -1341,7 +1341,7 @@ fn font_items() -> Vec<Item> {
 
 /// The Effect menu, built from the effects catalogue (Illustrator Effects), plus raster effects.
 fn effect_menu() -> Vec<Item> {
-    let cat = drawcraft_effects::effect_catalog();
+    let cat = vectorcraft_effects::effect_catalog();
     let mut out = vec![
         c("Apply Last Effect", "effect.applyLast"),
         todos("Last Effect", "Cmd+Alt+Shift+E"),
@@ -1395,8 +1395,8 @@ mod tests {
     fn recent_files_track_opens_and_saves() {
         let dir = std::env::temp_dir().join(format!("dc-recent-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
-        let mut app = DrawcraftApp::new(
-            drawcraft_engine::Session::new(),
+        let mut app = VectorcraftApp::new(
+            vectorcraft_engine::Session::new(),
             crate::Services {
                 read: Some(Box::new(|p: &str| std::fs::read(p).map_err(|e| e.to_string()))),
                 write: Some(Box::new(|p: &str, b: &[u8]| std::fs::write(p, b).map_err(|e| e.to_string()))),
@@ -1404,12 +1404,12 @@ mod tests {
             },
         );
         app.run("file.new", json!({"width": 100, "height": 100})).unwrap();
-        let (a, b) = (dir.join("a.drawcraft"), dir.join("b.drawcraft"));
+        let (a, b) = (dir.join("a.vectorcraft"), dir.join("b.vectorcraft"));
         for p in [&a, &b, &a] {
             app.run("file.saveAs", json!({"path": p.to_string_lossy()})).unwrap();
         }
         assert_eq!(app.ui.recent_files, [a.to_string_lossy(), b.to_string_lossy()]);
-        assert_eq!(dynamic_label(&app, "file.openRecent2", ""), "b.drawcraft");
+        assert_eq!(dynamic_label(&app, "file.openRecent2", ""), "b.vectorcraft");
         assert!(enabled(&app, "file.openRecent2") && !enabled(&app, "file.openRecent3"));
         app.run("file.openRecent2", json!({})).unwrap();
         assert_eq!(app.session.documents().len(), 2);
@@ -1425,7 +1425,7 @@ mod tests {
             for it in items {
                 match it {
                     Item::Cmd(_, id, _) => {
-                        if drawcraft_engine::find_command(id).is_none()
+                        if vectorcraft_engine::find_command(id).is_none()
                             && !UI_COMMANDS.iter().any(|c| c.0 == *id)
                             && !id.starts_with("object.path.")
                             && *id != "type.createOutlines"

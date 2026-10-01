@@ -1,15 +1,15 @@
-//! macOS: DrawCraft's menu tree as the native system menu bar (like Illustrator on the Mac).
+//! macOS: VectorCraft's menu tree as the native system menu bar (like Illustrator on the Mac).
 //! Items dispatch through the same command path as the in-window menus; enablement, check marks
 //! and dynamic labels ("Undo Move") are refreshed a few times per second.
 
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use drawcraft_ui_egui::DrawcraftApp;
-use drawcraft_ui_egui::menus::{self, Item};
 use muda::accelerator::Accelerator;
 use muda::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 use serde_json::Value;
+use vectorcraft_ui_egui::VectorcraftApp;
+use vectorcraft_ui_egui::menus::{self, Item};
 
 enum Handle {
     Plain(MenuItem),
@@ -34,10 +34,10 @@ fn accel(sc: &str) -> Option<Accelerator> {
 }
 
 impl NativeMenu {
-    pub fn install(app: &mut DrawcraftApp) -> Self {
+    pub fn install(app: &mut VectorcraftApp) -> Self {
         // Accelerators come from `shortcut_of`, which honours the user's overrides.
-        drawcraft_ui_egui::shortcut_editor::sync(&app.ui);
-        let generation = drawcraft_ui_egui::shortcut_editor::GENERATION.load(std::sync::atomic::Ordering::Relaxed);
+        vectorcraft_ui_egui::shortcut_editor::sync(&app.ui);
+        let generation = vectorcraft_ui_egui::shortcut_editor::GENERATION.load(std::sync::atomic::Ordering::Relaxed);
         let menu = Menu::new();
         let mut items = HashMap::new();
         let mut counter = 0usize;
@@ -57,20 +57,20 @@ impl NativeMenu {
     }
 
     /// Dispatch clicked items and refresh state.
-    pub fn poll(&mut self, app: &mut DrawcraftApp) {
+    pub fn poll(&mut self, app: &mut VectorcraftApp) {
         while let Ok(ev) = MenuEvent::receiver().try_recv() {
             if let Some((cmd, params, _, _)) = self.items.get(ev.id.as_ref()) {
                 let p = if params.is_null() { serde_json::json!({}) } else { params.clone() };
                 menus::invoke(app, cmd, p);
             }
         }
-        let now = drawcraft_ui_egui::now_ms();
+        let now = vectorcraft_ui_egui::now_ms();
         if now - self.last_refresh < 250.0 {
             return;
         }
         self.last_refresh = now;
         // Shortcuts edited or workspaces added: rebuild so accelerators and lists are current.
-        if drawcraft_ui_egui::shortcut_editor::GENERATION.load(std::sync::atomic::Ordering::Relaxed) != self.generation {
+        if vectorcraft_ui_egui::shortcut_editor::GENERATION.load(std::sync::atomic::Ordering::Relaxed) != self.generation {
             *self = NativeMenu::install(app);
             return;
         }
@@ -108,7 +108,13 @@ impl NativeMenu {
     }
 }
 
-fn build(app: &DrawcraftApp, parent: &Submenu, entries: &[Item], items: &mut HashMap<String, (String, Value, Handle, String)>, counter: &mut usize) {
+fn build(
+    app: &VectorcraftApp,
+    parent: &Submenu,
+    entries: &[Item],
+    items: &mut HashMap<String, (String, Value, Handle, String)>,
+    counter: &mut usize,
+) {
     for e in entries {
         match e {
             Item::Sep => {

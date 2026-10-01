@@ -1,9 +1,9 @@
 [package]
-name = "drawcraft-geom"
+name = "vectorcraft-geom"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DrawCraft geom"
+description = "VectorCraft geom"
 
 [lints]
 workspace = true
@@ -14,6 +14,6 @@ serde = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
-drawcraft-testkit = { workspace = true }
+vectorcraft-testkit = { workspace = true }
 proptest = { workspace = true }
 serde_json = { workspace = true }

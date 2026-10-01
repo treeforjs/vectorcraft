@@ -1,7 +1,7 @@
 use super::*;
-use drawcraft_color::{Color, Gradient, GradientPaint, Paint};
-use drawcraft_doc::{Appearance, Node};
-use drawcraft_geom::shapes;
+use vectorcraft_color::{Color, Gradient, GradientPaint, Paint};
+use vectorcraft_doc::{Appearance, Node};
+use vectorcraft_geom::shapes;
 
 fn rect_node(d: &mut Document, r: Rect, fill: Paint, stroke: Paint, w: f64) -> Node {
     let id = d.alloc_id();
@@ -77,7 +77,7 @@ fn multiply_blend() {
     let mut d = Document::new(100.0, 100.0);
     let a = rect_node(&mut d, Rect::new(0.0, 0.0, 100.0, 100.0), Paint::solid(Color::rgb(1.0, 1.0, 0.0)), Paint::None, 0.0);
     let mut b = rect_node(&mut d, Rect::new(0.0, 0.0, 100.0, 100.0), Paint::solid(Color::rgb(0.0, 1.0, 1.0)), Paint::None, 0.0);
-    b.blend = drawcraft_color::BlendMode::Multiply;
+    b.blend = vectorcraft_color::BlendMode::Multiply;
     let l = d.layers[0].id;
     d.insert(Some(l), 0, a).unwrap();
     d.insert(Some(l), 1, b).unwrap();
@@ -193,8 +193,8 @@ fn arrowheads_render() {
     assert!(r.pixel(73, 47)[0] < 128);
 }
 
-use drawcraft_doc::Arrowhead;
-use drawcraft_geom::Point;
+use vectorcraft_doc::Arrowhead;
+use vectorcraft_geom::Point;
 
 /// A red 10..90 square masked by a white square covering only its left half (10..50),
 /// plus a mid-grey strip (50..70) — rendered both multi- and single-threaded.
@@ -205,7 +205,7 @@ fn masked_doc(clip: bool, invert: bool) -> Document {
     let grey = rect_node(&mut d, Rect::new(50.0, 10.0, 70.0, 90.0), Paint::solid(Color::rgb(0.5, 0.5, 0.5)), Paint::None, 0.0);
     let gid = d.alloc_id();
     let art = Node::group(gid, vec![Arc::new(white), Arc::new(grey)]);
-    let mut m = drawcraft_doc::OpacityMask::new(art, clip);
+    let mut m = vectorcraft_doc::OpacityMask::new(art, clip);
     m.invert = invert;
     n.mask = Some(Box::new(m));
     let l = d.layers[0].id;

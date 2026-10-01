@@ -3,12 +3,12 @@
 
 use std::collections::HashSet;
 
-use drawcraft_doc::{Node, NodeId, NodeKind};
 use egui::{Color32, Sense, Stroke, StrokeKind, Ui, vec2};
 use serde_json::json;
+use vectorcraft_doc::{Node, NodeId, NodeKind};
 
 use crate::theme::Tokens;
-use crate::{DrawcraftApp, icons, widgets};
+use crate::{VectorcraftApp, icons, widgets};
 
 const ROW: f32 = 26.0;
 
@@ -16,7 +16,7 @@ fn expanded_id() -> egui::Id {
     egui::Id::new("layers-expanded")
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let Some(st) = app.session.active() else { return };
     let doc = st.doc.clone();
@@ -101,7 +101,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
 #[allow(clippy::too_many_arguments)]
 fn row(
     ui: &mut Ui,
-    doc: &drawcraft_doc::Document,
+    doc: &vectorcraft_doc::Document,
     n: &Node,
     depth: usize,
     sel: &HashSet<NodeId>,
@@ -275,7 +275,7 @@ fn row(
                 None => (None, 0),
             };
             // A layer dropped on a non-layer goes into that row's container; top level only for layers.
-            let src_is_layer = doc.node(drawcraft_doc::NodeId(src)).is_some_and(|x| x.is_layer());
+            let src_is_layer = doc.node(vectorcraft_doc::NodeId(src)).is_some_and(|x| x.is_layer());
             if parent.is_some() || src_is_layer {
                 actions.push(("node.move".into(), json!({"id": src, "parent": parent.map(|p| p.0), "index": index})));
             }
@@ -292,11 +292,11 @@ fn row(
 
 /// A real rendered thumbnail, cached by node identity (unchanged nodes keep their `Arc`
 /// allocation, so the address is a free change detector). Only rendered for visible rows.
-fn real_thumb(ui: &Ui, doc: &drawcraft_doc::Document, n: &Node, r: egui::Rect) -> bool {
+fn real_thumb(ui: &Ui, doc: &vectorcraft_doc::Document, n: &Node, r: egui::Rect) -> bool {
     use std::cell::RefCell;
     use std::collections::HashMap;
     thread_local! {
-        static RENDERER: RefCell<drawcraft_render::Renderer> = RefCell::new(drawcraft_render::Renderer::new());
+        static RENDERER: RefCell<vectorcraft_render::Renderer> = RefCell::new(vectorcraft_render::Renderer::new());
         static CACHE: RefCell<HashMap<(usize, u64), egui::TextureHandle>> = RefCell::new(HashMap::new());
     }
     if !ui.is_rect_visible(r) {

@@ -1,4 +1,4 @@
-//! DrawCraft document model: artboards, layers and objects, appearance, swatches (pure data + serde).
+//! VectorCraft document model: artboards, layers and objects, appearance, swatches (pure data + serde).
 //!
 //! Documents are persistent trees: children are `Arc<Node>`, and edits go through
 //! [`Document::node_mut`], which clones only the nodes on the path from the root to the edited node.
@@ -30,18 +30,18 @@ pub(crate) mod skip {
 }
 
 pub use appearance::{Appearance, AppearanceItem, Arrowhead, Dash, Effect, FillLayer, LineCap, LineJoin, StrokeAlign, StrokeLayer, WidthProfile};
-pub use drawcraft_color as color;
-pub use drawcraft_geom as geom;
 pub use hit::{Hit, HitKind};
 pub use live::{BlendOrientation, BlendSpacing, BlendSpec, EnvelopeKind, GradientMesh, MeshPoint};
 pub use node::{ImageObject, LAYER_COLORS, LayerColor, LiveShape, Node, NodeId, NodeKind, OpacityMask};
 pub use pattern::{Overlap, PatternDef, PatternEdit, RepeatKind, RepeatSpec, TileType};
 pub use selection::{AnchorRef, Selection};
 pub use text::{AreaOptions, CharStyle, FirstBaseline, Justify, ParaStyle, TextKind, TextObject, TextRun, TextStyleDef};
+pub use vectorcraft_color as color;
+pub use vectorcraft_geom as geom;
 
-use drawcraft_color::{Swatch, SwatchGroup};
-use drawcraft_geom::{Point, Rect};
 use serde::{Deserialize, Serialize};
+use vectorcraft_color::{Swatch, SwatchGroup};
+use vectorcraft_geom::{Point, Rect};
 
 #[derive(Debug, thiserror::Error, PartialEq)]
 pub enum DocError {
@@ -308,7 +308,7 @@ pub const FORMAT_VERSION: u32 = 1;
 impl Document {
     /// A new document with one artboard of `size` and one layer ("Layer 1").
     pub fn new(width: f64, height: f64) -> Self {
-        let (swatches, swatch_groups) = drawcraft_color::default_swatches();
+        let (swatches, swatch_groups) = vectorcraft_color::default_swatches();
         let mut d = Self {
             version: FORMAT_VERSION,
             title: "Untitled-1".into(),
@@ -541,11 +541,11 @@ impl Document {
     pub fn bounds_of(&self, ids: &[NodeId], visual: bool) -> Option<Rect> {
         ids.iter()
             .filter_map(|id| self.node(*id))
-            .fold(None, |acc, n| drawcraft_geom::union_opt(acc, if visual { n.visual_bounds() } else { n.geometric_bounds() }))
+            .fold(None, |acc, n| vectorcraft_geom::union_opt(acc, if visual { n.visual_bounds() } else { n.geometric_bounds() }))
     }
     /// Bounds of all art.
     pub fn art_bounds(&self) -> Option<Rect> {
-        self.layers.iter().fold(None, |acc, l| drawcraft_geom::union_opt(acc, l.visual_bounds()))
+        self.layers.iter().fold(None, |acc, l| vectorcraft_geom::union_opt(acc, l.visual_bounds()))
     }
     /// Artboard index containing point `p` (topmost = last).
     pub fn artboard_at(&self, p: Point) -> Option<usize> {
@@ -577,7 +577,7 @@ impl Document {
 }
 
 fn default_graphic_styles() -> Vec<GraphicStyle> {
-    use drawcraft_color::{Color, Paint};
+    use vectorcraft_color::{Color, Paint};
     vec![
         GraphicStyle { name: "Default Graphic Style".into(), appearance: Appearance::default_art() },
         GraphicStyle { name: "Black Outline".into(), appearance: Appearance::basic(Paint::None, Paint::solid(Color::BLACK), 1.0) },
@@ -595,7 +595,7 @@ fn default_graphic_styles() -> Vec<GraphicStyle> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use drawcraft_geom::shapes;
+    use vectorcraft_geom::shapes;
 
     fn doc_with_rects() -> (Document, NodeId, NodeId) {
         let mut d = Document::new(612.0, 792.0);

@@ -1,14 +1,14 @@
 //! Stroke panel: weight spinner + presets, cap / corner / align toggles, miter limit, dashed line
 //! with three dash/gap pairs, arrowheads with drawn previews, arrow scale, width profiles.
 
-use drawcraft_doc::{Arrowhead, LineCap, LineJoin, StrokeAlign, StrokeLayer, Unit, WidthProfile};
 use egui::{Color32, Pos2, Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Arrowhead, LineCap, LineJoin, StrokeAlign, StrokeLayer, Unit, WidthProfile};
 
 use super::{first_selected, pstate, set_pstate};
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
 pub const WEIGHT_PRESETS: [f64; 22] =
     [0.25, 0.5, 0.75, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0];
@@ -72,15 +72,15 @@ fn arrow_label(a: Option<Arrowhead>) -> String {
     }
 }
 
-fn stroke_now(app: &DrawcraftApp) -> Option<StrokeLayer> {
+fn stroke_now(app: &VectorcraftApp) -> Option<StrokeLayer> {
     first_selected(app).and_then(|n| n.appearance.stroke().cloned())
 }
 
-fn set(app: &mut DrawcraftApp, p: Value) {
+fn set(app: &mut VectorcraftApp, p: Value) {
     app.run("stroke.set", p).ok();
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let st = stroke_now(app);
     let weight = st.as_ref().map(|s| s.width).unwrap_or(app.session.paint.stroke_width);
@@ -383,7 +383,7 @@ fn profile_dropdown(ui: &mut Ui, cur: &str) -> Option<&'static str> {
     out
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let hidden: bool = pstate(ui.ctx(), "stroke-hide-options");
     if menu_item(ui, if hidden { "Show Options" } else { "Hide Options" }, true, false) {
         set_pstate(ui.ctx(), "stroke-hide-options", !hidden);

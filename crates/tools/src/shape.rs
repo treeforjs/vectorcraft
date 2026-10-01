@@ -4,8 +4,8 @@
 //! drag asks the UI for the size dialog (like Illustrator). ↑/↓ during a polygon/star drag change the
 //! side/point count.
 
-use drawcraft_geom::{Point, Rect};
 use serde_json::{Value, json};
+use vectorcraft_geom::{Point, Rect};
 
 use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext, ToolKey};
 
@@ -76,14 +76,14 @@ impl ShapeTool {
             }
             "lineSegment" => {
                 let (a, b) = if m.alt { (start - (p - start), p) } else { (start, p) };
-                let b = if m.shift { a + drawcraft_geom::constrain_angle(b - a, 45.0) } else { b };
+                let b = if m.shift { a + vectorcraft_geom::constrain_angle(b - a, 45.0) } else { b };
                 ("shape.line".into(), json!({ "x1": a.x, "y1": a.y, "x2": b.x, "y2": b.y }))
             }
             _ => {
                 let mut d = p - start;
                 if m.shift {
                     let s = d.x.abs().max(d.y.abs());
-                    d = drawcraft_geom::Vec2::new(s * d.x.signum(), s * d.y.signum());
+                    d = vectorcraft_geom::Vec2::new(s * d.x.signum(), s * d.y.signum());
                 }
                 let r = if m.alt { Rect::from_points(start - d, start + d) } else { Rect::from_points(start, start + d) };
                 let cmd = if self.id == "ellipse" { "shape.ellipse" } else { "shape.rectangle" };
@@ -217,7 +217,7 @@ impl Tool for ShapeTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     #[test]
     fn rect_drag() {

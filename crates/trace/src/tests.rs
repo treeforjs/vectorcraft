@@ -15,7 +15,7 @@ fn disc(size: u32, cx: f64, cy: f64, r: f64) -> Raster {
 }
 
 /// Net filled area (outer contours positive, holes negative).
-fn net_area(p: &drawcraft_geom::PathData) -> f64 {
+fn net_area(p: &vectorcraft_geom::PathData) -> f64 {
     p.subpaths.iter().map(|s| s.area()).sum()
 }
 

@@ -5,9 +5,9 @@
 //! Enter/Esc (or switching tools) ends the path. Clicking the end of a selected open path continues
 //! it. The rubber-band preview shows the next segment.
 
-use drawcraft_doc::{NodeId, NodeKind};
-use drawcraft_geom::{BezPath, Point};
 use serde_json::json;
+use vectorcraft_doc::{NodeId, NodeKind};
+use vectorcraft_geom::{BezPath, Point};
 
 use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext, ToolKey};
 
@@ -44,7 +44,7 @@ impl Tool for PenTool {
         self.drag.is_some()
     }
     fn pointer(&mut self, cx: &ToolContext, ev: &PointerEvent) -> Vec<Action> {
-        let exclude: Vec<drawcraft_doc::NodeId> = if self.drawing { cx.selection.objects.clone() } else { vec![] };
+        let exclude: Vec<vectorcraft_doc::NodeId> = if self.drawing { cx.selection.objects.clone() } else { vec![] };
         let (mut p, _) = if matches!(ev.kind, PointerKind::Down) { crate::guides::snap_draw(cx, ev.pos, &exclude) } else { (ev.pos, vec![]) };
         let tol = cx.tol(5.0);
         let active = if self.drawing { active_path(cx) } else { None };
@@ -59,7 +59,7 @@ impl Tool for PenTool {
             PointerKind::Down => {
                 if let Some((id, first, last, _)) = active {
                     if ev.mods.shift {
-                        p = last + drawcraft_geom::constrain_angle(p - last, 45.0);
+                        p = last + vectorcraft_geom::constrain_angle(p - last, 45.0);
                     }
                     if p.distance(first) <= tol {
                         self.drag = Some((first, true));
@@ -86,7 +86,7 @@ impl Tool for PenTool {
                 let Some((a, closing)) = self.drag else { return vec![] };
                 let mut out_h = ev.pos;
                 if ev.mods.shift {
-                    out_h = a + drawcraft_geom::constrain_angle(ev.pos - a, 45.0);
+                    out_h = a + vectorcraft_geom::constrain_angle(ev.pos - a, 45.0);
                 }
                 let alt = ev.mods.alt;
                 let Some((id, ..)) = active_path(cx).or(active) else {
@@ -165,7 +165,7 @@ impl Tool for PenTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     #[test]
     fn first_click_creates_path() {

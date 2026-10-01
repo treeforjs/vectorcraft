@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 
 use crate::state::{Dialog, DockTab, UiState};
 use crate::theme::{self, Tokens};
-use crate::{DrawcraftApp, widgets};
+use crate::{VectorcraftApp, widgets};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -233,7 +233,7 @@ pub fn menu_items() -> Vec<crate::menus::Item> {
 }
 
 /// The app-bar workspace switcher's menu.
-pub fn popup(app: &mut DrawcraftApp, ui: &mut egui::Ui) {
+pub fn popup(app: &mut VectorcraftApp, ui: &mut egui::Ui) {
     ui.set_min_width(210.0);
     ui.set_max_width(240.0);
     let mut clicked: Option<(&'static str, Value)> = None;
@@ -264,7 +264,7 @@ pub fn popup(app: &mut DrawcraftApp, ui: &mut egui::Ui) {
 
 // ---------- commands ----------
 
-pub fn run_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Result<Value, String>> {
+pub fn run_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<Result<Value, String>> {
     let s = |k: &str| p.get(k).and_then(Value::as_str).map(str::to_string);
     let r = match id {
         "window.workspace" => match s("name").and_then(|n| find(&app.ui, &n)) {
@@ -300,7 +300,7 @@ pub fn run_command(app: &mut DrawcraftApp, id: &str, p: &Value) -> Option<Result
 }
 
 /// OK in New Workspace / Manage Workspaces.
-pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
+pub fn confirm(app: &mut VectorcraftApp) -> Result<Value, String> {
     let Some(d) = app.ui.dialog.clone() else { return Err("no dialog open".into()) };
     let r = match d.kind.as_str() {
         "newWorkspace" => save_as(&mut app.ui, &d.str("name")).map(|_| Value::Null),
@@ -312,7 +312,7 @@ pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
     r
 }
 
-pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
+pub fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
     let Some(mut d) = app.ui.dialog.clone() else { return };
     let t = Tokens::get(ctx);
     let (mut ok, mut cancel) = (false, false);

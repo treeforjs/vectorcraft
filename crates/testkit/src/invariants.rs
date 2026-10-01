@@ -2,9 +2,9 @@
 
 use std::collections::HashSet;
 
-use drawcraft_doc::{Document, NodeKind};
-use drawcraft_engine::Session;
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, NodeKind};
+use vectorcraft_engine::Session;
 
 /// Serialize a document to JSON (the canonical form for equality checks).
 pub fn doc_json(doc: &Document) -> Value {
@@ -88,11 +88,11 @@ pub fn check_session(s: &Session) -> Result<(), String> {
     Ok(())
 }
 
-/// `.drawcraft` save → load must reproduce the document (numbers compared to 1e-12 relative —
+/// `.vectorcraft` save → load must reproduce the document (numbers compared to 1e-12 relative —
 /// see [`check_native_roundtrip_exact`] for the bit-exact version).
 pub fn check_native_roundtrip(doc: &Document) -> Result<(), String> {
-    let bytes = drawcraft_format::save(doc, false);
-    let back = drawcraft_format::load(&bytes).map_err(|e| format!("load: {e}"))?;
+    let bytes = vectorcraft_format::save(doc, false);
+    let back = vectorcraft_format::load(&bytes).map_err(|e| format!("load: {e}"))?;
     let (a, b) = (doc_json(doc), doc_json(&back));
     if !json_approx_eq(&a, &b, 1e-12) {
         return Err(format!("native round trip differs:\n{}", first_diff(&a, &b, "$")));
@@ -100,10 +100,10 @@ pub fn check_native_roundtrip(doc: &Document) -> Result<(), String> {
     Ok(())
 }
 
-/// Bit-exact `.drawcraft` round trip (every f64 must survive).
+/// Bit-exact `.vectorcraft` round trip (every f64 must survive).
 pub fn check_native_roundtrip_exact(doc: &Document) -> Result<(), String> {
-    let bytes = drawcraft_format::save(doc, false);
-    let back = drawcraft_format::load(&bytes).map_err(|e| format!("load: {e}"))?;
+    let bytes = vectorcraft_format::save(doc, false);
+    let back = vectorcraft_format::load(&bytes).map_err(|e| format!("load: {e}"))?;
     let (a, b) = (doc_json(doc), doc_json(&back));
     if a != b {
         return Err(format!("native round trip differs:\n{}", first_diff(&a, &b, "$")));
@@ -126,8 +126,8 @@ pub fn json_approx_eq(a: &Value, b: &Value, rel: f64) -> bool {
 
 /// SVG export must not panic and must re-import.
 pub fn check_svg_roundtrip(doc: &Document) -> Result<Document, String> {
-    let svg = drawcraft_svg::export(doc, &drawcraft_svg::ExportOptions::default());
-    drawcraft_svg::import(&svg).map_err(|e| format!("svg re-import: {e}\n{svg}"))
+    let svg = vectorcraft_svg::export(doc, &vectorcraft_svg::ExportOptions::default());
+    vectorcraft_svg::import(&svg).map_err(|e| format!("svg re-import: {e}\n{svg}"))
 }
 
 /// `document.inspect` must succeed and serialize.

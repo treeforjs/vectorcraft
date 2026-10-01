@@ -1,7 +1,7 @@
 //! Loop → polygon → Bézier curves.
 
-use drawcraft_geom::{AnchorKind, CubicBez, ParamCurve, PathData, Point, SubPath};
-use drawcraft_pathops::{SimplifyOptions, simplify_with};
+use vectorcraft_geom::{AnchorKind, CubicBez, ParamCurve, PathData, Point, SubPath};
+use vectorcraft_pathops::{SimplifyOptions, simplify_with};
 
 use crate::contour::Loop;
 

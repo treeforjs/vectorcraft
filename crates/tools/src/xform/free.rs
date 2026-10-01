@@ -6,8 +6,8 @@
 //! Cmd / Cmd+Alt+Shift while dragging a corner like classic Illustrator) move the corners of the
 //! box and preview `object.distort`.
 
-use drawcraft_geom::{Affine, Point, Rect, Vec2};
 use serde_json::{Value, json};
+use vectorcraft_geom::{Affine, Point, Rect, Vec2};
 
 use super::{BLUE, polygon, rect_corners};
 use crate::bbox::{Handle, hit_handle, in_rotate_zone, move_delta, rotate_for_drag, scale_for_drag};
@@ -308,7 +308,7 @@ impl Tool for FreeTransformTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     fn ev(kind: PointerKind, x: f64, y: f64) -> PointerEvent {
         PointerEvent::new(kind, x, y)

@@ -2,16 +2,16 @@
 //! (Object → Create Gradient Mesh, Mesh tool edits).
 //!
 //! The objects are live document nodes (`NodeKind::Blend`, `NodeKind::Envelope`,
-//! `NodeKind::Mesh`); evaluation lives in `drawcraft_doc::live` and the renderer. **Expand**
-//! replaces a live object by its evaluated geometry (`drawcraft_render::expand_live`).
+//! `NodeKind::Mesh`); evaluation lives in `vectorcraft_doc::live` and the renderer. **Expand**
+//! replaces a live object by its evaluated geometry (`vectorcraft_render::expand_live`).
 
 use std::sync::Arc;
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::live::{self, BlendOrientation, BlendSpacing, BlendSpec, EnvelopeKind, GradientMesh, MeshAppearance, Spine};
-use drawcraft_doc::{Appearance, Document, Node, NodeId, NodeKind, Selection};
-use drawcraft_geom::{Affine, PathData, Point};
 use serde_json::{Value, json};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::live::{self, BlendOrientation, BlendSpacing, BlendSpec, EnvelopeKind, GradientMesh, MeshAppearance, Spine};
+use vectorcraft_doc::{Appearance, Document, Node, NodeId, NodeKind, Selection};
+use vectorcraft_geom::{Affine, PathData, Point};
 
 use super::edit::selected_roots;
 use super::*;
@@ -421,7 +421,7 @@ fn blend_expand(s: &mut Session, _: &Value) -> Result<Value> {
         let mut out = vec![];
         for b in &blends {
             let Some(n) = d.node(*b).cloned() else { continue };
-            let children = drawcraft_render::expand_live(&n).into_iter().map(Arc::new).collect();
+            let children = vectorcraft_render::expand_live(&n).into_iter().map(Arc::new).collect();
             let mut g = Node::new(n.id, NodeKind::Group { children, clip: false });
             g.opacity = n.opacity;
             g.blend = n.blend;
@@ -551,7 +551,7 @@ fn env_make_mesh(s: &mut Session, p: &Value) -> Result<Value> {
     let src = roots
         .iter()
         .filter_map(|id| st.doc.node(*id))
-        .fold(None, |a, n| drawcraft_geom::union_opt(a, n.geometric_bounds()))
+        .fold(None, |a, n| vectorcraft_geom::union_opt(a, n.geometric_bounds()))
         .ok_or_else(|| bad(C, "selection has no bounds"))?;
     let kind = EnvelopeKind::Mesh { rows: rows as u32, cols: cols as u32, points: live::grid_points(src, rows as u32, cols as u32) };
     let id = s.edit("Make Envelope", |d, sel| wrap(d, sel, &roots, |id, content| envelope(id, content, kind)))?;
@@ -648,7 +648,7 @@ fn env_expand(s: &mut Session, _: &Value) -> Result<Value> {
         let mut out = vec![];
         for e in &envs {
             let Some(n) = d.node(*e).cloned() else { continue };
-            let children = drawcraft_render::expand_live(&n).into_iter().map(Arc::new).collect();
+            let children = vectorcraft_render::expand_live(&n).into_iter().map(Arc::new).collect();
             let mut g = Node::new(n.id, NodeKind::Group { children, clip: false });
             g.opacity = n.opacity;
             g.blend = n.blend;

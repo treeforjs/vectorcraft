@@ -1,4 +1,4 @@
-//! DrawCraft test helpers.
+//! VectorCraft test helpers.
 //!
 //! - [`fixtures`]: sessions and documents in known states (empty, single/multi selection, a "rich"
 //!   document touching most node kinds), plus a [`fixtures::DocBuilder`] for building documents
@@ -6,7 +6,7 @@
 //! - [`strategies`]: proptest strategies for geometry and for engine command sequences ([`strategies::Op`]), and
 //!   junk-parameter generators for fuzzing the command registry.
 //! - [`invariants`]: structural checks for documents and sessions, and round-trip checks
-//!   (`.drawcraft`, SVG, `document.inspect`).
+//!   (`.vectorcraft`, SVG, `document.inspect`).
 //! - [`raster`]: rendering helpers and image comparison with a perceptual tolerance.
 //! - [`geom`]: geometry assertions (approximate equality, curve sampling, Hausdorff distance).
 //!
@@ -19,14 +19,14 @@ pub mod invariants;
 pub mod raster;
 pub mod strategies;
 
-pub use drawcraft_engine::{Session, doc::NodeId};
 pub use serde_json::{Value, json};
+pub use vectorcraft_engine::{Session, doc::NodeId};
 /// Re-exports so dependents without direct dependencies (e.g. app test crates) can use them.
-pub use {drawcraft_doc as doc, drawcraft_format as format, drawcraft_render as render, drawcraft_svg as svg};
+pub use {vectorcraft_doc as doc, vectorcraft_format as format, vectorcraft_render as render, vectorcraft_svg as svg};
 
 /// A per-process temporary directory for test output (created on first use).
 pub fn temp_dir(tag: &str) -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join(format!("drawcraft-testkit-{tag}-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("vectorcraft-testkit-{tag}-{}", std::process::id()));
     std::fs::create_dir_all(&dir).expect("create temp dir");
     dir
 }

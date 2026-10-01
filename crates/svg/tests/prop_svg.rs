@@ -1,15 +1,15 @@
 //! SVG export/import properties: never panics, always re-imports, and plain art survives the round
 //! trip visually (render comparison with a perceptual tolerance).
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::Appearance;
-use drawcraft_geom::{PathData, Rect, shapes};
-use drawcraft_svg::{ExportOptions, Styling, export, import};
-use drawcraft_testkit::fixtures::{self, DocBuilder, art_nodes};
-use drawcraft_testkit::invariants::check_document;
-use drawcraft_testkit::raster::{assert_similar, render_artboard};
-use drawcraft_testkit::strategies::{arb_closed_shape, arb_ops, arb_path_data};
 use proptest::prelude::*;
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::Appearance;
+use vectorcraft_geom::{PathData, Rect, shapes};
+use vectorcraft_svg::{ExportOptions, Styling, export, import};
+use vectorcraft_testkit::fixtures::{self, DocBuilder, art_nodes};
+use vectorcraft_testkit::invariants::check_document;
+use vectorcraft_testkit::raster::{assert_similar, render_artboard};
+use vectorcraft_testkit::strategies::{arb_closed_shape, arb_ops, arb_path_data};
 
 fn all_options() -> Vec<ExportOptions> {
     let mut v = vec![];

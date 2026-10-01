@@ -1,4 +1,4 @@
-//! The DrawCraft engine façade.
+//! The VectorCraft engine façade.
 //!
 //! Every user-visible action is a command with a stable id (`object.group`, `select.same.fillColor`,
 //! `shape.rectangle`…) and JSON parameters. The egui UI, the CLI, the control channel and the MCP
@@ -12,16 +12,16 @@ mod tooling;
 
 use std::sync::Arc;
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{Document, NodeId, NodeKind, Selection};
-use drawcraft_geom::Affine;
-use drawcraft_tools::{PaintDefaults, Tool};
 use serde_json::Value;
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{Document, NodeId, NodeKind, Selection};
+use vectorcraft_geom::Affine;
+use vectorcraft_tools::{PaintDefaults, Tool};
 
 pub use cmd::{CommandInfo, CommandSpec, command_specs, find_command};
-pub use drawcraft_doc as doc;
-pub use drawcraft_tools as tools;
 pub use tooling::{UiRequest, ViewInfo};
+pub use vectorcraft_doc as doc;
+pub use vectorcraft_tools as tools;
 
 #[derive(Debug, thiserror::Error)]
 pub enum EngineError {
@@ -39,8 +39,8 @@ pub enum EngineError {
     Other(String),
 }
 
-impl From<drawcraft_doc::DocError> for EngineError {
-    fn from(e: drawcraft_doc::DocError) -> Self {
+impl From<vectorcraft_doc::DocError> for EngineError {
+    fn from(e: vectorcraft_doc::DocError) -> Self {
         EngineError::Other(e.to_string())
     }
 }
@@ -82,9 +82,12 @@ pub struct DocState {
     pub selection: Selection,
     pub history: History,
     pub path: Option<String>,
-    /// Increments on every change; UIs re-render when it moves.
+    /// Increments on every change (also selection and view-only changes); UIs re-render when it
+    /// moves. Not a dirty flag: see [`DocState::is_dirty`].
     pub revision: u64,
-    pub saved_revision: u64,
+    /// The document as last saved (or opened). Structural sharing makes "unchanged" a pointer
+    /// comparison, and undoing back to the saved state counts as clean.
+    saved_doc: Arc<Document>,
     /// The layer new art goes into (the "current layer" in the Layers panel).
     pub active_layer: Option<NodeId>,
     /// Isolation mode container.
@@ -103,13 +106,14 @@ static NEXT_DOC_UID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64
 impl DocState {
     pub fn new(doc: Document, path: Option<String>) -> Self {
         let active_layer = doc.default_layer();
+        let doc = Arc::new(doc);
         Self {
-            doc: Arc::new(doc),
+            saved_doc: doc.clone(),
+            doc,
             selection: Selection::default(),
             history: History { limit: 500, ..Default::default() },
             path,
             revision: 1,
-            saved_revision: 1,
             active_layer,
             isolation: None,
             interaction: None,
@@ -118,8 +122,13 @@ impl DocState {
             uid: NEXT_DOC_UID.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
         }
     }
+    /// Unsaved changes: the document differs from the saved one (selection changes don't count).
     pub fn is_dirty(&self) -> bool {
-        self.revision != self.saved_revision
+        !Arc::ptr_eq(&self.doc, &self.saved_doc)
+    }
+    /// Record the current document as saved.
+    pub fn mark_saved(&mut self) {
+        self.saved_doc = self.doc.clone();
     }
     pub fn title(&self) -> String {
         self.path
@@ -147,7 +156,7 @@ pub const MAX_COORD: f64 = 4.0e6;
 /// Cheap sanity check after an edit: artboards and the objects just touched (the selection) must
 /// have finite, in-range geometry, so saved files always reload and renderers never see NaN/∞.
 fn doc_sane(d: &Document, sel: &Selection) -> bool {
-    let ok = |r: drawcraft_geom::Rect| [r.x0, r.y0, r.x1, r.y1].iter().all(|v| v.is_finite() && v.abs() <= MAX_COORD);
+    let ok = |r: vectorcraft_geom::Rect| [r.x0, r.y0, r.x1, r.y1].iter().all(|v| v.is_finite() && v.abs() <= MAX_COORD);
     d.artboards.iter().all(|a| ok(a.rect)) && sel.objects.iter().all(|id| d.node(*id).and_then(|n| n.geometric_bounds()).is_none_or(ok))
 }
 
@@ -416,7 +425,7 @@ pub struct Session {
     /// Which proxy is in front (true = Fill, false = Stroke) — the X key toggles.
     pub fill_active: bool,
     /// Internal clipboard (serialized nodes).
-    pub clipboard: Vec<drawcraft_doc::Node>,
+    pub clipboard: Vec<vectorcraft_doc::Node>,
     /// Executed commands (for actions and debugging).
     pub journal: Vec<(String, Value)>,
     pub(crate) tool: Box<dyn Tool>,
@@ -447,7 +456,7 @@ impl Session {
             fill_active: true,
             clipboard: vec![],
             journal: vec![],
-            tool: drawcraft_tools::create("selection"),
+            tool: vectorcraft_tools::create("selection"),
             last_view: ViewInfo::default(),
             depth: 0,
             draw_mode: DrawMode::Normal,
@@ -485,7 +494,7 @@ impl Session {
         let acts = self.with_tool_cx(view, |t, cx| t.deactivate(cx));
         let _ = self.apply_actions(acts);
         let _ = self.cancel_interaction();
-        self.tool = drawcraft_tools::create(self.tool.id());
+        self.tool = vectorcraft_tools::create(self.tool.id());
     }
     pub fn set_active(&mut self, index: usize) -> bool {
         if index < self.docs.len() {
@@ -503,7 +512,22 @@ impl Session {
         format!("Untitled-{}", self.untitled_counter)
     }
     /// Add a document and make it active.
-    pub fn add_document(&mut self, doc: Document, path: Option<String>) -> usize {
+    pub fn add_document(&mut self, mut doc: Document, path: Option<String>) -> usize {
+        // Text layout bounds are a cache (not saved): compute them now, or selection boxes and
+        // hit testing would use the rough estimate until each text object is edited.
+        let mut texts = vec![];
+        doc.walk(|n| {
+            if matches!(n.kind, NodeKind::Text(_)) {
+                texts.push(n.id);
+            }
+        });
+        for id in texts {
+            if let Some(NodeKind::Text(t)) = doc.node_mut(id).map(|n| &mut n.kind)
+                && t.cached_bounds.is_none()
+            {
+                cmd::typecmd::refresh_bounds(t);
+            }
+        }
         self.reset_tool_for_doc_switch();
         let mut st = DocState::new(doc, path);
         st.history.limit = self.prefs.history_states as usize;

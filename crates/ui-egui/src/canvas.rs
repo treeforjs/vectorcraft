@@ -1,15 +1,15 @@
 //! The document canvas: rendering, rulers, navigation, pointer routing to tools and on-canvas
 //! selection visuals (bounding box, anchors, handles, smart-guide style labels).
 
-use drawcraft_doc::{Node, NodeKind};
-use drawcraft_geom::{Affine, BezPath, PathEl, Point, Rect};
-use drawcraft_tools::{Cursor, Mods, Overlay, PointerEvent, PointerKind};
 use egui::{Color32, CornerRadius, Pos2, Sense, Shape, Stroke, StrokeKind, Ui, pos2, vec2};
 use serde_json::json;
+use vectorcraft_doc::{Node, NodeKind};
+use vectorcraft_geom::{Affine, BezPath, PathEl, Point, Rect};
+use vectorcraft_tools::{Cursor, Mods, Overlay, PointerEvent, PointerKind};
 
 use crate::state::View;
 use crate::theme::{self, Tokens};
-use crate::{CacheKey, DrawcraftApp, now_ms, widgets};
+use crate::{CacheKey, VectorcraftApp, now_ms, widgets};
 
 const RULER: f32 = 16.0;
 
@@ -45,10 +45,10 @@ impl Xf {
         [Point::new(r.x0, r.y0), Point::new(r.x1, r.y0), Point::new(r.x1, r.y1), Point::new(r.x0, r.y1)].iter().map(|p| self.to_screen(*p)).collect()
     }
     /// Convert a screen-space delta to a document delta.
-    pub fn delta_to_doc(&self, d: egui::Vec2) -> drawcraft_geom::Vec2 {
+    pub fn delta_to_doc(&self, d: egui::Vec2) -> vectorcraft_geom::Vec2 {
         let (sn, cs) = self.rot.sin_cos();
         let (dx, dy) = (d.x as f64, d.y as f64);
-        drawcraft_geom::Vec2::new((dx * cs + dy * sn) / self.zoom, (-dx * sn + dy * cs) / self.zoom)
+        vectorcraft_geom::Vec2::new((dx * cs + dy * sn) / self.zoom, (-dx * sn + dy * cs) / self.zoom)
     }
     pub fn rect_to_screen(&self, r: Rect) -> egui::Rect {
         egui::Rect::from_two_pos(self.to_screen(Point::new(r.x0, r.y0)), self.to_screen(Point::new(r.x1, r.y1)))
@@ -90,7 +90,7 @@ pub fn mods(m: egui::Modifiers, space: bool) -> Mods {
 }
 
 /// Fit the view (View → Fit Artboard / Fit All / Actual Size).
-pub fn fit(app: &mut DrawcraftApp, how: &str) {
+pub fn fit(app: &mut VectorcraftApp, how: &str) {
     let Some(rect) = app.canvas_rect else {
         if let Some(v) = app.view_mut() {
             v.fitted = false;
@@ -117,7 +117,7 @@ pub fn fit(app: &mut DrawcraftApp, how: &str) {
     }
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let full = ui.available_rect_before_wrap();
     if app.session.active().is_none() {
@@ -181,7 +181,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     };
     if !app.canvas.worker_started {
         app.canvas.worker_started = true;
-        if std::env::var_os("DRAWCRAFT_SYNC_RENDER").is_none() {
+        if std::env::var_os("VECTORCRAFT_SYNC_RENDER").is_none() {
             app.canvas.worker = crate::render_worker::Worker::spawn(ui.ctx().clone());
         }
     }
@@ -199,10 +199,10 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
             * Affine::rotate(v.rotation.to_radians())
             * Affine::scale(v.zoom * ppp as f64)
             * Affine::translate(-v.center.to_vec2());
-        let opts = drawcraft_render::RenderOptions { outline: app.ui.view.outline, background: None, artboards: false, ..Default::default() };
-        let opts = drawcraft_render::RenderOptions {
-            proof: drawcraft_render::proof::active_proof(),
-            overprint_preview: drawcraft_render::proof::overprint_preview_on(),
+        let opts = vectorcraft_render::RenderOptions { outline: app.ui.view.outline, background: None, artboards: false, ..Default::default() };
+        let opts = vectorcraft_render::RenderOptions {
+            proof: vectorcraft_render::proof::active_proof(),
+            overprint_preview: vectorcraft_render::proof::overprint_preview_on(),
             ..opts
         };
         // Light documents render synchronously (no lag vs overlays); heavy ones go to the worker.
@@ -288,7 +288,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
             let c = app.session.cursor(p, mods(m, space), view_info);
             let painter = ui.ctx().layer_painter(egui::LayerId::new(egui::Order::Tooltip, egui::Id::new("tool-cursor")));
             // Caps Lock gives precise (crosshair) cursors, like Illustrator; env opt-out for system cursors.
-            let custom = std::env::var_os("DRAWCRAFT_SYSTEM_CURSORS").is_none();
+            let custom = std::env::var_os("VECTORCRAFT_SYSTEM_CURSORS").is_none();
             match ui.input(|i| i.pointer.hover_pos()) {
                 Some(hp) if custom && crate::cursors::paint(&painter, c, hp) => egui::CursorIcon::None,
                 _ => cursor_icon(c),
@@ -323,7 +323,7 @@ fn cursor_icon(c: Cursor) -> egui::CursorIcon {
     }
 }
 
-fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: egui::Rect) {
+fn handle_input(app: &mut VectorcraftApp, ui: &Ui, resp: &egui::Response, rect: egui::Rect) {
     let (pointer, m, space, scroll, zoom_delta) =
         ui.input(|i| (i.pointer.clone(), i.modifiers, i.key_down(egui::Key::Space), i.smooth_scroll_delta, i.zoom_delta()));
     let v = *app.view().unwrap_or(&View::default());
@@ -400,7 +400,7 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
                         deg = (deg / 15.0).round() * 15.0;
                     }
                     if let Some(vm) = app.view_mut() {
-                        vm.rotation = drawcraft_geom::normalize_deg(deg);
+                        vm.rotation = vectorcraft_geom::normalize_deg(deg);
                     }
                 }
                 Drag::ZoomBox { .. } => {}
@@ -460,13 +460,13 @@ fn handle_input(app: &mut DrawcraftApp, ui: &Ui, resp: &egui::Response, rect: eg
 }
 
 /// Send a pointer event to the active tool and act on UI requests (dialogs, tool switches).
-pub fn dispatch(app: &mut DrawcraftApp, ev: &PointerEvent, view: drawcraft_engine::ViewInfo) {
+pub fn dispatch(app: &mut VectorcraftApp, ev: &PointerEvent, view: vectorcraft_engine::ViewInfo) {
     match app.session.pointer(ev, view) {
         Ok(reqs) => {
             for r in reqs {
                 match r {
-                    drawcraft_engine::UiRequest::Dialog(kind, p) => crate::dialogs::open_tool_dialog(app, &kind, p),
-                    drawcraft_engine::UiRequest::SwitchTool(t) => app.select_tool(&t),
+                    vectorcraft_engine::UiRequest::Dialog(kind, p) => crate::dialogs::open_tool_dialog(app, &kind, p),
+                    vectorcraft_engine::UiRequest::SwitchTool(t) => app.select_tool(&t),
                 }
             }
         }
@@ -636,7 +636,7 @@ fn node_outline(n: &Node) -> BezPath {
         NodeKind::Path { path, .. } => bp.extend(path.to_bezpath()),
         NodeKind::Text(_) | NodeKind::Image(_) | NodeKind::SymbolInstance { .. } => {
             if let Some(b) = c.geometric_bounds() {
-                bp.extend(drawcraft_geom::shapes::rectangle(b).to_bezpath());
+                bp.extend(vectorcraft_geom::shapes::rectangle(b).to_bezpath());
             }
         }
         _ => {}
@@ -644,14 +644,14 @@ fn node_outline(n: &Node) -> BezPath {
     bp
 }
 
-fn hover_highlight(app: &DrawcraftApp, p: &egui::Painter, xf: &Xf) {
+fn hover_highlight(app: &VectorcraftApp, p: &egui::Painter, xf: &Xf) {
     let Some(h) = app.hover_doc else { return };
     if app.session.tool_busy() || !matches!(app.session.tool_id(), "selection" | "directSelection" | "groupSelection") {
         return;
     }
     let Some(st) = app.session.active() else { return };
-    let opt = drawcraft_doc::hit::HitOptions { tol: 3.0 / xf.zoom, outline: app.ui.view.outline, path_only: false };
-    let Some(hit) = drawcraft_doc::hit::hit_test(&st.doc, h, opt) else { return };
+    let opt = vectorcraft_doc::hit::HitOptions { tol: 3.0 / xf.zoom, outline: app.ui.view.outline, path_only: false };
+    let Some(hit) = vectorcraft_doc::hit::hit_test(&st.doc, h, opt) else { return };
     let id = if app.session.tool_id() == "selection" { hit.top_object(st.isolation) } else { hit.leaf };
     if st.selection.contains(id) {
         return;
@@ -677,7 +677,7 @@ fn anchor_square(p: &egui::Painter, c: Pos2, color: Color32, filled: bool, size:
     }
 }
 
-fn selection_overlay(app: &DrawcraftApp, p: &egui::Painter, xf: &Xf) {
+fn selection_overlay(app: &VectorcraftApp, p: &egui::Painter, xf: &Xf) {
     let Some(st) = app.session.active() else { return };
     let tool = app.session.tool_id();
     let direct = matches!(tool, "directSelection" | "pen" | "addAnchor" | "deleteAnchor" | "anchorPoint" | "curvature");
@@ -727,7 +727,7 @@ fn selection_overlay(app: &DrawcraftApp, p: &egui::Painter, xf: &Xf) {
     // Live corner widgets (Direct Selection on a single live rectangle).
     if tool == "directSelection"
         && st.selection.len() == 1
-        && let Some(NodeKind::Path { live: Some(drawcraft_doc::LiveShape::Rectangle { w, h, radii, xf: lxf }), .. }) =
+        && let Some(NodeKind::Path { live: Some(vectorcraft_doc::LiveShape::Rectangle { w, h, radii, xf: lxf }), .. }) =
             st.doc.node(st.selection.objects[0]).map(|n| &n.kind)
     {
         let color = c32(st.doc.layer_color(st.selection.objects[0]));
@@ -743,7 +743,7 @@ fn selection_overlay(app: &DrawcraftApp, p: &egui::Painter, xf: &Xf) {
         let Some(b) = st.doc.bounds_of(&st.selection.objects, false) else { return };
         let color = c32(st.doc.layer_color(st.selection.objects[0]));
         p.add(Shape::closed_line(xf.quad(b), Stroke::new(1.0, color)));
-        for h in drawcraft_tools::bbox::Handle::ALL {
+        for h in vectorcraft_tools::bbox::Handle::ALL {
             let c = xf.to_screen(h.pos(b));
             let hr = egui::Rect::from_center_size(c, vec2(6.0, 6.0));
             p.rect_filled(hr, 0.0, Color32::WHITE);
@@ -805,13 +805,13 @@ fn draw_overlays(p: &egui::Painter, xf: &Xf, overlays: &[Overlay], t: &Tokens) {
 }
 
 /// The Home screen shown when no document is open.
-fn home(app: &mut DrawcraftApp, ui: &mut Ui, rect: egui::Rect) {
+fn home(app: &mut VectorcraftApp, ui: &mut Ui, rect: egui::Rect) {
     let t = Tokens::get(ui.ctx());
     ui.painter().rect_filled(rect, 0.0, t.panel_darker);
     let inner = rect.shrink2(vec2((rect.width() - 820.0).max(40.0) / 2.0, 60.0));
     let mut child = ui.new_child(egui::UiBuilder::new().max_rect(inner).layout(egui::Layout::top_down(egui::Align::Min)));
     let ui = &mut child;
-    ui.label(egui::RichText::new("Welcome to DrawCraft").font(theme::semibold(26.0)).color(t.text));
+    ui.label(egui::RichText::new("Welcome to VectorCraft").font(theme::semibold(26.0)).color(t.text));
     ui.add_space(4.0);
     ui.label(egui::RichText::new("Vector illustration — fast, open, scriptable.").size(14.0).color(t.text_dim));
     ui.add_space(22.0);
@@ -854,10 +854,10 @@ fn home(app: &mut DrawcraftApp, ui: &mut Ui, rect: egui::Rect) {
 }
 
 fn kurbo_flatten(p: &BezPath, tol: f64, f: &mut impl FnMut(PathEl)) {
-    drawcraft_geom::kurbo::flatten(p.elements().iter().copied(), tol, f);
+    vectorcraft_geom::kurbo::flatten(p.elements().iter().copied(), tol, f);
 }
 
-fn upload(app: &mut DrawcraftApp, ctx: &egui::Context, img: &drawcraft_render::Rendered) {
+fn upload(app: &mut VectorcraftApp, ctx: &egui::Context, img: &vectorcraft_render::Rendered) {
     let color = egui::ColorImage::from_rgba_premultiplied([img.width as usize, img.height as usize], &img.pixels);
     match &mut app.canvas.texture {
         Some(tex) => tex.set(color, egui::TextureOptions::LINEAR),
@@ -866,7 +866,7 @@ fn upload(app: &mut DrawcraftApp, ctx: &egui::Context, img: &drawcraft_render::R
 }
 
 /// The Contextual Task Bar: a floating pill under the selection with the most likely next actions.
-fn task_bar(app: &mut DrawcraftApp, ui: &mut Ui, xf: &Xf) {
+fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
     let t = Tokens::get(ui.ctx());
     let Some(st) = app.session.active() else { return };
     if st.selection.is_empty() || !matches!(app.session.tool_id(), "selection" | "directSelection" | "groupSelection") {

@@ -1,11 +1,11 @@
 //! Graphic Styles panel: thumbnail grid or list of the document's styles.
 
-use drawcraft_doc::Appearance;
 use egui::{Rect, Sense, Stroke, StrokeKind, Ui, vec2};
 use serde_json::json;
+use vectorcraft_doc::Appearance;
 
 use super::{pstate, selection_len, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
 
@@ -29,7 +29,7 @@ fn preview(ui: &Ui, r: Rect, ap: &Appearance) {
     }
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let styles: Vec<(String, Appearance)> =
         app.session.active().map(|d| d.doc.graphic_styles.iter().map(|g| (g.name.clone(), g.appearance.clone())).collect()).unwrap_or_default();
@@ -110,7 +110,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let sel: Option<String> = pstate(ui.ctx(), "gs-sel");
     let list: bool = pstate(ui.ctx(), "gs-list");
     if menu_item(ui, "New Graphic Style…", selection_len(app) > 0, false) {

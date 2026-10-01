@@ -1,6 +1,6 @@
-use drawcraft_doc::Effect;
-use drawcraft_geom::{PathData, Point, Rect, Shape, SubPath, shapes};
 use serde_json::{Value, json};
+use vectorcraft_doc::Effect;
+use vectorcraft_geom::{PathData, Point, Rect, Shape, SubPath, shapes};
 
 use super::*;
 
@@ -287,7 +287,7 @@ fn raster_effects_parse_and_outset() {
     assert_eq!(r.len(), 5);
     match &r[0] {
         RasterFx::DropShadow { mode, opacity, dx, dy, blur, color } => {
-            assert_eq!(*mode, drawcraft_doc::color::BlendMode::Multiply);
+            assert_eq!(*mode, vectorcraft_doc::color::BlendMode::Multiply);
             assert!(close(*opacity as f64, 0.5, 1e-6));
             assert_eq!((*dx, *dy, *blur), (10.0, -4.0, 6.0));
             assert_eq!(color.to_rgb(), [1.0, 0.0, 0.0]);
@@ -301,7 +301,7 @@ fn raster_effects_parse_and_outset() {
 
 #[test]
 fn blend_mode_names() {
-    use drawcraft_doc::color::BlendMode;
+    use vectorcraft_doc::color::BlendMode;
     assert_eq!(raster::blend_mode("Color-Burn"), BlendMode::ColorBurn);
     assert_eq!(raster::blend_mode("screen"), BlendMode::Screen);
     assert_eq!(raster::blend_mode("???"), BlendMode::Normal);

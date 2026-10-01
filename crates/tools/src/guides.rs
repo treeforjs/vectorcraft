@@ -1,8 +1,8 @@
 //! Smart Guides: snapping to anchors, object bounds (edges/centres), artboards, with the magenta
 //! construction lines and labels Illustrator users expect.
 
-use drawcraft_doc::{Document, NodeId, NodeKind};
-use drawcraft_geom::{Point, Rect, Vec2};
+use vectorcraft_doc::{Document, NodeId, NodeKind};
+use vectorcraft_geom::{Point, Rect, Vec2};
 
 use crate::{Overlay, ToolContext};
 
@@ -137,7 +137,7 @@ impl Targets {
 pub fn snap_draw(cx: &ToolContext, p: Point, exclude: &[NodeId]) -> (Point, Vec<Overlay>) {
     if cx.snap_to_grid {
         let s = cx.doc.grid.spacing / cx.doc.grid.subdivisions.max(1) as f64;
-        return (drawcraft_geom::snap::snap_point_to_grid(p, s), vec![]);
+        return (vectorcraft_geom::snap::snap_point_to_grid(p, s), vec![]);
     }
     if !cx.smart_guides {
         return (p, vec![]);

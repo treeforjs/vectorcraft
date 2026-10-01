@@ -6,13 +6,13 @@ use serde_json::json;
 use super::{pstate, set_pstate};
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
 fn selected(ui: &Ui, n: usize) -> usize {
     pstate::<usize>(ui.ctx(), "ab-sel").min(n.saturating_sub(1))
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let abs: Vec<String> = app.session.active().map(|d| d.doc.artboards.iter().map(|a| a.name.clone()).collect()).unwrap_or_default();
     if abs.is_empty() {
@@ -97,7 +97,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let n = app.session.active().map(|d| d.doc.artboards.len()).unwrap_or(0);
     let sel = selected(ui, n);
     if menu_item(ui, "New Artboard", n > 0, false) {

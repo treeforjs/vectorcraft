@@ -1,8 +1,8 @@
 //! Creating art: shapes, paths, text.
 
-use drawcraft_doc::{Appearance, CharStyle, LiveShape, Node, NodeKind, TextObject};
-use drawcraft_geom::{Affine, Anchor, AnchorKind, FillRule, PathData, Point, Rect, SubPath, shapes};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Appearance, CharStyle, LiveShape, Node, NodeKind, TextObject};
+use vectorcraft_geom::{Affine, Anchor, AnchorKind, FillRule, PathData, Point, Rect, SubPath, shapes};
 
 use super::*;
 
@@ -72,7 +72,7 @@ pub(crate) fn add_node(s: &mut Session, label: &str, kind: NodeKind, appearance:
                         let (par, idx, _) = d.position(target).ok_or(crate::EngineError::NoNode(target))?;
                         let mut mask = d.node(target).cloned().ok_or(crate::EngineError::NoNode(target))?;
                         mask.id = d.alloc_id();
-                        mask.appearance = Appearance::basic(drawcraft_color::Paint::None, drawcraft_color::Paint::None, 0.0);
+                        mask.appearance = Appearance::basic(vectorcraft_color::Paint::None, vectorcraft_color::Paint::None, 0.0);
                         if let NodeKind::Path { clipping, .. } = &mut mask.kind {
                             *clipping = true;
                         }
@@ -184,8 +184,8 @@ fn line(s: &mut Session, p: &Value) -> Result<Value> {
     let live = LiveShape::Line { a, b };
     // Lines are stroked, never filled (Illustrator ignores the fill for new open lines).
     let appearance = Appearance::basic(
-        drawcraft_color::Paint::None,
-        if s.paint.stroke.is_none() { drawcraft_color::Paint::solid(drawcraft_color::Color::BLACK) } else { s.paint.stroke.clone() },
+        vectorcraft_color::Paint::None,
+        if s.paint.stroke.is_none() { vectorcraft_color::Paint::solid(vectorcraft_color::Color::BLACK) } else { s.paint.stroke.clone() },
         s.paint.stroke_width.max(0.1),
     );
     add_node(s, "Line", path_kind(live.to_path(), Some(live)), appearance, None)
@@ -211,7 +211,7 @@ fn arc(s: &mut Session, p: &Value) -> Result<Value> {
 
 fn grid_group(s: &mut Session, label: &str, paths: Vec<PathData>) -> Result<Value> {
     let parent = s.doc()?.insertion_parent();
-    let ap = Appearance::basic(drawcraft_color::Paint::None, s.paint.stroke.clone(), s.paint.stroke_width);
+    let ap = Appearance::basic(vectorcraft_color::Paint::None, s.paint.stroke.clone(), s.paint.stroke_width);
     let id = s.edit(label, |d, sel| {
         let children = paths
             .into_iter()
@@ -255,7 +255,7 @@ pub(crate) fn anchor_from_json(v: &Value) -> Option<Anchor> {
 
 fn path_create(s: &mut Session, p: &Value) -> Result<Value> {
     let path = if let Some(d) = str_param(p, "d") {
-        let bp = drawcraft_geom::BezPath::from_svg(d).map_err(|e| bad("path.create", format!("bad path data: {e}")))?;
+        let bp = vectorcraft_geom::BezPath::from_svg(d).map_err(|e| bad("path.create", format!("bad path data: {e}")))?;
         PathData::from_bezpath(&bp)
     } else {
         let anchors: Vec<Anchor> = p
@@ -273,7 +273,7 @@ fn path_create(s: &mut Session, p: &Value) -> Result<Value> {
     let mut ap = Appearance::basic(s.paint.fill.clone(), s.paint.stroke.clone(), s.paint.stroke_width);
     // Open paths drawn with a stroke of None would be invisible: mimic Illustrator and keep what the user set.
     if !path.is_closed() && ap.stroke_paint().is_none() && ap.fill_paint().is_none() {
-        ap.set_stroke(drawcraft_color::Paint::solid(drawcraft_color::Color::BLACK));
+        ap.set_stroke(vectorcraft_color::Paint::solid(vectorcraft_color::Color::BLACK));
     }
     add_node(s, "Pen", path_kind(path, None), ap, None)
 }
@@ -293,17 +293,17 @@ fn text_create(s: &mut Session, p: &Value) -> Result<Value> {
         style.font_style = f.to_string();
     }
     style.fill = match p.get("color").and_then(color_value) {
-        Some(c) => drawcraft_color::Paint::solid(c),
-        None if !s.paint.fill.is_none() && s.paint.fill != drawcraft_color::Paint::solid(drawcraft_color::Color::WHITE) => s.paint.fill.clone(),
-        None => drawcraft_color::Paint::solid(drawcraft_color::Color::BLACK),
+        Some(c) => vectorcraft_color::Paint::solid(c),
+        None if !s.paint.fill.is_none() && s.paint.fill != vectorcraft_color::Paint::solid(vectorcraft_color::Color::WHITE) => s.paint.fill.clone(),
+        None => vectorcraft_color::Paint::solid(vectorcraft_color::Color::BLACK),
     };
     let mut t = TextObject::point(Point::new(x, y), text, style);
     if let Some(a) = p.get("area") {
         let w = f64_or(a, "width", 200.0);
         let h = f64_or(a, "height", 100.0);
-        t.kind = drawcraft_doc::TextKind::Area { frame: shapes::rectangle(Rect::new(0.0, 0.0, w, h)) };
+        t.kind = vectorcraft_doc::TextKind::Area { frame: shapes::rectangle(Rect::new(0.0, 0.0, w, h)) };
     }
-    let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), &t);
+    let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), &t);
     t.cached_bounds = Some(lay.bounds);
     add_node(s, "Type", NodeKind::Text(Box::new(t)), Appearance::default(), None)
 }

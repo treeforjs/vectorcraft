@@ -7,7 +7,7 @@ use std::time::Duration;
 use serde_json::{Value, json};
 
 /// Something that answers control-channel methods (`engine.execute`, `document.inspect`,
-/// `ui.pointer`, `ui.render`, `app.export`, …). See `drawcraft_ui_egui::control` for the list.
+/// `ui.pointer`, `ui.render`, `app.export`, …). See `vectorcraft_ui_egui::control` for the list.
 pub trait Backend {
     /// Call one method. `Ok` carries the `result`, `Err` the error message.
     fn call(&mut self, method: &str, params: Value) -> Result<Value, String>;
@@ -17,7 +17,7 @@ pub trait Backend {
     fn describe(&self) -> String;
 }
 
-/// A running DrawCraft app, reached through its loopback control port.
+/// A running VectorCraft app, reached through its loopback control port.
 pub struct Remote {
     addr: String,
     conn: Option<(BufReader<TcpStream>, TcpStream)>,
@@ -83,7 +83,7 @@ impl Backend for Remote {
                 self.conn = None;
                 self.roundtrip(&line).map_err(|e| {
                     self.conn = None;
-                    format!("DrawCraft app at {} is not reachable: {e}", self.addr)
+                    format!("VectorCraft app at {} is not reachable: {e}", self.addr)
                 })?
             }
         };

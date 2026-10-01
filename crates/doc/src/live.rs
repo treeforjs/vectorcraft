@@ -17,9 +17,9 @@
 use std::f64::consts::PI;
 use std::sync::Arc;
 
-use drawcraft_color::{Color, Gradient, GradientPaint, Paint};
-use drawcraft_geom::{Affine, Anchor, BezPath, CubicBez, FillRule, ParamCurve, PathData, Point, Rect, Shape, SubPath, Vec2};
 use serde::{Deserialize, Serialize};
+use vectorcraft_color::{Color, Gradient, GradientPaint, Paint};
+use vectorcraft_geom::{Affine, Anchor, BezPath, CubicBez, FillRule, ParamCurve, PathData, Point, Rect, Shape, SubPath, Vec2};
 
 use crate::appearance::{Appearance, AppearanceItem, FillLayer};
 use crate::node::{Node, NodeId, NodeKind};
@@ -525,7 +525,7 @@ pub fn blend_expand(keys: &[Arc<Node>], spec: &BlendSpec) -> Vec<Node> {
 }
 
 // =====================================================================================
-// Warp maps (shared with drawcraft-effects' Warp effects)
+// Warp maps (shared with vectorcraft-effects' Warp effects)
 // =====================================================================================
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -688,8 +688,8 @@ fn flatten_subpath(sp: &SubPath, tol: f64) -> Vec<Point> {
     let mut bp = BezPath::new();
     sp.to_bezpath_into(&mut bp);
     let mut pts: Vec<Point> = Vec::new();
-    drawcraft_geom::kurbo::flatten(bp.iter(), tol, |el| match el {
-        drawcraft_geom::PathEl::MoveTo(p) | drawcraft_geom::PathEl::LineTo(p) if pts.last().is_none_or(|q| q.distance(p) > 1e-9) => pts.push(p),
+    vectorcraft_geom::kurbo::flatten(bp.iter(), tol, |el| match el {
+        vectorcraft_geom::PathEl::MoveTo(p) | vectorcraft_geom::PathEl::LineTo(p) if pts.last().is_none_or(|q| q.distance(p) > 1e-9) => pts.push(p),
         _ => {}
     });
     pts
@@ -1214,7 +1214,7 @@ impl GradientMesh {
 
 /// Union of the geometric bounds of `nodes`.
 pub fn nodes_bounds(nodes: &[Arc<Node>]) -> Option<Rect> {
-    nodes.iter().fold(None, |acc, c| drawcraft_geom::union_opt(acc, c.geometric_bounds()))
+    nodes.iter().fold(None, |acc, c| vectorcraft_geom::union_opt(acc, c.geometric_bounds()))
 }
 
 /// A `(rows+1)×(cols+1)` grid over `r` (row-major).
@@ -1452,7 +1452,7 @@ pub(crate) fn max_outset(nodes: &[Arc<Node>]) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use drawcraft_geom::shapes;
+    use vectorcraft_geom::shapes;
 
     fn rect_node(x: f64, y: f64, w: f64, h: f64, c: Color) -> Arc<Node> {
         Arc::new(Node::path(NodeId(1), shapes::rectangle(Rect::new(x, y, x + w, y + h)), Appearance::basic(Paint::solid(c), Paint::None, 0.0)))

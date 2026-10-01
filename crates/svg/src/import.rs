@@ -4,13 +4,13 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use drawcraft_color::{BlendMode, Color, Gradient, GradientGeom, GradientKind, GradientPaint, GradientStop, Paint};
-use drawcraft_doc::{
+use usvg::roxmltree;
+use vectorcraft_color::{BlendMode, Color, Gradient, GradientGeom, GradientKind, GradientPaint, GradientStop, Paint};
+use vectorcraft_doc::{
     Appearance, AppearanceItem, CharStyle, Dash, Document, FillLayer, ImageBlob, ImageObject, Justify, LayerColor, LineCap, LineJoin, Node, NodeKind,
     StrokeLayer, TextKind, TextObject, TextRun,
 };
-use drawcraft_geom::{Affine, BezPath, FillRule, PathData, Point, Vec2};
-use usvg::roxmltree;
+use vectorcraft_geom::{Affine, BezPath, FillRule, PathData, Point, Vec2};
 
 use crate::SvgError;
 
@@ -42,7 +42,7 @@ pub(crate) fn import(svg: &str) -> Result<(Document, Vec<String>), SvgError> {
             let usvg::Node::Group(g) = c else { continue };
             let children = im.children(g, base * aff(g.transform()));
             let id = im.doc.alloc_id();
-            let mut l = Node::layer(id, g.id(), LayerColor::Preset((i % drawcraft_doc::LAYER_COLORS.len()) as u8));
+            let mut l = Node::layer(id, g.id(), LayerColor::Preset((i % vectorcraft_doc::LAYER_COLORS.len()) as u8));
             if let Some(ch) = l.children_mut() {
                 *ch = children;
             }
@@ -208,7 +208,7 @@ impl Importer {
     }
 
     /// `<mask>` → opacity mask (luminance; alpha masks are approximated by their luminance).
-    fn opacity_mask(&mut self, m: &usvg::Mask, ts: Affine, label: &str) -> Option<Box<drawcraft_doc::OpacityMask>> {
+    fn opacity_mask(&mut self, m: &usvg::Mask, ts: Affine, label: &str) -> Option<Box<vectorcraft_doc::OpacityMask>> {
         if m.kind() == usvg::MaskType::Alpha {
             self.warn(format!("alpha mask on {label} imported as a luminance opacity mask"));
         }
@@ -220,7 +220,7 @@ impl Importer {
             return None;
         }
         let art = self.named("", NodeKind::Group { children, clip: false });
-        Some(Box::new(drawcraft_doc::OpacityMask::new(art, true)))
+        Some(Box::new(vectorcraft_doc::OpacityMask::new(art, true)))
     }
 
     fn clip_node(&mut self, cp: &usvg::ClipPath, ts: Affine) -> Option<Node> {

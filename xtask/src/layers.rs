@@ -30,7 +30,7 @@ impl Class {
     }
 }
 
-/// The layering table. Names are package names without the `drawcraft-`
+/// The layering table. Names are package names without the `vectorcraft-`
 /// prefix.
 pub const TABLE: &[(&str, Class)] = &[
     ("geom", Class::Layer(0)),
@@ -51,7 +51,7 @@ pub const TABLE: &[(&str, Class)] = &[
     ("mcp", Class::Layer(6)),
     ("testkit", Class::Testkit),
     // L7 apps and tooling
-    ("drawcraft", Class::Exempt),
+    ("vectorcraft", Class::Exempt),
     ("cli", Class::Exempt),
     ("web", Class::Exempt),
     ("xtask", Class::Exempt),
@@ -79,7 +79,7 @@ pub const UI_CRATES: &[&str] = &["egui", "eframe", "winit", "egui_kittest", "rfd
 pub const UI_MIN_LAYER: u8 = 6;
 
 pub fn short_name(pkg: &str) -> &str {
-    pkg.strip_prefix("drawcraft-").unwrap_or(pkg)
+    pkg.strip_prefix("vectorcraft-").unwrap_or(pkg)
 }
 
 pub fn classify(pkg: &str) -> Option<Class> {
@@ -137,7 +137,7 @@ impl std::fmt::Display for Violation {
                 write!(f, "{krate}: standalone crate must not depend on workspace crate {dep}")
             }
             Violation::TestkitAsNormalDep { krate } => {
-                write!(f, "{krate}: drawcraft-testkit may only be a dev-dependency")
+                write!(f, "{krate}: vectorcraft-testkit may only be a dev-dependency")
             }
             Violation::UiBelowL6 { krate, dep, layer } => {
                 write!(f, "{krate} (L{layer}) depends on UI crate `{dep}`; UI toolkits are only allowed in L6+")
@@ -245,76 +245,76 @@ mod tests {
     #[test]
     fn clean_downward_graph_passes() {
         let g = [
-            c("drawcraft-geom", &[("kurbo", Normal, false)]),
-            c("drawcraft-doc", &[("drawcraft-geom", Normal, true)]),
-            c("drawcraft-engine", &[("drawcraft-doc", Normal, true), ("drawcraft-testkit", Dev, true)]),
-            c("drawcraft-ui-egui", &[("drawcraft-engine", Normal, true), ("egui", Normal, false)]),
-            c("drawcraft-cli", &[("drawcraft-ui-egui", Normal, true)]),
+            c("vectorcraft-geom", &[("kurbo", Normal, false)]),
+            c("vectorcraft-doc", &[("vectorcraft-geom", Normal, true)]),
+            c("vectorcraft-engine", &[("vectorcraft-doc", Normal, true), ("vectorcraft-testkit", Dev, true)]),
+            c("vectorcraft-ui-egui", &[("vectorcraft-engine", Normal, true), ("egui", Normal, false)]),
+            c("vectorcraft-cli", &[("vectorcraft-ui-egui", Normal, true)]),
         ];
         assert!(check(&g).is_empty(), "{:?}", check(&g));
     }
 
     #[test]
     fn upward_dependency_flagged() {
-        let v = check(&[c("drawcraft-doc", &[("drawcraft-engine", Normal, true)])]);
+        let v = check(&[c("vectorcraft-doc", &[("vectorcraft-engine", Normal, true)])]);
         assert!(matches!(v[..], [Violation::Upward { from: 1, to: 5, .. }]));
     }
 
     #[test]
     fn sideways_dependency_flagged() {
-        let v = check(&[c("drawcraft-text", &[("drawcraft-pathops", Normal, true)])]);
+        let v = check(&[c("vectorcraft-text", &[("vectorcraft-pathops", Normal, true)])]);
         assert!(matches!(v[..], [Violation::Upward { from: 2, to: 2, .. }]));
     }
 
     #[test]
     fn l0_foundation_chain_allowed_one_way() {
-        assert!(check(&[c("drawcraft-color", &[("drawcraft-geom", Normal, true)])]).is_empty());
-        let v = check(&[c("drawcraft-geom", &[("drawcraft-color", Normal, true)])]);
+        assert!(check(&[c("vectorcraft-color", &[("vectorcraft-geom", Normal, true)])]).is_empty());
+        let v = check(&[c("vectorcraft-geom", &[("vectorcraft-color", Normal, true)])]);
         assert!(matches!(v[..], [Violation::Upward { from: 0, to: 0, .. }]));
     }
 
     #[test]
     fn self_dev_dependency_ignored() {
-        assert!(check(&[c("drawcraft-doc", &[("drawcraft-doc", Dev, true)])]).is_empty());
+        assert!(check(&[c("vectorcraft-doc", &[("vectorcraft-doc", Dev, true)])]).is_empty());
     }
 
     #[test]
     fn upward_dev_dependency_flagged() {
-        let v = check(&[c("drawcraft-geom", &[("drawcraft-doc", Dev, true)])]);
+        let v = check(&[c("vectorcraft-geom", &[("vectorcraft-doc", Dev, true)])]);
         assert!(matches!(v[..], [Violation::Upward { kind: Dev, .. }]));
     }
 
     #[test]
     fn ui_crates_below_l6_flagged() {
         for dep in ["egui", "eframe", "winit", "egui_kittest", "rfd", "bevy_ecs", "bevy"] {
-            let v = check(&[c("drawcraft-engine", &[(dep, Normal, false)])]);
+            let v = check(&[c("vectorcraft-engine", &[(dep, Normal, false)])]);
             assert!(matches!(v[..], [Violation::UiBelowL6 { layer: 5, .. }]), "{dep}");
         }
-        assert!(check(&[c("drawcraft-engine", &[("egui_extras_not", Normal, false)])]).is_empty());
-        assert!(check(&[c("drawcraft-mcp", &[("winit", Normal, false)])]).is_empty());
+        assert!(check(&[c("vectorcraft-engine", &[("egui_extras_not", Normal, false)])]).is_empty());
+        assert!(check(&[c("vectorcraft-mcp", &[("winit", Normal, false)])]).is_empty());
     }
 
     #[test]
     fn unregistered_crate_is_error() {
-        let v = check(&[c("drawcraft-mystery", &[])]);
-        assert!(matches!(&v[..], [Violation::Unregistered { krate }] if krate == "drawcraft-mystery"));
+        let v = check(&[c("vectorcraft-mystery", &[])]);
+        assert!(matches!(&v[..], [Violation::Unregistered { krate }] if krate == "vectorcraft-mystery"));
         assert!(v[0].to_string().contains("register"));
     }
 
     #[test]
     fn testkit_only_as_dev_dependency() {
-        let v = check(&[c("drawcraft-render", &[("drawcraft-testkit", Normal, true)])]);
+        let v = check(&[c("vectorcraft-render", &[("vectorcraft-testkit", Normal, true)])]);
         assert!(matches!(v[..], [Violation::TestkitAsNormalDep { .. }]));
-        assert!(check(&[c("drawcraft-render", &[("drawcraft-testkit", Dev, true)])]).is_empty());
+        assert!(check(&[c("vectorcraft-render", &[("vectorcraft-testkit", Dev, true)])]).is_empty());
         // testkit itself may use anything up to L5 but not L6 crates.
-        assert!(check(&[c("drawcraft-testkit", &[("drawcraft-engine", Normal, true)])]).is_empty());
-        assert!(!check(&[c("drawcraft-testkit", &[("drawcraft-ui-egui", Normal, true)])]).is_empty());
+        assert!(check(&[c("vectorcraft-testkit", &[("vectorcraft-engine", Normal, true)])]).is_empty());
+        assert!(!check(&[c("vectorcraft-testkit", &[("vectorcraft-ui-egui", Normal, true)])]).is_empty());
     }
 
     #[test]
     fn apps_and_xtask_exempt() {
-        for app in ["drawcraft", "drawcraft-cli", "drawcraft-web", "xtask"] {
-            assert!(check(&[c(app, &[("egui", Normal, false), ("drawcraft-ui-egui", Normal, true)])]).is_empty());
+        for app in ["vectorcraft", "vectorcraft-cli", "vectorcraft-web", "xtask"] {
+            assert!(check(&[c(app, &[("egui", Normal, false), ("vectorcraft-ui-egui", Normal, true)])]).is_empty());
         }
     }
 
@@ -322,17 +322,17 @@ mod tests {
     fn metadata_parsing() {
         let meta: Value = serde_json::from_str(
             r#"{"packages":[
-                {"name":"drawcraft-doc","dependencies":[
-                    {"name":"drawcraft-geom","kind":null,"path":"/x/crates/geom"},
+                {"name":"vectorcraft-doc","dependencies":[
+                    {"name":"vectorcraft-geom","kind":null,"path":"/x/crates/geom"},
                     {"name":"serde","kind":null},
                     {"name":"proptest","kind":"dev"}]},
-                {"name":"drawcraft-geom","dependencies":[]}
+                {"name":"vectorcraft-geom","dependencies":[]}
             ]}"#,
         )
         .unwrap();
         let g = from_metadata(&meta).unwrap();
         assert_eq!(g.len(), 2);
-        let doc = g.iter().find(|c| c.name == "drawcraft-doc").unwrap();
+        let doc = g.iter().find(|c| c.name == "vectorcraft-doc").unwrap();
         assert!(doc.deps[0].workspace && !doc.deps[1].workspace);
         assert_eq!(doc.deps[2].kind, Dev);
         assert!(check(&g).is_empty());

@@ -4,7 +4,7 @@
 //! testing need nothing special; after an edit the engine joins the slices and re-distributes them
 //! with [`distribute`].
 
-use drawcraft_doc::{TextObject, TextRun};
+use vectorcraft_doc::{TextObject, TextRun};
 
 use crate::edit::{normalize, runs_len, slice_runs, style_at};
 use crate::{FontDb, layout};
@@ -59,11 +59,11 @@ pub fn distribute(db: &FontDb, frames: &[&TextObject], runs: &[TextRun]) -> Vec<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use drawcraft_doc::{CharStyle, TextKind};
-    use drawcraft_geom::{Affine, Rect, shapes};
+    use vectorcraft_doc::{CharStyle, TextKind};
+    use vectorcraft_geom::{Affine, Rect, shapes};
 
     fn frame(x: f64) -> TextObject {
-        let mut t = TextObject::point(drawcraft_geom::Point::ZERO, "", CharStyle::default());
+        let mut t = TextObject::point(vectorcraft_geom::Point::ZERO, "", CharStyle::default());
         t.kind = TextKind::Area { frame: shapes::rectangle(Rect::new(x, 0.0, x + 120.0, 60.0)) };
         t.xf = Affine::IDENTITY;
         t

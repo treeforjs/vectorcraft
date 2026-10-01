@@ -3,8 +3,8 @@
 
 use std::collections::BTreeMap;
 
-use drawcraft_doc::{Document, NodeId, NodeKind};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, NodeId, NodeKind};
 
 use super::typecmd::refresh_bounds;
 use super::*;
@@ -45,7 +45,7 @@ pub fn specs() -> Vec<CommandSpec> {
 fn scope(s: &Session, selection_only: bool) -> Result<Vec<NodeId>> {
     let st = s.doc()?;
     let mut v = vec![];
-    let mut add = |n: &drawcraft_doc::Node| {
+    let mut add = |n: &vectorcraft_doc::Node| {
         n.walk(&mut |c| {
             if matches!(c.kind, NodeKind::Text(_)) && !v.contains(&c.id) {
                 v.push(c.id);
@@ -66,7 +66,7 @@ fn scope(s: &Session, selection_only: bool) -> Result<Vec<NodeId>> {
     Ok(v)
 }
 
-fn text(d: &Document, id: NodeId) -> Option<&drawcraft_doc::TextObject> {
+fn text(d: &Document, id: NodeId) -> Option<&vectorcraft_doc::TextObject> {
     match d.node(id).map(|n| &n.kind) {
         Some(NodeKind::Text(t)) => Some(t),
         _ => None,
@@ -76,7 +76,7 @@ fn text(d: &Document, id: NodeId) -> Option<&drawcraft_doc::TextObject> {
 fn fonts(s: &mut Session, p: &Value) -> Result<Value> {
     let ids = scope(s, bool_or(p, "selectionOnly", false))?;
     let d = &s.doc()?.doc;
-    let db = drawcraft_text::FontDb::global();
+    let db = vectorcraft_text::FontDb::global();
     let families = db.families();
     let mut found: BTreeMap<(String, String), (usize, Vec<NodeId>)> = BTreeMap::new();
     for id in ids {
@@ -110,13 +110,14 @@ fn replace(s: &mut Session, p: &Value) -> Result<Value> {
     const C: &str = "text.replaceFont";
     let (ff, fs) = font_param(p, "from", C)?;
     let (tf, ts) = font_param(p, "to", C)?;
-    let db = drawcraft_text::FontDb::global();
+    let db = vectorcraft_text::FontDb::global();
     if !db.families().iter().any(|f| f.eq_ignore_ascii_case(&tf)) {
         return Err(bad(C, format!("font family `{tf}` is not available")));
     }
     let ids = scope(s, bool_or(p, "selectionOnly", false))?;
-    let matches =
-        |st: &drawcraft_doc::CharStyle| st.font_family.eq_ignore_ascii_case(&ff) && fs.as_ref().is_none_or(|x| st.font_style.eq_ignore_ascii_case(x));
+    let matches = |st: &vectorcraft_doc::CharStyle| {
+        st.font_family.eq_ignore_ascii_case(&ff) && fs.as_ref().is_none_or(|x| st.font_style.eq_ignore_ascii_case(x))
+    };
     let n = s.edit("Replace Font", |d, _| {
         let mut n = 0;
         for id in &ids {
@@ -133,7 +134,7 @@ fn replace(s: &mut Session, p: &Value) -> Result<Value> {
                 }
             }
             if changed {
-                drawcraft_text::edit::normalize(&mut t.runs);
+                vectorcraft_text::edit::normalize(&mut t.runs);
                 refresh_bounds(t);
             }
         }
@@ -184,5 +185,46 @@ mod tests {
         assert_eq!(fams, ["Source Sans 3", "Source Serif 4"]);
         assert!(s.execute("text.replaceFont", &json!({"from": {"family": "Source Serif 4"}, "to": {"family": "Nope"}})).is_err());
         let _ = a;
+    }
+}
+
+#[cfg(test)]
+mod open_tests {
+    use super::*;
+
+    #[test]
+    fn opened_documents_have_exact_text_bounds() {
+        let mut s = Session::new();
+        s.execute("file.new", &json!({"width": 400, "height": 200})).unwrap();
+        let id = s.execute("text.create", &json!({"x": 10, "y": 60, "text": "WIDE TRACKED", "size": 40})).unwrap()["id"].as_u64().unwrap();
+        s.execute("text.setStyle", &json!({"tracking": 400})).unwrap();
+        let want = s.doc().unwrap().doc.node(NodeId(id)).unwrap().geometric_bounds().unwrap();
+        // Save and reopen: the cache isn't in the file, yet the bounds must match.
+        let bytes = vectorcraft_format::save(&s.doc().unwrap().doc, false);
+        let reopened = vectorcraft_format::load(&bytes).unwrap();
+        let mut t = Session::new();
+        t.add_document(reopened, None);
+        let got = t.doc().unwrap().doc.node(NodeId(id)).unwrap().geometric_bounds().unwrap();
+        assert!((got.width() - want.width()).abs() < 1e-6, "{got:?} vs {want:?}");
+    }
+}
+
+#[cfg(test)]
+mod dirty_tests {
+    use super::*;
+
+    #[test]
+    fn selection_never_marks_modified_and_undo_to_saved_is_clean() {
+        let mut s = Session::new();
+        s.add_document(Document::new(100.0, 100.0), None);
+        let id = s.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap()["id"].clone();
+        s.doc_mut().unwrap().mark_saved();
+        s.execute("select.none", &json!({})).unwrap();
+        s.execute("select.set", &json!({"ids": [id]})).unwrap();
+        assert!(!s.doc().unwrap().is_dirty(), "selecting is not an edit");
+        s.execute("object.move", &json!({"dx": 5, "dy": 0})).unwrap();
+        assert!(s.doc().unwrap().is_dirty());
+        s.execute("edit.undo", &json!({})).unwrap();
+        assert!(!s.doc().unwrap().is_dirty(), "back to the saved state");
     }
 }

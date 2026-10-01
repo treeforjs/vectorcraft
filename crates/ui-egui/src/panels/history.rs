@@ -5,7 +5,7 @@ use serde_json::json;
 
 use crate::theme::Tokens;
 use crate::widgets::menu_item;
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
 /// Undo (negative) / redo (positive) steps to reach row `target` when `current` is the current
 /// row (row 0 = the document as opened).
@@ -13,7 +13,7 @@ pub fn steps_to(current: usize, target: usize) -> i64 {
     target as i64 - current as i64
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let Some(st) = app.session.active() else {
         super::empty_state(ui, "history", "No document", "Open a document to see its history.");
@@ -59,7 +59,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-pub fn menu(_app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(_app: &mut VectorcraftApp, ui: &mut Ui) {
     menu_item(ui, "History Options…", false, false);
 }
 

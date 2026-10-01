@@ -1,7 +1,7 @@
 use super::*;
-use drawcraft_doc::{CharStyle, Justify, TextKind, TextRun};
-use drawcraft_geom::PathData;
 use kurbo::{Affine, Shape};
+use vectorcraft_doc::{CharStyle, Justify, TextKind, TextRun};
+use vectorcraft_geom::PathData;
 
 fn db() -> &'static FontDb {
     FontDb::global()

@@ -1,14 +1,8 @@
-//! PDF → Document (hayro-interpret device that builds a DrawCraft node tree).
+//! PDF → Document (hayro-interpret device that builds a VectorCraft node tree).
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use drawcraft_color::{BlendMode, Color, Gradient, GradientGeom, GradientKind, GradientPaint, GradientStop, Paint};
-use drawcraft_doc::{
-    Appearance, AppearanceItem, Artboard, Dash, Document, FillLayer, ImageBlob, ImageObject, LayerColor, LineCap, LineJoin, Node, NodeId, NodeKind,
-    StrokeLayer,
-};
-use drawcraft_geom::{FillRule, PathData};
 use hayro_interpret::font::Glyph;
 use hayro_interpret::pattern::Pattern;
 use hayro_interpret::shading::ShadingType;
@@ -19,6 +13,12 @@ use hayro_interpret::{
 use hayro_syntax::Pdf;
 use hayro_syntax::object::Name;
 use kurbo::{Affine, BezPath, Point, Rect, Shape, Vec2};
+use vectorcraft_color::{BlendMode, Color, Gradient, GradientGeom, GradientKind, GradientPaint, GradientStop, Paint};
+use vectorcraft_doc::{
+    Appearance, AppearanceItem, Artboard, Dash, Document, FillLayer, ImageBlob, ImageObject, LayerColor, LineCap, LineJoin, Node, NodeId, NodeKind,
+    StrokeLayer,
+};
+use vectorcraft_geom::{FillRule, PathData};
 
 use crate::{ImportOptions, ImportReport, PdfError};
 
@@ -325,7 +325,7 @@ impl Builder {
         self.push_node(n);
     }
 
-    /// Convert a hayro paint to a DrawCraft paint and opacity. `bbox` is the painted area in
+    /// Convert a hayro paint to a VectorCraft paint and opacity. `bbox` is the painted area in
     /// document coordinates (for patterns).
     fn paint(&mut self, p: &hayro_interpret::Paint<'_>) -> (Paint, f32) {
         match p {

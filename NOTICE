@@ -1,11 +1,11 @@
-DrawCraft
-Copyright the DrawCraft contributors. Licensed under MIT OR Apache-2.0.
+VectorCraft
+Copyright the VectorCraft contributors. Licensed under MIT OR Apache-2.0.
 
 This product bundles third-party material under the following licences. Per-file attribution
 (author, source, licence) for every asset is in ASSETS.md. No Adobe icons, images or artwork are included.
 
 - Lucide icons (assets/icons/*.svg except dc-*.svg) — ISC License. See assets/icons/LICENSE-lucide.txt.
-- DrawCraft icons (assets/icons/dc-*.svg) — original work, MIT OR Apache-2.0.
+- VectorCraft icons (assets/icons/dc-*.svg) — original work, MIT OR Apache-2.0.
 - Source Sans 3 and Source Serif 4 (assets/fonts/Source*) — SIL Open Font License 1.1. See assets/fonts/OFL-SourceSans3.txt, OFL-SourceSerif4.txt.
 - Inter (assets/fonts/Inter-*.ttf) — SIL Open Font License 1.1. See assets/fonts/OFL-Inter.txt.
 - JetBrains Mono (assets/fonts/JetBrainsMono-*.ttf) — SIL Open Font License 1.1. See assets/fonts/OFL-JetBrainsMono.txt.

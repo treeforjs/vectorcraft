@@ -3,13 +3,13 @@
 
 use std::sync::{Mutex, OnceLock};
 
-use drawcraft_doc::{CharStyle, NodeId, NodeKind, Unit};
-use drawcraft_tools::{Mods, ToolKey};
 use egui::{Key, Ui, vec2};
 use serde_json::{Value, json};
+use vectorcraft_doc::{CharStyle, NodeId, NodeKind, Unit};
+use vectorcraft_tools::{Mods, ToolKey};
 
 use super::{first_selected, pstate, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
 
@@ -19,11 +19,11 @@ pub const SCALE_PRESETS: [f64; 8] = [25.0, 50.0, 75.0, 90.0, 100.0, 110.0, 125.0
 
 /// The character style shown by the panel: the selected range's (or the caret's) while the Type
 /// tool edits text, else the first selected text object's first run.
-pub(crate) fn text_style(app: &DrawcraftApp) -> Option<(CharStyle, drawcraft_doc::ParaStyle)> {
+pub(crate) fn text_style(app: &VectorcraftApp) -> Option<(CharStyle, vectorcraft_doc::ParaStyle)> {
     if let Some((id, a, b)) = text_editing(app)
         && let Some(NodeKind::Text(t)) = app.session.active().and_then(|d| d.doc.node(id)).map(|n| &n.kind)
     {
-        return Some((drawcraft_text::edit::insertion_style(&t.runs, a, b), t.para.clone()));
+        return Some((vectorcraft_text::edit::insertion_style(&t.runs, a, b), t.para.clone()));
     }
     let n = first_selected(app)?;
     match &n.kind {
@@ -32,16 +32,16 @@ pub(crate) fn text_style(app: &DrawcraftApp) -> Option<(CharStyle, drawcraft_doc
     }
 }
 
-fn style(app: &mut DrawcraftApp, p: Value) {
+fn style(app: &mut VectorcraftApp, p: Value) {
     char_cmd(app, "text.setStyle", p);
 }
-fn format(app: &mut DrawcraftApp, p: Value) {
+fn format(app: &mut VectorcraftApp, p: Value) {
     char_cmd(app, "text.setFormat", p);
 }
 
 /// Apply character attributes: to the selected range while the Type tool edits text (the whole
 /// object when nothing is selected), else to the selected text objects.
-fn char_cmd(app: &mut DrawcraftApp, cmd: &str, p: Value) {
+fn char_cmd(app: &mut VectorcraftApp, cmd: &str, p: Value) {
     let Some((id, a, b)) = text_editing(app) else {
         app.run(cmd, p).ok();
         return;
@@ -59,7 +59,7 @@ fn char_cmd(app: &mut DrawcraftApp, cmd: &str, p: Value) {
 // ---------- Type tool editing glue (selection, clipboard, keys) ----------
 
 /// The text object the Type tool is editing and its selection (clamped to the text).
-pub(crate) fn text_editing(app: &DrawcraftApp) -> Option<(NodeId, usize, usize)> {
+pub(crate) fn text_editing(app: &VectorcraftApp) -> Option<(NodeId, usize, usize)> {
     let o = app.session.tool_options();
     let id = NodeId(o.get("editing")?.as_u64()?);
     let len = match &app.session.active()?.doc.node(id)?.kind {
@@ -71,7 +71,7 @@ pub(crate) fn text_editing(app: &DrawcraftApp) -> Option<(NodeId, usize, usize)>
 }
 
 /// Close the Type tool's typing session (one undo step) before another command edits the text.
-pub(crate) fn end_typing(app: &mut DrawcraftApp) {
+pub(crate) fn end_typing(app: &mut VectorcraftApp) {
     if app.session.tool_options().get("typing").and_then(Value::as_bool) == Some(true) {
         app.session.set_tool_option("commitTyping", &json!(true));
         app.session.commit_interaction().ok();
@@ -84,7 +84,7 @@ static CTX: OnceLock<egui::Context> = OnceLock::new();
 /// can't read the system clipboard).
 static CLIP: Mutex<String> = Mutex::new(String::new());
 
-fn text_copy(app: &mut DrawcraftApp) -> bool {
+fn text_copy(app: &mut VectorcraftApp) -> bool {
     let Some((id, a, b)) = text_editing(app) else { return false };
     if a == b {
         return false;
@@ -99,14 +99,14 @@ fn text_copy(app: &mut DrawcraftApp) -> bool {
     true
 }
 
-fn text_key(app: &mut DrawcraftApp, k: ToolKey, m: Mods) {
+fn text_key(app: &mut VectorcraftApp, k: ToolKey, m: Mods) {
     let v = app.view_info();
     if let Err(e) = app.session.tool_key(k, m, v) {
         app.status(e.to_string());
     }
 }
 
-fn text_paste(app: &mut DrawcraftApp, s: Option<String>) {
+fn text_paste(app: &mut VectorcraftApp, s: Option<String>) {
     let s = s.unwrap_or_else(|| CLIP.lock().unwrap_or_else(|e| e.into_inner()).clone());
     if !s.is_empty() {
         let v = app.view_info();
@@ -118,7 +118,7 @@ fn text_paste(app: &mut DrawcraftApp, s: Option<String>) {
 
 /// Edit-menu commands while the Type tool edits text act on the text (Cut/Copy/Paste/Select
 /// All/Clear). `None` = not intercepted.
-pub(crate) fn intercept_text_command(app: &mut DrawcraftApp, id: &str) -> Option<Result<Value, String>> {
+pub(crate) fn intercept_text_command(app: &mut VectorcraftApp, id: &str) -> Option<Result<Value, String>> {
     if !app.session.tool_wants_text() {
         return None;
     }
@@ -149,7 +149,7 @@ enum TextInput {
 }
 
 /// Route editing keys (with modifiers), clipboard events and Cmd+A/C/X/V to the Type tool.
-pub(crate) fn route_type_input(app: &mut DrawcraftApp, ctx: &egui::Context) {
+pub(crate) fn route_type_input(app: &mut VectorcraftApp, ctx: &egui::Context) {
     CTX.get_or_init(|| ctx.clone());
     let mut todo = vec![];
     ctx.input_mut(|i| {
@@ -228,18 +228,18 @@ fn cell(ui: &mut Ui, label: &str, tip: &str, add: impl FnOnce(&mut Ui)) {
     });
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let Some((s, _)) = text_style(app) else {
         super::empty_state(ui, "type", "No text selected", "Select a text object to edit its character attributes.");
         return;
     };
-    let fams = drawcraft_text::FontDb::global().families();
+    let fams = vectorcraft_text::FontDb::global().families();
     let names: Vec<&str> = fams.iter().map(String::as_str).collect();
     let w = ui.available_width();
     if let Some(i) = widgets::dropdown(ui, "ch-font", &s.font_family, &names, w - 4.0) {
         style(app, json!({"font": names[i]}));
     }
-    let styles = drawcraft_text::FontDb::global().styles(&s.font_family);
+    let styles = vectorcraft_text::FontDb::global().styles(&s.font_family);
     let snames: Vec<&str> = styles.iter().map(String::as_str).collect();
     if let Some(i) = widgets::dropdown(ui, "ch-style", &s.font_style, &snames, w - 4.0) {
         style(app, json!({"style": snames[i]}));
@@ -369,7 +369,7 @@ fn style_toggle(ui: &mut Ui, g: Glyph, tip: &str, on: bool, enabled: bool) -> bo
     enabled && resp.clicked()
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let st = text_style(app);
     let has = st.is_some();
     let hidden: bool = pstate(ui.ctx(), "ch-hide-options");
@@ -396,8 +396,8 @@ pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
     ui.separator();
     #[cfg(not(target_arch = "wasm32"))]
-    if menu_item(ui, "Show System Fonts", true, drawcraft_text::FontDb::global().families().len() > 4) {
-        let n = drawcraft_text::FontDb::global().load_system_fonts();
+    if menu_item(ui, "Show System Fonts", true, vectorcraft_text::FontDb::global().families().len() > 4) {
+        let n = vectorcraft_text::FontDb::global().load_system_fonts();
         app.ui.status = format!("{n} system font faces available");
     }
     if menu_item(ui, "Reset Panel", has, false) {

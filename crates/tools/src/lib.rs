@@ -1,4 +1,4 @@
-//! DrawCraft tools: pointer events in → commands and overlays out.
+//! VectorCraft tools: pointer events in → commands and overlays out.
 //!
 //! Tools never mutate the document directly. They emit [`Action`]s that the engine executes:
 //! `Begin` snapshots the document, each `Preview` re-applies one command on top of that snapshot
@@ -22,11 +22,11 @@ pub mod symbolism;
 pub mod text;
 pub mod xform;
 
-use drawcraft_color::Paint;
-use drawcraft_doc::{Document, NodeId, Selection};
-use drawcraft_geom::{BezPath, Point, Rect};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use vectorcraft_color::Paint;
+use vectorcraft_doc::{Document, NodeId, Selection};
+use vectorcraft_geom::{BezPath, Point, Rect};
 
 pub use catalog::{TOOL_GROUPS, ToolInfo, tool_info};
 
@@ -154,8 +154,8 @@ impl ToolContext<'_> {
     pub fn tol(&self, px: f64) -> f64 {
         px / self.zoom.max(1e-9)
     }
-    pub fn hit_options(&self) -> drawcraft_doc::hit::HitOptions {
-        drawcraft_doc::hit::HitOptions { tol: self.tol(3.0), outline: self.outline, path_only: false }
+    pub fn hit_options(&self) -> vectorcraft_doc::hit::HitOptions {
+        vectorcraft_doc::hit::HitOptions { tol: self.tol(3.0), outline: self.outline, path_only: false }
     }
 }
 
@@ -280,8 +280,8 @@ pub(crate) fn json_ids(ids: &[NodeId]) -> Value {
 #[cfg(test)]
 pub(crate) mod testutil {
     use super::*;
-    use drawcraft_doc::{Appearance, Node};
-    use drawcraft_geom::shapes;
+    use vectorcraft_doc::{Appearance, Node};
+    use vectorcraft_geom::shapes;
 
     pub fn doc_with_rect() -> (Document, NodeId) {
         let mut d = Document::new(500.0, 500.0);
@@ -292,7 +292,11 @@ pub(crate) mod testutil {
     }
 
     pub fn paint() -> PaintDefaults {
-        PaintDefaults { fill: Paint::solid(drawcraft_color::Color::WHITE), stroke: Paint::solid(drawcraft_color::Color::BLACK), stroke_width: 1.0 }
+        PaintDefaults {
+            fill: Paint::solid(vectorcraft_color::Color::WHITE),
+            stroke: Paint::solid(vectorcraft_color::Color::BLACK),
+            stroke_width: 1.0,
+        }
     }
 
     pub fn cx<'a>(d: &'a Document, s: &'a Selection, p: &'a PaintDefaults) -> ToolContext<'a> {

@@ -4,13 +4,13 @@
 //! through `prefs.set`. Also: persistence of engine prefs inside `UiState` and the per-frame
 //! application of the UI-side preferences (brightness, canvas colour, UI scaling, render threads).
 
-use drawcraft_engine::Prefs;
-use drawcraft_engine::cmd::prefscmds::{PREF_CATEGORIES, PREF_SPECS, PrefKind};
 use serde_json::{Map, Value, json};
+use vectorcraft_engine::Prefs;
+use vectorcraft_engine::cmd::prefscmds::{PREF_CATEGORIES, PREF_SPECS, PrefKind};
 
 use crate::state::Dialog;
 use crate::theme::{self, Brightness, Tokens};
-use crate::{DrawcraftApp, widgets};
+use crate::{VectorcraftApp, widgets};
 
 /// UI-only fields shown in the dialog (backed by `UiState`, not engine prefs).
 const UI_FIELDS: &[(&str, &str, &str)] = &[
@@ -19,7 +19,7 @@ const UI_FIELDS: &[(&str, &str, &str)] = &[
     ("__taskBar", "General", "Enable Contextual Task Bar"),
 ];
 
-pub fn open(app: &mut DrawcraftApp, category: Option<&str>) {
+pub fn open(app: &mut VectorcraftApp, category: Option<&str>) {
     let mut fields: Map<String, Value> = app.session.prefs.to_json().as_object().cloned().unwrap_or_default();
     let cat = category.and_then(|c| PREF_CATEGORIES.iter().find(|x| x.eq_ignore_ascii_case(c))).copied().unwrap_or(PREF_CATEGORIES[0]);
     fields.insert("__category".into(), json!(cat));
@@ -30,7 +30,7 @@ pub fn open(app: &mut DrawcraftApp, category: Option<&str>) {
 }
 
 /// OK: validate and apply every preference in the dialog (nothing changes on error).
-pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
+pub fn confirm(app: &mut VectorcraftApp) -> Result<Value, String> {
     let Some(d) = app.ui.dialog.clone() else { return Err("no dialog open".into()) };
     let values: Map<String, Value> = d.fields.iter().filter(|(k, _)| !k.starts_with("__")).map(|(k, v)| (k.clone(), v.clone())).collect();
     app.run("prefs.set", json!({ "values": values }))?;
@@ -43,12 +43,12 @@ pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
 }
 
 /// Copy the engine prefs into `UiState` so the host persists them with the UI state.
-pub fn snapshot(app: &mut DrawcraftApp) {
+pub fn snapshot(app: &mut VectorcraftApp) {
     app.ui.engine_prefs = app.session.prefs.to_json();
 }
 
 /// Restore engine prefs from `UiState` after the host loaded saved UI state.
-pub fn restore(app: &mut DrawcraftApp) {
+pub fn restore(app: &mut VectorcraftApp) {
     let mut p: Prefs = serde_json::from_value(app.ui.engine_prefs.clone()).unwrap_or_default();
     if app.ui.engine_prefs.is_null() {
         // Older preference files: keep the saved brightness.
@@ -65,7 +65,7 @@ struct Applied {
 }
 
 /// Per frame: push UI-side preferences into egui / the renderer when they change.
-pub fn apply_runtime(app: &mut DrawcraftApp, ctx: &egui::Context) {
+pub fn apply_runtime(app: &mut VectorcraftApp, ctx: &egui::Context) {
     let p = &app.session.prefs;
     if let Some(b) = Brightness::parse(&p.ui_brightness)
         && b != app.ui.brightness
@@ -83,8 +83,8 @@ pub fn apply_runtime(app: &mut DrawcraftApp, ctx: &egui::Context) {
             ctx.data_mut(|d| d.insert_temp(egui::Id::NULL, t));
         }
         if prev.is_some_and(|pr| pr.threads != want.threads) {
-            drawcraft_render::set_default_threads(u16::try_from(want.threads).ok());
-            app.canvas.renderer.threads = drawcraft_render::default_threads();
+            vectorcraft_render::set_default_threads(u16::try_from(want.threads).ok());
+            app.canvas.renderer.threads = vectorcraft_render::default_threads();
             app.canvas.worker = None;
             app.canvas.worker_started = false;
         }
@@ -97,7 +97,7 @@ pub fn apply_runtime(app: &mut DrawcraftApp, ctx: &egui::Context) {
     }
 }
 
-pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
+pub fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
     let Some(mut d) = app.ui.dialog.clone() else { return };
     let t = Tokens::get(ctx);
     let (mut ok, mut cancel, mut reset) = (false, false, false);
@@ -258,7 +258,7 @@ fn category_fields(ui: &mut egui::Ui, d: &mut Dialog, cat: &str) {
             PrefKind::Color => {
                 labeled(ui, sp.label, |ui| {
                     let hex = v.as_str().unwrap_or("#000000");
-                    let c = drawcraft_color::Color::from_hex(hex).map(|c| c.to_rgba8(1.0)).unwrap_or([0, 0, 0, 255]);
+                    let c = vectorcraft_color::Color::from_hex(hex).map(|c| c.to_rgba8(1.0)).unwrap_or([0, 0, 0, 255]);
                     let mut rgb = [c[0], c[1], c[2]];
                     if ui.color_edit_button_srgb(&mut rgb).changed() {
                         d.fields.insert(sp.key.into(), json!(format!("#{:02x}{:02x}{:02x}", rgb[0], rgb[1], rgb[2])));
@@ -300,10 +300,10 @@ fn labeled(ui: &mut egui::Ui, label: &str, add: impl FnOnce(&mut egui::Ui)) {
 mod tests {
     use super::*;
     use crate::Services;
-    use drawcraft_engine::Session;
+    use vectorcraft_engine::Session;
 
-    fn app() -> DrawcraftApp {
-        DrawcraftApp::new(Session::new(), Services::default())
+    fn app() -> VectorcraftApp {
+        VectorcraftApp::new(Session::new(), Services::default())
     }
 
     #[test]

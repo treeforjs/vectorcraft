@@ -1,9 +1,9 @@
 //! Brushes and symbols: commands, tools, rendering and persistence.
 
-use drawcraft_doc::{Node, NodeKind};
-use drawcraft_geom::Rect;
-use drawcraft_tools::{Mods, PointerEvent, PointerKind};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Node, NodeKind};
+use vectorcraft_geom::Rect;
+use vectorcraft_tools::{Mods, PointerEvent, PointerKind};
 
 use super::*;
 
@@ -361,7 +361,7 @@ fn brushed_strokes_and_instances_render() {
     let l = line(&mut s);
     s.execute("brush.apply", &json!({"name": "Chain", "ids": [l.0]})).unwrap();
     let doc = s.doc().unwrap().doc.clone();
-    let img = drawcraft_render::Renderer::new().render_region(&doc, Rect::new(0.0, 0.0, 400.0, 300.0), 1.0, true);
+    let img = vectorcraft_render::Renderer::new().render_region(&doc, Rect::new(0.0, 0.0, 400.0, 300.0), 1.0, true);
     let dark = |x: u32, y: u32| {
         let p = img.pixel(x, y);
         (p[0] as u32 + p[1] as u32 + p[2] as u32) < 300
@@ -374,17 +374,17 @@ fn brushed_strokes_and_instances_render() {
 }
 
 #[test]
-fn brushes_and_symbols_survive_drawcraft_round_trip() {
+fn brushes_and_symbols_survive_vectorcraft_round_trip() {
     let mut s = session();
     make_symbol(&mut s);
     s.execute("brush.new", &json!({"type": "calligraphic", "name": "Mine", "params": {"size": 7}})).unwrap();
     let l = line(&mut s);
     s.execute("brush.apply", &json!({"name": "Mine", "ids": [l.0]})).unwrap();
     let doc = s.doc().unwrap().doc.clone();
-    let bytes = drawcraft_format::save(&doc, false);
-    let back = drawcraft_format::load(&bytes).unwrap();
-    assert_eq!(drawcraft_brush::library(&back), drawcraft_brush::library(&doc));
-    assert_eq!(drawcraft_brush::find(&back, "Mine").map(|b| b.kind.type_id()), Some("calligraphic"));
+    let bytes = vectorcraft_format::save(&doc, false);
+    let back = vectorcraft_format::load(&bytes).unwrap();
+    assert_eq!(vectorcraft_brush::library(&back), vectorcraft_brush::library(&doc));
+    assert_eq!(vectorcraft_brush::find(&back, "Mine").map(|b| b.kind.type_id()), Some("calligraphic"));
     assert_eq!(back.symbols, doc.symbols);
     assert_eq!(back.unknown.get("symbolSizes"), doc.unknown.get("symbolSizes"));
     let bl = back.node(l).unwrap();

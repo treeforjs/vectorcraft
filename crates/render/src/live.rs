@@ -1,6 +1,6 @@
 //! Live objects in the renderer.
 //!
-//! Blends and envelopes are evaluated by `drawcraft_doc::live` and the resulting objects cached
+//! Blends and envelopes are evaluated by `vectorcraft_doc::live` and the resulting objects cached
 //! by `Arc` identity of the live node (so the steps keep stable `Arc`s and hit the geometry cache
 //! frame after frame). Gradient meshes are tessellated into many small solid-colour quads (vello
 //! has no mesh shading), with the density chosen from the on-screen patch size; each quad is
@@ -9,9 +9,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use drawcraft_doc::live::{self, GradientMesh, MeshQuad};
-use drawcraft_doc::{Appearance, AppearanceItem, FillLayer, Node, NodeKind, StrokeLayer};
-use drawcraft_geom::{Affine, BezPath, PathData, Point};
+use vectorcraft_doc::live::{self, GradientMesh, MeshQuad};
+use vectorcraft_doc::{Appearance, AppearanceItem, FillLayer, Node, NodeKind, StrokeLayer};
+use vectorcraft_geom::{Affine, BezPath, PathData, Point};
 use vello_cpu::RenderContext;
 use vello_cpu::peniko;
 
@@ -113,7 +113,7 @@ impl Renderer {
     pub(crate) fn draw_live(&mut self, ctx: &mut RenderContext, f: &Frame, a: &Arc<Node>) {
         let stamp = self.stamp;
         self.live.tick(stamp);
-        let layered = !f.opts.outline && (a.opacity < 1.0 || a.blend != drawcraft_color::BlendMode::Normal || a.isolate);
+        let layered = !f.opts.outline && (a.opacity < 1.0 || a.blend != vectorcraft_color::BlendMode::Normal || a.isolate);
         if layered {
             ctx.set_transform(Affine::IDENTITY);
             ctx.push_layer(None, Some(blend_mode(a.blend)), Some(a.opacity), None, None);

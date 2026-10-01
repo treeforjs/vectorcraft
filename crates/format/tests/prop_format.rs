@@ -1,14 +1,14 @@
-//! `.drawcraft` format: round trips, robustness against garbage, versioning, unknown fields.
+//! `.vectorcraft` format: round trips, robustness against garbage, versioning, unknown fields.
 
 use std::sync::Arc;
 
-use drawcraft_doc::{Document, ImageBlob, NodeId};
-use drawcraft_format::{base64_decode, base64_encode, load, save, sniff};
-use drawcraft_testkit::fixtures;
-use drawcraft_testkit::invariants::{check_document, check_native_roundtrip, check_native_roundtrip_exact, doc_json, json_approx_eq};
-use drawcraft_testkit::strategies::arb_ops;
 use proptest::prelude::*;
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, ImageBlob, NodeId};
+use vectorcraft_format::{base64_decode, base64_encode, load, save, sniff};
+use vectorcraft_testkit::fixtures;
+use vectorcraft_testkit::invariants::{check_document, check_native_roundtrip, check_native_roundtrip_exact, doc_json, json_approx_eq};
+use vectorcraft_testkit::strategies::arb_ops;
 
 fn rich_doc() -> Document {
     (*fixtures::rich_session().doc().unwrap().doc).clone()
@@ -84,8 +84,8 @@ fn rich_document_roundtrips() {
     let bytes = save(&d, true);
     assert!(sniff(&bytes));
     let v: Value = serde_json::from_slice(&bytes).unwrap();
-    assert_eq!(v["format"], "drawcraft");
-    assert_eq!(v["version"], drawcraft_format::VERSION);
+    assert_eq!(v["format"], "vectorcraft");
+    assert_eq!(v["version"], vectorcraft_format::VERSION);
 }
 
 #[test]
@@ -100,14 +100,14 @@ fn sniff_distinguishes_formats() {
 #[test]
 fn rejects_newer_versions_and_other_formats() {
     let mut v: Value = serde_json::from_slice(&save(&Document::new(1.0, 1.0), false)).unwrap();
-    v["version"] = json!(drawcraft_format::VERSION + 1);
-    assert!(matches!(load(&serde_json::to_vec(&v).unwrap()), Err(drawcraft_format::FormatError::TooNew(_))));
-    v["version"] = json!(drawcraft_format::VERSION);
+    v["version"] = json!(vectorcraft_format::VERSION + 1);
+    assert!(matches!(load(&serde_json::to_vec(&v).unwrap()), Err(vectorcraft_format::FormatError::TooNew(_))));
+    v["version"] = json!(vectorcraft_format::VERSION);
     v["format"] = json!("other");
-    assert!(matches!(load(&serde_json::to_vec(&v).unwrap()), Err(drawcraft_format::FormatError::NotDrawcraft(_))));
-    v["format"] = json!("drawcraft");
+    assert!(matches!(load(&serde_json::to_vec(&v).unwrap()), Err(vectorcraft_format::FormatError::NotVectorcraft(_))));
+    v["format"] = json!("vectorcraft");
     v["images"] = json!({"x": {"mime": "image/png", "data": "not base64!"}});
-    assert!(matches!(load(&serde_json::to_vec(&v).unwrap()), Err(drawcraft_format::FormatError::BadImage(_))));
+    assert!(matches!(load(&serde_json::to_vec(&v).unwrap()), Err(vectorcraft_format::FormatError::BadImage(_))));
 }
 
 #[test]

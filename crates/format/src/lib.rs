@@ -1,9 +1,9 @@
-//! The native `.drawcraft` format.
+//! The native `.vectorcraft` format.
 //!
-//! A `.drawcraft` file is UTF-8 JSON:
+//! A `.vectorcraft` file is UTF-8 JSON:
 //! ```json
-//! { "format": "drawcraft", "version": 1, "generator": "DrawCraft 0.1.0",
-//!   "document": { …drawcraft_doc::Document… },
+//! { "format": "vectorcraft", "version": 1, "generator": "VectorCraft 0.1.0",
+//!   "document": { …vectorcraft_doc::Document… },
 //!   "images": { "<key>": { "mime": "image/png", "data": "<base64>" } } }
 //! ```
 //! It is lossless for everything in the document model and preserves unknown fields under
@@ -13,18 +13,30 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use drawcraft_doc::{Document, ImageBlob};
 use serde::{Deserialize, Serialize};
+use vectorcraft_doc::{Document, ImageBlob};
 
 /// v2: anchors as `{p: [x, y], in?, out?, kind?}` and default-valued fields omitted (v1 files still load).
 pub const VERSION: u32 = 2;
-pub const EXTENSION: &str = "drawcraft";
+pub const EXTENSION: &str = "vectorcraft";
+/// Extension and format name from before the project was renamed (DrawCraft): still opened.
+pub const LEGACY_EXTENSION: &str = "drawcraft";
+
+/// Is `ext` (without the dot, any case) a native document extension?
+pub fn is_native_ext(ext: &str) -> bool {
+    ext.eq_ignore_ascii_case(EXTENSION) || ext.eq_ignore_ascii_case(LEGACY_EXTENSION)
+}
+
+/// Does the file name or path end in a native document extension?
+pub fn is_native_name(name: &str) -> bool {
+    std::path::Path::new(name).extension().and_then(|e| e.to_str()).is_some_and(is_native_ext)
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum FormatError {
-    #[error("not a DrawCraft file: {0}")]
-    NotDrawcraft(String),
-    #[error("file version {0} is newer than this DrawCraft supports ({VERSION})")]
+    #[error("not a VectorCraft file: {0}")]
+    NotVectorcraft(String),
+    #[error("file version {0} is newer than this VectorCraft supports ({VERSION})")]
     TooNew(u32),
     #[error("invalid image data for `{0}`")]
     BadImage(String),
@@ -51,9 +63,9 @@ struct File {
 pub fn save(doc: &Document, pretty: bool) -> Vec<u8> {
     let images = doc.images.iter().map(|(k, b)| (k.clone(), Image { mime: b.mime.clone(), data: base64_encode(&b.bytes) })).collect();
     let f = File {
-        format: "drawcraft".into(),
+        format: "vectorcraft".into(),
         version: VERSION,
-        generator: format!("DrawCraft {}", env!("CARGO_PKG_VERSION")),
+        generator: format!("VectorCraft {}", env!("CARGO_PKG_VERSION")),
         document: doc.clone(),
         images,
     };
@@ -71,9 +83,9 @@ pub fn save_file(doc: &Document) -> Vec<u8> {
 }
 
 pub fn load(bytes: &[u8]) -> Result<Document, FormatError> {
-    let f: File = serde_json::from_slice(bytes).map_err(|e| FormatError::NotDrawcraft(e.to_string()))?;
-    if f.format != "drawcraft" {
-        return Err(FormatError::NotDrawcraft(format!("format is `{}`", f.format)));
+    let f: File = serde_json::from_slice(bytes).map_err(|e| FormatError::NotVectorcraft(e.to_string()))?;
+    if f.format != EXTENSION && f.format != LEGACY_EXTENSION {
+        return Err(FormatError::NotVectorcraft(format!("format is `{}`", f.format)));
     }
     if f.version > VERSION {
         return Err(FormatError::TooNew(f.version));
@@ -87,10 +99,10 @@ pub fn load(bytes: &[u8]) -> Result<Document, FormatError> {
     Ok(doc)
 }
 
-/// Does this look like a `.drawcraft` file?
+/// Does this look like a `.vectorcraft` file?
 pub fn sniff(bytes: &[u8]) -> bool {
     let head = &bytes[..bytes.len().min(256)];
-    std::str::from_utf8(head).is_ok_and(|s| s.trim_start().starts_with('{') && s.contains("\"drawcraft\""))
+    std::str::from_utf8(head).is_ok_and(|s| s.trim_start().starts_with('{') && (s.contains("\"vectorcraft\"") || s.contains("\"drawcraft\"")))
 }
 
 const B64: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -139,8 +151,19 @@ pub fn base64_decode(s: &str) -> Option<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use drawcraft_doc::{Appearance, Node};
-    use drawcraft_geom::{Rect, shapes};
+
+    #[test]
+    fn files_from_before_the_rename_still_open() {
+        let d = Document::new(100.0, 50.0);
+        let legacy = String::from_utf8(save(&d, false)).unwrap().replacen("\"format\":\"vectorcraft\"", "\"format\":\"drawcraft\"", 1);
+        assert!(legacy.contains("\"drawcraft\""));
+        assert!(sniff(legacy.as_bytes()));
+        assert_eq!(load(legacy.as_bytes()).unwrap().artboards[0].rect, d.artboards[0].rect);
+        assert!(is_native_name("old/Poster.DrawCraft") && is_native_name("new.vectorcraft") && !is_native_name("x.svg"));
+        assert!(load(br#"{"format":"other","version":1,"document":{}}"#).is_err());
+    }
+    use vectorcraft_doc::{Appearance, Node};
+    use vectorcraft_geom::{Rect, shapes};
 
     #[test]
     fn roundtrip() {

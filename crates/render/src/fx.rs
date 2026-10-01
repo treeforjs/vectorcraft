@@ -1,7 +1,7 @@
 //! Live effects in the renderer.
 //!
 //! Geometry effects (object-level, then per fill/stroke) rewrite the path before painting via
-//! `drawcraft-effects`. Raster effects use vello_cpu filter layers. Those only work in
+//! `vectorcraft-effects`. Raster effects use vello_cpu filter layers. Those only work in
 //! single-threaded contexts, so on the multithreaded pipeline each filter layer is rendered
 //! offscreen on the calling thread (cropped to its reach) and composited back with the same blend
 //! mode and opacity ([`Renderer::with_filters`]):
@@ -13,9 +13,9 @@
 //! - Inner Glow: a blurred inverse silhouette (Edge) or the blurred silhouette (Center), clipped
 //!   to the shape and painted above it.
 
-use drawcraft_doc::{AppearanceItem, Effect, Node, NodeKind};
-use drawcraft_effects::{self as effects, GeomContext, RasterFx};
-use drawcraft_geom::{Affine, BezPath, FillRule, Rect, Shape};
+use vectorcraft_doc::{AppearanceItem, Effect, Node, NodeKind};
+use vectorcraft_effects::{self as effects, GeomContext, RasterFx};
+use vectorcraft_geom::{Affine, BezPath, FillRule, Rect, Shape};
 use vello_common::filter_effects::{EdgeMode, Filter, FilterPrimitive};
 use vello_cpu::RenderContext;
 use vello_cpu::peniko;
@@ -103,7 +103,7 @@ pub(crate) fn visual_bounds(n: &Node) -> Option<Rect> {
 pub(crate) fn cull_bounds(n: &Node) -> Option<Rect> {
     match &n.kind {
         NodeKind::Layer { children, .. } | NodeKind::Group { children, clip: false } => {
-            children.iter().fold(None, |acc, c| drawcraft_geom::union_opt(acc, cull_bounds(c)))
+            children.iter().fold(None, |acc, c| vectorcraft_geom::union_opt(acc, cull_bounds(c)))
         }
         _ if has_fx(n) => visual_bounds(n),
         _ => n.visual_bounds(),
@@ -124,7 +124,7 @@ fn blur_filter(sigma: f64) -> Filter {
     Filter::from_primitive(FilterPrimitive::GaussianBlur { std_deviation: sigma.max(0.0) as f32, edge_mode: EdgeMode::None })
 }
 
-fn pcolor(c: &drawcraft_doc::color::Color) -> peniko::Color {
+fn pcolor(c: &vectorcraft_doc::color::Color) -> peniko::Color {
     let [r, g, b] = c.to_rgb();
     peniko::Color::new([r, g, b, 1.0])
 }
@@ -160,7 +160,7 @@ impl Renderer {
             };
             let mut gs = g.clone();
             gs.apply_affine(Affine::translate((dx, dy)));
-            let reach = reach + drawcraft_geom::Vec2::new(dx, dy);
+            let reach = reach + vectorcraft_geom::Vec2::new(dx, dy);
             self.with_filters(ctx, f, reach, blur, Some((mode, opacity)), |r, c, fr, comp| {
                 c.set_transform(fr.view);
                 c.push_layer(None, comp.map(|m| blend_mode(m.0)), comp.map(|m| m.1), None, Some(filter));
@@ -251,8 +251,8 @@ impl Renderer {
         f: &Frame,
         reach: Rect,
         blur: f64,
-        composite: Option<(drawcraft_doc::color::BlendMode, f32)>,
-        draw: impl FnOnce(&mut Self, &mut RenderContext, &Frame, Option<(drawcraft_doc::color::BlendMode, f32)>),
+        composite: Option<(vectorcraft_doc::color::BlendMode, f32)>,
+        draw: impl FnOnce(&mut Self, &mut RenderContext, &Frame, Option<(vectorcraft_doc::color::BlendMode, f32)>),
     ) {
         if !f.mt {
             return draw(self, ctx, f, composite);
@@ -273,7 +273,7 @@ impl Renderer {
         off.flush();
         let mut pm = vello_cpu::Pixmap::new(w, h);
         off.render(&mut pm, &mut self.resources);
-        let layered = composite.is_some_and(|(m, o)| m != drawcraft_doc::color::BlendMode::Normal || o < 1.0);
+        let layered = composite.is_some_and(|(m, o)| m != vectorcraft_doc::color::BlendMode::Normal || o < 1.0);
         if let Some((m, o)) = composite.filter(|_| layered) {
             ctx.set_transform(Affine::IDENTITY);
             ctx.push_layer(None, Some(blend_mode(m)), Some(o), None, None);
@@ -298,7 +298,7 @@ impl Renderer {
                     if !fl.visible || fl.paint.is_none() {
                         continue;
                     }
-                    let layered = fl.opacity < 1.0 || fl.blend != drawcraft_doc::color::BlendMode::Normal;
+                    let layered = fl.opacity < 1.0 || fl.blend != vectorcraft_doc::color::BlendMode::Normal;
                     if layered {
                         ctx.set_transform(Affine::IDENTITY);
                         ctx.push_layer(None, Some(blend_mode(fl.blend)), Some(fl.opacity), None, None);
@@ -329,10 +329,10 @@ impl Renderer {
 
 #[cfg(test)]
 mod tests {
-    use drawcraft_doc::color::{Color, Paint};
-    use drawcraft_doc::{Appearance, Document, Effect, Node};
-    use drawcraft_geom::{Affine, Rect, shapes};
     use serde_json::json;
+    use vectorcraft_doc::color::{Color, Paint};
+    use vectorcraft_doc::{Appearance, Document, Effect, Node};
+    use vectorcraft_geom::{Affine, Rect, shapes};
 
     use crate::{RenderOptions, Rendered, Renderer};
 
@@ -376,8 +376,8 @@ mod tests {
         let id = d.layers[0].children().unwrap()[0].id;
         let mut n = (*d.node(id).unwrap()).clone();
         n.appearance = Appearance::basic(Paint::None, Paint::solid(Color::BLACK), 4.0);
-        if let Some(drawcraft_doc::AppearanceItem::Stroke(s)) =
-            n.appearance.items.iter_mut().find(|i| matches!(i, drawcraft_doc::AppearanceItem::Stroke(_)))
+        if let Some(vectorcraft_doc::AppearanceItem::Stroke(s)) =
+            n.appearance.items.iter_mut().find(|i| matches!(i, vectorcraft_doc::AppearanceItem::Stroke(_)))
         {
             s.effects =
                 vec![Effect { id: "stylize.outerGlow".into(), params: json!({"color": "#ff0000", "opacity": 100, "blur": 6}), visible: true }];

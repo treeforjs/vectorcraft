@@ -1,4 +1,4 @@
-# Build with: trunk build --release   (from apps/drawcraft-web)
+# Build with: trunk build --release   (from apps/vectorcraft-web)
 [build]
 target = "index.html"
 dist = "../../dist/web"

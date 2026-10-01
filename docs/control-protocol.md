@@ -1,6 +1,6 @@
 # Control protocol
 
-`drawcraft --control <port>` listens on `127.0.0.1:<port>` (loopback only). One JSON request per line:
+`vectorcraft --control <port>` listens on `127.0.0.1:<port>` (loopback only). One JSON request per line:
 `{"id": 1, "method": "ui.inspect", "params": {}}` → `{"id": 1, "ok": true, "result": {...}}` or `{"id":1,"ok":false,"error":"..."}`.
 
 | Method | Params | |

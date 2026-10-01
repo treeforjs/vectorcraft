@@ -1,9 +1,9 @@
 //! Width points, Liquify, Puppet Warp and Perspective Grid commands and tools.
 
-use drawcraft_geom::{PathData, Point, Rect, Shape};
-use drawcraft_tools::distort::perspective::{PerspectiveGrid, Plane};
-use drawcraft_tools::{Mods, PointerEvent, PointerKind, ToolKey};
 use serde_json::json;
+use vectorcraft_geom::{PathData, Point, Rect, Shape};
+use vectorcraft_tools::distort::perspective::{PerspectiveGrid, Plane};
+use vectorcraft_tools::{Mods, PointerEvent, PointerKind, ToolKey};
 
 use super::*;
 
@@ -315,15 +315,15 @@ fn perspective_selection_moves_within_the_plane() {
     s.execute("perspective.attach", &json!({"ids": [a.0], "plane": "right"})).unwrap();
     let g = grid(&s);
     let before: Vec<Point> = path(&s, a).anchors().map(|(_, _, an)| g.to_plane(Plane::Right, an.p).unwrap()).collect();
-    let centre = before.iter().fold(drawcraft_geom::Vec2::ZERO, |a, p| a + p.to_vec2()) / before.len() as f64;
+    let centre = before.iter().fold(vectorcraft_geom::Vec2::ZERO, |a, p| a + p.to_vec2()) / before.len() as f64;
     let from = g.to_page(Plane::Right, centre.to_point()).unwrap();
-    let to = g.to_page(Plane::Right, (centre + drawcraft_geom::Vec2::new(40.0, 20.0)).to_point()).unwrap();
+    let to = g.to_page(Plane::Right, (centre + vectorcraft_geom::Vec2::new(40.0, 20.0)).to_point()).unwrap();
     let n = undo_len(&s);
     gesture(&mut s, "perspectiveSelection", &[(from.x, from.y), (to.x, to.y), (to.x, to.y)], Mods::default());
     assert_eq!(undo_len(&s), n + 1);
     let after: Vec<Point> = path(&s, a).anchors().map(|(_, _, an)| g.to_plane(Plane::Right, an.p).unwrap()).collect();
     for (b, c) in before.iter().zip(&after) {
-        assert!((*c - *b - drawcraft_geom::Vec2::new(40.0, 20.0)).hypot() < 1e-6, "{b:?} → {c:?}");
+        assert!((*c - *b - vectorcraft_geom::Vec2::new(40.0, 20.0)).hypot() < 1e-6, "{b:?} → {c:?}");
     }
 }
 

@@ -2,14 +2,14 @@
 //! value fields, hex field, None/Black/White chips, spectrum ramp and the Fill/Stroke proxy.
 //! When the active paint is a gradient, the sliders edit the Gradient panel's selected stop.
 
-use drawcraft_color::{Color, Paint};
 use egui::{Color32, Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
 use serde_json::json;
+use vectorcraft_color::{Color, Paint};
 
 use super::{active_paint, color_json, live_run, paint_target, pstate, push_recent, set_pstate};
 use crate::theme::Tokens;
 use crate::widgets::{self, Live, menu_item};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Mode {
@@ -159,7 +159,7 @@ enum Target {
     Stop { paint: Paint, index: usize, color: Color },
 }
 
-fn target(app: &DrawcraftApp, ui: &Ui) -> Target {
+fn target(app: &VectorcraftApp, ui: &Ui) -> Target {
     let p = active_paint(app);
     match &p {
         Paint::Gradient(g) => {
@@ -172,7 +172,7 @@ fn target(app: &DrawcraftApp, ui: &Ui) -> Target {
     }
 }
 
-fn apply(app: &mut DrawcraftApp, ui: &Ui, tgt: &Target, c: Color, phase: Live) {
+fn apply(app: &mut VectorcraftApp, ui: &Ui, tgt: &Target, c: Color, phase: Live) {
     match tgt {
         Target::Paint(_) => {
             let cmd = paint_target(app);
@@ -194,7 +194,7 @@ fn apply(app: &mut DrawcraftApp, ui: &Ui, tgt: &Target, c: Color, phase: Live) {
     }
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let tgt = target(app, ui);
     let color = match &tgt {
@@ -370,7 +370,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let hidden: bool = pstate(ui.ctx(), "color-hide-options");
     if menu_item(ui, if hidden { "Show Options" } else { "Hide Options" }, true, false) {
         set_pstate(ui.ctx(), "color-hide-options", !hidden);

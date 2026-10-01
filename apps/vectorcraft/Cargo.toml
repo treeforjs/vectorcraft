@@ -1,17 +1,17 @@
 [package]
-name = "drawcraft"
+name = "vectorcraft"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish = false
-default-run = "drawcraft"
+default-run = "vectorcraft"
 
 [lints]
 workspace = true
 
 [dependencies]
-drawcraft-engine = { workspace = true }
-drawcraft-ui-egui = { workspace = true }
+vectorcraft-engine = { workspace = true }
+vectorcraft-ui-egui = { workspace = true }
 eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit", "wayland", "x11"] }
 egui = { workspace = true }
 serde_json = { workspace = true }

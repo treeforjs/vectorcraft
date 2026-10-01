@@ -3,10 +3,10 @@
 use std::ops::Range;
 use std::sync::Arc;
 
-use drawcraft_doc::CharStyle;
 use harfrust::{Direction, Feature, ShapeOptions, UnicodeBuffer};
 use skrifa::MetadataProvider;
 use skrifa::instance::{LocationRef, Size};
+use vectorcraft_doc::CharStyle;
 
 use crate::features::OtFeatures;
 use crate::fontdb::{FontDb, FontFace};

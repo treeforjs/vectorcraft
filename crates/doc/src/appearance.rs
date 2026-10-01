@@ -1,8 +1,8 @@
 //! The appearance model: a stack of fills and strokes, each with its own opacity, blend mode and
 //! effects, plus object-level effects.
 
-use drawcraft_color::{BlendMode, Color, Paint};
 use serde::{Deserialize, Serialize};
+use vectorcraft_color::{BlendMode, Color, Paint};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LineCap {
@@ -105,7 +105,7 @@ impl WidthProfile {
     }
 }
 
-/// A live effect in an appearance stack. Parameters are interpreted by `drawcraft-effects`.
+/// A live effect in an appearance stack. Parameters are interpreted by `vectorcraft-effects`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Effect {
     /// Stable id, e.g. `stylize.dropShadow`, `distort.roughen`, `path.offsetPath`, `warp.arc`.

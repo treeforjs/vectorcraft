@@ -1,15 +1,15 @@
 //! The Properties panel: context-sensitive sections like Illustrator's.
 
-use drawcraft_doc::{NodeKind, Unit};
 use egui::{Sense, Stroke, StrokeKind, Ui, vec2};
 use serde_json::json;
+use vectorcraft_doc::{NodeKind, Unit};
 
 use super::first_selected;
 use crate::theme::Tokens;
 use crate::widgets::{self, dim_label, divider, section_header};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let Some(st) = app.session.active() else {
         dim_label(ui, "No document open");
@@ -106,7 +106,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-fn document_sections(app: &mut DrawcraftApp, ui: &mut Ui) {
+fn document_sections(app: &mut VectorcraftApp, ui: &mut Ui) {
     let units = app.session.active().map(|d| d.doc.units).unwrap_or_default();
     section_header(ui, "Document");
     ui.horizontal(|ui| {
@@ -185,7 +185,7 @@ fn document_sections(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-pub fn transform_section(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn transform_section(app: &mut VectorcraftApp, ui: &mut Ui) {
     let Some(st) = app.session.active() else { return };
     let units = st.doc.units;
     let Some(b) = st.doc.bounds_of(&st.selection.objects, false) else {
@@ -193,7 +193,7 @@ pub fn transform_section(app: &mut DrawcraftApp, ui: &mut Ui) {
         return;
     };
     let refi: usize = ui.data(|d| d.get_temp(egui::Id::new("refpt"))).unwrap_or(4);
-    let rp = drawcraft_geom::reference_point(b, refi);
+    let rp = vectorcraft_geom::reference_point(b, refi);
     section_header(ui, "Transform");
     ui.horizontal(|ui| {
         if let Some(i) = widgets::reference_point(ui, refi) {
@@ -240,7 +240,7 @@ pub fn transform_section(app: &mut DrawcraftApp, ui: &mut Ui) {
         && let NodeKind::Path { live: Some(live), .. } = &n.kind
     {
         match live {
-            drawcraft_doc::LiveShape::Rectangle { radii, .. } => {
+            vectorcraft_doc::LiveShape::Rectangle { radii, .. } => {
                 ui.horizontal(|ui| {
                     dim_label(ui, "Corner Radius:");
                     if let Some(r) = widgets::num_field(ui, "radius", Some(radii[0]), units, 80.0) {
@@ -248,7 +248,7 @@ pub fn transform_section(app: &mut DrawcraftApp, ui: &mut Ui) {
                     }
                 });
             }
-            drawcraft_doc::LiveShape::Polygon { sides, .. } => {
+            vectorcraft_doc::LiveShape::Polygon { sides, .. } => {
                 ui.horizontal(|ui| {
                     dim_label(ui, "Sides:");
                     if let Some(s) = widgets::plain_field(ui, "sides", *sides as f64, "", 0, 60.0) {
@@ -261,7 +261,7 @@ pub fn transform_section(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-fn appearance_section(app: &mut DrawcraftApp, ui: &mut Ui) {
+fn appearance_section(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let Some(n) = first_selected(app) else { return };
     section_header(ui, "Appearance");
@@ -316,7 +316,7 @@ fn appearance_section(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-pub fn type_sections(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn type_sections(app: &mut VectorcraftApp, ui: &mut Ui) {
     let Some(n) = first_selected(app) else {
         dim_label(ui, "Select a text object");
         return;
@@ -327,7 +327,7 @@ pub fn type_sections(app: &mut DrawcraftApp, ui: &mut Ui) {
     };
     let s = tx.first_style();
     section_header(ui, "Character");
-    let fams = drawcraft_text::FontDb::global().families();
+    let fams = vectorcraft_text::FontDb::global().families();
     let names: Vec<&str> = fams.iter().map(String::as_str).collect();
     if let Some(i) = widgets::dropdown(ui, "font", &s.font_family, &names, ui.available_width() - 4.0) {
         app.run("text.setStyle", json!({"font": names[i]})).ok();

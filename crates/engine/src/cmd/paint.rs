@@ -1,8 +1,8 @@
 //! Fill/stroke, Stroke panel, Appearance, Transparency, Swatches, Graphic Styles.
 
-use drawcraft_color::{BlendMode, Color, Gradient, GradientKind, GradientPaint, Paint};
-use drawcraft_doc::{Appearance, AppearanceItem, Arrowhead, Dash, FillLayer, LineCap, LineJoin, NodeKind, StrokeAlign, StrokeLayer};
 use serde_json::{Value, json};
+use vectorcraft_color::{BlendMode, Color, Gradient, GradientKind, GradientPaint, Paint};
+use vectorcraft_doc::{Appearance, AppearanceItem, Arrowhead, Dash, FillLayer, LineCap, LineJoin, NodeKind, StrokeAlign, StrokeLayer};
 
 use super::*;
 use crate::EngineError;
@@ -78,7 +78,7 @@ pub(crate) fn paint_from(s: &Session, p: &Value) -> Result<Option<Paint>> {
         let st = s.doc()?;
         // A pattern definition works as its swatch even without a swatch entry.
         if st.doc.swatch(name).is_none() && st.doc.pattern(name).is_some() {
-            return Ok(Some(drawcraft_doc::pattern::pattern_paint(name)));
+            return Ok(Some(vectorcraft_doc::pattern::pattern_paint(name)));
         }
         let sw = st.doc.swatch(name).ok_or_else(|| EngineError::Other(format!("no swatch `{name}`")))?;
         let mut paint = sw.paint.clone();
@@ -99,7 +99,7 @@ pub(crate) fn paint_from(s: &Session, p: &Value) -> Result<Option<Paint>> {
             grad.stops = stops
                 .iter()
                 .filter_map(|st| {
-                    Some(drawcraft_color::GradientStop {
+                    Some(vectorcraft_color::GradientStop {
                         offset: st.get("offset")?.as_f64()? as f32,
                         color: color_value(st.get("color")?)?,
                         opacity: st.get("opacity").and_then(Value::as_f64).unwrap_or(1.0) as f32,
@@ -121,7 +121,7 @@ pub(crate) fn paint_from(s: &Session, p: &Value) -> Result<Option<Paint>> {
 }
 
 /// Leaf objects whose appearance should change for `ids` (groups apply to children).
-fn paint_targets(s: &Session, p: &Value) -> Result<Vec<drawcraft_doc::NodeId>> {
+fn paint_targets(s: &Session, p: &Value) -> Result<Vec<vectorcraft_doc::NodeId>> {
     let ids = targets(s, p)?;
     let d = &s.doc()?.doc;
     let mut out = vec![];
@@ -290,9 +290,9 @@ fn stroke_set(s: &mut Session, p: &Value) -> Result<Value> {
             }
             match str_param(p, "profile") {
                 Some("uniform") => st.profile = None,
-                Some("lens") => st.profile = Some(drawcraft_doc::WidthProfile::lens()),
-                Some("taperStart") => st.profile = Some(drawcraft_doc::WidthProfile::taper_start()),
-                Some("taperEnd") => st.profile = Some(drawcraft_doc::WidthProfile::taper_end()),
+                Some("lens") => st.profile = Some(vectorcraft_doc::WidthProfile::lens()),
+                Some("taperStart") => st.profile = Some(vectorcraft_doc::WidthProfile::taper_start()),
+                Some("taperEnd") => st.profile = Some(vectorcraft_doc::WidthProfile::taper_end()),
                 _ => {}
             }
         }
@@ -412,7 +412,7 @@ fn add_effect(s: &mut Session, p: &Value) -> Result<Value> {
     s.edit("Add Effect", |d, _| {
         for nid in &ids {
             if let Some(n) = d.node_mut(*nid) {
-                n.appearance.effects.push(drawcraft_doc::Effect { id: id.clone(), params: params.clone(), visible: true });
+                n.appearance.effects.push(vectorcraft_doc::Effect { id: id.clone(), params: params.clone(), visible: true });
             }
         }
         Ok(())
@@ -456,7 +456,7 @@ fn style_new(s: &mut Session, p: &Value) -> Result<Value> {
     let ap = st.doc.node(id).map(|n| n.appearance.clone()).unwrap_or_default();
     let name = str_param(p, "name").map(str::to_string).unwrap_or_else(|| format!("Graphic Style {}", st.doc.graphic_styles.len() + 1));
     s.edit("New Graphic Style", |d, _| {
-        d.graphic_styles.push(drawcraft_doc::GraphicStyle { name: name.clone(), appearance: ap });
+        d.graphic_styles.push(vectorcraft_doc::GraphicStyle { name: name.clone(), appearance: ap });
         Ok(())
     })?;
     Ok(json!({ "name": name }))
@@ -479,7 +479,7 @@ fn swatch_new(s: &mut Session, p: &Value) -> Result<Value> {
     };
     let global = bool_or(p, "global", false);
     s.edit("New Swatch", |d, _| {
-        d.swatches.push(drawcraft_color::Swatch { name: name.clone(), paint, global, spot: false });
+        d.swatches.push(vectorcraft_color::Swatch { name: name.clone(), paint, global, spot: false });
         Ok(())
     })?;
     Ok(json!({ "name": name }))

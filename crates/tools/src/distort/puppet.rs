@@ -7,9 +7,9 @@
 //! with the dragged pin at the pointer), committed on release as one undo step. The mesh follows
 //! the current shape, so successive drags compose.
 
-use drawcraft_doc::{Document, NodeId};
-use drawcraft_geom::{BezPath, Point, Rect};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, NodeId};
+use vectorcraft_geom::{BezPath, Point, Rect};
 
 use super::arap::{Mesh, MeshOptions, auto_pins};
 use super::{BLUE, collect_points};
@@ -92,7 +92,7 @@ impl Tool for PuppetWarpTool {
                 self.sync(cx);
                 if self.ids.is_empty() {
                     // Click an object to select it; pins appear on the next event.
-                    if let Some(h) = drawcraft_doc::hit::hit_test(cx.doc, p, cx.hit_options()) {
+                    if let Some(h) = vectorcraft_doc::hit::hit_test(cx.doc, p, cx.hit_options()) {
                         return vec![Action::Exec("select.set".into(), json!({"ids": [h.top_object(cx.isolation).0]}))];
                     }
                     return vec![];
@@ -202,7 +202,7 @@ impl Tool for PuppetWarpTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     #[test]
     fn puppet_tool_autopins_adds_and_drags() {

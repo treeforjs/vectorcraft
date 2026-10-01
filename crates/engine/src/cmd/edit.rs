@@ -2,9 +2,9 @@
 
 use std::sync::Arc;
 
-use drawcraft_doc::{Document, Node, NodeId, Unit};
-use drawcraft_geom::{Affine, Vec2};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, Node, NodeId, Unit};
+use vectorcraft_geom::{Affine, Vec2};
 
 use super::*;
 use crate::{EngineError, inspect};
@@ -64,12 +64,12 @@ fn file_new(s: &mut Session, p: &Value) -> Result<Value> {
         d.units = parse_unit(u).ok_or_else(|| bad("file.new", format!("unknown units `{u}`")))?;
     }
     if str_param(p, "colorMode").is_some_and(|m| m.eq_ignore_ascii_case("cmyk")) {
-        d.color_mode = drawcraft_doc::ColorMode::Cmyk;
+        d.color_mode = vectorcraft_doc::ColorMode::Cmyk;
     }
     let n = p.get("artboards").and_then(Value::as_u64).unwrap_or(1).clamp(1, 1000) as usize;
     for i in 1..n {
-        let r = drawcraft_geom::Rect::new(0.0, 0.0, w, h) + Vec2::new(i as f64 * (w + 20.0), 0.0);
-        d.artboards.push(drawcraft_doc::Artboard {
+        let r = vectorcraft_geom::Rect::new(0.0, 0.0, w, h) + Vec2::new(i as f64 * (w + 20.0), 0.0);
+        d.artboards.push(vectorcraft_doc::Artboard {
             id: (i + 1) as u32,
             name: format!("Artboard {}", i + 1),
             rect: r,
@@ -152,7 +152,7 @@ pub(crate) fn selected_roots(s: &Session) -> Result<Vec<NodeId>> {
         .in_paint_order(&st.doc)
         .into_iter()
         .map(|id| match st.doc.parent_of(id).and_then(|p| st.doc.node(p).map(|n| (p, n))) {
-            Some((p, n)) if matches!(n.kind, drawcraft_doc::NodeKind::Compound { .. }) => p,
+            Some((p, n)) if matches!(n.kind, vectorcraft_doc::NodeKind::Compound { .. }) => p,
             _ => id,
         })
         .collect();
@@ -226,7 +226,7 @@ fn paste(s: &mut Session, p: &Value, mode: PasteMode) -> Result<Value> {
         }
         _ => None,
     };
-    let artboards: Vec<drawcraft_geom::Rect> = st.doc.artboards.iter().map(|a| a.rect).collect();
+    let artboards: Vec<vectorcraft_geom::Rect> = st.doc.artboards.iter().map(|a| a.rect).collect();
     let dx = f64_or(p, "dx", off);
     let dy = f64_or(p, "dy", off);
     let label = match mode {
@@ -274,7 +274,7 @@ fn duplicate(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// Duplicate `roots` directly above each original, transform the copies, select them.
-pub(crate) fn duplicate_in(d: &mut Document, sel: &mut drawcraft_doc::Selection, roots: &[NodeId], xf: Affine) -> Result<Vec<NodeId>> {
+pub(crate) fn duplicate_in(d: &mut Document, sel: &mut vectorcraft_doc::Selection, roots: &[NodeId], xf: Affine) -> Result<Vec<NodeId>> {
     let mut out = vec![];
     for id in roots {
         let Some((par, idx, _)) = d.position(*id) else { continue };

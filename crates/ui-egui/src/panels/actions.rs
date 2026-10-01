@@ -7,7 +7,7 @@ use serde_json::{Value, json};
 
 use crate::theme::Tokens;
 use crate::widgets::{self, dim_label};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Action {
@@ -44,13 +44,13 @@ pub fn default_sets() -> Vec<ActionSet> {
 }
 
 /// Run an action as a single undoable batch.
-pub fn play(app: &mut DrawcraftApp, set: usize, idx: usize) -> Result<Value, String> {
+pub fn play(app: &mut VectorcraftApp, set: usize, idx: usize) -> Result<Value, String> {
     let Some(a) = app.ui.action_sets.get(set).and_then(|s| s.actions.get(idx)).cloned() else { return Err("no such action".into()) };
     let commands: Vec<Value> = a.steps.iter().map(|(c, p)| json!({"command": c, "params": p})).collect();
     app.run("command.batch", json!({"label": a.name, "commands": commands}))
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut egui::Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     let selected_id = egui::Id::new("actions-selected");
     let mut selected: Option<(usize, usize)> = ui.data(|d| d.get_temp(selected_id));
@@ -149,7 +149,7 @@ mod tests {
         for set in default_sets() {
             for a in set.actions {
                 for (c, _) in a.steps {
-                    assert!(drawcraft_engine::find_command(&c).is_some(), "{c}");
+                    assert!(vectorcraft_engine::find_command(&c).is_some(), "{c}");
                 }
             }
         }

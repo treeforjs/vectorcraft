@@ -2,9 +2,9 @@
 //! appearance item duplicate/reorder, artboard reorder/duplicate, swatch groups, graphic style
 //! management and the advanced Character/Paragraph attributes.
 
-use drawcraft_color::{Gradient, GradientKind, GradientPaint, GradientStop, Paint, SwatchGroup};
-use drawcraft_doc::{Document, NodeKind};
 use serde_json::{Value, json};
+use vectorcraft_color::{Gradient, GradientKind, GradientPaint, GradientStop, Paint, SwatchGroup};
+use vectorcraft_doc::{Document, NodeKind};
 
 use super::*;
 use crate::EngineError;
@@ -90,7 +90,7 @@ fn leaf_targets(s: &Session, p: &Value) -> Result<Vec<NodeId>> {
 }
 
 /// Apply the gradient edits in `p` to `paint` (pure; unit-tested).
-pub(crate) fn apply_gradient_edit(paint: &Paint, p: &Value, bounds: Option<drawcraft_geom::Rect>) -> std::result::Result<Paint, String> {
+pub(crate) fn apply_gradient_edit(paint: &Paint, p: &Value, bounds: Option<vectorcraft_geom::Rect>) -> std::result::Result<Paint, String> {
     let mut gp = match paint {
         Paint::Gradient(g) => (**g).clone(),
         _ => GradientPaint::new(Gradient::default()),
@@ -143,7 +143,7 @@ pub(crate) fn apply_gradient_edit(paint: &Paint, p: &Value, bounds: Option<drawc
         gp.angle = a;
         if let Some(g) = &mut gp.geom {
             let r = a.to_radians();
-            let dir = drawcraft_geom::Vec2::new(r.cos(), -r.sin());
+            let dir = vectorcraft_geom::Vec2::new(r.cos(), -r.sin());
             if gp.gradient.kind == GradientKind::Radial {
                 g.end = g.start + dir * g.length();
             } else {
@@ -291,7 +291,7 @@ fn artboard_duplicate(s: &mut Session, p: &Value) -> Result<Value> {
         a.id = d.artboards.iter().map(|a| a.id).max().unwrap_or(0) + 1;
         a.name = format!("{} copy", src.name);
         let dx = right + 20.0 - src.rect.x0;
-        a.rect = drawcraft_geom::Rect::new(src.rect.x0 + dx, src.rect.y0, src.rect.x1 + dx, src.rect.y1);
+        a.rect = vectorcraft_geom::Rect::new(src.rect.x0 + dx, src.rect.y0, src.rect.x1 + dx, src.rect.y1);
         d.artboards.push(a);
         Ok(d.artboards.len() - 1)
     })?;
@@ -311,7 +311,7 @@ fn unique_name(d: &Document, base: &str) -> String {
 fn swatch_new_group(s: &mut Session, p: &Value) -> Result<Value> {
     let names: Vec<String> =
         p.get("swatches").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect()).unwrap_or_default();
-    let colors: Vec<drawcraft_color::Color> =
+    let colors: Vec<vectorcraft_color::Color> =
         p.get("colors").and_then(Value::as_array).map(|a| a.iter().filter_map(color_value).collect()).unwrap_or_default();
     let requested = str_param(p, "name").map(str::to_string);
     let name = s.edit("New Color Group", |d, _| {
@@ -325,7 +325,7 @@ fn swatch_new_group(s: &mut Session, p: &Value) -> Result<Value> {
         for c in &colors {
             let [r, g, b] = c.to_rgb();
             let nm = format!("R={} G={} B={}", (r * 255.0).round(), (g * 255.0).round(), (b * 255.0).round());
-            group.swatches.push(drawcraft_color::Swatch { name: nm, paint: Paint::solid(*c), global: false, spot: false });
+            group.swatches.push(vectorcraft_color::Swatch { name: nm, paint: Paint::solid(*c), global: false, spot: false });
         }
         d.swatch_groups.push(group);
         Ok(name)
@@ -338,7 +338,7 @@ fn swatch_duplicate(s: &mut Session, p: &Value) -> Result<Value> {
     let new = s.edit("Duplicate Swatch", |d, _| {
         let src = d.swatch(&name).cloned().ok_or_else(|| EngineError::Other(format!("no swatch `{name}`")))?;
         let nm = unique_name(d, &format!("{name} copy"));
-        let copy = drawcraft_color::Swatch { name: nm.clone(), ..src };
+        let copy = vectorcraft_color::Swatch { name: nm.clone(), ..src };
         if let Some(pos) = d.swatches.iter().position(|sw| sw.name == name) {
             d.swatches.insert(pos + 1, copy);
         } else if let Some(g) = d.swatch_groups.iter_mut().find(|g| g.swatches.iter().any(|sw| sw.name == name)) {
@@ -353,7 +353,7 @@ fn swatch_duplicate(s: &mut Session, p: &Value) -> Result<Value> {
 fn swatch_sort(s: &mut Session, _: &Value) -> Result<Value> {
     s.edit("Sort Swatches", |d, _| {
         // [None] and other bracketed specials stay first, like Illustrator.
-        let key = |sw: &drawcraft_color::Swatch| (!sw.name.starts_with('['), sw.name.to_lowercase());
+        let key = |sw: &vectorcraft_color::Swatch| (!sw.name.starts_with('['), sw.name.to_lowercase());
         d.swatches.sort_by_key(key);
         for g in &mut d.swatch_groups {
             g.swatches.sort_by_key(key);
@@ -491,11 +491,11 @@ fn set_format(s: &mut Session, p: &Value) -> Result<Value> {
 // ---------- stroke extras ----------
 
 /// Mirror a width profile along the path (t → 1 − t) or across it (swap left/right widths).
-pub(crate) fn flip_profile(p: &drawcraft_doc::WidthProfile, along: bool) -> drawcraft_doc::WidthProfile {
+pub(crate) fn flip_profile(p: &vectorcraft_doc::WidthProfile, along: bool) -> vectorcraft_doc::WidthProfile {
     let mut pts: Vec<(f64, f64, f64)> =
         if along { p.points.iter().map(|&(t, l, r)| (1.0 - t, l, r)).collect() } else { p.points.iter().map(|&(t, l, r)| (t, r, l)).collect() };
     pts.sort_by(|a, b| a.0.total_cmp(&b.0));
-    drawcraft_doc::WidthProfile { points: pts }
+    vectorcraft_doc::WidthProfile { points: pts }
 }
 
 fn stroke_advanced(s: &mut Session, p: &Value) -> Result<Value> {

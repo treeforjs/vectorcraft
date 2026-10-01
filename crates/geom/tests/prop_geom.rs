@@ -1,10 +1,10 @@
 //! Geometry property tests: PathData ↔ BezPath, bounds, hit testing, anchors and shapes.
 
-use drawcraft_geom::hit::{distance_to_outline, fill_contains, stroke_contains};
-use drawcraft_geom::{Affine, BezPath, FillRule, PathData, PathEl, Point, Rect, Shape, Vec2, shapes};
-use drawcraft_testkit::geom::{grid, hausdorff, polygon_area, rect_contains, sample, sample_path};
-use drawcraft_testkit::strategies::{arb_closed_shape, arb_convex_polygon, arb_path_data, arb_point, arb_rect, arb_star_polygon, polygon_path};
 use proptest::prelude::*;
+use vectorcraft_geom::hit::{distance_to_outline, fill_contains, stroke_contains};
+use vectorcraft_geom::{Affine, BezPath, FillRule, PathData, PathEl, Point, Rect, Shape, Vec2, shapes};
+use vectorcraft_testkit::geom::{grid, hausdorff, polygon_area, rect_contains, sample, sample_path};
+use vectorcraft_testkit::strategies::{arb_closed_shape, arb_convex_polygon, arb_path_data, arb_point, arb_rect, arb_star_polygon, polygon_path};
 
 fn els_close(a: &BezPath, b: &BezPath, eps: f64) -> bool {
     let (a, b) = (a.elements(), b.elements());

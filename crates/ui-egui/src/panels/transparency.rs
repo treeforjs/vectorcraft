@@ -2,16 +2,16 @@
 //! opacity-mask controls (make/release, link, clip, invert; Shift-click the mask to disable it),
 //! Isolate Blending and Knockout Group.
 
-use drawcraft_color::{BlendMode, Paint};
 use egui::{Sense, Stroke, StrokeKind, Ui, vec2};
 use serde_json::json;
+use vectorcraft_color::{BlendMode, Paint};
 
 use super::{current_paints, first_selected, live_run, pstate, selection_len, set_pstate};
 use crate::theme::Tokens;
 use crate::widgets::{self, Live, menu_item};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let n = first_selected(app);
     let has = n.is_some();
@@ -139,7 +139,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let hide_thumbs: bool = pstate(ui.ctx(), "tr-hide-thumbs");
     let hide_opts: bool = pstate(ui.ctx(), "tr-hide-options");
     if menu_item(ui, if hide_thumbs { "Show Thumbnails" } else { "Hide Thumbnails" }, true, false) {
@@ -193,10 +193,10 @@ pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
 
 /// A rendered thumbnail of `n` (which may live outside the tree, like mask art). One texture per
 /// slot, re-rendered only when the document revision, object or size changes.
-fn node_thumb(app: &DrawcraftApp, ui: &Ui, slot: &str, n: &drawcraft_doc::Node, r: egui::Rect, bg: Option<[u8; 4]>) -> bool {
+fn node_thumb(app: &VectorcraftApp, ui: &Ui, slot: &str, n: &vectorcraft_doc::Node, r: egui::Rect, bg: Option<[u8; 4]>) -> bool {
     use std::cell::RefCell;
     thread_local! {
-        static RENDERER: RefCell<drawcraft_render::Renderer> = RefCell::new(drawcraft_render::Renderer::new());
+        static RENDERER: RefCell<vectorcraft_render::Renderer> = RefCell::new(vectorcraft_render::Renderer::new());
     }
     let Some(st) = app.session.active() else { return false };
     let px = (r.width().min(r.height()) * ui.ctx().pixels_per_point()).round().max(8.0) as u32;
@@ -221,10 +221,10 @@ fn node_thumb(app: &DrawcraftApp, ui: &Ui, slot: &str, n: &drawcraft_doc::Node, 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use drawcraft_engine::Session;
+    use vectorcraft_engine::Session;
 
     /// Run the panel and its ≡ menu for one headless frame.
-    fn frame(app: &mut DrawcraftApp) {
+    fn frame(app: &mut VectorcraftApp) {
         let ctx = egui::Context::default();
         let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {
             show(app, ui);
@@ -235,8 +235,8 @@ mod tests {
 
     #[test]
     fn panel_draws_with_and_without_a_mask() {
-        let mut app = DrawcraftApp::new(Session::new(), Default::default());
-        let r = |app: &mut DrawcraftApp, id: &str, p: serde_json::Value| app.session.execute(id, &p).unwrap();
+        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let r = |app: &mut VectorcraftApp, id: &str, p: serde_json::Value| app.session.execute(id, &p).unwrap();
         r(&mut app, "file.new", json!({"width": 100, "height": 100}));
         frame(&mut app);
         let a = r(&mut app, "shape.rectangle", json!({"x": 0, "y": 0, "width": 50, "height": 50}))["id"].clone();

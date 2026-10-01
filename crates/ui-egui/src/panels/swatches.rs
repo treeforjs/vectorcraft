@@ -1,14 +1,14 @@
 //! Swatches panel: proxy, Recent Colors, thumbnail grid (15.5 pt tiles on a 17 pt pitch) or list,
 //! colour groups as folders, None/Registration first, bottom bar and panel menu.
 
-use drawcraft_color::Paint;
 use egui::{Rect, Sense, Stroke, StrokeKind, Ui, pos2, vec2};
 use serde_json::json;
+use vectorcraft_color::Paint;
 
 use super::{active_paint, paint_target, pstate, push_recent, set_pstate};
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item, swatch_tile};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
 /// View modes of the swatch list.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -85,11 +85,11 @@ enum Entry {
 
 const REGISTRATION: &str = "[Registration]";
 
-fn entries(app: &DrawcraftApp, kind: Kind) -> Vec<Entry> {
+fn entries(app: &VectorcraftApp, kind: Kind) -> Vec<Entry> {
     let Some(st) = app.session.active() else { return vec![] };
     let d = &st.doc;
     let mut out = vec![];
-    let sw = |s: &drawcraft_color::Swatch| Entry::Swatch { name: s.name.clone(), paint: s.paint.clone(), global: s.global, spot: s.spot };
+    let sw = |s: &vectorcraft_color::Swatch| Entry::Swatch { name: s.name.clone(), paint: s.paint.clone(), global: s.global, spot: s.spot };
     // None first, then Registration, then the rest (Illustrator's order).
     let (specials, rest): (Vec<_>, Vec<_>) = d.swatches.iter().partition(|s| s.paint.is_none());
     for s in specials.iter().filter(|s| kind.accepts(&s.paint, false)) {
@@ -112,7 +112,7 @@ fn entries(app: &DrawcraftApp, kind: Kind) -> Vec<Entry> {
     out
 }
 
-fn apply(app: &mut DrawcraftApp, ui: &Ui, e: &Entry) {
+fn apply(app: &mut VectorcraftApp, ui: &Ui, e: &Entry) {
     let target = paint_target(app);
     match e {
         Entry::Registration => {
@@ -131,7 +131,7 @@ fn apply(app: &mut DrawcraftApp, ui: &Ui, e: &Entry) {
 }
 
 /// A pattern swatch drawn as a rendered tile (cached by the definition's identity and size).
-fn pattern_thumb(app: &DrawcraftApp, ui: &Ui, r: Rect, paint: &Paint) {
+fn pattern_thumb(app: &VectorcraftApp, ui: &Ui, r: Rect, paint: &Paint) {
     use std::cell::RefCell;
     use std::collections::HashMap;
     type Key = (String, Vec<usize>, String, u32);
@@ -149,7 +149,7 @@ fn pattern_thumb(app: &DrawcraftApp, ui: &Ui, r: Rect, paint: &Paint) {
         px,
     );
     let tex = CACHE.with(|c| c.borrow().get(&key).cloned()).unwrap_or_else(|| {
-        let tex = drawcraft_render::render_pattern_swatch(&st.doc, pattern, px).map(|img| {
+        let tex = vectorcraft_render::render_pattern_swatch(&st.doc, pattern, px).map(|img| {
             let color = egui::ColorImage::from_rgba_premultiplied([img.width as usize, img.height as usize], &img.pixels);
             ui.ctx().load_texture(format!("pattern-swatch-{pattern}-{px}"), color, egui::TextureOptions::LINEAR)
         });
@@ -189,7 +189,7 @@ fn selected_name(ui: &Ui) -> Option<String> {
     pstate::<Option<String>>(ui.ctx(), "swatch-selected")
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     if app.session.active().is_none() {
         super::empty_state(ui, "swatch-book", "No document", "Open a document to see its swatches.");
@@ -352,7 +352,7 @@ fn deletable(ui: &Ui) -> Option<String> {
     selected_name(ui).filter(|n| !n.starts_with('['))
 }
 
-fn bottom(app: &mut DrawcraftApp, ui: &mut Ui) {
+fn bottom(app: &mut VectorcraftApp, ui: &mut Ui) {
     let kind: Kind = pstate(ui.ctx(), "swatch-kind");
     widgets::bottom_bar(ui, |ui| {
         widgets::icon_button_enabled(ui, "library", "Swatch Libraries (on the roadmap)", false, false, 24.0);
@@ -383,7 +383,7 @@ fn bottom(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-fn new_swatch(app: &mut DrawcraftApp) {
+fn new_swatch(app: &mut VectorcraftApp) {
     let p = active_paint(app);
     let params = match &p {
         Paint::None => json!({}),
@@ -392,7 +392,7 @@ fn new_swatch(app: &mut DrawcraftApp) {
     app.run("swatch.new", params).ok();
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let view: View = pstate(ui.ctx(), "swatch-view");
     let sel = deletable(ui);
     if menu_item(ui, "New Swatch…", true, false) {
@@ -437,12 +437,12 @@ pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use drawcraft_color::Color;
+    use vectorcraft_color::Color;
 
     #[test]
     fn kind_filter() {
         let solid = Paint::solid(Color::BLACK);
-        let grad = Paint::Gradient(Box::new(drawcraft_color::GradientPaint::new(Default::default())));
+        let grad = Paint::Gradient(Box::new(vectorcraft_color::GradientPaint::new(Default::default())));
         assert!(Kind::All.accepts(&grad, false));
         assert!(Kind::Color.accepts(&solid, false));
         assert!(!Kind::Color.accepts(&grad, false));

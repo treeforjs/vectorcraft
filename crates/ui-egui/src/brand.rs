@@ -1,4 +1,4 @@
-//! The DrawCraft brand mark (original artwork, drawn in code): a warm diagonal-gradient rounded
+//! The VectorCraft brand mark (original artwork, drawn in code): a warm diagonal-gradient rounded
 //! square with a white pen nib — the same design as the app icon rendered by `cargo xtask bundle`.
 
 use egui::epaint::{Mesh, Vertex, WHITE_UV};

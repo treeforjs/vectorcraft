@@ -4,19 +4,19 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use drawcraft_doc::{Document, Node, NodeKind};
 use egui::{Sense, Stroke, StrokeKind, Ui, vec2};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, Node, NodeKind};
 
 use super::{pstate, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
 
 /// A thumbnail of symbol `name` (an instance at its natural size), cached by the art's identity.
 fn thumb(ui: &Ui, doc: &Document, name: &str, size: f32) -> Option<egui::TextureHandle> {
     thread_local! {
-        static RENDERER: RefCell<drawcraft_render::Renderer> = RefCell::new(drawcraft_render::Renderer::new());
+        static RENDERER: RefCell<vectorcraft_render::Renderer> = RefCell::new(vectorcraft_render::Renderer::new());
         static CACHE: RefCell<HashMap<(usize, String, u32), egui::TextureHandle>> = RefCell::new(HashMap::new());
     }
     let sym = doc.symbols.iter().find(|s| s.name == name)?;
@@ -34,7 +34,7 @@ fn thumb(ui: &Ui, doc: &Document, name: &str, size: f32) -> Option<egui::Texture
     let mut d = Document::new(w.max(1.0), h.max(1.0));
     d.symbols.push(sym.clone());
     let id = d.alloc_id();
-    let xf = drawcraft_geom::Affine::scale_non_uniform(w / 20.0, h / 20.0);
+    let xf = vectorcraft_geom::Affine::scale_non_uniform(w / 20.0, h / 20.0);
     let l = d.layers[0].id;
     d.insert(Some(l), 0, Node::new(id, NodeKind::SymbolInstance { symbol: name.into(), xf })).ok()?;
     let img = RENDERER.with(|r| r.borrow_mut().render_thumbnail(&d, id, px))?;
@@ -50,11 +50,11 @@ fn thumb(ui: &Ui, doc: &Document, name: &str, size: f32) -> Option<egui::Texture
     Some(tex)
 }
 
-fn current(app: &mut DrawcraftApp) -> Option<String> {
+fn current(app: &mut VectorcraftApp) -> Option<String> {
     app.run("symbol.list", json!({})).ok().and_then(|v| v["current"].as_str().map(str::to_string))
 }
 
-fn has_instances_selected(app: &DrawcraftApp) -> bool {
+fn has_instances_selected(app: &VectorcraftApp) -> bool {
     app.session.active().is_some_and(|st| {
         st.selection.objects.iter().any(|id| {
             let mut any = false;
@@ -66,7 +66,7 @@ fn has_instances_selected(app: &DrawcraftApp) -> bool {
     })
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let Some(doc) = app.session.active().map(|d| d.doc.clone()) else { return };
     let names: Vec<String> = doc.symbols.iter().map(|s| s.name.clone()).collect();
@@ -152,7 +152,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let sel = current(app);
     let has_sel = app.session.active().is_some_and(|d| !d.selection.is_empty());
     let inst = has_instances_selected(app);

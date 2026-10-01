@@ -5,7 +5,7 @@ use egui::Ui;
 use serde_json::{Value, json};
 
 use super::{pstate, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
 
@@ -38,7 +38,7 @@ fn row(ui: &mut Ui, label: &str, value: String) {
     });
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let sel_only: bool = pstate(ui.ctx(), "docinfo-sel");
     let Ok(i) = app.session.execute("document.info", &json!({ "selectionOnly": sel_only })) else {
         widgets::dim_label(ui, "No document");
@@ -97,7 +97,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     });
 }
 
-pub fn menu(_app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(_app: &mut VectorcraftApp, ui: &mut Ui) {
     let sel: bool = pstate(ui.ctx(), "docinfo-sel");
     if menu_item(ui, "Selection Only", true, sel) {
         set_pstate(ui.ctx(), "docinfo-sel", !sel);
@@ -110,7 +110,7 @@ mod tests {
 
     #[test]
     fn draws_headless() {
-        let mut app = DrawcraftApp::new(drawcraft_engine::Session::new(), Default::default());
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
         app.session.execute("file.new", &json!({"width": 100, "height": 100})).unwrap();
         app.session.execute("text.create", &json!({"x": 10, "y": 40, "text": "Hi"})).unwrap();
         let ctx = egui::Context::default();

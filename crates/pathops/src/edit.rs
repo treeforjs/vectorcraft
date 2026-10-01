@@ -1,8 +1,8 @@
 //! Object → Path commands: Simplify, Smooth, Remove redundant points, Add Anchor Points, Average,
 //! Join, Split Into Grid.
 
-use drawcraft_geom::{Anchor, PathData, SubPath};
 use kurbo::{ParamCurveArclen, Point, Rect, Vec2};
+use vectorcraft_geom::{Anchor, PathData, SubPath};
 
 use crate::boolean::{Seg, segs_to_subpath};
 use crate::fit::{end_tangent, fit_cubics, fit_single, is_straight, sample, start_tangent};

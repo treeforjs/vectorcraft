@@ -1,9 +1,9 @@
 use std::f64::consts::PI;
 
-use drawcraft_geom::{FillRule, PathData, SubPath};
-use drawcraft_pathops::*;
 use kurbo::{ParamCurve, Point, Rect, Shape as _};
 use proptest::prelude::*;
+use vectorcraft_geom::{FillRule, PathData, SubPath};
+use vectorcraft_pathops::*;
 
 const NZ: FillRule = FillRule::NonZero;
 

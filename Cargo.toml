@@ -1,34 +1,34 @@
 [workspace]
 resolver = "3"
 members = ["crates/*", "apps/*", "xtask"]
-default-members = ["crates/*", "apps/drawcraft", "apps/drawcraft-cli", "xtask"]
+default-members = ["crates/*", "apps/vectorcraft", "apps/vectorcraft-cli", "xtask"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.90"
-repository = "https://github.com/storytold/drawcraft"
+repository = "https://github.com/storytold/vectorcraft"
 
 [workspace.dependencies]
 # internal
-drawcraft-geom = { path = "crates/geom" }
-drawcraft-color = { path = "crates/color" }
-drawcraft-doc = { path = "crates/doc" }
-drawcraft-pathops = { path = "crates/pathops" }
-drawcraft-brush = { path = "crates/brush" }
-drawcraft-trace = { path = "crates/trace" }
-drawcraft-text = { path = "crates/text" }
-drawcraft-effects = { path = "crates/effects" }
-drawcraft-render = { path = "crates/render" }
-drawcraft-svg = { path = "crates/svg" }
-drawcraft-pdf = { path = "crates/pdf" }
-drawcraft-format = { path = "crates/format" }
-drawcraft-tools = { path = "crates/tools" }
-drawcraft-engine = { path = "crates/engine" }
-drawcraft-ui-egui = { path = "crates/ui-egui" }
-drawcraft-mcp = { path = "crates/mcp" }
-drawcraft-testkit = { path = "crates/testkit" }
+vectorcraft-geom = { path = "crates/geom" }
+vectorcraft-color = { path = "crates/color" }
+vectorcraft-doc = { path = "crates/doc" }
+vectorcraft-pathops = { path = "crates/pathops" }
+vectorcraft-brush = { path = "crates/brush" }
+vectorcraft-trace = { path = "crates/trace" }
+vectorcraft-text = { path = "crates/text" }
+vectorcraft-effects = { path = "crates/effects" }
+vectorcraft-render = { path = "crates/render" }
+vectorcraft-svg = { path = "crates/svg" }
+vectorcraft-pdf = { path = "crates/pdf" }
+vectorcraft-format = { path = "crates/format" }
+vectorcraft-tools = { path = "crates/tools" }
+vectorcraft-engine = { path = "crates/engine" }
+vectorcraft-ui-egui = { path = "crates/ui-egui" }
+vectorcraft-mcp = { path = "crates/mcp" }
+vectorcraft-testkit = { path = "crates/testkit" }
 
 # foundation
 kurbo = { version = "0.13", features = ["serde"] }

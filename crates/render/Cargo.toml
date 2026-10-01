@@ -1,20 +1,20 @@
 [package]
-name = "drawcraft-render"
+name = "vectorcraft-render"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DrawCraft renderer: document to pixels (vello_cpu backend)"
+description = "VectorCraft renderer: document to pixels (vello_cpu backend)"
 
 [lints]
 workspace = true
 
 [dependencies]
-drawcraft-geom = { workspace = true }
-drawcraft-color = { workspace = true }
-drawcraft-doc = { workspace = true }
-drawcraft-text = { workspace = true }
-drawcraft-effects = { workspace = true }
-drawcraft-brush = { workspace = true }
+vectorcraft-geom = { workspace = true }
+vectorcraft-color = { workspace = true }
+vectorcraft-doc = { workspace = true }
+vectorcraft-text = { workspace = true }
+vectorcraft-effects = { workspace = true }
+vectorcraft-brush = { workspace = true }
 vello_cpu = { workspace = true }
 # Filter types (Gaussian blur, drop shadow) are not re-exported by vello_cpu 0.2.
 vello_common = { version = "0.2", default-features = false }
@@ -25,6 +25,6 @@ log = { workspace = true }
 vello_cpu = { workspace = true, features = ["multithreading"] }
 
 [dev-dependencies]
-drawcraft-testkit = { workspace = true }
+vectorcraft-testkit = { workspace = true }
 proptest = { workspace = true }
 serde_json = { workspace = true }

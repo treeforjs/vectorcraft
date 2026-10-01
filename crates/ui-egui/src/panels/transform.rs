@@ -1,14 +1,14 @@
 //! Transform panel: reference point, X/Y/W/H with the constrain link, rotate and shear, flips,
 //! live-shape properties and the Scale Corners / Scale Strokes & Effects options.
 
-use drawcraft_doc::NodeKind;
 use egui::Ui;
 use serde_json::json;
+use vectorcraft_doc::NodeKind;
 
 use super::{first_selected, pstate, set_pstate};
 use crate::theme::Tokens;
 use crate::widgets::{self, menu_item};
-use crate::{DrawcraftApp, icons};
+use crate::{VectorcraftApp, icons};
 
 pub const ANGLE_PRESETS: [f64; 9] = [-180.0, -135.0, -90.0, -45.0, 0.0, 45.0, 90.0, 135.0, 180.0];
 
@@ -21,7 +21,7 @@ pub fn constrained(w: f64, h: f64, new_w: Option<f64>, new_h: Option<f64>) -> (f
     }
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let Some(st) = app.session.active() else {
         widgets::dim_label(ui, "No document");
@@ -32,7 +32,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     let refi: usize = ui.data(|d| d.get_temp(egui::Id::new("refpt"))).unwrap_or(4);
     let link: bool = pstate(ui.ctx(), "xf-link");
     let has = bounds.is_some();
-    let rp = bounds.map(|b| drawcraft_geom::reference_point(b, refi));
+    let rp = bounds.map(|b| vectorcraft_geom::reference_point(b, refi));
     ui.horizontal(|ui| {
         if let Some(i) = widgets::reference_point(ui, refi) {
             ui.data_mut(|d| d.insert_temp(egui::Id::new("refpt"), i));
@@ -98,7 +98,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     {
         widgets::divider(ui);
         match live {
-            drawcraft_doc::LiveShape::Rectangle { radii, .. } => {
+            vectorcraft_doc::LiveShape::Rectangle { radii, .. } => {
                 widgets::subheader(ui, "Rectangle Properties:");
                 ui.horizontal(|ui| {
                     widgets::dim_label(ui, "Corner Radius:");
@@ -107,7 +107,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
                     }
                 });
             }
-            drawcraft_doc::LiveShape::Polygon { sides, .. } => {
+            vectorcraft_doc::LiveShape::Polygon { sides, .. } => {
                 widgets::subheader(ui, "Polygon Properties:");
                 ui.horizontal(|ui| {
                     widgets::dim_label(ui, "Sides:");
@@ -133,7 +133,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     let hidden: bool = pstate(ui.ctx(), "xf-hide-options");
     let has = super::selection_len(app) > 0;
     if menu_item(ui, if hidden { "Show Options" } else { "Hide Options" }, true, false) {

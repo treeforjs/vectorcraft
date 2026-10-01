@@ -1,26 +1,26 @@
 [package]
-name = "drawcraft-engine"
+name = "vectorcraft-engine"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DrawCraft engine: sessions, history, selection, the command registry"
+description = "VectorCraft engine: sessions, history, selection, the command registry"
 
 [lints]
 workspace = true
 
 [dependencies]
-drawcraft-geom = { workspace = true }
-drawcraft-color = { workspace = true }
-drawcraft-doc = { workspace = true }
-drawcraft-tools = { workspace = true }
-drawcraft-text = { workspace = true }
-drawcraft-render = { workspace = true }
-drawcraft-pathops = { workspace = true }
-drawcraft-brush = { workspace = true }
-drawcraft-trace = { workspace = true }
-drawcraft-svg = { workspace = true }
-drawcraft-format = { workspace = true }
-drawcraft-pdf = { workspace = true }
+vectorcraft-geom = { workspace = true }
+vectorcraft-color = { workspace = true }
+vectorcraft-doc = { workspace = true }
+vectorcraft-tools = { workspace = true }
+vectorcraft-text = { workspace = true }
+vectorcraft-render = { workspace = true }
+vectorcraft-pathops = { workspace = true }
+vectorcraft-brush = { workspace = true }
+vectorcraft-trace = { workspace = true }
+vectorcraft-svg = { workspace = true }
+vectorcraft-format = { workspace = true }
+vectorcraft-pdf = { workspace = true }
 kurbo = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -28,5 +28,5 @@ thiserror = { workspace = true }
 log = { workspace = true }
 
 [dev-dependencies]
-drawcraft-testkit = { workspace = true }
+vectorcraft-testkit = { workspace = true }
 proptest = { workspace = true }

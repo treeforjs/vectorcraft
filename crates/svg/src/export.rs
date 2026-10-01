@@ -2,10 +2,12 @@
 
 use std::collections::{HashMap, HashSet};
 
-use drawcraft_color::{BlendMode, GradientKind, GradientPaint, Paint};
-use drawcraft_doc::{AppearanceItem, Document, FillLayer, LineCap, LineJoin, Node, NodeId, NodeKind, StrokeAlign, StrokeLayer, TextKind, TextObject};
-use drawcraft_doc::{CharStyle, Justify};
-use drawcraft_geom::{Affine, FillRule, PathData, Point, Rect, Vec2};
+use vectorcraft_color::{BlendMode, GradientKind, GradientPaint, Paint};
+use vectorcraft_doc::{
+    AppearanceItem, Document, FillLayer, LineCap, LineJoin, Node, NodeId, NodeKind, StrokeAlign, StrokeLayer, TextKind, TextObject,
+};
+use vectorcraft_doc::{CharStyle, Justify};
+use vectorcraft_geom::{Affine, FillRule, PathData, Point, Rect, Vec2};
 
 use crate::{ExportOptions, Styling, base64_encode, fmt_num, xml_escape};
 
@@ -533,12 +535,12 @@ impl Writer<'_> {
             }
             NodeKind::Image(im) => {
                 let r = Rect::new(0.0, 0.0, im.width as f64, im.height as f64);
-                let p = drawcraft_geom::shapes::rectangle(r).transformed(im.xf);
+                let p = vectorcraft_geom::shapes::rectangle(r).transformed(im.xf);
                 out.push((self.path_d(&p, self.xf), FillRule::NonZero));
             }
             NodeKind::Text(_) | NodeKind::SymbolInstance { .. } => {}
             NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) | NodeKind::Repeat(_) => {
-                let g = drawcraft_doc::live::expand_deep(n, None);
+                let g = vectorcraft_doc::live::expand_deep(n, None);
                 self.clip_shapes(&g, out);
             }
         }
@@ -546,7 +548,7 @@ impl Writer<'_> {
 
     /// An object with an opacity mask: `<g mask="url(#…)">` around the unmasked object. The mask
     /// art goes in `<defs>`; no-clip adds a white backdrop and invert a colour-inverting filter.
-    fn masked(&mut self, n: &Node, m: &drawcraft_doc::OpacityMask) {
+    fn masked(&mut self, n: &Node, m: &vectorcraft_doc::OpacityMask) {
         const BIG: &str = "x=\"-100000\" y=\"-100000\" width=\"200000\" height=\"200000\"";
         let mid = self.fresh_id("mask");
         let (body, depth) = (std::mem::take(&mut self.body), self.depth);
@@ -681,7 +683,7 @@ impl Writer<'_> {
             }
             // Live blends/envelopes/meshes export their evaluated (expanded) form.
             NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Mesh(_) | NodeKind::Repeat(_) => {
-                let g = drawcraft_doc::live::expand_deep(n, None);
+                let g = vectorcraft_doc::live::expand_deep(n, None);
                 self.node(&g);
             }
         }

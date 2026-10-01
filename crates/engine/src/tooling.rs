@@ -1,8 +1,8 @@
 //! Hosting the active tool: pointer/key events → actions → commands.
 
-use drawcraft_geom::Point;
-use drawcraft_tools::{Action, Cursor, Mods, Overlay, PointerEvent, ToolContext, ToolKey};
 use serde_json::Value;
+use vectorcraft_geom::Point;
+use vectorcraft_tools::{Action, Cursor, Mods, Overlay, PointerEvent, ToolContext, ToolKey};
 
 use crate::{Result, Session};
 
@@ -41,11 +41,11 @@ impl Session {
         }
         let acts = self.with_tool_cx(view, |t, cx| t.deactivate(cx));
         self.apply_actions(acts)?;
-        self.tool = drawcraft_tools::create(id);
+        self.tool = vectorcraft_tools::create(id);
         Ok(())
     }
 
-    pub(crate) fn with_tool_cx<R>(&mut self, view: ViewInfo, f: impl FnOnce(&mut dyn drawcraft_tools::Tool, &ToolContext) -> R) -> R
+    pub(crate) fn with_tool_cx<R>(&mut self, view: ViewInfo, f: impl FnOnce(&mut dyn vectorcraft_tools::Tool, &ToolContext) -> R) -> R
     where
         R: Default,
     {
@@ -93,7 +93,7 @@ impl Session {
     pub fn overlays(&mut self, view: ViewInfo) -> Vec<Overlay> {
         let mut v = self.with_tool_cx(view, |t, cx| t.overlays(cx));
         if let Some(d) = self.active() {
-            v.splice(0..0, drawcraft_tools::distort::perspective::grid_overlays(&d.doc, 1.0 / view.zoom.max(1e-9), self.tool.id()));
+            v.splice(0..0, vectorcraft_tools::distort::perspective::grid_overlays(&d.doc, 1.0 / view.zoom.max(1e-9), self.tool.id()));
         }
         v
     }

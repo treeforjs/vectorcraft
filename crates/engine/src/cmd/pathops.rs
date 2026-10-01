@@ -1,16 +1,16 @@
 //! Pathfinder panel (`object.pathfinder.*`) and Object → Path commands backed by
-//! `drawcraft-pathops`: Offset Path, Outline Stroke, Simplify, Add Anchor Points, Split Into Grid,
+//! `vectorcraft-pathops`: Offset Path, Outline Stroke, Simplify, Add Anchor Points, Split Into Grid,
 //! Clean Up and Divide Objects Below.
 
 use std::sync::Arc;
 
-use drawcraft_color::{BlendMode, Paint};
-use drawcraft_doc::appearance::{AppearanceItem, LineCap, LineJoin, StrokeAlign, StrokeLayer};
-use drawcraft_doc::{Appearance, Document, Node, NodeId, NodeKind, TextObject};
-use drawcraft_geom::{FillRule, PathData};
-use drawcraft_pathops as po;
-use drawcraft_pathops::{BoolOp, PathfinderOp};
 use serde_json::{Value, json};
+use vectorcraft_color::{BlendMode, Paint};
+use vectorcraft_doc::appearance::{AppearanceItem, LineCap, LineJoin, StrokeAlign, StrokeLayer};
+use vectorcraft_doc::{Appearance, Document, Node, NodeId, NodeKind, TextObject};
+use vectorcraft_geom::{FillRule, PathData};
+use vectorcraft_pathops as po;
+use vectorcraft_pathops::{BoolOp, PathfinderOp};
 
 use super::edit::selected_roots;
 use super::*;
@@ -223,13 +223,13 @@ pub(crate) fn node_path(n: &Node) -> Option<(PathData, FillRule)> {
 
 /// Glyph outlines of a text object in document coordinates.
 pub(crate) fn text_outline(t: &TextObject) -> PathData {
-    let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), t);
+    let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
     PathData::from_bezpath(&lay.to_bezpath()).transformed(t.xf)
 }
 
 /// Appearance a text object's outlines take: the first run's fill and stroke.
 pub(crate) fn text_style_appearance(fill: &Paint, stroke: &Paint, width: f64) -> Appearance {
-    let mut a = Appearance { items: vec![AppearanceItem::Fill(drawcraft_doc::appearance::FillLayer::new(fill.clone()))], effects: vec![] };
+    let mut a = Appearance { items: vec![AppearanceItem::Fill(vectorcraft_doc::appearance::FillLayer::new(fill.clone()))], effects: vec![] };
     if !stroke.is_none() && width > 0.0 {
         a.items.push(AppearanceItem::Stroke(StrokeLayer::new(stroke.clone(), width)));
     }
@@ -504,7 +504,7 @@ fn outline_stroke(s: &mut Session, _: &Value) -> Result<Value> {
                 }
                 let mut stroke_node = shape_node(d, outline, Some(&l));
                 stroke_node.appearance =
-                    Appearance { items: vec![AppearanceItem::Fill(drawcraft_doc::appearance::FillLayer::new(st.paint.clone()))], effects: vec![] };
+                    Appearance { items: vec![AppearanceItem::Fill(vectorcraft_doc::appearance::FillLayer::new(st.paint.clone()))], effects: vec![] };
                 let fill = l.appearance.fill().filter(|f| f.visible && !f.paint.is_none()).cloned();
                 let new = if let Some(f) = fill {
                     let mut fill_node = l.clone();

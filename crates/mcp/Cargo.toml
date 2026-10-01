@@ -1,24 +1,24 @@
 [package]
-name = "drawcraft-mcp"
+name = "vectorcraft-mcp"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DrawCraft MCP server: JSON-RPC 2.0 over stdio, driving a running app or a headless session"
+description = "VectorCraft MCP server: JSON-RPC 2.0 over stdio, driving a running app or a headless session"
 
 [lints]
 workspace = true
 
 [dependencies]
-drawcraft-engine = { workspace = true }
-drawcraft-render = { workspace = true }
-drawcraft-svg = { workspace = true }
-drawcraft-format = { workspace = true }
-drawcraft-tools = { workspace = true }
-drawcraft-geom = { workspace = true }
-drawcraft-doc = { workspace = true }
+vectorcraft-engine = { workspace = true }
+vectorcraft-render = { workspace = true }
+vectorcraft-svg = { workspace = true }
+vectorcraft-format = { workspace = true }
+vectorcraft-tools = { workspace = true }
+vectorcraft-geom = { workspace = true }
+vectorcraft-doc = { workspace = true }
 serde_json = { workspace = true }
 log = { workspace = true }
 
 [dev-dependencies]
-drawcraft-testkit = { workspace = true }
+vectorcraft-testkit = { workspace = true }
 proptest = { workspace = true }

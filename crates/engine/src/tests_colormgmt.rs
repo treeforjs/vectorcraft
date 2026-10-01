@@ -3,13 +3,13 @@
 
 use std::sync::Mutex;
 
-use drawcraft_color::cms::{self, Intent, Lab, delta_e2000};
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{ColorMode, Document};
-use drawcraft_geom::Affine;
-use drawcraft_render::proof::{ProofSetup, ProofTarget};
-use drawcraft_render::{RenderOptions, Renderer};
 use serde_json::{Value, json};
+use vectorcraft_color::cms::{self, Intent, Lab, delta_e2000};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{ColorMode, Document};
+use vectorcraft_geom::Affine;
+use vectorcraft_render::proof::{ProofSetup, ProofTarget};
+use vectorcraft_render::{RenderOptions, Renderer};
 
 use super::*;
 
@@ -37,7 +37,7 @@ fn lab_of_rgb(rgb: [f32; 3]) -> Lab {
     cms::lab::srgb_to_lab(rgb)
 }
 
-fn render(doc: &Document, opts: RenderOptions) -> drawcraft_render::Rendered {
+fn render(doc: &Document, opts: RenderOptions) -> vectorcraft_render::Rendered {
     let mut r = Renderer::new();
     r.threads = 0;
     r.render(doc, 100, 100, Affine::IDENTITY, &RenderOptions { background: Some([255, 255, 255, 255]), ..opts })
@@ -265,11 +265,11 @@ fn spot_colours_get_their_own_plate() {
     assert_eq!(vis, [false, false, false, false, true]);
     let r = s.execute("view.separationsPreview", &json!({"toggle": "Cyan"})).unwrap();
     assert_eq!(r["plates"][0]["visible"], true);
-    assert_eq!(drawcraft_render::proof::active_proof().unwrap().separations.unwrap().len(), 2);
-    assert!(drawcraft_render::proof::overprint_preview_on(), "separations imply overprint preview");
+    assert_eq!(vectorcraft_render::proof::active_proof().unwrap().separations.unwrap().len(), 2);
+    assert!(vectorcraft_render::proof::overprint_preview_on(), "separations imply overprint preview");
     assert!(s.execute("view.separationsPreview", &json!({"only": "Mauve"})).is_err());
     s.execute("view.separationsPreview", &json!({"on": false})).unwrap();
-    assert!(drawcraft_render::proof::active_proof().is_none_or(|p| p.separations.is_none()));
+    assert!(vectorcraft_render::proof::active_proof().is_none_or(|p| p.separations.is_none()));
 }
 
 #[test]
@@ -288,7 +288,7 @@ fn overprint_black_multiplies_in_preview() {
     assert!(over[2] as i32 > over[0] as i32 + 10, "overprint lets the cyan through: {over:?}");
     assert!(over[2] < knock[2] + 60 && over[2] <= 128, "and stays dark: {over:?}");
     s.execute("edit.colors.overprintBlack", &json!({"remove": true})).unwrap();
-    assert!(drawcraft_render::proof::overprint_ids(&s.doc().unwrap().doc).is_empty());
+    assert!(vectorcraft_render::proof::overprint_ids(&s.doc().unwrap().doc).is_empty());
 }
 
 #[test]
@@ -299,10 +299,10 @@ fn view_toggles_redraw_without_dirtying() {
     let r = s.execute("view.proofColors", &json!({"on": true})).unwrap();
     assert_eq!(r["proofColors"], true);
     assert!(s.doc().unwrap().revision > rev, "canvas redraws");
-    assert_eq!(s.doc().unwrap().revision, s.doc().unwrap().saved_revision, "not marked modified");
+    assert!(!s.doc().unwrap().is_dirty(), "not marked modified");
     let r = s.execute("view.proofSetup", &json!({"target": "deuteranopia", "intent": "perceptual"})).unwrap();
     assert_eq!(r["target"], "deuteranopia");
-    assert_eq!(drawcraft_render::proof::active_proof().unwrap().target, ProofTarget::Deuteranopia);
+    assert_eq!(vectorcraft_render::proof::active_proof().unwrap().target, ProofTarget::Deuteranopia);
     assert!(s.execute("view.proofSetup", &json!({"target": "cmyk:Nope"})).is_err());
     s.execute("view.proofSetup", &json!({"target": "workingCmyk", "intent": "relative"})).unwrap();
     let r = s.execute("view.proofColors", &json!({"on": false})).unwrap();
@@ -319,7 +319,7 @@ fn has_cmyk_op(pdf: &str) -> bool {
 }
 
 fn pdf_text(doc: &Document) -> String {
-    let bytes = drawcraft_pdf::export(doc, &drawcraft_pdf::PdfOptions { compress: false, created: Some(0), ..Default::default() }).unwrap();
+    let bytes = vectorcraft_pdf::export(doc, &vectorcraft_pdf::PdfOptions { compress: false, created: Some(0), ..Default::default() }).unwrap();
     String::from_utf8_lossy(&bytes).into_owned()
 }
 

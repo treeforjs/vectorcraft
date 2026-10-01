@@ -5,9 +5,9 @@
 use std::sync::Arc;
 use std::sync::mpsc::{Receiver, Sender, channel};
 
-use drawcraft_doc::Document;
-use drawcraft_geom::Affine;
-use drawcraft_render::{RenderOptions, Rendered, Renderer};
+use vectorcraft_doc::Document;
+use vectorcraft_geom::Affine;
+use vectorcraft_render::{RenderOptions, Rendered, Renderer};
 
 use crate::CacheKey;
 
@@ -41,7 +41,7 @@ impl Worker {
         let (tx, jobs) = channel::<Job>();
         let (done_tx, rx) = channel::<Done>();
         std::thread::Builder::new()
-            .name("drawcraft-render".into())
+            .name("vectorcraft-render".into())
             .spawn(move || {
                 let mut r = Renderer::new();
                 while let Ok(mut job) = jobs.recv() {

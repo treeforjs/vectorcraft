@@ -73,7 +73,7 @@ pub fn tool_definitions() -> Vec<Value> {
         tool(
             "list_commands",
             "List commands",
-            "List DrawCraft commands (id, label, menu path, shortcut, parameter description, enabled state). Every editing action is a command; run any of them with run_command. Coordinates are points in document space, y down, origin at the first artboard's top-left.",
+            "List VectorCraft commands (id, label, menu path, shortcut, parameter description, enabled state). Every editing action is a command; run any of them with run_command. Coordinates are points in document space, y down, origin at the first artboard's top-left.",
             obj(
                 json!({"filter": string("Case-insensitive substring matched against id, label and menu path (e.g. \"align\", \"Object\")"), "enabledOnly": {"type": "boolean", "description": "Only commands that can run right now"}}),
                 &[],
@@ -83,7 +83,7 @@ pub fn tool_definitions() -> Vec<Value> {
         tool(
             "run_command",
             "Run command",
-            "Execute any DrawCraft command by id with JSON params (see list_commands for ids and params). Examples: {\"command\":\"object.group\"}, {\"command\":\"object.align\",\"params\":{\"align\":\"left\"}}, {\"command\":\"file.new\",\"params\":{\"width\":800,\"height\":600}}. Returns the command's result (e.g. {id} for creation commands).",
+            "Execute any VectorCraft command by id with JSON params (see list_commands for ids and params). Examples: {\"command\":\"object.group\"}, {\"command\":\"object.align\",\"params\":{\"align\":\"left\"}}, {\"command\":\"file.new\",\"params\":{\"width\":800,\"height\":600}}. Returns the command's result (e.g. {id} for creation commands).",
             obj(
                 json!({"command": string("Command id, e.g. shape.rectangle, object.group, paint.setFill"), "params": {"type": "object", "description": "Command parameters"}}),
                 &["command"],
@@ -246,24 +246,24 @@ pub fn tool_definitions() -> Vec<Value> {
         tool(
             "open_file",
             "Open file",
-            "Open a .drawcraft or .svg file as a new, active document.",
+            "Open a .vectorcraft or .svg file as a new, active document.",
             obj(json!({"path": string("File path")}), &["path"]),
             false,
         ),
         tool(
             "save_file",
             "Save file",
-            "Save the active document in the native .drawcraft format.",
+            "Save the active document in the native .vectorcraft format.",
             obj(json!({"path": string("Destination (default: the document's current path)")}), &[]),
             false,
         ),
         tool(
             "export",
             "Export",
-            "Export the active document: svg (artboard viewBox), png (rendered artboard) or drawcraft (native).",
+            "Export the active document: svg (artboard viewBox), png (rendered artboard) or vectorcraft (native).",
             obj(
                 json!({
-                    "format": {"type": "string", "enum": ["svg", "png", "pdf", "jpg", "webp", "drawcraft"], "description": "Default: from the path's extension"},
+                    "format": {"type": "string", "enum": ["svg", "png", "pdf", "jpg", "webp", "vectorcraft"], "description": "Default: from the path's extension"},
                     "path": string("Destination file"),
                     "scale": num("PNG pixels per point (default 1)"),
                 }),
@@ -293,7 +293,7 @@ fn need_ui(b: &dyn Backend, tool: &str) -> Result<(), String> {
         Ok(())
     } else {
         Err(format!(
-            "`{tool}` needs the desktop app: run `drawcraft --control 7979` and start the server with `drawcraft-cli mcp --connect 127.0.0.1:7979`"
+            "`{tool}` needs the desktop app: run `vectorcraft --control 7979` and start the server with `vectorcraft-cli mcp --connect 127.0.0.1:7979`"
         ))
     }
 }
@@ -392,7 +392,7 @@ fn screenshot(b: &mut dyn Backend, a: &Args) -> Result<ToolResult, String> {
         let target = match path {
             Some(p) => p,
             None => {
-                tmp = std::env::temp_dir().join(format!("drawcraft-window-{}.png", std::process::id())).to_string_lossy().to_string();
+                tmp = std::env::temp_dir().join(format!("vectorcraft-window-{}.png", std::process::id())).to_string_lossy().to_string();
                 &tmp
             }
         };
@@ -412,7 +412,7 @@ fn screenshot(b: &mut dyn Backend, a: &Args) -> Result<ToolResult, String> {
     let r = b.call("ui.render", p)?;
     let b64 = r.get("pngBase64").and_then(Value::as_str).ok_or("renderer returned no image")?;
     if let Some(path) = path {
-        let png = drawcraft_format::base64_decode(b64).ok_or("renderer returned bad base64")?;
+        let png = vectorcraft_format::base64_decode(b64).ok_or("renderer returned bad base64")?;
         std::fs::write(path, png).map_err(|e| format!("write {path}: {e}"))?;
     }
     Ok(ToolResult {
@@ -427,7 +427,7 @@ fn screenshot(b: &mut dyn Backend, a: &Args) -> Result<ToolResult, String> {
 fn image_result(png: &[u8], info: Value) -> ToolResult {
     ToolResult {
         content: vec![
-            json!({"type": "image", "data": drawcraft_format::base64_encode(png), "mimeType": "image/png"}),
+            json!({"type": "image", "data": vectorcraft_format::base64_encode(png), "mimeType": "image/png"}),
             json!({"type": "text", "text": info.to_string()}),
         ],
         is_error: false,
@@ -543,12 +543,12 @@ fn dispatch(b: &mut dyn Backend, name: &str, a: &Args) -> Result<ToolResult, Str
                 .and_then(Value::as_str)
                 .map(str::to_ascii_lowercase)
                 .unwrap_or_else(|| std::path::Path::new(path).extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default());
-            if !["svg", "png", "pdf", "jpg", "jpeg", "webp", "drawcraft"].contains(&fmt.as_str()) {
-                return Err(format!("unknown export format `{fmt}` (svg, png, pdf, jpg, webp, drawcraft)"));
+            if !["svg", "png", "pdf", "jpg", "jpeg", "webp", "vectorcraft"].contains(&fmt.as_str()) {
+                return Err(format!("unknown export format `{fmt}` (svg, png, pdf, jpg, webp, vectorcraft)"));
             }
             let scale = a.get("scale").and_then(Value::as_f64).unwrap_or(1.0);
             // The desktop app exports native files through Save (which also sets the document path).
-            if fmt == "drawcraft" && b.has_ui() {
+            if fmt == "vectorcraft" && b.has_ui() {
                 return j(b.call("app.save", json!({"path": path}))?);
             }
             j(b.call("app.export", json!({"format": fmt, "path": path, "scale": scale}))?)

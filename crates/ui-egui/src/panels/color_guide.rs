@@ -1,13 +1,13 @@
 //! Color Guide panel: base colour, harmony-rule dropdown with the harmony strip, and a variation
 //! grid (tints/shades, warm/cool or vivid/muted) whose cells apply to the active proxy.
 
-use drawcraft_color::harmony::Harmony;
-use drawcraft_color::{Color, Paint};
 use egui::{Rect, Sense, Ui, vec2};
 use serde_json::json;
+use vectorcraft_color::harmony::Harmony;
+use vectorcraft_color::{Color, Paint};
 
 use super::{active_paint, color_json, paint_target, pstate, push_recent, set_pstate};
-use crate::DrawcraftApp;
+use crate::VectorcraftApp;
 use crate::widgets::{self, menu_item};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -52,7 +52,7 @@ fn harmony(ui: &Ui) -> Harmony {
     Harmony::ALL[i.min(Harmony::ALL.len() - 1)]
 }
 
-pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = crate::theme::Tokens::get(ui.ctx());
     let base = match active_paint(app) {
         Paint::Solid { color, .. } => color,
@@ -129,7 +129,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     }
 }
 
-pub fn menu(_app: &mut DrawcraftApp, ui: &mut Ui) {
+pub fn menu(_app: &mut VectorcraftApp, ui: &mut Ui) {
     let mode: Variation = pstate(ui.ctx(), "cg-mode");
     for (m, l) in
         [(Variation::TintsShades, "Show Tints/Shades"), (Variation::WarmCool, "Show Warm/Cool"), (Variation::VividMuted, "Show Vivid/Muted")]

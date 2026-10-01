@@ -1,8 +1,8 @@
 //! Layers panel, artboards.
 
-use drawcraft_doc::{Artboard, LayerColor, NodeId, NodeKind};
-use drawcraft_geom::Rect;
 use serde_json::{Value, json};
+use vectorcraft_doc::{Artboard, LayerColor, NodeId, NodeKind};
+use vectorcraft_geom::Rect;
 
 use super::*;
 use crate::EngineError;
@@ -73,7 +73,7 @@ fn new_sublayer(s: &mut Session, p: &Value) -> Result<Value> {
         let id = d.alloc_id();
         let color = LayerColor::Preset(((d.layers.len() + n + 1) % 27) as u8);
         let nm = name.unwrap_or_else(|| format!("Layer {}", d.node_count()));
-        d.insert(Some(parent), usize::MAX, drawcraft_doc::Node::layer(id, &nm, color))?;
+        d.insert(Some(parent), usize::MAX, vectorcraft_doc::Node::layer(id, &nm, color))?;
         Ok(id)
     })?;
     Ok(json!({ "id": id.0 }))

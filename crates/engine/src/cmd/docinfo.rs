@@ -2,10 +2,10 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use drawcraft_color::Paint;
-use drawcraft_doc::{ColorMode, Document, Node, NodeId, NodeKind};
-use drawcraft_geom::{Affine, Rect};
 use serde_json::{Value, json};
+use vectorcraft_color::Paint;
+use vectorcraft_doc::{ColorMode, Document, Node, NodeId, NodeKind};
+use vectorcraft_geom::{Affine, Rect};
 
 use super::*;
 
@@ -86,8 +86,8 @@ fn info(s: &mut Session, p: &Value) -> Result<Value> {
             }
             for item in &n.appearance.items {
                 let paint = match item {
-                    drawcraft_doc::AppearanceItem::Fill(f) => &f.paint,
-                    drawcraft_doc::AppearanceItem::Stroke(s) => &s.paint,
+                    vectorcraft_doc::AppearanceItem::Fill(f) => &f.paint,
+                    vectorcraft_doc::AppearanceItem::Stroke(s) => &s.paint,
                 };
                 if let Some(k) = paint_kind(paint) {
                     *counts.entry(k).or_default() += 1;
@@ -153,11 +153,11 @@ fn pixel_perfect(s: &mut Session, p: &Value) -> Result<Value> {
             // Whole-pixel stroke weights; odd ones centre on half pixels.
             let mut odd = false;
             for item in &mut node.appearance.items {
-                if let drawcraft_doc::AppearanceItem::Stroke(st) = item
+                if let vectorcraft_doc::AppearanceItem::Stroke(st) = item
                     && st.width > 0.0
                 {
                     st.width = st.width.round().max(1.0);
-                    odd |= st.width as i64 % 2 == 1 && st.align == drawcraft_doc::StrokeAlign::Center;
+                    odd |= st.width as i64 % 2 == 1 && st.align == vectorcraft_doc::StrokeAlign::Center;
                 }
             }
             if let Some(b) = node.geometric_bounds() {

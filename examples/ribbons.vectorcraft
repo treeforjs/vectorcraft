@@ -1,7 +1,7 @@
 {
-  "format": "drawcraft",
+  "format": "vectorcraft",
   "version": 1,
-  "generator": "DrawCraft 0.1.0",
+  "generator": "VectorCraft 0.1.0",
   "document": {
     "version": 1,
     "title": "Ribbons",

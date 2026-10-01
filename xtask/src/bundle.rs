@@ -1,13 +1,13 @@
-//! `cargo xtask bundle`: build the release app and wrap it as `dist/DrawCraft.app` (macOS), with an
-//! icon rendered by DrawCraft's own renderer.
+//! `cargo xtask bundle`: build the release app and wrap it as `dist/VectorCraft.app` (macOS), with an
+//! icon rendered by VectorCraft's own renderer.
 
 use std::path::Path;
 use std::process::Command;
 
-use drawcraft_color::{Color, Gradient, GradientKind, GradientPaint, GradientStop, Paint};
-use drawcraft_doc::{Appearance, Document, Node};
-use drawcraft_geom::{Anchor, PathData, Point, Rect, SubPath, shapes};
-use drawcraft_render::Renderer;
+use vectorcraft_color::{Color, Gradient, GradientKind, GradientPaint, GradientStop, Paint};
+use vectorcraft_doc::{Appearance, Document, Node};
+use vectorcraft_geom::{Anchor, PathData, Point, Rect, SubPath, shapes};
+use vectorcraft_render::Renderer;
 
 /// The app icon: a warm-gradient rounded square with a white pen nib (our own artwork).
 pub fn icon_png(size: u32) -> Vec<u8> {
@@ -77,21 +77,21 @@ pub fn icon_png(size: u32) -> Vec<u8> {
 pub fn run(root: &Path) -> Result<(), String> {
     let status = Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".into()))
         .current_dir(root)
-        .args(["build", "--release", "-p", "drawcraft", "-p", "drawcraft-cli"])
+        .args(["build", "--release", "-p", "vectorcraft", "-p", "vectorcraft-cli"])
         .status()
         .map_err(|e| e.to_string())?;
     if !status.success() {
         return Err("release build failed".into());
     }
     let target = std::env::var("CARGO_TARGET_DIR").map(std::path::PathBuf::from).unwrap_or_else(|_| root.join("target"));
-    let app = root.join("dist/DrawCraft.app/Contents");
-    let _ = std::fs::remove_dir_all(root.join("dist/DrawCraft.app"));
+    let app = root.join("dist/VectorCraft.app/Contents");
+    let _ = std::fs::remove_dir_all(root.join("dist/VectorCraft.app"));
     std::fs::create_dir_all(app.join("MacOS")).map_err(|e| e.to_string())?;
     std::fs::create_dir_all(app.join("Resources")).map_err(|e| e.to_string())?;
-    std::fs::copy(target.join("release/drawcraft"), app.join("MacOS/DrawCraft")).map_err(|e| format!("copy app: {e}"))?;
-    std::fs::copy(target.join("release/drawcraft-cli"), app.join("MacOS/drawcraft-cli")).map_err(|e| format!("copy cli: {e}"))?;
+    std::fs::copy(target.join("release/vectorcraft"), app.join("MacOS/VectorCraft")).map_err(|e| format!("copy app: {e}"))?;
+    std::fs::copy(target.join("release/vectorcraft-cli"), app.join("MacOS/vectorcraft-cli")).map_err(|e| format!("copy cli: {e}"))?;
     // Icon set → .icns via iconutil (macOS build tool).
-    let iconset = root.join("dist/DrawCraft.iconset");
+    let iconset = root.join("dist/VectorCraft.iconset");
     let _ = std::fs::remove_dir_all(&iconset);
     std::fs::create_dir_all(&iconset).map_err(|e| e.to_string())?;
     for (sz, name) in [
@@ -108,12 +108,12 @@ pub fn run(root: &Path) -> Result<(), String> {
     ] {
         std::fs::write(iconset.join(format!("icon_{name}.png")), icon_png(sz)).map_err(|e| e.to_string())?;
     }
-    std::fs::write(root.join("dist/DrawCraft-icon.png"), icon_png(1024)).map_err(|e| e.to_string())?;
+    std::fs::write(root.join("dist/VectorCraft-icon.png"), icon_png(1024)).map_err(|e| e.to_string())?;
     let ok = Command::new("iconutil")
         .args(["-c", "icns"])
         .arg(&iconset)
         .arg("-o")
-        .arg(app.join("Resources/DrawCraft.icns"))
+        .arg(app.join("Resources/VectorCraft.icns"))
         .status()
         .map(|s| s.success())
         .unwrap_or(false);
@@ -125,18 +125,18 @@ pub fn run(root: &Path) -> Result<(), String> {
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleName</key><string>DrawCraft</string>
-<key>CFBundleDisplayName</key><string>DrawCraft</string>
-<key>CFBundleIdentifier</key><string>ai.storyteller.drawcraft</string>
-<key>CFBundleExecutable</key><string>DrawCraft</string>
-<key>CFBundleIconFile</key><string>DrawCraft</string>
+<key>CFBundleName</key><string>VectorCraft</string>
+<key>CFBundleDisplayName</key><string>VectorCraft</string>
+<key>CFBundleIdentifier</key><string>ai.storyteller.vectorcraft</string>
+<key>CFBundleExecutable</key><string>VectorCraft</string>
+<key>CFBundleIconFile</key><string>VectorCraft</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>{version}</string>
 <key>CFBundleVersion</key><string>{version}</string>
 <key>NSHighResolutionCapable</key><true/>
 <key>LSMinimumSystemVersion</key><string>11.0</string>
 <key>CFBundleDocumentTypes</key><array>
- <dict><key>CFBundleTypeName</key><string>DrawCraft Document</string><key>CFBundleTypeExtensions</key><array><string>drawcraft</string></array><key>CFBundleTypeRole</key><string>Editor</string></dict>
+ <dict><key>CFBundleTypeName</key><string>VectorCraft Document</string><key>CFBundleTypeExtensions</key><array><string>vectorcraft</string></array><key>CFBundleTypeRole</key><string>Editor</string></dict>
  <dict><key>CFBundleTypeName</key><string>SVG</string><key>CFBundleTypeExtensions</key><array><string>svg</string></array><key>CFBundleTypeRole</key><string>Editor</string></dict>
  <dict><key>CFBundleTypeName</key><string>PDF / Illustrator</string><key>CFBundleTypeExtensions</key><array><string>pdf</string><string>ai</string></array><key>CFBundleTypeRole</key><string>Viewer</string></dict>
 </array>
@@ -144,6 +144,6 @@ pub fn run(root: &Path) -> Result<(), String> {
 "#
     );
     std::fs::write(app.join("Info.plist"), plist).map_err(|e| e.to_string())?;
-    println!("built {}", root.join("dist/DrawCraft.app").display());
+    println!("built {}", root.join("dist/VectorCraft.app").display());
     Ok(())
 }

@@ -1,8 +1,8 @@
 //! Panel-support commands (`cmd/panelcmds.rs`).
 
-use drawcraft_color::{GradientKind, Paint};
-use drawcraft_doc::{AppearanceItem, NodeKind};
 use serde_json::json;
+use vectorcraft_color::{GradientKind, Paint};
+use vectorcraft_doc::{AppearanceItem, NodeKind};
 
 use super::*;
 
@@ -17,7 +17,7 @@ fn rect(s: &mut Session) -> NodeId {
     NodeId(r["id"].as_u64().unwrap())
 }
 
-fn node(s: &Session, id: NodeId) -> drawcraft_doc::Node {
+fn node(s: &Session, id: NodeId) -> vectorcraft_doc::Node {
     s.doc().unwrap().doc.node(id).unwrap().clone()
 }
 
@@ -158,9 +158,9 @@ fn stroke_advanced_scale_swap_flip() {
     let n = node(&s, id);
     let st = n.appearance.stroke().unwrap();
     assert_eq!(st.start_arrow, None);
-    assert_eq!(st.end_arrow, Some(drawcraft_doc::Arrowhead::Triangle));
+    assert_eq!(st.end_arrow, Some(vectorcraft_doc::Arrowhead::Triangle));
     assert_eq!(st.arrow_scale, (200.0, 50.0));
-    assert_eq!(st.profile.as_ref().unwrap().points, drawcraft_doc::WidthProfile::taper_start().points);
+    assert_eq!(st.profile.as_ref().unwrap().points, vectorcraft_doc::WidthProfile::taper_start().points);
     assert!(s.execute("stroke.setAdvanced", &json!({})).is_err());
     assert!(s.execute("stroke.setAdvanced", &json!({"flipProfile": "sideways"})).is_err());
 }

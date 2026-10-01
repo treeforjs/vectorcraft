@@ -3,8 +3,8 @@
 //! Frames are ordinary area text objects holding their slice of the story; the document lists the
 //! thread order. After every edit, threads whose frames changed are re-flowed ([`reflow`]).
 
-use drawcraft_doc::{Document, Node, NodeId, NodeKind, TextKind, TextObject, TextRun};
 use serde_json::{Value, json};
+use vectorcraft_doc::{Document, Node, NodeId, NodeKind, TextKind, TextObject, TextRun};
 
 use super::edit::selected_roots;
 use super::typecmd::refresh_bounds;
@@ -92,10 +92,10 @@ pub(crate) fn reflow(before: &Document, doc: &mut Document) {
             }
             continue;
         }
-        drawcraft_text::edit::normalize(&mut story);
+        vectorcraft_text::edit::normalize(&mut story);
         let frames: Vec<TextObject> = live.iter().filter_map(|id| text_of(doc, *id).cloned()).collect();
         let refs: Vec<&TextObject> = frames.iter().collect();
-        let parts = drawcraft_text::thread::distribute(drawcraft_text::FontDb::global(), &refs, &story);
+        let parts = vectorcraft_text::thread::distribute(vectorcraft_text::FontDb::global(), &refs, &story);
         for (id, runs) in live.iter().zip(parts) {
             if let Some(NodeKind::Text(t)) = doc.node_mut(*id).map(|n| &mut n.kind)
                 && t.runs != runs
@@ -112,14 +112,14 @@ pub(crate) fn reflow(before: &Document, doc: &mut Document) {
 }
 
 /// A closed path converted to an empty area-type frame with `style`.
-fn frame_from_path(n: &Node, style: drawcraft_doc::CharStyle) -> Option<Node> {
+fn frame_from_path(n: &Node, style: vectorcraft_doc::CharStyle) -> Option<Node> {
     let NodeKind::Path { path, .. } = &n.kind else { return None };
     if !path.subpaths.first().is_some_and(|s| s.closed) {
         return None;
     }
-    let mut t = TextObject::point(drawcraft_geom::Point::ZERO, "", style);
+    let mut t = TextObject::point(vectorcraft_geom::Point::ZERO, "", style);
     t.kind = TextKind::Area { frame: path.clone() };
-    t.xf = drawcraft_geom::Affine::IDENTITY;
+    t.xf = vectorcraft_geom::Affine::IDENTITY;
     refresh_bounds(&mut t);
     Some(Node::new(n.id, NodeKind::Text(Box::new(t))))
 }
@@ -198,7 +198,7 @@ fn release(s: &mut Session, _: &Value) -> Result<Value> {
             if let Some(first) = keep.first()
                 && let Some(NodeKind::Text(t)) = d.node_mut(*first).map(|n| &mut n.kind)
             {
-                drawcraft_text::edit::normalize(&mut story);
+                vectorcraft_text::edit::normalize(&mut story);
                 t.runs = story;
             }
             let i = d.text_threads.iter().position(|t| *t == thread).unwrap_or(0);

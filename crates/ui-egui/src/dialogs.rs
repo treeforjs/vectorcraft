@@ -5,10 +5,10 @@ use serde_json::{Value, json};
 
 use crate::state::Dialog;
 use crate::theme::{self, Tokens};
-use crate::{DrawcraftApp, widgets};
+use crate::{VectorcraftApp, widgets};
 
 /// A click with a shape tool opens its size dialog.
-pub fn open_tool_dialog(app: &mut DrawcraftApp, kind: &str, p: Value) {
+pub fn open_tool_dialog(app: &mut VectorcraftApp, kind: &str, p: Value) {
     let x = p.get("x").and_then(Value::as_f64).unwrap_or(0.0);
     let y = p.get("y").and_then(Value::as_f64).unwrap_or(0.0);
     let d = match kind {
@@ -120,7 +120,7 @@ fn title(kind: &str) -> &'static str {
 }
 
 /// Apply the open dialog (OK).
-pub fn confirm(app: &mut DrawcraftApp) -> Result<Value, String> {
+pub fn confirm(app: &mut VectorcraftApp) -> Result<Value, String> {
     let Some(d) = app.ui.dialog.clone() else { return Err("no dialog open".into()) };
     match d.kind.as_str() {
         "preferences" => return crate::prefs_dialog::confirm(app),
@@ -243,18 +243,18 @@ fn check(ui: &mut egui::Ui, d: &mut Dialog, key: &str, label: &str) {
     }
 }
 
-pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
+pub fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
     if app.ui.about {
         let mut open = true;
-        egui::Window::new("About DrawCraft")
+        egui::Window::new("About VectorCraft")
             .collapsible(false)
             .resizable(false)
             .open(&mut open)
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
             .show(ctx, |ui| {
-                ui.label(egui::RichText::new("DrawCraft").font(theme::semibold(22.0)));
+                ui.label(egui::RichText::new("VectorCraft").font(theme::semibold(22.0)));
                 ui.label(format!("Version {} — open-source vector illustration in pure Rust.", env!("CARGO_PKG_VERSION")));
-                ui.label("MIT OR Apache-2.0. Fonts: Source Sans 3, Inter, JetBrains Mono (OFL). Icons: Lucide (ISC) + DrawCraft.");
+                ui.label("MIT OR Apache-2.0. Fonts: Source Sans 3, Inter, JetBrains Mono (OFL). Icons: Lucide (ISC) + VectorCraft.");
             });
         app.ui.about = open;
     }
@@ -313,7 +313,7 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
                 }
                 "newDocument" => new_document(ui, &mut d),
                 "allTools" => {
-                    for g in drawcraft_tools::TOOL_GROUPS {
+                    for g in vectorcraft_tools::TOOL_GROUPS {
                         ui.horizontal_wrapped(|ui| {
                             for tool in g.iter() {
                                 if ui.button(tool.label.trim_end_matches(" Tool")).clicked() {
@@ -440,7 +440,7 @@ fn new_document(ui: &mut egui::Ui, d: &mut Dialog) {
 }
 
 /// Export for Screens: artboard picker (thumbnails + checkboxes), format/scale rows, destination.
-fn export_for_screens_ui(app: &mut DrawcraftApp, ui: &mut egui::Ui, d: &mut Dialog) {
+fn export_for_screens_ui(app: &mut VectorcraftApp, ui: &mut egui::Ui, d: &mut Dialog) {
     let t = Tokens::get(ui.ctx());
     let names: Vec<String> = app.session.active().map(|s| s.doc.artboards.iter().map(|a| a.name.clone()).collect()).unwrap_or_default();
     let mut boards: Vec<bool> =
@@ -547,7 +547,7 @@ fn export_for_screens_ui(app: &mut DrawcraftApp, ui: &mut egui::Ui, d: &mut Dial
 }
 
 /// A small cached rendering of artboard `i` (keyed by document revision).
-fn artboard_thumb(app: &mut DrawcraftApp, ctx: &egui::Context, i: usize) -> Option<egui::TextureHandle> {
+fn artboard_thumb(app: &mut VectorcraftApp, ctx: &egui::Context, i: usize) -> Option<egui::TextureHandle> {
     let st = app.session.active()?;
     let key = egui::Id::new(("ab-thumb", i, st.revision));
     if let Some(t) = ctx.data(|d| d.get_temp::<egui::TextureHandle>(key)) {
@@ -575,7 +575,7 @@ fn recolor_map(d: &Dialog) -> Value {
 
 /// Recolor Artwork: current → new colour rows, harmony rules, randomize. Returns true when changed.
 fn recolor_ui(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
-    use drawcraft_color::Color;
+    use vectorcraft_color::Color;
     let t = Tokens::get(ui.ctx());
     let mut pairs: Vec<Value> = d.fields.get("pairs").and_then(Value::as_array).cloned().unwrap_or_default();
     let mut changed = false;

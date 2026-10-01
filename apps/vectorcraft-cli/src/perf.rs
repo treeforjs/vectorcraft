@@ -1,15 +1,15 @@
-//! `drawcraft-cli perf`: the performance budgets (plan §4) measured on a synthetic document.
+//! `vectorcraft-cli perf`: the performance budgets (plan §4) measured on a synthetic document.
 //!
 //! Each row is the median of several runs. Timings are wall-clock: on a busy machine (load
 //! average above the core count) they are noise, and the report says so.
 
 use std::time::Instant;
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{Appearance, Document, Node, hit};
-use drawcraft_geom::{Affine, Point, Rect, shapes};
-use drawcraft_render::{RenderOptions, Renderer};
 use serde_json::json;
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{Appearance, Document, Node, hit};
+use vectorcraft_geom::{Affine, Point, Rect, shapes};
+use vectorcraft_render::{RenderOptions, Renderer};
 
 /// Deterministic xorshift in 0..1.
 struct Rng(u64);
@@ -81,7 +81,7 @@ pub fn run(args: &[String]) -> Result<(), String> {
     }
     let cores = std::thread::available_parallelism().map_or(1, |c| c.get());
     let load = load_average();
-    println!("DrawCraft performance budgets — {n} paths, {cores} cores, load average {}", load.map_or("?".into(), |l| format!("{l:.1}")));
+    println!("VectorCraft performance budgets — {n} paths, {cores} cores, load average {}", load.map_or("?".into(), |l| format!("{l:.1}")));
     let noisy = load.is_some_and(|l| l > cores as f64 * 0.75);
     if noisy {
         println!("WARNING: the machine is busy; wall-clock timings below are not trustworthy.");
@@ -122,14 +122,14 @@ pub fn run(args: &[String]) -> Result<(), String> {
     rows.push(("hit test (per click)", hits, 2.0));
 
     let mut bytes = vec![];
-    rows.push(("save .drawcraft", median_ms(3, || bytes = drawcraft_format::save_file(&doc)), 300.0));
-    rows.push(("open .drawcraft", median_ms(3, || drop(drawcraft_format::load(&bytes).expect("load"))), 300.0));
-    let svg_opts = drawcraft_svg::ExportOptions::default();
-    rows.push(("export SVG", median_ms(3, || drop(drawcraft_svg::export(&doc, &svg_opts))), 500.0));
+    rows.push(("save .vectorcraft", median_ms(3, || bytes = vectorcraft_format::save_file(&doc)), 300.0));
+    rows.push(("open .vectorcraft", median_ms(3, || drop(vectorcraft_format::load(&bytes).expect("load"))), 300.0));
+    let svg_opts = vectorcraft_svg::ExportOptions::default();
+    rows.push(("export SVG", median_ms(3, || drop(vectorcraft_svg::export(&doc, &svg_opts))), 500.0));
 
     // Pathfinder Unite on 1,000 overlapping paths.
     let unite = median_ms(3, || {
-        let mut s = drawcraft_engine::Session::new();
+        let mut s = vectorcraft_engine::Session::new();
         s.add_document(synthetic(1000), None);
         s.execute("select.all", &json!({})).expect("select");
         s.execute("object.pathfinder.unite", &json!({})).expect("unite");

@@ -1,14 +1,14 @@
 //! Effect menu commands (live effects) and Object → Expand Appearance.
 //!
 //! Effects are stored on the object's appearance (`appearance.effects`) and evaluated at render
-//! time by `drawcraft-effects` (re-exported by the renderer).
+//! time by `vectorcraft-effects` (re-exported by the renderer).
 
 use std::sync::Arc;
 
-use drawcraft_doc::{Node, NodeKind};
-use drawcraft_geom::{FillRule, PathData};
-use drawcraft_render::effects;
 use serde_json::{Value, json};
+use vectorcraft_doc::{Node, NodeKind};
+use vectorcraft_geom::{FillRule, PathData};
+use vectorcraft_render::effects;
 
 use super::edit::selected_roots;
 use super::*;
@@ -186,7 +186,7 @@ fn node_geometry(n: &Node) -> Option<(PathData, FillRule)> {
 }
 
 /// Bake the object-level geometry effects of `id` (and, recursively, of group members).
-fn expand_node(d: &mut drawcraft_doc::Document, id: NodeId, out: &mut Vec<NodeId>) {
+fn expand_node(d: &mut vectorcraft_doc::Document, id: NodeId, out: &mut Vec<NodeId>) {
     let Some(n) = d.node(id).cloned() else { return };
     if let Some(children) = n.children()
         && matches!(n.kind, NodeKind::Group { .. })
@@ -240,8 +240,8 @@ fn expand_appearance(s: &mut Session, p: &Value) -> Result<Value> {
 
 #[cfg(test)]
 mod tests {
-    use drawcraft_doc::NodeKind;
     use serde_json::json;
+    use vectorcraft_doc::NodeKind;
 
     use crate::{NodeId, Session};
 
@@ -252,7 +252,7 @@ mod tests {
         (s, NodeId(r["id"].as_u64().unwrap()))
     }
 
-    fn node(s: &Session, id: NodeId) -> drawcraft_doc::Node {
+    fn node(s: &Session, id: NodeId) -> vectorcraft_doc::Node {
         s.doc().unwrap().doc.node(id).cloned().unwrap()
     }
 

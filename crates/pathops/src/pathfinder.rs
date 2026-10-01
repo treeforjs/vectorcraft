@@ -1,8 +1,8 @@
 //! Illustrator's Pathfinder panel and Shape Builder regions, over an ordered stack of shapes
 //! (index 0 = back-most, last = front-most).
 
-use drawcraft_geom::{FillRule, PathData};
 use kurbo::{BezPath, ParamCurve, ParamCurveNearest, Point, Shape as _};
+use vectorcraft_geom::{FillRule, PathData};
 
 use crate::boolean::{Arrangement, Seg, all_contours_to_path, contours_to_path, fill_bezpath, segs_to_subpath, unite_all};
 

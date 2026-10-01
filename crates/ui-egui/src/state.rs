@@ -1,8 +1,8 @@
 //! Serializable UI state (read and driven by the control channel).
 
-use drawcraft_geom::Point;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use vectorcraft_geom::Point;
 
 use crate::theme::Brightness;
 
@@ -150,7 +150,7 @@ impl Dialog {
     pub fn f64(&self, k: &str, d: f64) -> f64 {
         match self.fields.get(k) {
             Some(Value::Number(n)) => n.as_f64().unwrap_or(d),
-            Some(Value::String(s)) => drawcraft_doc::Unit::Points.parse(s).unwrap_or(d),
+            Some(Value::String(s)) => vectorcraft_doc::Unit::Points.parse(s).unwrap_or(d),
             _ => d,
         }
     }
@@ -235,7 +235,7 @@ impl UiState {
         self.status.clear();
         self.about = false;
         self.open_panel = None;
-        if self.group_tool.len() != drawcraft_tools::TOOL_GROUPS.len() {
+        if self.group_tool.len() != vectorcraft_tools::TOOL_GROUPS.len() {
             self.group_tool = UiState::default().group_tool;
         }
         self
@@ -259,7 +259,7 @@ impl Default for UiState {
             view: ViewFlags::default(),
             dialog: None,
             flyout: None,
-            group_tool: drawcraft_tools::TOOL_GROUPS.iter().map(|g| g[0].id.to_string()).collect(),
+            group_tool: vectorcraft_tools::TOOL_GROUPS.iter().map(|g| g[0].id.to_string()).collect(),
             status: String::new(),
             palette_open: false,
             palette_query: String::new(),

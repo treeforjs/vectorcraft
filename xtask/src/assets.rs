@@ -32,6 +32,7 @@ const ASSET_EXT: &[&str] = &[
     "ase",
     "aco",
     "abr",
+    "vectorcraft",
     "drawcraft",
     "mp4",
     "wav",

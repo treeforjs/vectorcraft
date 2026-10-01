@@ -1,20 +1,20 @@
 [package]
-name = "drawcraft-format"
+name = "vectorcraft-format"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DrawCraft native .drawcraft format (versioned JSON, embedded images)"
+description = "VectorCraft native .vectorcraft format (versioned JSON, embedded images)"
 
 [lints]
 workspace = true
 
 [dependencies]
-drawcraft-doc = { workspace = true }
+vectorcraft-doc = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
-drawcraft-testkit = { workspace = true }
+vectorcraft-testkit = { workspace = true }
 proptest = { workspace = true }
-drawcraft-geom = { workspace = true }
+vectorcraft-geom = { workspace = true }

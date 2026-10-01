@@ -1,7 +1,7 @@
 //! Distort & Transform effects.
 
-use drawcraft_geom::{Affine, Anchor, ParamCurve, PathData, Point, Rect, SubPath, Vec2};
 use serde_json::Value;
+use vectorcraft_geom::{Affine, Anchor, ParamCurve, PathData, Point, Rect, SubPath, Vec2};
 
 use crate::util::*;
 
@@ -79,7 +79,7 @@ pub fn roughen(path: &PathData, b: Rect, p: &Value) -> PathData {
         let mut pts = vec![];
         for i in 0..sp.segment_count() {
             let c = sp.segment(i);
-            let len = drawcraft_geom::kurbo::ParamCurveArclen::arclen(&c, 0.1);
+            let len = vectorcraft_geom::kurbo::ParamCurveArclen::arclen(&c, 0.1);
             let k = if spacing.is_finite() { ((len / spacing).ceil() as usize).clamp(1, 2000) } else { 1 };
             for j in 0..k {
                 pts.push(c.eval(j as f64 / k as f64));

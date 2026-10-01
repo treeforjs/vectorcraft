@@ -5,9 +5,9 @@
 
 use std::sync::Arc;
 
-use drawcraft_color::{Color, Paint};
-use drawcraft_doc::{AppearanceItem, Document, Node, NodeId, NodeKind};
 use serde_json::{Value, json};
+use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::{AppearanceItem, Document, Node, NodeId, NodeKind};
 
 use super::edit::selected_roots;
 use super::*;

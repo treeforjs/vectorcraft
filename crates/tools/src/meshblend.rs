@@ -7,10 +7,10 @@
 //!   colour unless Shift); drag a mesh point → `object.mesh.movePoint` previews; Alt-click a mesh
 //!   point → `object.mesh.deletePoint`.
 
-use drawcraft_color::Paint;
-use drawcraft_doc::{NodeId, NodeKind};
-use drawcraft_geom::Point;
 use serde_json::json;
+use vectorcraft_color::Paint;
+use vectorcraft_doc::{NodeId, NodeKind};
+use vectorcraft_geom::Point;
 
 use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext};
 
@@ -25,7 +25,7 @@ pub fn create(id: &str) -> Option<Box<dyn Tool>> {
 }
 
 fn hit_top(cx: &ToolContext, p: Point) -> Option<(NodeId, NodeId)> {
-    let h = drawcraft_doc::hit::hit_test(cx.doc, p, cx.hit_options())?;
+    let h = vectorcraft_doc::hit::hit_test(cx.doc, p, cx.hit_options())?;
     Some((h.top_object(cx.isolation), h.leaf))
 }
 
@@ -191,15 +191,15 @@ impl Tool for MeshTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_doc::Selection;
+    use vectorcraft_doc::Selection;
 
     #[test]
     fn blend_tool_two_clicks_make_blend() {
         let (mut d, a) = doc_with_rect();
         let l = d.layers[0].id;
         let b = d.alloc_id();
-        let r = drawcraft_geom::shapes::rectangle(drawcraft_geom::Rect::new(300.0, 100.0, 350.0, 150.0));
-        d.insert(Some(l), 1, drawcraft_doc::Node::path(b, r, drawcraft_doc::Appearance::default_art())).unwrap();
+        let r = vectorcraft_geom::shapes::rectangle(vectorcraft_geom::Rect::new(300.0, 100.0, 350.0, 150.0));
+        d.insert(Some(l), 1, vectorcraft_doc::Node::path(b, r, vectorcraft_doc::Appearance::default_art())).unwrap();
         let (s, p) = (Selection::default(), paint());
         let c = cx(&d, &s, &p);
         let mut t = create("blend").unwrap();
