@@ -1,111 +1,229 @@
-<h1 align="center">DrawCraft</h1>
+<p align="center">
+  <a href="https://getartcraft.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/artcraft-logo-white.svg">
+      <img alt="ArtCraft" src="docs/brand/artcraft-logo.svg" width="200">
+    </picture>
+  </a>
+</p>
+
+<h1 align="center">VectorCraft</h1>
 
 <p align="center">
   <b>Vector illustration, reimagined in pure Rust.</b><br>
-  A fast, open-source, clean-room take on the Adobe Illustrator workflow — native on macOS, Windows and Linux, and in the browser via WebAssembly.<br>
-  <i>By the artcraft team.</i>
+  <sub>(formerly DrawCraft; the rename is in progress)</sub>
 </p>
 
 <p align="center">
-  <img src="docs/images/shot-1-neon.png" alt="DrawCraft editing the Neon Drive poster: the title is selected, the Appearance panel shows its live Outer Glow, and the Properties panel shows its character settings" width="100%">
-  <br><sub><b>Neon Drive</b> — Pathfinder-cut sun, live Outer Glow on type and grid, clipping masks · <code>examples/neon-drive.drawcraft</code></sub>
+  A fast, open-source, clean-room take on the Adobe Illustrator workflow. It runs natively on
+  macOS, Windows and Linux, and in the browser via WebAssembly. Built by the ArtCraft team.
 </p>
+
+<p align="center">
+  <img alt="Status: in active development" src="https://img.shields.io/badge/status-in%20active%20development-e8573f">
+  <img alt="Written in pure Rust" src="https://img.shields.io/badge/pure-Rust-b83a24?logo=rust&logoColor=white">
+  <img alt="Runs on macOS, Windows, Linux and the web" src="https://img.shields.io/badge/runs%20on-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux%20%C2%B7%20Web-555555">
+  <img alt="MCP server for agents" src="https://img.shields.io/badge/agents-MCP%20server-555555">
+  <img alt="License: MIT OR Apache-2.0" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-555555">
+</p>
+
+<p align="center">
+  <a href="https://discord.gg/artcraft"><img alt="Join the ArtCraft community on Discord" src="https://img.shields.io/badge/Join%20us%20on%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" height="40"></a>
+</p>
+
+<p align="center">
+  <a href="https://getartcraft.com/apps/drawcraft"><b>VectorCraft on getartcraft.com</b></a> ·
+  <a href="https://getartcraft.com/">ArtCraft</a> ·
+  <a href="https://getartcraft.com/apps">All Crafting Apps</a>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="docs/images/shot-1-neon.png" alt="VectorCraft editing the Neon Drive poster: the title is selected, the Appearance panel shows its live Outer Glow, and the Properties panel shows its character settings" width="100%">
+  <br><sub><b>Neon Drive</b>: a Pathfinder-cut sun, live Outer Glow on the type and grid, and clipping masks · <code>examples/neon-drive.vectorcraft</code></sub>
+</p>
+
+> [!NOTE]
+> **ArtCraft is a community of artists from all walks of life.** Painters, photographers,
+> filmmakers, illustrators, designers, animators, hobbyists, and people who picked up a pencil
+> last week. If you make things, you're one of us. **[Come say hi on Discord](https://discord.gg/artcraft).**
+
+<p align="center">
+  <a href="#a-look-around">A look around</a> ·
+  <a href="#made-in-vectorcraft">Made in VectorCraft</a> ·
+  <a href="#why-vectorcraft">Why VectorCraft</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#status">Status</a> ·
+  <a href="#the-crafting-apps">The Crafting Apps</a> ·
+  <a href="#license-and-credits">License</a>
+</p>
+
+## A look around
 
 <table>
 <tr>
 <td width="50%" valign="top">
-  <img src="docs/images/shot-2-ribbons.png" alt="Three live blend ribbons of 55–70 steps with smooth colour, clipped to the artboard; Layers panel open" width="100%">
-  <p align="center"><sub><b>Live Blends</b> — editable key paths, smooth colour, clipped to the artboard</sub></p>
+  <img src="docs/images/shot-2-ribbons.png" alt="Three live blend ribbons of 55 to 70 steps with smooth colour, clipped to the artboard, with the Layers panel open" width="100%">
+  <p align="center"><sub><b>Live Blends</b>: editable key paths and smooth colour, clipped to the artboard</sub></p>
 </td>
 <td width="50%" valign="top">
-  <img src="docs/images/shot-4-bezier.png" alt="Direct Selection tool showing anchor points and Bézier handles on a crescent built with Pathfinder" width="100%">
-  <p align="center"><sub><b>Pen &amp; Direct Selection</b> — real Bézier anchors and handles, contextual task bar</sub></p>
+  <img src="docs/images/shot-4-bezier.png" alt="Direct Selection tool showing anchor points and Bézier handles on a crescent built with Pathfinder, with the contextual task bar below it" width="100%">
+  <p align="center"><sub><b>Pen and Direct Selection</b>: real Bézier anchors and handles, plus a contextual task bar</sub></p>
 </td>
 </tr>
 <tr>
 <td colspan="2" valign="top">
   <img src="docs/images/shot-3-sheet.png" alt="Four artboards in the light UI theme: Pathfinder, Gradient Mesh, radial Repeat and Envelope Distort" width="100%">
-  <p align="center"><sub><b>Multiple artboards, light theme</b> — Pathfinder · Gradient Mesh · live radial Repeat · Envelope Distort · <code>examples/feature-sheet.drawcraft</code></sub></p>
+  <p align="center"><sub><b>Multiple artboards, light theme</b>: Pathfinder · Gradient Mesh · live radial Repeat · Envelope Distort · <code>examples/feature-sheet.vectorcraft</code></sub></p>
 </td>
 </tr>
 </table>
 
-### Made in DrawCraft
+## Made in VectorCraft
 
-Every piece below was built entirely through DrawCraft's command API, the same one the MCP server exposes to agents, and exported by DrawCraft's own renderer. Source files are in [`examples/`](examples).
+Every piece below was built entirely through VectorCraft's command API, the same one the MCP server
+exposes to agents, and exported by VectorCraft's own renderer. The source files are in
+[`examples/`](examples).
 
 <table>
 <tr>
-  <td width="33%"><img src="docs/images/art-neon-drive.png" alt="Neon Drive synthwave poster" width="100%"></td>
-  <td width="33%"><img src="docs/images/dusk-poster.png" alt="Dusk poster: gradient sky, glowing sun, layered mountains" width="100%"></td>
-  <td width="33%"><img src="docs/images/art-repeat.png" alt="Radial Repeat mandala" width="100%"><br><img src="docs/images/art-envelope.png" alt="Envelope Distort flag warp of striped type" width="100%"></td>
+<td width="50%" valign="top">
+  <img src="docs/images/art-neon-drive.png" alt="Neon Drive synthwave poster: a striped orange sun setting between purple mountains over a glowing pink grid" width="100%">
+  <p align="center"><sub><b>Neon Drive</b>: synthwave poster with glowing type and grid</sub></p>
+</td>
+<td width="50%" valign="top">
+  <img src="docs/images/dusk-poster.png" alt="Dusk poster: a gradient sky with stars and birds, a glowing sun behind layered purple mountains and pine trees" width="100%">
+  <p align="center"><sub><b>Dusk</b>: gradient sky, glowing sun, layered mountains</sub></p>
+</td>
 </tr>
 <tr>
-  <td colspan="2"><img src="docs/images/art-ribbons.png" alt="Live blend ribbons" width="100%"></td>
-  <td><img src="docs/images/art-mesh.png" alt="Gradient mesh spheres" width="100%"><br><img src="docs/images/art-pathfinder.png" alt="Crescent and stars made with Pathfinder" width="100%"></td>
+<td colspan="2" valign="top">
+  <img src="docs/images/art-ribbons.png" alt="Live Blends: three wide ribbons blending yellow to pink and teal to purple, crossing over a dark background" width="100%">
+  <p align="center"><sub><b>Live Blends</b>: 70 steps, smooth colour, editable spines</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+  <img src="docs/images/art-repeat.png" alt="Radial Repeat mandala: teal petals around a coral center, ringed by yellow dots" width="100%">
+  <p align="center"><sub><b>Radial Repeat</b>: a live mandala</sub></p>
+</td>
+<td width="50%" valign="top">
+  <img src="docs/images/art-envelope.png" alt="Envelope Distort: rainbow stripes and the word WARP bent into a waving flag" width="100%">
+  <p align="center"><sub><b>Envelope Distort</b>: striped type warped into a flag</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+  <img src="docs/images/art-mesh.png" alt="Gradient Mesh: three softly shaded purple, pink and cyan spheres on a dark background" width="100%">
+  <p align="center"><sub><b>Gradient Mesh</b>: shaded spheres</sub></p>
+</td>
+<td width="50%" valign="top">
+  <img src="docs/images/art-pathfinder.png" alt="Pathfinder: a purple gradient crescent moon and three orange stars on a peach background" width="100%">
+  <p align="center"><sub><b>Pathfinder</b>: a crescent and stars from exact booleans</sub></p>
+</td>
 </tr>
 </table>
 
-### Why DrawCraft
+## Why VectorCraft
 
-- **Familiar.** Illustrator's layout, tools, menus, panels and shortcuts — the Pen, Direct Selection, Pathfinder, Smart Guides, Appearance, Swatches, Layers… you already know how to use it.
-- **Fast.** Multithreaded SIMD rendering off the UI thread; 20,000 shapes render in ~27 ms at full retina resolution while the interface stays at 120 fps.
-- **Robust.** Exact curve booleans (no "cannot perform operation"), unlimited undo via structural sharing, property-tested file round trips.
-- **Open.** A documented native format (`.drawcraft`, JSON), first-class SVG, PDF (and PDF-compatible `.ai`) import/export, PNG/JPEG/WebP and Export for Screens.
-- **Agent-native.** Every menu item, tool gesture, panel and dialog is drivable over a JSON control channel and an **MCP server** — Claude and other agents can draw, edit and export like a human.
-- **Everywhere.** One codebase: desktop apps and the same UI in the browser.
+- **Familiar.** Illustrator's layout, tools, menus, panels and shortcuts: the Pen, Direct Selection,
+  Pathfinder, Smart Guides, Appearance, Swatches, Layers and more. You already know how to use it.
+- **Fast.** Multithreaded SIMD rendering off the UI thread. 20,000 shapes render in about 27 ms at
+  full retina resolution while the interface stays at 120 fps.
+- **Robust.** Exact curve booleans (no "cannot perform operation"), unlimited undo via structural
+  sharing, and property-tested file round trips.
+- **Open.** A documented native format (`.vectorcraft`, JSON), first-class SVG, PDF (and
+  PDF-compatible `.ai`) import and export, PNG/JPEG/WebP, and Export for Screens.
+- **Agent-native.** Every menu item, tool gesture, panel and dialog can be driven over a JSON
+  control channel and an **MCP server**, so Claude and other agents can draw, edit and export the
+  way a person does.
+- **Everywhere.** One codebase for the desktop apps and the same UI in the browser.
 
 ## Quick start
 
 ```sh
-cargo run --release -p drawcraft                          # desktop app
-cargo run --release -p drawcraft -- examples/dusk-poster.drawcraft
-cargo run --release -p drawcraft -- --control 7979        # + JSON control channel
-cargo run --release -p drawcraft-cli -- mcp               # MCP server (stdio)
-cargo run --release -p drawcraft-cli -- run --in examples/ribbons.drawcraft --export out.pdf   # headless batch
-cargo run --release -p drawcraft-cli -- bench examples/neon-drive.drawcraft                   # render timing
-cargo xtask bundle                                        # dist/DrawCraft.app (macOS)
-cd apps/drawcraft-web && trunk build --release            # web build → dist/web
+cargo run --release -p vectorcraft                          # desktop app
+cargo run --release -p vectorcraft -- examples/dusk-poster.vectorcraft
+cargo run --release -p vectorcraft -- --control 7979        # + JSON control channel
+cargo run --release -p vectorcraft-cli -- mcp               # MCP server (stdio)
+cargo run --release -p vectorcraft-cli -- run --in examples/ribbons.vectorcraft --export out.pdf   # headless batch
+cargo run --release -p vectorcraft-cli -- bench examples/neon-drive.vectorcraft                   # render timing
+cargo xtask bundle                                        # dist/VectorCraft.app (macOS)
+cd apps/vectorcraft-web && trunk build --release            # web build → dist/web
 cargo xtask ci                                            # fmt, clippy, tests, layering, wasm
 ```
 
-Register with Claude Code: `claude mcp add drawcraft -- /path/to/drawcraft-cli mcp` — see [`docs/mcp.md`](docs/mcp.md) and [`docs/control-protocol.md`](docs/control-protocol.md).
+### Use it from Claude Code and other agents
+
+Register the MCP server with Claude Code:
+
+```sh
+claude mcp add vectorcraft -- /path/to/vectorcraft-cli mcp
+```
+
+The details are in [`docs/mcp.md`](docs/mcp.md) and [`docs/control-protocol.md`](docs/control-protocol.md).
 
 ## Status
 
-DrawCraft is under active development. See **[ROADMAP.md](ROADMAP.md)** for what ships today, milestones, and honest time-to-parity estimates.
+VectorCraft is under active development. [**ROADMAP.md**](ROADMAP.md) covers what ships today, the
+milestones, and honest time-to-parity estimates.
 
-Workspace: `crates/{geom, color, doc, pathops, text, effects, trace, brush, render, svg, pdf, format, tools, engine, ui-egui, mcp, testkit}`, `apps/{drawcraft, drawcraft-cli, drawcraft-web}`. The egui frontend is a separate crate, so the UI can be swapped without touching the engine. Agent and contributor rules (clean-room, the asset policy, quality gates): [`AGENTS.md`](AGENTS.md). Every bundled asset is listed with its licence in [`ASSETS.md`](ASSETS.md).
+**Workspace:** `crates/{geom, color, doc, pathops, text, effects, trace, brush, render, svg, pdf, format, tools, engine, ui-egui, mcp, testkit}`
+and `apps/{vectorcraft, vectorcraft-cli, vectorcraft-web}`. The egui frontend is its own crate, so
+the UI can be swapped without touching the engine.
 
-## Crafting Apps
+Agent and contributor rules (clean-room, the asset policy, quality gates) are in
+[`AGENTS.md`](AGENTS.md). Every bundled asset is listed with its licence in [`ASSETS.md`](ASSETS.md).
 
-Open-source, pure-Rust, clean-room creative tools — each engine-first, cross-platform, WASM-ready and fully agent-drivable.
+## The Crafting Apps
 
-<table>
-<tr>
-  <td align="center" width="20%"><a href="https://github.com/storytold/photocraft"><b>PhotoCraft</b></a></td>
-  <td>Layered raster image editor in the spirit of <b>Photoshop</b> — high-bit-depth pipeline, adjustment layers, brushes, PSD round-trip.</td>
-</tr>
-<tr>
-  <td align="center"><a href="https://github.com/storytold/drawcraft"><b>DrawCraft</b></a></td>
-  <td>Vector illustration in the spirit of <b>Illustrator</b> — Pen, Pathfinder, live effects, type, SVG/PDF. <i>(you are here)</i></td>
-</tr>
-<tr>
-  <td align="center"><a href="https://github.com/storytold/filmcraft"><b>FilmCraft</b></a></td>
-  <td>Non-linear video editor in the spirit of <b>Premiere Pro</b> — timeline editing, effects, and export.</td>
-</tr>
-<tr>
-  <td align="center"><a href="https://github.com/storytold/lightcraft"><b>LightCraft</b></a></td>
-  <td>Photo library and non-destructive raw developer in the spirit of <b>Lightroom</b> — local-first catalog, wide-gamut float pipeline.</td>
-</tr>
-<tr>
-  <td align="center"><a href="https://github.com/storytold/printcraft"><b>PrintCraft</b></a></td>
-  <td>PDF viewer and editor in the spirit of <b>Acrobat</b> — rendering, forms, annotations, and document tools.</td>
-</tr>
-</table>
+VectorCraft is one of the **Crafting Apps**: free, open-source creative tools from the
+[ArtCraft](https://getartcraft.com/) team, each written from scratch in Rust and each able to
+stand on its own.
 
-## License
+| App | What it's for | Code | Learn more |
+|---|---|---|---|
+| <img src="https://img.shields.io/badge/PhotoCraft-2f7bf5?style=for-the-badge" alt="PhotoCraft" height="24"> | Image editing: layers, masks, type and real PSD files | [GitHub](https://github.com/storytold/photocraft) | [getartcraft.com](https://getartcraft.com/apps/photocraft) |
+| <img src="https://img.shields.io/badge/VectorCraft-e8573f?style=for-the-badge" alt="VectorCraft" height="24"> | **Vector illustration (formerly DrawCraft)** · **you are here** | [**GitHub**](https://github.com/storytold/vectorcraft) | [**getartcraft.com**](https://getartcraft.com/apps/drawcraft) |
+| <img src="https://img.shields.io/badge/FilmCraft-8b5cf6?style=for-the-badge" alt="FilmCraft" height="24"> | Video editing, color and sound | [GitHub](https://github.com/storytold/filmcraft) | [getartcraft.com](https://getartcraft.com/apps/filmcraft) |
+| <img src="https://img.shields.io/badge/LightCraft-f2a516?style=for-the-badge" alt="LightCraft" height="24"> | Photo library and raw development | [GitHub](https://github.com/storytold/lightcraft) | [getartcraft.com](https://getartcraft.com/apps/lightcraft) |
+| <img src="https://img.shields.io/badge/PrintCraft-12a58a?style=for-the-badge" alt="PrintCraft" height="24"> | Reading, organizing and protecting PDFs | [GitHub](https://github.com/storytold/printcraft) | [getartcraft.com](https://getartcraft.com/apps/printcraft) |
+| <img src="https://img.shields.io/badge/EffectCraft-e0368f?style=for-the-badge" alt="EffectCraft" height="24"> | Motion graphics and visual effects | [GitHub](https://github.com/storytold/effectcraft) | [getartcraft.com](https://getartcraft.com/apps/effectcraft) |
+| <img src="https://img.shields.io/badge/DesignCraft-7bb51c?style=for-the-badge" alt="DesignCraft" height="24"> | Page layout and publishing | [GitHub](https://github.com/storytold/designcraft) | [getartcraft.com](https://getartcraft.com/apps/designcraft) |
 
-MIT OR Apache-2.0. Bundled fonts are OFL; Lucide icons are ISC; all other icons and art are original. Per-asset attribution: [`ASSETS.md`](ASSETS.md) (see also [`NOTICE`](NOTICE)).
+And [**ArtCraft**](https://getartcraft.com/) itself, our AI image and video studio for artists who want real control.
 
-<sub>DrawCraft is an independent project and is not affiliated with or endorsed by Adobe. "Adobe", "Illustrator", "Photoshop", "Premiere Pro", "Lightroom" and "Acrobat" are trademarks of Adobe Inc., used here only to describe compatibility and workflow familiarity.</sub>
+<br>
+
+<p align="center">
+  <a href="https://discord.gg/artcraft"><img alt="Join the ArtCraft community on Discord" src="https://img.shields.io/badge/Join%20us%20on%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" height="40"></a>
+</p>
+
+<h3 align="center">Come make things with us</h3>
+
+<p align="center">
+  Our Discord is where artists of every kind hang out: people who paint, shoot, draw, cut film,
+  set type, and people still figuring out what they like to make. Share what you're working on,
+  ask for help, tell us what's broken, or tell us what you wish these tools could do.
+  Whatever your medium and however long you've been at it, you're welcome here.
+</p>
+
+<p align="center">
+  <a href="https://discord.gg/artcraft"><b>discord.gg/artcraft</b></a> ·
+  <a href="https://getartcraft.com/">getartcraft.com</a> ·
+  <a href="https://getartcraft.com/apps">The Crafting Apps</a> ·
+  <a href="https://getartcraft.com/apps/drawcraft">VectorCraft</a>
+</p>
+
+## License and credits
+
+MIT OR Apache-2.0. Bundled fonts are OFL, Lucide icons are ISC, and all other icons and art are
+original. Per-asset attribution is in [`ASSETS.md`](ASSETS.md) (see also [`NOTICE`](NOTICE)).
+
+<sub>VectorCraft is an independent project and is not affiliated with or endorsed by Adobe. "Adobe", "Illustrator", "Photoshop", "Premiere Pro", "Lightroom" and "Acrobat" are trademarks of Adobe Inc., used here only to describe compatibility and workflow familiarity.</sub>
+
+<p align="center">
+  <a href="https://getartcraft.com/"><img alt="ArtCraft" src="docs/brand/artcraft-mark.svg" width="28"></a><br>
+  <sub>Made by the <a href="https://getartcraft.com/">ArtCraft</a> team and community.</sub>
+</p>
