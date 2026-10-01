@@ -28,6 +28,7 @@ mod select;
 mod textedit;
 mod typecmd;
 mod typemenu;
+pub mod wand;
 mod xform;
 
 use drawcraft_color::Color;
@@ -134,6 +135,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(object::specs());
         v.extend(path::specs());
         v.extend(select::specs());
+        v.extend(wand::specs());
         v.extend(paint::specs());
         v.extend(opacitymask::specs());
         v.extend(layer::specs());

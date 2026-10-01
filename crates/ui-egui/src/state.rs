@@ -81,6 +81,8 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("info", "Info", "info"),
     ("navigator", "Navigator", "map"),
     ("separations", "Separations Preview", "printer"),
+    ("imageTrace", "Image Trace", "image"),
+    ("magicWand", "Magic Wand", "wand-sparkles"),
 ];
 
 /// Groups of icon panels separated by dividers in the collapsed column.

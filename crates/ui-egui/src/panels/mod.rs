@@ -15,8 +15,10 @@ pub mod glyphs;
 pub mod gradient;
 pub mod graphic_styles;
 pub mod history;
+pub mod image_trace;
 pub mod info;
 pub mod layers;
+pub mod magic_wand;
 pub mod navigator;
 pub mod paragraph;
 pub mod pathfinder;
@@ -74,6 +76,8 @@ pub fn show_icon_panel(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "brushes" => brushes::show(app, ui),
         "symbols" => symbols::show(app, ui),
         "patternOptions" => pattern_options::show(app, ui),
+        "imageTrace" => image_trace::show(app, ui),
+        "magicWand" => magic_wand::show(app, ui),
         _ => {
             dim_label(ui, "This panel is on the roadmap (see the parity plan).");
         }
@@ -105,6 +109,8 @@ pub fn panel_menu_items(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "brushes" => brushes::menu(app, ui),
         "symbols" => symbols::menu(app, ui),
         "patternOptions" => pattern_options::menu(app, ui),
+        "imageTrace" => image_trace::menu(app, ui),
+        "magicWand" => magic_wand::menu(app, ui),
         _ => {
             ui.add_enabled(false, egui::Button::new("No options").frame(false));
         }

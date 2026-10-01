@@ -1,70 +1,22 @@
 //! Magic Wand (Y) and Lasso (Q).
 //!
-//! Magic Wand: click an object to select every object whose fill colour is within `tolerance`
-//! (0..255 RGB distance); Shift adds, Alt subtracts. Lasso: freehand loop selecting anchor points
-//! inside it (direct-selection style); Shift adds, Alt subtracts.
+//! Magic Wand: click an object to select every object with similar attributes. The matching and
+//! its settings (Magic Wand panel) live in the engine's `select.magicWand` command; Shift adds,
+//! Alt subtracts. Lasso: freehand loop selecting anchor points inside it (direct-selection
+//! style); Shift adds, Alt subtracts.
 
 use std::collections::BTreeSet;
 
-use drawcraft_color::Paint;
+use drawcraft_doc::{AnchorRef, NodeId, NodeKind};
 use drawcraft_doc::hit::hit_test;
-use drawcraft_doc::{AnchorRef, Document, NodeId, NodeKind};
 use drawcraft_geom::Point;
 use serde_json::{Value, json};
 
 use super::paint_owner;
-use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext, ToolKey, json_ids};
+use crate::{Action, Cursor, Mods, Overlay, PointerEvent, PointerKind, Tool, ToolContext, ToolKey};
 
-pub struct MagicWandTool {
-    /// RGB distance tolerance, 0..255.
-    pub tolerance: f64,
-}
-
-impl Default for MagicWandTool {
-    fn default() -> Self {
-        Self { tolerance: 32.0 }
-    }
-}
-
-fn fill_of(n: &drawcraft_doc::Node) -> Paint {
-    match &n.kind {
-        NodeKind::Text(t) => t.runs.first().map(|r| r.style.fill.clone()).unwrap_or_default(),
-        _ => n.appearance.fill_paint(),
-    }
-}
-
-/// Are two fills "similar" within `tol` (0..255 Euclidean RGB distance)? Non-solid paints must match exactly.
-pub fn similar_fill(a: &Paint, b: &Paint, tol: f64) -> bool {
-    match (a.color(), b.color()) {
-        (Some(x), Some(y)) => {
-            let (x, y) = (x.to_rgb(), y.to_rgb());
-            let d: f64 = (0..3).map(|i| ((x[i] - y[i]) as f64 * 255.0).powi(2)).sum::<f64>().sqrt();
-            d <= tol + 1e-6
-        }
-        _ => a == b,
-    }
-}
-
-/// Paintable leaves (paths, compounds, text, images) that are visible and editable.
-fn paintable(doc: &Document) -> Vec<NodeId> {
-    let mut out = vec![];
-    let mut compounds: Vec<NodeId> = vec![];
-    doc.walk(|n| {
-        if matches!(n.kind, NodeKind::Compound { .. }) {
-            compounds.push(n.id);
-            out.push(n.id);
-        } else if !n.is_container() {
-            out.push(n.id);
-        }
-    });
-    out.retain(|id| {
-        !doc.parent_of(*id).is_some_and(|p| compounds.contains(&p))
-            && doc.is_editable(*id)
-            && doc.is_visible(*id)
-            && doc.node(*id).is_some_and(|n| n.visible)
-    });
-    out
-}
+#[derive(Default)]
+pub struct MagicWandTool;
 
 impl Tool for MagicWandTool {
     fn id(&self) -> &'static str {
@@ -78,34 +30,18 @@ impl Tool for MagicWandTool {
         let Some(h) = hit_test(cx.doc, ev.pos, cx.hit_options()) else {
             return if ev.mods.shift || ev.mods.alt { vec![] } else { vec![Action::Exec("select.none".into(), json!({}))] };
         };
-        let src = paint_owner(cx.doc, h.leaf);
-        let Some(reference) = cx.doc.node(src).map(fill_of) else { return vec![] };
-        let hits: Vec<NodeId> = paintable(cx.doc)
-            .into_iter()
-            .filter(|id| cx.doc.node(*id).is_some_and(|n| similar_fill(&fill_of(n), &reference, self.tolerance)))
-            .collect();
-        if ev.mods.alt {
-            let keep: Vec<NodeId> = cx.selection.objects.iter().copied().filter(|id| !hits.contains(id)).collect();
-            return vec![Action::Exec("select.set".into(), json!({ "ids": json_ids(&keep) }))];
-        }
-        let cmd = if ev.mods.shift { "select.add" } else { "select.set" };
-        vec![Action::Exec(cmd.into(), json!({ "ids": json_ids(&hits) }))]
+        let mode = if ev.mods.alt {
+            "subtract"
+        } else if ev.mods.shift {
+            "add"
+        } else {
+            "set"
+        };
+        vec![Action::Exec("select.magicWand".into(), json!({ "id": paint_owner(cx.doc, h.leaf).0, "mode": mode }))]
     }
 
     fn cursor(&self, _cx: &ToolContext, _p: Point, _m: Mods) -> Cursor {
         Cursor::Crosshair
-    }
-
-    fn options(&self) -> Value {
-        json!({ "tolerance": self.tolerance })
-    }
-
-    fn set_option(&mut self, key: &str, value: &Value) {
-        if key == "tolerance"
-            && let Some(v) = value.as_f64()
-        {
-            self.tolerance = v.clamp(0.0, 255.0);
-        }
     }
 }
 
@@ -227,34 +163,22 @@ impl Tool for LassoTool {
 mod tests {
     use super::*;
     use crate::testutil::*;
-    use drawcraft_color::Color;
-    use drawcraft_doc::{Appearance, Node, Selection};
-    use drawcraft_geom::{Rect, shapes};
-
-    fn add_rect(d: &mut Document, r: Rect, fill: Color) -> NodeId {
-        let l = d.layers[0].id;
-        let id = d.alloc_id();
-        d.insert(Some(l), usize::MAX, Node::path(id, shapes::rectangle(r), Appearance::basic(Paint::solid(fill), Paint::None, 1.0))).unwrap();
-        id
-    }
+    use drawcraft_doc::Selection;
 
     #[test]
-    fn magic_wand_selects_similar_fills() {
-        let (mut d, a) = doc_with_rect(); // white fill
-        let b = add_rect(&mut d, Rect::new(300.0, 300.0, 350.0, 350.0), Color::rgb8(250, 250, 250));
-        let c = add_rect(&mut d, Rect::new(400.0, 400.0, 450.0, 450.0), Color::rgb8(255, 0, 0));
+    fn magic_wand_emits_the_engine_command() {
+        let (d, a) = doc_with_rect();
         let s = Selection::default();
         let p = paint();
         let cx = cx(&d, &s, &p);
-        let mut t = MagicWandTool::default();
+        let mut t = MagicWandTool;
         let r = t.pointer(&cx, &PointerEvent::new(PointerKind::Down, 150.0, 150.0));
-        assert_eq!(r, vec![Action::Exec("select.set".into(), json!({"ids": [a.0, b.0]}))]);
-        t.set_option("tolerance", &json!(0));
-        let r = t.pointer(&cx, &PointerEvent::new(PointerKind::Down, 150.0, 150.0));
-        assert_eq!(r, vec![Action::Exec("select.set".into(), json!({"ids": [a.0]}))]);
+        assert_eq!(r, vec![Action::Exec("select.magicWand".into(), json!({"id": a.0, "mode": "set"}))]);
         let shift = Mods { shift: true, ..Default::default() };
-        let r = t.pointer(&cx, &PointerEvent::new(PointerKind::Down, 420.0, 420.0).with_mods(shift));
-        assert_eq!(r, vec![Action::Exec("select.add".into(), json!({"ids": [c.0]}))]);
+        let r = t.pointer(&cx, &PointerEvent::new(PointerKind::Down, 150.0, 150.0).with_mods(shift));
+        assert_eq!(r, vec![Action::Exec("select.magicWand".into(), json!({"id": a.0, "mode": "add"}))]);
+        let miss = t.pointer(&cx, &PointerEvent::new(PointerKind::Down, 900.0, 900.0));
+        assert_eq!(miss, vec![Action::Exec("select.none".into(), json!({}))]);
     }
 
     #[test]
