@@ -533,6 +533,7 @@ fn lp_expand(s: &mut Session, p: &Value) -> Result<Value> {
         for g in &targets {
             let n = d.node_mut(*g).ok_or(EngineError::NoNode(*g))?;
             n.name = None;
+            n.trace = None;
             if let Some(ch) = n.children_mut() {
                 ch.retain(|c| match c.name.as_deref() {
                     Some(SOURCES_NAME) => false,
@@ -640,6 +641,13 @@ fn trace_params(p: &Value) -> Result<tr::TraceParams> {
 fn trace_make(s: &mut Session, p: &Value, expand: bool) -> Result<Value> {
     const C: &str = "imageTrace.make";
     let params = trace_params(p)?;
+    let params_json = serde_json::to_value(&params).map_err(|e| EngineError::Other(e.to_string()))?;
+    // The preset's name if the parameters are exactly that preset's, else "Custom".
+    let named = str_param(p, "preset").unwrap_or("Default");
+    let preset_label = match tr::preset(named) {
+        Some(b) if serde_json::to_value(&b).ok().as_ref() == Some(&params_json) => named.to_string(),
+        _ => "Custom".to_string(),
+    };
     let roots = root_ids(s, p)?;
     // The image (inside a trace group, or selected directly).
     let (target, img) = {
@@ -687,6 +695,9 @@ fn trace_make(s: &mut Session, p: &Value, expand: bool) -> Result<Value> {
         let gid = d.alloc_id();
         let mut g = Node::group(gid, children);
         g.name = if expand { None } else { Some(TRACE_NAME.into()) };
+        if !expand {
+            g.trace = Some(Box::new(json!({ "preset": preset_label, "params": params_json })));
+        }
         let (par, idx, _) = d.position(target).ok_or(EngineError::NoNode(target))?;
         d.remove(target)?;
         d.insert(par, idx, g)?;
@@ -727,6 +738,7 @@ fn trace_expand(s: &mut Session, p: &Value) -> Result<Value> {
         for g in &targets {
             let n = d.node_mut(*g).ok_or(EngineError::NoNode(*g))?;
             n.name = None;
+            n.trace = None;
             if let Some(ch) = n.children_mut() {
                 ch.retain(|c| !matches!(c.kind, NodeKind::Image(_)));
             }

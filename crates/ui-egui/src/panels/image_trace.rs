@@ -17,6 +17,9 @@ struct TraceUi {
     preset: String,
     params: Value,
     info: Option<(u64, u64, u64)>,
+    /// The selected Image Trace object's stored settings last adopted (so edits in progress
+    /// aren't overwritten until the object changes).
+    synced: Value,
 }
 
 fn presets(app: &mut DrawcraftApp) -> Vec<(String, Value)> {
@@ -27,16 +30,17 @@ fn presets(app: &mut DrawcraftApp) -> Vec<(String, Value)> {
         .unwrap_or_default()
 }
 
-/// What the selection is: an Image Trace object, a plain image, or neither.
-fn target(app: &DrawcraftApp) -> (bool, bool) {
-    let Some(n) = first_selected(app) else { return (false, false) };
+/// What the selection is: an Image Trace object (with its stored settings), a plain image, or neither.
+fn target(app: &DrawcraftApp) -> (bool, bool, Option<Value>) {
+    let Some(n) = first_selected(app) else { return (false, false, None) };
     let trace = n.name.as_deref() == Some("Image Trace")
         && n.children().is_some_and(|c| c.first().is_some_and(|i| matches!(i.kind, drawcraft_doc::NodeKind::Image(_))));
-    (trace, matches!(n.kind, drawcraft_doc::NodeKind::Image(_)))
+    (trace, matches!(n.kind, drawcraft_doc::NodeKind::Image(_)), n.trace.map(|t| *t))
 }
 
 fn trace(app: &mut DrawcraftApp, st: &mut TraceUi) {
-    match app.run("imageTrace.make", json!({ "preset": "Default", "params": st.params })) {
+    let preset = if st.preset == "Custom" { "Default" } else { st.preset.as_str() };
+    match app.run("imageTrace.make", json!({ "preset": preset, "params": st.params })) {
         Ok(r) => st.info = Some((r["paths"].as_u64().unwrap_or(0), r["anchors"].as_u64().unwrap_or(0), r["colors"].as_u64().unwrap_or(0))),
         Err(e) => app.ui.status = e,
     }
@@ -63,7 +67,12 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         st.preset = "Default".into();
         st.params = all.first().map(|p| p.1.clone()).unwrap_or_default();
     }
-    let (is_trace, is_image) = target(app);
+    let (is_trace, is_image, stored) = target(app);
+    if let Some(t) = stored.filter(|t| *t != st.synced) {
+        st.preset = t["preset"].as_str().unwrap_or("Custom").to_string();
+        st.params = t["params"].clone();
+        st.synced = t;
+    }
     let mut retrace = false;
 
     ui.horizontal(|ui| {
@@ -155,7 +164,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
 }
 
 pub fn menu(app: &mut DrawcraftApp, ui: &mut Ui) {
-    let (is_trace, _) = target(app);
+    let (is_trace, _, _) = target(app);
     if menu_item(ui, "Release", is_trace, false) {
         app.run("imageTrace.release", json!({})).ok();
     }

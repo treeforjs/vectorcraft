@@ -260,6 +260,9 @@ pub struct Node {
     /// Opacity mask (Transparency panel). Its art lives here, outside the layer tree.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mask: Option<Box<OpacityMask>>,
+    /// Image Trace object: `{preset, params}` it was traced with (the Image Trace panel shows them).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trace: Option<Box<serde_json::Value>>,
     pub kind: NodeKind,
 }
 
@@ -301,6 +304,7 @@ impl Node {
             knockout: false,
             appearance: Appearance::default(),
             mask: None,
+            trace: None,
             kind,
         }
     }

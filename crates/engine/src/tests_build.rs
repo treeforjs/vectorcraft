@@ -416,3 +416,26 @@ fn image_trace_presets_query_and_errors() {
     assert!(find_command("imageTrace.make").unwrap().menu == ["Object", "Image Trace"]);
     assert!(find_command("livePaint.make").unwrap().menu == ["Object", "Live Paint"]);
 }
+
+#[test]
+fn image_trace_object_remembers_its_settings() {
+    let mut s = session();
+    image_doc(&mut s);
+    let r = s.execute("imageTrace.make", &json!({"preset": "6 Colors"})).unwrap();
+    let g = NodeId(r["id"].as_u64().unwrap());
+    let t = node(&s, g).trace.clone().expect("settings stored");
+    assert_eq!(t["preset"], "6 Colors");
+    assert_eq!(t["params"]["colors"], 6);
+    // Changing a parameter makes it Custom; the settings survive save/open.
+    let r = s.execute("imageTrace.make", &json!({"id": g.0, "preset": "6 Colors", "params": {"colors": 9}})).unwrap();
+    let g = NodeId(r["id"].as_u64().unwrap());
+    let d = s.doc().unwrap().doc.clone();
+    let back = drawcraft_format::load(&drawcraft_format::save(&d, false)).unwrap();
+    let t = back.node(g).unwrap().trace.clone().unwrap();
+    assert_eq!((t["preset"].as_str(), t["params"]["colors"].as_u64()), (Some("Custom"), Some(9)));
+    // Expanded traces are plain groups.
+    s.execute("imageTrace.expand", &json!({})).unwrap();
+    let st = s.doc().unwrap();
+    let id = st.selection.in_paint_order(&st.doc)[0];
+    assert!(st.doc.node(id).unwrap().trace.is_none());
+}
