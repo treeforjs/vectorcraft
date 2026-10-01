@@ -108,7 +108,8 @@ pub struct DrawcraftApp {
     /// Commands whose shortcuts the native menu handles (skip them in egui to avoid double firing).
     pub native_shortcuts: std::collections::HashSet<String>,
     control_rx: Option<Receiver<ControlRequest>>,
-    pending_screenshots: Vec<(u64, Option<String>, Sender<ControlResponse>)>,
+    /// (token, path, reply, deadline ms): a window that isn't presented never delivers its frame.
+    pending_screenshots: Vec<(u64, Option<String>, Sender<ControlResponse>, f64)>,
     queued_screenshots: Vec<(u64, f64, u32)>,
     screenshot_token: u64,
     /// Synthetic input events (from the control channel) injected one step per frame.
@@ -237,7 +238,7 @@ impl DrawcraftApp {
                     let token = self.screenshot_token;
                     let settle = ctx.global_style().animation_time as f64 * 2000.0 + 80.0;
                     self.queued_screenshots.push((token, now_ms() + settle, 0));
-                    self.pending_screenshots.push((token, path, reply));
+                    self.pending_screenshots.push((token, path, reply, now_ms() + settle + 8000.0));
                 }
             }
         }
@@ -278,11 +279,22 @@ impl DrawcraftApp {
                 .collect()
         });
         for (token, image) in events {
-            if let Some(i) = self.pending_screenshots.iter().position(|(t, _, _)| *t == token) {
-                let (_, path, reply) = self.pending_screenshots.remove(i);
+            if let Some(i) = self.pending_screenshots.iter().position(|(t, ..)| *t == token) {
+                let (_, path, reply, _) = self.pending_screenshots.remove(i);
                 let _ = reply.send(control::save_screenshot(self, &image, path.as_deref()));
             }
         }
+        let now = now_ms();
+        self.pending_screenshots.retain(|(_, _, reply, deadline)| {
+            if now < *deadline {
+                return true;
+            }
+            let _ = reply.send(serde_json::json!({
+                "ok": false,
+                "error": "no frame was presented (screen locked, window minimized or fully covered); ui.render still renders the artboard"
+            }));
+            false
+        });
     }
 
     /// Show a transient status message.

@@ -30,10 +30,11 @@ DrawCraft is a clean-room, open-source, Rust-native vector illustration app targ
 ## Running and looking at the app
 - `cargo run --release -p drawcraft -- --control 7979 [file.svg|file.drawcraft]`
 - Drive it: JSON lines on `127.0.0.1:7979`, e.g. `{"id":1,"method":"engine.execute","params":{"command":"shape.rectangle","params":{"x":10,"y":10,"width":100,"height":50}}}` then `{"id":2,"method":"ui.screenshot","params":{"path":"/tmp/shot.png"}}`. Methods: `crates/ui-egui/src/control.rs`.
-- **For UI work, look at the result** (take `ui.screenshot`, read the PNG) and compare with `plan/illustrator/02-ui-ux.md` / `10-observed-ui.md`.
+- **For UI work, look at the result** (take `ui.screenshot`, read the PNG) and compare with `plan/illustrator/02-ui-ux.md` / `10-observed-ui.md`. `ui.screenshot` needs a presented frame: if it errors (screen locked), check the art with `ui.render` / `drawcraft-cli run … --export x.png`, and cover panels with a headless egui frame test (see `panels/transparency.rs` tests).
+- **Performance:** `drawcraft-cli bench FILE [--size WxH] [--iters N]` prints ms/frame (multi- and single-threaded). Check it before and after renderer changes.
 - MCP: `drawcraft-cli mcp` (see `docs/mcp.md`).
 - Shell gotcha: `mv`/`cp` are aliased interactive here — use `/bin/mv -f` / `/bin/cp -f`.
-- Parallel agents: separate `CARGO_TARGET_DIR` per agent; edit only the crates you own; write manifests atomically.
+- Parallel agents: separate `CARGO_TARGET_DIR` per agent; edit only the crates you own; write manifests atomically. Each target dir grows to ~30 GB: delete yours when you finish (a full disk fails links with `errno=28`).
 
 ## Roadmap
 `ROADMAP.md` (committed) tracks status, milestones and time-to-parity estimates. Update it whenever a milestone task lands.

@@ -254,7 +254,7 @@ impl Headless {
         Ok(json!({"path": path}))
     }
 
-    /// `app.export {format?, path, scale?, artboard?}`: svg | png | drawcraft (format defaults to the extension).
+    /// `app.export {format?, path, scale?, artboard?}`: svg | png | pdf | jpg | webp | drawcraft (format defaults to the extension).
     pub fn export(&mut self, p: &Value) -> Result<Value, String> {
         let path = s(p, "path").ok_or("missing `path`")?;
         let fmt = s(p, "format").map(str::to_ascii_lowercase).unwrap_or_else(|| ext_of(path));
@@ -272,7 +272,12 @@ impl Headless {
                 self.renderer.render_region(&doc, r, scale, false).to_png()
             }
             "drawcraft" => drawcraft_format::save(&doc, true),
-            other => return Err(format!("unknown export format `{other}` (svg, png, drawcraft)")),
+            // pdf, jpg, webp…: the engine's exporter (same bytes as the app).
+            other => {
+                let params = json!({"path": path, "format": other, "scale": p.get("scale"), "artboard": p.get("artboard")});
+                let r = self.session.execute("document.export", &params).map_err(|e| e.to_string())?;
+                return Ok(json!({"path": path, "format": fmt, "bytes": r["bytes"]}));
+            }
         };
         std::fs::write(path, &bytes).map_err(|e| format!("write {path}: {e}"))?;
         Ok(json!({"path": path, "format": fmt, "bytes": bytes.len()}))

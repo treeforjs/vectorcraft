@@ -263,7 +263,7 @@ pub fn tool_definitions() -> Vec<Value> {
             "Export the active document: svg (artboard viewBox), png (rendered artboard) or drawcraft (native).",
             obj(
                 json!({
-                    "format": {"type": "string", "enum": ["svg", "png", "drawcraft"], "description": "Default: from the path's extension"},
+                    "format": {"type": "string", "enum": ["svg", "png", "pdf", "jpg", "webp", "drawcraft"], "description": "Default: from the path's extension"},
                     "path": string("Destination file"),
                     "scale": num("PNG pixels per point (default 1)"),
                 }),
@@ -543,8 +543,8 @@ fn dispatch(b: &mut dyn Backend, name: &str, a: &Args) -> Result<ToolResult, Str
                 .and_then(Value::as_str)
                 .map(str::to_ascii_lowercase)
                 .unwrap_or_else(|| std::path::Path::new(path).extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default());
-            if !["svg", "png", "drawcraft"].contains(&fmt.as_str()) {
-                return Err(format!("unknown export format `{fmt}` (svg, png, drawcraft)"));
+            if !["svg", "png", "pdf", "jpg", "jpeg", "webp", "drawcraft"].contains(&fmt.as_str()) {
+                return Err(format!("unknown export format `{fmt}` (svg, png, pdf, jpg, webp, drawcraft)"));
             }
             let scale = a.get("scale").and_then(Value::as_f64).unwrap_or(1.0);
             // The desktop app exports native files through Save (which also sets the document path).

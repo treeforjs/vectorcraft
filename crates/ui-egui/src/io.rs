@@ -167,7 +167,7 @@ pub fn save(app: &mut DrawcraftApp, path: Option<String>, save_as: bool) -> Resu
     Ok(path)
 }
 
-/// Export the document as SVG / PNG / JPEG.
+/// Export the document as SVG / PDF / PNG / JPEG / WebP.
 pub fn export(app: &mut DrawcraftApp, format: &str, path: Option<String>, scale: f64) -> Result<String, String> {
     let st = app.session.active().ok_or("no document")?;
     let doc = st.doc.clone();
@@ -182,21 +182,20 @@ pub fn export(app: &mut DrawcraftApp, format: &str, path: Option<String>, scale:
     let bytes = match format {
         "svg" => drawcraft_svg::export(&doc, &drawcraft_svg::ExportOptions { artboard: Some(0), ..Default::default() }).into_bytes(),
         "pdf" => drawcraft_pdf::export(&doc, &drawcraft_pdf::PdfOptions::default()).map_err(|e| e.to_string())?,
-        "png" | "jpg" | "jpeg" => {
+        "png" | "jpg" | "jpeg" | "webp" => {
             let r = doc.artboards.first().map(|a| a.rect).ok_or("no artboard")?;
-            let img = app.canvas.renderer.render_region(&doc, r, scale, format != "png");
-            if format == "png" { img.to_png() } else { encode_jpeg(&img)? }
+            let img = app.canvas.renderer.render_region(&doc, r, scale, format == "jpg" || format == "jpeg");
+            match format {
+                "png" => img.to_png(),
+                "webp" => img.to_webp(),
+                _ => img.to_jpeg(90),
+            }
         }
         other => return Err(format!("unknown export format `{other}`")),
     };
     write_out(app, &path, &bytes)?;
     app.status(format!("Exported {path}"));
     Ok(path)
-}
-
-fn encode_jpeg(img: &drawcraft_render::Rendered) -> Result<Vec<u8>, String> {
-    let _ = img;
-    Err("JPEG export lands with M4.6".into())
 }
 
 /// File → Place… (embed an image or SVG into the active document).

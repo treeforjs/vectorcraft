@@ -15,7 +15,7 @@
 | `ui.key` / `ui.text` | `{key, shift?, alt?, cmd?}` / `{text}` | synthetic keyboard input |
 | `ui.set` | `{brightness?, panel?, rulers?, outline?, grid?, smartGuides?, boundingBox?, controlBar?}` | |
 | `ui.dialog.set` / `.confirm` / `.cancel` | `{field, value}` | fill and submit the open dialog |
-| `ui.screenshot` | `{path?}` | capture the window (PNG) |
+| `ui.screenshot` | `{path?}` | capture the window (PNG). Needs a presented frame: with the screen locked or the window minimized/covered it fails after ~8 s with an explanatory error |
 | `ui.render` | `{path?, scale?}` | render the artboard headlessly (PNG) |
 | `ui.resize` / `ui.focus` | | |
 | `app.open` / `app.save` / `app.export` / `app.quit` | `{path}` / `{path?}` / `{format, path, scale?}` | |

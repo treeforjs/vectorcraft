@@ -2,7 +2,7 @@
 //!
 //! ```text
 //! drawcraft-cli mcp [--connect 127.0.0.1:7979 | --headless]
-//! drawcraft-cli run [--in file.drawcraft|file.svg] [--cmd id [--params '{json}']]... [--export out.svg|.png|.drawcraft]... [--scale 2]
+//! drawcraft-cli run [--in file.drawcraft|file.svg] [--cmd id [--params '{json}']]... [--export out.svg|.png|.pdf|.jpg|.webp|.drawcraft]... [--scale 2]
 //! drawcraft-cli commands
 //! drawcraft-cli bench FILE [--size 2880x1800] [--iters 5]
 //! ```
@@ -24,7 +24,7 @@ USAGE:
 
   drawcraft-cli run [--in FILE] [--cmd ID [--params JSON]]... [--export FILE]... [--scale N]
       Headless batch: open FILE (.drawcraft/.svg) or start a new document, run commands in
-      order, export (.svg, .png, .drawcraft by extension). Prints one JSON result per step.
+      order, export (.svg, .png, .pdf, .jpg, .webp, .drawcraft by extension). Prints one JSON result per step.
 
   drawcraft-cli commands
       Print the command catalogue as JSON.

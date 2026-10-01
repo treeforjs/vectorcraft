@@ -62,6 +62,8 @@ cargo run --release -p drawcraft                          # desktop app
 cargo run --release -p drawcraft -- examples/dusk-poster.drawcraft
 cargo run --release -p drawcraft -- --control 7979        # + JSON control channel
 cargo run --release -p drawcraft-cli -- mcp               # MCP server (stdio)
+cargo run --release -p drawcraft-cli -- run --in examples/ribbons.drawcraft --export out.pdf   # headless batch
+cargo run --release -p drawcraft-cli -- bench examples/neon-drive.drawcraft                   # render timing
 cargo xtask bundle                                        # dist/DrawCraft.app (macOS)
 cd apps/drawcraft-web && trunk build --release            # web build → dist/web
 cargo xtask ci                                            # fmt, clippy, tests, layering, wasm
@@ -73,7 +75,7 @@ Register with Claude Code: `claude mcp add drawcraft -- /path/to/drawcraft-cli m
 
 DrawCraft is under active development. See **[ROADMAP.md](ROADMAP.md)** for what ships today, milestones, and honest time-to-parity estimates.
 
-Workspace: `crates/{geom, color, doc, pathops, text, effects, trace, brush, render, svg, pdf, format, tools, engine, ui-egui, mcp, testkit}`, `apps/{drawcraft, drawcraft-cli, drawcraft-web}`. The egui frontend is a separate crate, so the UI can be swapped without touching the engine. Agent guide: [`CLAUDE.md`](CLAUDE.md).
+Workspace: `crates/{geom, color, doc, pathops, text, effects, trace, brush, render, svg, pdf, format, tools, engine, ui-egui, mcp, testkit}`, `apps/{drawcraft, drawcraft-cli, drawcraft-web}`. The egui frontend is a separate crate, so the UI can be swapped without touching the engine. Agent and contributor rules (clean-room, the asset policy, quality gates): [`AGENTS.md`](AGENTS.md). Every bundled asset is listed with its licence in [`ASSETS.md`](ASSETS.md).
 
 ## Crafting Apps
 
