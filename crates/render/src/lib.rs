@@ -131,7 +131,7 @@ struct GeomEntry {
 /// Reusable renderer (keeps the render context, decoded images and glyph caches between frames).
 pub struct Renderer {
     texts: HashMap<usize, (Arc<Node>, Arc<TextGeom>)>,
-    /// Single-threaded context used when the document has raster filters (vello's filters require it).
+    /// Context reused when rendering single-threaded (`threads == 0`).
     ctx_st: Option<RenderContext>,
     /// Worker threads for the multithreaded rasterizer (0 = single-threaded).
     pub threads: u16,
@@ -163,7 +163,10 @@ impl Default for Renderer {
     }
 }
 
+#[derive(Clone, Copy)]
 struct Frame<'a> {
+    /// Drawing into a multithreaded context: vello filter layers must be rendered offscreen.
+    mt: bool,
     doc: &'a Document,
     view: Affine,
     /// Visible region in document coordinates (for culling).
@@ -198,14 +201,9 @@ impl Renderer {
         let doc: &Document = &prepared;
         let w = width.clamp(1, u16::MAX as u32) as u16;
         let h = height.clamp(1, u16::MAX as u32) as u16;
-        // Raster filters (drop shadow, glows, blur) need the single-threaded pipeline.
-        let mut has_filters = false;
-        doc.walk(|n| {
-            if !has_filters && node_has_raster_fx(n) {
-                has_filters = true;
-            }
-        });
-        let threads = if has_filters { 0 } else { self.threads };
+        // Raster filters (drop shadow, glows, blur) are rendered offscreen on this thread when the
+        // main context is multithreaded (see `fx::with_filters`).
+        let threads = self.threads;
         let slot = if threads == 0 { self.ctx_st.take() } else { self.ctx.take() };
         let mut ctx = match slot {
             Some(mut c) if c.width() == w && c.height() == h => {
@@ -218,7 +216,7 @@ impl Renderer {
         let inv = view.inverse();
         let visible = inv.transform_rect_bbox(Rect::new(0.0, 0.0, w as f64, h as f64));
         let px = 1.0 / view.determinant().abs().sqrt().max(1e-12);
-        let frame = Frame { doc, view, visible, px, opts };
+        let frame = Frame { mt: threads > 0, doc, view, visible, px, opts };
 
         if let Some(bg) = opts.background {
             ctx.set_transform(Affine::IDENTITY);
@@ -283,7 +281,7 @@ impl Renderer {
             ctx.set_paint(peniko::Color::from_rgba8(bg[0], bg[1], bg[2], bg[3]));
             ctx.fill_rect(&kurbo::Rect::new(0.0, 0.0, w as f64, w as f64));
         }
-        let frame = Frame { doc, view, visible: b.inflate(1.0, 1.0), px: 1.0 / s, opts: &RenderOptions::default() };
+        let frame = Frame { mt: false, doc, view, visible: b.inflate(1.0, 1.0), px: 1.0 / s, opts: &RenderOptions::default() };
         self.draw_node(&mut ctx, &frame, n, true);
         ctx.flush();
         let mut pm = Pixmap::new(w, w);
@@ -368,7 +366,7 @@ impl Renderer {
     /// Render an opacity mask's art offscreen and turn its luminance into a coverage mask.
     fn opacity_mask(&mut self, f: &Frame, m: &drawcraft_doc::OpacityMask, w: u16, h: u16) -> vello_cpu::Mask {
         let mut mctx = single_threaded_context(w, h);
-        self.draw_node(&mut mctx, f, &m.art, true);
+        self.draw_node(&mut mctx, &Frame { mt: false, ..*f }, &m.art, true);
         mctx.flush();
         let mut pm = Pixmap::new(w, h);
         mctx.render(&mut pm, &mut self.resources);
@@ -729,9 +727,6 @@ impl Renderer {
     }
 }
 
-/// Number of visible painted fill/stroke items (opacity folding is exact only for one).
-/// A render context on the calling thread. vello_cpu's `RenderContext::new` defaults to a
-/// multithreaded dispatcher, which panics on filter effects (glows, shadows, blur).
 /// Opacity-mask coverage of one premultiplied pixel: luminance, with the area outside the mask
 /// art black (clip) or white (no clip), optionally inverted.
 fn mask_value(r: u8, g: u8, b: u8, a: u8, clip: bool, invert: bool) -> u8 {
@@ -745,20 +740,13 @@ fn mask_value(r: u8, g: u8, b: u8, a: u8, clip: bool, invert: bool) -> u8 {
     (l.clamp(0.0, 1.0) * 255.0 + 0.5) as u8
 }
 
+/// A render context on the calling thread. vello_cpu's `RenderContext::new` defaults to a
+/// multithreaded dispatcher, which panics on filter effects (glows, shadows, blur).
 pub(crate) fn single_threaded_context(w: u16, h: u16) -> RenderContext {
     RenderContext::new_with(w, h, vello_cpu::RenderSettings { num_threads: 0, ..Default::default() })
 }
 
-/// Whether drawing `n` itself may push a raster filter (node-level or per fill/stroke effects).
-fn node_has_raster_fx(n: &Node) -> bool {
-    let raster = |e: &[_]| !e.is_empty() && !drawcraft_effects::raster_effects(e).is_empty();
-    raster(&n.appearance.effects)
-        || n.appearance.items.iter().any(|i| match i {
-            AppearanceItem::Fill(f) => raster(&f.effects),
-            AppearanceItem::Stroke(s) => raster(&s.effects),
-        })
-}
-
+/// Number of visible painted fill/stroke items (opacity folding is exact only for one).
 fn painted_items(n: &Node) -> usize {
     n.appearance
         .items

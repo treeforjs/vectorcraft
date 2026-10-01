@@ -1,8 +1,10 @@
 //! Live effects in the renderer.
 //!
 //! Geometry effects (object-level, then per fill/stroke) rewrite the path before painting via
-//! `drawcraft-effects`. Raster effects use vello_cpu filter layers (single-threaded contexts only,
-//! which is what the renderer creates):
+//! `drawcraft-effects`. Raster effects use vello_cpu filter layers. Those only work in
+//! single-threaded contexts, so on the multithreaded pipeline each filter layer is rendered
+//! offscreen on the calling thread (cropped to its reach) and composited back with the same blend
+//! mode and opacity ([`Renderer::with_filters`]):
 //!
 //! - Drop Shadow / Outer Glow: the object's silhouette in a `DropShadowOnly` filter layer, painted
 //!   below the object with the effect's blend mode and opacity;
@@ -140,67 +142,146 @@ impl Renderer {
         }
         let gctx = geom_ctx(n);
         let rfx = effects::raster_effects(&n.appearance.effects);
+        // Document-space reach of the painted geometry (strokes, arrowheads…).
+        let outset = n.appearance.outset();
+        let reach = g.bounding_box().inflate(outset, outset);
         // Below the object: shadows and outer glows.
         for fx in rfx.iter().filter(|x| x.is_below()) {
             // The offset is applied to the geometry rather than in the filter: vello_cpu drops
             // layer content that lies entirely outside the viewport before filtering.
-            let (mode, opacity, dx, dy, filter) = match fx {
+            let (mode, opacity, dx, dy, blur, filter) = match fx {
                 RasterFx::DropShadow { mode, opacity, dx, dy, blur, color } => {
-                    (*mode, *opacity, *dx, *dy, shadow_filter(0.0, 0.0, *blur, pcolor(color)))
+                    (*mode, *opacity, *dx, *dy, *blur, shadow_filter(0.0, 0.0, *blur, pcolor(color)))
                 }
-                RasterFx::OuterGlow { mode, opacity, blur, color } => (*mode, *opacity, 0.0, 0.0, shadow_filter(0.0, 0.0, *blur, pcolor(color))),
+                RasterFx::OuterGlow { mode, opacity, blur, color } => {
+                    (*mode, *opacity, 0.0, 0.0, *blur, shadow_filter(0.0, 0.0, *blur, pcolor(color)))
+                }
                 _ => continue,
             };
             let mut gs = g.clone();
             gs.apply_affine(Affine::translate((dx, dy)));
-            ctx.set_transform(f.view);
-            ctx.push_layer(None, Some(blend_mode(mode)), Some(opacity), None, Some(filter));
-            self.paint_items(ctx, f, n, &gs, rule, &gctx);
-            ctx.pop_layer();
+            let reach = reach + drawcraft_geom::Vec2::new(dx, dy);
+            self.with_filters(ctx, f, reach, blur, Some((mode, opacity)), |r, c, fr, comp| {
+                c.set_transform(fr.view);
+                c.push_layer(None, comp.map(|m| blend_mode(m.0)), comp.map(|m| m.1), None, Some(filter));
+                r.paint_items(c, fr, n, &gs, rule, &gctx);
+                c.pop_layer();
+            });
         }
         // The object itself (blurred / feathered).
-        let mut layers = 0;
-        for fx in &rfx {
-            match fx {
-                RasterFx::Feather { radius } if *radius > 0.0 => {
-                    ctx.set_transform(f.view);
-                    ctx.set_fill_rule(fill_rule(rule));
-                    ctx.push_clip_layer(&g);
-                    ctx.push_layer(None, None, None, None, Some(blur_filter(radius / 2.0)));
-                    layers += 2;
+        let blur: f64 = rfx
+            .iter()
+            .map(|fx| match fx {
+                RasterFx::Feather { radius } | RasterFx::GaussianBlur { radius } => radius.max(0.0),
+                _ => 0.0,
+            })
+            .sum();
+        if blur > 0.0 {
+            self.with_filters(ctx, f, reach, blur, None, |r, c, fr, _| {
+                let mut layers = 0;
+                for fx in &rfx {
+                    match fx {
+                        RasterFx::Feather { radius } if *radius > 0.0 => {
+                            c.set_transform(fr.view);
+                            c.set_fill_rule(fill_rule(rule));
+                            c.push_clip_layer(&g);
+                            c.push_layer(None, None, None, None, Some(blur_filter(radius / 2.0)));
+                            layers += 2;
+                        }
+                        RasterFx::GaussianBlur { radius } if *radius > 0.0 => {
+                            c.set_transform(fr.view);
+                            c.push_layer(None, None, None, None, Some(blur_filter(radius / 2.0)));
+                            layers += 1;
+                        }
+                        _ => {}
+                    }
                 }
-                RasterFx::GaussianBlur { radius } if *radius > 0.0 => {
-                    ctx.set_transform(f.view);
-                    ctx.push_layer(None, None, None, None, Some(blur_filter(radius / 2.0)));
-                    layers += 1;
+                r.paint_items(c, fr, n, &g, rule, &gctx);
+                for _ in 0..layers {
+                    c.pop_layer();
                 }
-                _ => {}
-            }
-        }
-        self.paint_items(ctx, f, n, &g, rule, &gctx);
-        for _ in 0..layers {
-            ctx.pop_layer();
+            });
+        } else {
+            self.paint_items(ctx, f, n, &g, rule, &gctx);
         }
         // Above the object: inner glows, clipped to the shape.
         for fx in &rfx {
             let RasterFx::InnerGlow { mode, opacity, blur, color, center } = fx else { continue };
-            ctx.set_transform(f.view);
-            ctx.set_fill_rule(fill_rule(rule));
-            ctx.push_clip_layer(&g);
-            ctx.push_layer(None, Some(blend_mode(*mode)), Some(*opacity), None, Some(shadow_filter(0.0, 0.0, *blur, pcolor(color))));
-            ctx.set_paint(peniko::Color::BLACK);
-            if *center {
-                ctx.set_fill_rule(fill_rule(rule));
-                ctx.fill_path(&g);
-            } else {
-                // Everything outside the shape, so the glow bleeds in from the edges.
-                let pad = blur * 2.0 + 4.0 * f.px;
-                let mut inv = g.bounding_box().inflate(pad, pad).to_path(0.1);
-                inv.extend(g.iter());
-                ctx.set_fill_rule(peniko::Fill::EvenOdd);
-                ctx.fill_path(&inv);
-            }
-            ctx.pop_layer();
+            let filter = shadow_filter(0.0, 0.0, *blur, pcolor(color));
+            self.with_filters(ctx, f, g.bounding_box(), *blur, Some((*mode, *opacity)), |_, c, fr, comp| {
+                // The blend layer goes outside the clip: a clip layer is isolated, so a blend
+                // inside it would mix with nothing instead of the object below.
+                if let Some((m, o)) = comp {
+                    c.set_transform(Affine::IDENTITY);
+                    c.push_layer(None, Some(blend_mode(m)), Some(o), None, None);
+                }
+                c.set_transform(fr.view);
+                c.set_fill_rule(fill_rule(rule));
+                c.push_clip_layer(&g);
+                c.push_layer(None, None, None, None, Some(filter));
+                c.set_paint(peniko::Color::BLACK);
+                if *center {
+                    c.set_fill_rule(fill_rule(rule));
+                    c.fill_path(&g);
+                } else {
+                    // Everything outside the shape, so the glow bleeds in from the edges.
+                    let pad = blur * 2.0 + 4.0 * fr.px;
+                    let mut inv = g.bounding_box().inflate(pad, pad).to_path(0.1);
+                    inv.extend(g.iter());
+                    c.set_fill_rule(peniko::Fill::EvenOdd);
+                    c.fill_path(&inv);
+                }
+                c.pop_layer();
+                c.pop_layer();
+                if comp.is_some() {
+                    c.pop_layer();
+                }
+            });
+        }
+        ctx.set_transform(Affine::IDENTITY);
+    }
+
+    /// Run `draw`, which pushes filter layers. Single-threaded contexts draw directly and `draw`
+    /// applies `composite` (blend mode, opacity) on its filter layer. On a multithreaded context
+    /// the layer is drawn into an offscreen single-threaded context covering `reach` (document
+    /// space) plus the blur's spread, then composited back with `composite`.
+    fn with_filters(
+        &mut self,
+        ctx: &mut RenderContext,
+        f: &Frame,
+        reach: Rect,
+        blur: f64,
+        composite: Option<(drawcraft_doc::color::BlendMode, f32)>,
+        draw: impl FnOnce(&mut Self, &mut RenderContext, &Frame, Option<(drawcraft_doc::color::BlendMode, f32)>),
+    ) {
+        if !f.mt {
+            return draw(self, ctx, f, composite);
+        }
+        // 3σ of the Gaussian (σ = blur / 2) in pixels, plus a pixel of antialiasing.
+        let spread = blur.max(0.0) * 1.5 / f.px + 2.0;
+        let screen = Rect::new(0.0, 0.0, ctx.width() as f64, ctx.height() as f64).inflate(spread, spread);
+        let r = f.view.transform_rect_bbox(reach).inflate(spread, spread).intersect(screen);
+        let (x0, y0) = (r.x0.floor(), r.y0.floor());
+        let (w, h) = ((r.x1.ceil() - x0).min(u16::MAX as f64), (r.y1.ceil() - y0).min(u16::MAX as f64));
+        if w < 1.0 || h < 1.0 {
+            return;
+        }
+        let (w, h) = (w as u16, h as u16);
+        let mut off = crate::single_threaded_context(w, h);
+        let shifted = Frame { mt: false, view: Affine::translate((-x0, -y0)) * f.view, ..*f };
+        draw(self, &mut off, &shifted, None);
+        off.flush();
+        let mut pm = vello_cpu::Pixmap::new(w, h);
+        off.render(&mut pm, &mut self.resources);
+        let layered = composite.is_some_and(|(m, o)| m != drawcraft_doc::color::BlendMode::Normal || o < 1.0);
+        if let Some((m, o)) = composite.filter(|_| layered) {
+            ctx.set_transform(Affine::IDENTITY);
+            ctx.push_layer(None, Some(blend_mode(m)), Some(o), None, None);
+        }
+        ctx.set_transform(Affine::translate((x0, y0)));
+        ctx.set_paint(vello_cpu::Image { image: vello_cpu::ImageSource::Pixmap(std::sync::Arc::new(pm)), sampler: peniko::ImageSampler::default() });
+        ctx.fill_rect(&Rect::new(0.0, 0.0, w as f64, h as f64));
+        if layered {
             ctx.pop_layer();
         }
         ctx.set_transform(Affine::IDENTITY);
@@ -395,5 +476,52 @@ mod tests {
         let n = &d.layers[0].children().unwrap()[0];
         let b = super::visual_bounds(n).unwrap();
         assert!(b.x1 >= 10.0 + 7.0 + 7.5 - 1e-9);
+    }
+
+    /// Multithreaded rendering filters each effect offscreen; it must match the single-threaded
+    /// reference (blend modes against the real backdrop, objects partly off-screen, all effects).
+    #[test]
+    fn multithreaded_filters_match_single_threaded() {
+        let cases: Vec<(Rect, Vec<(&str, serde_json::Value)>)> = vec![
+            (Rect::new(20.0, 20.0, 60.0, 60.0), vec![("stylize.dropShadow", json!({"x": 6, "y": 4, "blur": 5, "opacity": 75}))]),
+            (Rect::new(20.0, 20.0, 60.0, 60.0), vec![("stylize.outerGlow", json!({"color": "#ff00aa", "blur": 8, "opacity": 90}))]),
+            (
+                Rect::new(20.0, 20.0, 60.0, 60.0),
+                vec![
+                    ("stylize.innerGlow", json!({"blur": 6})),
+                    ("stylize.innerGlow", json!({"blur": 4, "source": "center", "mode": "multiply", "color": "#0044ff"})),
+                ],
+            ),
+            (Rect::new(20.0, 20.0, 60.0, 60.0), vec![("stylize.feather", json!({"radius": 6}))]),
+            (Rect::new(20.0, 20.0, 60.0, 60.0), vec![("blur.gaussian", json!({"radius": 4})), ("stylize.dropShadow", json!({"blur": 3}))]),
+            // Partly outside the frame: the blur still spreads in from off-screen content.
+            (
+                Rect::new(-30.0, 70.0, 30.0, 130.0),
+                vec![("stylize.outerGlow", json!({"blur": 12, "mode": "normal"})), ("blur.gaussian", json!({"radius": 3}))],
+            ),
+        ];
+        for (r, fx) in cases {
+            let name = format!("{fx:?}");
+            let mut d = doc_with(r, Color::rgb(0.2, 0.6, 0.3), fx);
+            // A coloured backdrop so blend modes have something to blend with.
+            let l = d.layers[0].id;
+            let bid = d.alloc_id();
+            let bg = Node::path(
+                bid,
+                shapes::rectangle(Rect::new(0.0, 0.0, 100.0, 100.0)),
+                Appearance::basic(Paint::solid(Color::rgb(0.9, 0.5, 0.1)), Paint::None, 0.0),
+            );
+            d.insert(Some(l), 0, bg).unwrap();
+            let opts = RenderOptions::default();
+            let mut st = Renderer::new();
+            st.threads = 0;
+            let mut mt = Renderer::new();
+            mt.threads = 3;
+            let a = st.render(&d, 100, 100, Affine::IDENTITY, &opts);
+            let b = mt.render(&d, 100, 100, Affine::IDENTITY, &opts);
+            let worst = a.pixels.iter().zip(&b.pixels).map(|(x, y)| x.abs_diff(*y)).max().unwrap();
+            // The offscreen pass adds one 8-bit premultiplied round trip: a few levels of rounding.
+            assert!(worst <= 4, "{name}: max channel difference {worst}");
+        }
     }
 }

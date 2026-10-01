@@ -69,8 +69,14 @@ fn rasterize(r: &mut Renderer, doc: &Document, def: &PatternDef, region: Rect, w
     let px_rect = Rect::new(0.0, 0.0, w as f64, h as f64);
     for o in def.offsets_covering(region) {
         let v = view * def.instance_xf(o);
-        let frame =
-            Frame { doc, view: v, visible: v.inverse().transform_rect_bbox(px_rect), px: 1.0 / v.determinant().abs().sqrt().max(1e-12), opts: &opts };
+        let frame = Frame {
+            mt: false,
+            doc,
+            view: v,
+            visible: v.inverse().transform_rect_bbox(px_rect),
+            px: 1.0 / v.determinant().abs().sqrt().max(1e-12),
+            opts: &opts,
+        };
         for a in &def.art {
             r.draw_arc(&mut ctx, &frame, a);
         }
@@ -182,7 +188,7 @@ impl Renderer {
             for o in def.preview_offsets() {
                 let view = f.view * Affine::translate(o);
                 let visible = f.visible - o;
-                let frame = Frame { doc: f.doc, view, visible, px: f.px, opts: f.opts };
+                let frame = Frame { view, visible, ..*f };
                 for c in &children {
                     self.draw_arc(ctx, &frame, c);
                 }
