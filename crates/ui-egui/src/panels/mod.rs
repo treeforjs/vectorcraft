@@ -28,6 +28,7 @@ pub mod separations;
 pub mod stroke;
 pub mod swatches;
 pub mod symbols;
+pub mod text_styles;
 pub mod transform;
 pub mod transparency;
 
@@ -77,6 +78,8 @@ pub fn show_icon_panel(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "symbols" => symbols::show(app, ui),
         "patternOptions" => pattern_options::show(app, ui),
         "imageTrace" => image_trace::show(app, ui),
+        "charStyles" => text_styles::show(app, ui, text_styles::Kind::Char),
+        "paraStyles" => text_styles::show(app, ui, text_styles::Kind::Para),
         "magicWand" => magic_wand::show(app, ui),
         _ => {
             dim_label(ui, "This panel is on the roadmap (see the parity plan).");
@@ -110,6 +113,8 @@ pub fn panel_menu_items(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "symbols" => symbols::menu(app, ui),
         "patternOptions" => pattern_options::menu(app, ui),
         "imageTrace" => image_trace::menu(app, ui),
+        "charStyles" => text_styles::menu(app, ui, text_styles::Kind::Char),
+        "paraStyles" => text_styles::menu(app, ui, text_styles::Kind::Para),
         "magicWand" => magic_wand::menu(app, ui),
         _ => {
             ui.add_enabled(false, egui::Button::new("No options").frame(false));

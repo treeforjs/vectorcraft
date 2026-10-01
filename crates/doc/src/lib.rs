@@ -37,7 +37,7 @@ pub use live::{BlendOrientation, BlendSpacing, BlendSpec, EnvelopeKind, Gradient
 pub use node::{ImageObject, LAYER_COLORS, LayerColor, LiveShape, Node, NodeId, NodeKind, OpacityMask};
 pub use pattern::{Overlap, PatternDef, PatternEdit, RepeatKind, RepeatSpec, TileType};
 pub use selection::{AnchorRef, Selection};
-pub use text::{CharStyle, Justify, ParaStyle, TextKind, TextObject, TextRun};
+pub use text::{CharStyle, Justify, ParaStyle, TextKind, TextObject, TextRun, TextStyleDef};
 
 use drawcraft_color::{Swatch, SwatchGroup};
 use drawcraft_geom::{Point, Rect};
@@ -268,6 +268,12 @@ pub struct Document {
     pub swatch_groups: Vec<SwatchGroup>,
     #[serde(default)]
     pub graphic_styles: Vec<GraphicStyle>,
+    /// Character styles (besides the built-in [Normal Character Style], which may be redefined here).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub char_styles: Vec<TextStyleDef>,
+    /// Paragraph styles (besides the built-in [Normal Paragraph Style]).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub para_styles: Vec<TextStyleDef>,
     #[serde(default)]
     pub symbols: Vec<Symbol>,
     #[serde(default)]
@@ -316,6 +322,8 @@ impl Document {
             swatches,
             swatch_groups,
             graphic_styles: default_graphic_styles(),
+            char_styles: vec![],
+            para_styles: vec![],
             symbols: vec![],
             guides: vec![],
             grid: GridPrefs::default(),

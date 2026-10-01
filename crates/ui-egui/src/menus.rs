@@ -976,11 +976,11 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                     "Type",
                     vec![
                         panel("Character", "character"),
-                        todo("Character Styles"),
+                        panel("Character Styles", "charStyles"),
                         panel("Glyphs", "glyphs"),
                         todo("OpenType"),
                         panel("Paragraph", "paragraph"),
-                        todo("Paragraph Styles"),
+                        panel("Paragraph Styles", "paraStyles"),
                         todo("Tabs"),
                     ],
                 ),

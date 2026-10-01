@@ -76,6 +76,8 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("character", "Character", "type"),
     ("paragraph", "Paragraph", "pilcrow"),
     ("glyphs", "Glyphs", "text-cursor-input"),
+    ("charStyles", "Character Styles", "type"),
+    ("paraStyles", "Paragraph Styles", "pilcrow"),
     ("history", "History", "history"),
     ("actions", "Actions", "dc-actions"),
     ("info", "Info", "info"),

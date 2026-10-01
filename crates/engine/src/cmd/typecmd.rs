@@ -110,7 +110,7 @@ fn create_outlines(s: &mut Session, _: &Value) -> Result<Value> {
     Ok(json!({ "ids": ids.iter().map(|i| i.0).collect::<Vec<_>>() }))
 }
 
-fn text_targets(s: &Session, p: &Value, cmd: &str) -> Result<Vec<NodeId>> {
+pub(crate) fn text_targets(s: &Session, p: &Value, cmd: &str) -> Result<Vec<NodeId>> {
     let ids = targets(s, p)?;
     let t = text_ids(&s.doc()?.doc, &ids);
     if t.is_empty() {

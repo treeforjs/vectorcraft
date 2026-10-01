@@ -52,6 +52,9 @@ pub struct CharStyle {
     pub strikethrough: bool,
     #[serde(default)]
     pub all_caps: bool,
+    /// Character style (Character Styles panel) these attributes come from; None = Normal.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub style_name: Option<String>,
 }
 
 fn regular() -> String {
@@ -80,6 +83,7 @@ impl Default for CharStyle {
             underline: false,
             strikethrough: false,
             all_caps: false,
+            style_name: None,
         }
     }
 }
@@ -107,6 +111,18 @@ pub struct ParaStyle {
     pub space_after: f64,
     #[serde(default)]
     pub hyphenate: bool,
+    /// Paragraph style (Paragraph Styles panel) these attributes come from; None = Normal.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub style_name: Option<String>,
+}
+
+/// A named character or paragraph style: the attributes it sets (a subset of [`CharStyle`] or
+/// [`ParaStyle`] fields, by their serialized names). Text using it records the name.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TextStyleDef {
+    pub name: String,
+    #[serde(default)]
+    pub attrs: serde_json::Map<String, serde_json::Value>,
 }
 
 /// A run of text sharing one character style.
