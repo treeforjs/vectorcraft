@@ -183,15 +183,15 @@ pub enum NodeKind {
     },
     Path {
         path: PathData,
-        #[serde(default)]
+        #[serde(default, skip_serializing_if = "crate::skip::is_default")]
         rule: FillRule,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         live: Option<LiveShape>,
         /// This path acts as a clipping path inside a clip group.
-        #[serde(default)]
+        #[serde(default, skip_serializing_if = "crate::skip::is_default")]
         clipping: bool,
         /// Guide (non-printing) path.
-        #[serde(default)]
+        #[serde(default, skip_serializing_if = "crate::skip::is_default")]
         guide: bool,
     },
     /// Compound path: children are paths painted as one with the compound's appearance.
@@ -243,19 +243,19 @@ pub struct Node {
     pub id: NodeId,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
-    #[serde(default = "yes")]
+    #[serde(default = "yes", skip_serializing_if = "crate::skip::is_true")]
     pub visible: bool,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub locked: bool,
-    #[serde(default = "one")]
+    #[serde(default = "one", skip_serializing_if = "crate::skip::is_one")]
     pub opacity: f32,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub blend: BlendMode,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub isolate: bool,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub knockout: bool,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub appearance: Appearance,
     /// Opacity mask (Transparency panel). Its art lives here, outside the layer tree.
     #[serde(default, skip_serializing_if = "Option::is_none")]

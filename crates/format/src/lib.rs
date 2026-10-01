@@ -16,7 +16,8 @@ use std::sync::Arc;
 use drawcraft_doc::{Document, ImageBlob};
 use serde::{Deserialize, Serialize};
 
-pub const VERSION: u32 = 1;
+/// v2: anchors as `{p: [x, y], in?, out?, kind?}` and default-valued fields omitted (v1 files still load).
+pub const VERSION: u32 = 2;
 pub const EXTENSION: &str = "drawcraft";
 
 #[derive(Debug, thiserror::Error)]
@@ -57,6 +58,16 @@ pub fn save(doc: &Document, pretty: bool) -> Vec<u8> {
         images,
     };
     if pretty { serde_json::to_vec_pretty(&f).unwrap_or_default() } else { serde_json::to_vec(&f).unwrap_or_default() }
+}
+
+/// Documents up to this many objects are saved pretty-printed (readable, diffable); larger ones
+/// compact, where indentation would multiply the file size and slow opening down.
+pub const PRETTY_MAX_OBJECTS: usize = 2000;
+
+/// Serialize for saving to disk: pretty when small, compact when large.
+pub fn save_file(doc: &Document) -> Vec<u8> {
+    let objects: usize = doc.layers.iter().map(|l| l.count()).sum();
+    save(doc, objects <= PRETTY_MAX_OBJECTS)
 }
 
 pub fn load(bytes: &[u8]) -> Result<Document, FormatError> {

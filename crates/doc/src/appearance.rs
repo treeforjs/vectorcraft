@@ -126,11 +126,11 @@ fn one() -> f32 {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct FillLayer {
     pub paint: Paint,
-    #[serde(default = "one")]
+    #[serde(default = "one", skip_serializing_if = "crate::skip::is_one")]
     pub opacity: f32,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub blend: BlendMode,
-    #[serde(default = "yes")]
+    #[serde(default = "yes", skip_serializing_if = "crate::skip::is_true")]
     pub visible: bool,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub effects: Vec<Effect>,
@@ -147,13 +147,13 @@ pub struct StrokeLayer {
     pub paint: Paint,
     /// Weight in points.
     pub width: f64,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub cap: LineCap,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub join: LineJoin,
-    #[serde(default = "ten")]
+    #[serde(default = "ten", skip_serializing_if = "is_ten")]
     pub miter_limit: f64,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub align: StrokeAlign,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub dash: Option<Dash>,
@@ -162,18 +162,18 @@ pub struct StrokeLayer {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub end_arrow: Option<Arrowhead>,
     /// Arrowhead scale in percent (start, end).
-    #[serde(default = "hundreds")]
+    #[serde(default = "hundreds", skip_serializing_if = "is_hundreds")]
     pub arrow_scale: (f64, f64),
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub profile: Option<WidthProfile>,
     /// Brush applied to the stroke (by brush name).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub brush: Option<String>,
-    #[serde(default = "one")]
+    #[serde(default = "one", skip_serializing_if = "crate::skip::is_one")]
     pub opacity: f32,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub blend: BlendMode,
-    #[serde(default = "yes")]
+    #[serde(default = "yes", skip_serializing_if = "crate::skip::is_true")]
     pub visible: bool,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub effects: Vec<Effect>,
@@ -184,6 +184,12 @@ fn ten() -> f64 {
 }
 fn hundreds() -> (f64, f64) {
     (100.0, 100.0)
+}
+fn is_ten(v: &f64) -> bool {
+    *v == 10.0
+}
+fn is_hundreds(v: &(f64, f64)) -> bool {
+    *v == (100.0, 100.0)
 }
 
 impl StrokeLayer {

@@ -25,7 +25,9 @@ pub enum AnchorKind {
 }
 
 /// One anchor point with absolute handle positions. A handle equal to `p` means "no handle".
+/// Serialized without handles that equal `p` and without the default `kind` (smaller files).
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(from = "AnchorRepr", into = "AnchorRepr")]
 pub struct Anchor {
     pub p: Point,
     #[serde(rename = "in")]
@@ -34,6 +36,80 @@ pub struct Anchor {
     pub h_out: Point,
     #[serde(default)]
     pub kind: AnchorKind,
+}
+
+/// Wire form of [`Anchor`]: points as `[x, y]` (format v2; `{"x", "y"}` maps from v1 files are
+/// still read), and absent handles mean "no handle" (equal to `p`).
+#[derive(Serialize, Deserialize)]
+struct AnchorRepr {
+    p: WirePoint,
+    #[serde(rename = "in", default, skip_serializing_if = "Option::is_none")]
+    h_in: Option<WirePoint>,
+    #[serde(rename = "out", default, skip_serializing_if = "Option::is_none")]
+    h_out: Option<WirePoint>,
+    #[serde(default, skip_serializing_if = "is_corner")]
+    kind: AnchorKind,
+}
+
+fn is_corner(k: &AnchorKind) -> bool {
+    *k == AnchorKind::Corner
+}
+
+impl From<AnchorRepr> for Anchor {
+    fn from(r: AnchorRepr) -> Self {
+        let p = r.p.0;
+        Self { p, h_in: r.h_in.map_or(p, |h| h.0), h_out: r.h_out.map_or(p, |h| h.0), kind: r.kind }
+    }
+}
+
+impl From<Anchor> for AnchorRepr {
+    fn from(a: Anchor) -> Self {
+        let handle = |h: Point| (h != a.p).then_some(WirePoint(h));
+        Self { p: WirePoint(a.p), h_in: handle(a.h_in), h_out: handle(a.h_out), kind: a.kind }
+    }
+}
+
+/// A point written as `[x, y]`, read from `[x, y]` or `{"x": …, "y": …}`.
+struct WirePoint(Point);
+
+impl Serialize for WirePoint {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        [self.0.x, self.0.y].serialize(s)
+    }
+}
+
+impl<'de> Deserialize<'de> for WirePoint {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        struct V;
+        impl<'de> serde::de::Visitor<'de> for V {
+            type Value = WirePoint;
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("a point as [x, y] or {\"x\": x, \"y\": y}")
+            }
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A) -> Result<WirePoint, A::Error> {
+                let x = a.next_element()?.ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+                let y = a.next_element()?.ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+                Ok(WirePoint(Point::new(x, y)))
+            }
+            fn visit_map<A: serde::de::MapAccess<'de>>(self, mut a: A) -> Result<WirePoint, A::Error> {
+                let (mut x, mut y) = (None, None);
+                while let Some(k) = a.next_key::<std::borrow::Cow<'de, str>>()? {
+                    match k.as_ref() {
+                        "x" => x = Some(a.next_value()?),
+                        "y" => y = Some(a.next_value()?),
+                        _ => {
+                            a.next_value::<serde::de::IgnoredAny>()?;
+                        }
+                    }
+                }
+                Ok(WirePoint(Point::new(
+                    x.ok_or_else(|| serde::de::Error::missing_field("x"))?,
+                    y.ok_or_else(|| serde::de::Error::missing_field("y"))?,
+                )))
+            }
+        }
+        d.deserialize_any(V)
+    }
 }
 
 impl Anchor {
@@ -340,6 +416,19 @@ mod tests {
 
     fn square() -> PathData {
         PathData::single(SubPath::polyline(&[Point::new(0.0, 0.0), Point::new(10.0, 0.0), Point::new(10.0, 10.0), Point::new(0.0, 10.0)], true))
+    }
+
+    #[test]
+    fn anchors_serialize_compactly_and_read_v1_maps() {
+        let corner = Anchor::corner(Point::new(1.0, 2.0));
+        assert_eq!(serde_json::to_string(&corner).unwrap(), r#"{"p":[1.0,2.0]}"#);
+        let smooth = Anchor { p: Point::new(1.0, 2.0), h_in: Point::new(0.0, 2.0), h_out: Point::new(2.0, 2.0), kind: AnchorKind::Smooth };
+        let back: Anchor = serde_json::from_str(&serde_json::to_string(&smooth).unwrap()).unwrap();
+        assert_eq!(back, smooth);
+        let v1 = r#"{"p":{"x":1.0,"y":2.0},"in":{"x":0.0,"y":2.0},"out":{"x":2.0,"y":2.0},"kind":"Smooth"}"#;
+        assert_eq!(serde_json::from_str::<Anchor>(v1).unwrap(), smooth);
+        let v1_corner = r#"{"p":{"x":1.0,"y":2.0},"in":{"x":1.0,"y":2.0},"out":{"x":1.0,"y":2.0},"kind":"Corner"}"#;
+        assert_eq!(serde_json::from_str::<Anchor>(v1_corner).unwrap(), corner);
     }
 
     #[test]

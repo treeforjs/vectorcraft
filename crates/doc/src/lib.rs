@@ -16,6 +16,19 @@ pub mod text;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
+/// `skip_serializing_if` predicates: fields equal to their serde default are not written.
+pub(crate) mod skip {
+    pub fn is_default<T: Default + PartialEq>(v: &T) -> bool {
+        *v == T::default()
+    }
+    pub fn is_true(v: &bool) -> bool {
+        *v
+    }
+    pub fn is_one(v: &f32) -> bool {
+        *v == 1.0
+    }
+}
+
 pub use appearance::{Appearance, AppearanceItem, Arrowhead, Dash, Effect, FillLayer, LineCap, LineJoin, StrokeAlign, StrokeLayer, WidthProfile};
 pub use drawcraft_color as color;
 pub use drawcraft_geom as geom;

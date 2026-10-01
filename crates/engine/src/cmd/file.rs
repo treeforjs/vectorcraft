@@ -76,7 +76,7 @@ fn save(s: &mut Session, p: &Value) -> Result<Value> {
         .map(str::to_string)
         .or_else(|| s.active().and_then(|d| d.path.clone()))
         .ok_or_else(|| bad("document.save", "no path"))?;
-    let bytes = drawcraft_format::save(&s.doc()?.doc, true);
+    let bytes = drawcraft_format::save_file(&s.doc()?.doc);
     std::fs::write(&path, bytes).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
     let st = s.doc_mut()?;
     st.path = Some(path.clone());
@@ -87,7 +87,7 @@ fn save(s: &mut Session, p: &Value) -> Result<Value> {
 pub(crate) fn encode(s: &Session, format: &str, scale: f64, artboard: usize) -> Result<Vec<u8>> {
     let doc = &s.doc()?.doc;
     Ok(match format {
-        "drawcraft" => drawcraft_format::save(doc, true),
+        "drawcraft" => drawcraft_format::save_file(doc),
         "svg" => drawcraft_svg::export(doc, &drawcraft_svg::ExportOptions { artboard: Some(artboard), ..Default::default() }).into_bytes(),
         "pdf" => drawcraft_pdf::export(doc, &drawcraft_pdf::PdfOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?,
         "png" | "jpg" | "jpeg" | "webp" => {

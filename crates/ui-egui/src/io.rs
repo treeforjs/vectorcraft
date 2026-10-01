@@ -157,7 +157,7 @@ pub fn save(app: &mut DrawcraftApp, path: Option<String>, save_as: bool) -> Resu
             app.services.pick_save.as_mut().and_then(|f| f(&s)).ok_or("cancelled")?
         }
     };
-    let bytes = drawcraft_format::save(&app.session.active().unwrap().doc, true);
+    let bytes = drawcraft_format::save_file(&app.session.active().unwrap().doc);
     write_out(app, &path, &bytes)?;
     if let Some(st) = app.session.active_mut() {
         st.path = Some(path.clone());

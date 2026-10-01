@@ -245,7 +245,7 @@ impl Headless {
     pub fn save(&mut self, p: &Value) -> Result<Value, String> {
         let st = self.session.active().ok_or("no document")?;
         let path = s(p, "path").map(str::to_string).or_else(|| st.path.clone()).ok_or("missing `path` (document was never saved)")?;
-        let bytes = drawcraft_format::save(&st.doc, true);
+        let bytes = drawcraft_format::save_file(&st.doc);
         std::fs::write(&path, bytes).map_err(|e| format!("write {path}: {e}"))?;
         if let Some(st) = self.session.active_mut() {
             st.path = Some(path.clone());
@@ -271,7 +271,7 @@ impl Headless {
                 let scale = p.get("scale").and_then(Value::as_f64).unwrap_or(1.0).clamp(0.01, 16.0);
                 self.renderer.render_region(&doc, r, scale, false).to_png()
             }
-            "drawcraft" => drawcraft_format::save(&doc, true),
+            "drawcraft" => drawcraft_format::save_file(&doc),
             // pdf, jpg, webp…: the engine's exporter (same bytes as the app).
             other => {
                 let params = json!({"path": path, "format": other, "scale": p.get("scale"), "artboard": p.get("artboard")});
