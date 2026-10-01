@@ -94,7 +94,11 @@ pub struct DocState {
     pub last_transform: Option<(Affine, bool)>,
     /// Selection saved by Select → Reselect.
     pub last_selection_cmd: Option<(String, Value)>,
+    /// Process-unique id of this open document (tab indices shift when tabs close).
+    pub uid: u64,
 }
+
+static NEXT_DOC_UID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 impl DocState {
     pub fn new(doc: Document, path: Option<String>) -> Self {
@@ -111,6 +115,7 @@ impl DocState {
             interaction: None,
             last_transform: None,
             last_selection_cmd: None,
+            uid: NEXT_DOC_UID.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
         }
     }
     pub fn is_dirty(&self) -> bool {

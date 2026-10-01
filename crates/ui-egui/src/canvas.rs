@@ -167,7 +167,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
     let ppp = ui.ctx().pixels_per_point();
     let (w, h) = ((rect.width() * ppp).round().max(1.0) as u32, (rect.height() * ppp).round().max(1.0) as u32);
     let key = CacheKey {
-        doc: app.session.active_index().unwrap_or(0),
+        doc: st.uid as usize,
         revision: st.revision,
         zoom: v.zoom,
         cx: v.center.x,
@@ -186,7 +186,9 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         }
     }
     // Upload finished background renders.
-    if let Some(done) = app.canvas.worker.as_mut().and_then(|w| w.poll()) {
+    if let Some(done) = app.canvas.worker.as_mut().and_then(|w| w.poll())
+        && done.key.doc == key.doc
+    {
         upload(app, ui.ctx(), &done.img);
         app.canvas.key = Some(done.key);
         app.perf.render_ms = done.ms;
@@ -204,7 +206,9 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
             ..opts
         };
         // Light documents render synchronously (no lag vs overlays); heavy ones go to the worker.
-        let heavy = app.canvas.last_ms > 8.0 && app.canvas.texture.is_some();
+        // A document switch renders synchronously so another document's frame is never shown.
+        let same_doc = app.canvas.key.as_ref().is_some_and(|k| k.doc == key.doc);
+        let heavy = app.canvas.last_ms > 8.0 && app.canvas.texture.is_some() && same_doc;
         match (&mut app.canvas.worker, heavy) {
             (Some(worker), true) => worker.submit(crate::render_worker::Job { key: key.clone(), doc: doc.clone(), w, h, view, opts }),
             _ => {
@@ -218,6 +222,7 @@ pub fn show(app: &mut DrawcraftApp, ui: &mut Ui) {
         }
     }
     if let (Some(tex), Some(k)) = (&app.canvas.texture, &app.canvas.key)
+        && k.doc == key.doc
         && (k.rot - v.rotation).abs() < 1e-9
     {
         // Reproject the last frame if it was rendered for a different view.

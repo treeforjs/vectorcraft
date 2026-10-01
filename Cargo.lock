@@ -853,7 +853,9 @@ dependencies = [
 name = "drawcraft-cli"
 version = "0.1.0"
 dependencies = [
+ "drawcraft-geom",
  "drawcraft-mcp",
+ "drawcraft-render",
  "drawcraft-testkit",
  "serde_json",
 ]

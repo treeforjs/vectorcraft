@@ -235,6 +235,10 @@ impl Renderer {
                     if !st.visible || st.paint.is_none() || st.width <= 0.0 {
                         continue;
                     }
+                    // Brushed strokes keep their brush art under effects (e.g. a glowing scatter brush).
+                    if st.brush.is_some() && self.draw_brush(ctx, f, n, &ig, st) {
+                        continue;
+                    }
                     self.draw_stroke(ctx, f, &ig, rule, st, ib);
                 }
             }
