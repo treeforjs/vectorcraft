@@ -50,6 +50,10 @@ fn main() {
         d.insert(Some(l), usize::MAX, Node::new(id, drawcraft_doc::NodeKind::Text(Box::new(t)))).unwrap();
     }
     let mut r = Renderer::new();
+    if let Ok(t) = std::env::var("THREADS") {
+        r.threads = t.parse().unwrap_or(0);
+    }
+    let iters: usize = std::env::var("ITERS").ok().and_then(|v| v.parse().ok()).unwrap_or(5);
     let opts = RenderOptions::default();
     for (label, w, h, view) in [
         ("fit 2880x1800", 2880u32, 1800u32, Affine::scale(1.6)),
@@ -58,7 +62,6 @@ fn main() {
     ] {
         r.render(&d, w, h, view, &opts); // warm up
         let t = std::time::Instant::now();
-        let iters = 5;
         for _ in 0..iters {
             r.render(&d, w, h, view, &opts);
         }

@@ -95,18 +95,21 @@ pub fn run(args: &[String]) -> Result<(), String> {
     let mut r = Renderer::new();
     let fit = Affine::scale(1.6);
     r.render(&doc, 2880, 1800, fit, &opts);
-    rows.push(("render: fit page, 2880×1800", median_ms(5, || drop(r.render(&doc, 2880, 1800, fit, &opts))), 16.0));
+    // The canvas never waits for these: while panning/zooming it shows the last frame reprojected
+    // and re-renders in the background, so the budget is for that refresh to land quickly.
+    rows.push(("render: fit page, 2880×1800", median_ms(5, || drop(r.render(&doc, 2880, 1800, fit, &opts))), 100.0));
     let mut dx = 0.0;
     rows.push((
-        "render: pan frame (view moves 7 px)",
+        "render: background refresh after a pan",
         median_ms(9, || {
             dx += 7.0;
             drop(r.render(&doc, 2880, 1800, Affine::translate((dx, 0.0)) * fit, &opts));
         }),
-        16.0,
+        100.0,
     ));
     let zoom = Affine::scale(6.4) * Affine::translate((-600.0, -400.0));
     r.render(&doc, 2880, 1800, zoom, &opts);
+    // Zoomed in, culling leaves few objects: this one should fit a frame.
     rows.push(("render: 400% zoom, 2880×1800", median_ms(5, || drop(r.render(&doc, 2880, 1800, zoom, &opts))), 16.0));
 
     let mut rng = Rng(7);

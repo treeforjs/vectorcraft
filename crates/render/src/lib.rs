@@ -118,6 +118,37 @@ impl Rendered {
     }
 }
 
+/// Hasher for pointer-keyed caches: a multiply-xorshift (SipHash showed up in frame profiles).
+#[derive(Default, Clone, Copy)]
+struct PtrHasher(u64);
+
+impl std::hash::Hasher for PtrHasher {
+    fn write(&mut self, bytes: &[u8]) {
+        for b in bytes {
+            self.0 = (self.0 ^ *b as u64).wrapping_mul(0x0100_0000_01b3);
+        }
+    }
+    fn write_u64(&mut self, n: u64) {
+        let x = (self.0 ^ n).wrapping_mul(0x9e37_79b9_7f4a_7c15);
+        self.0 = x ^ (x >> 29);
+    }
+    fn write_usize(&mut self, n: usize) {
+        self.write_u64(n as u64);
+    }
+    fn finish(&self) -> u64 {
+        self.0
+    }
+}
+
+type PtrMap<K, V> = HashMap<K, V, std::hash::BuildHasherDefault<PtrHasher>>;
+
+/// A stroke expanded to a fill outline: (owning node, outline, last frame used).
+struct StrokeEntry {
+    node: Arc<Node>,
+    outline: Arc<BezPath>,
+    stamp: u64,
+}
+
 /// Cached per-node geometry, keyed by `Arc` identity. Structural sharing means an unchanged node
 /// keeps its allocation across edits, so a pointer match (with the Arc kept alive here so the
 /// address can't be reused) is an exact cache hit — no invalidation logic needed.
@@ -130,12 +161,17 @@ struct GeomEntry {
 
 /// Reusable renderer (keeps the render context, decoded images and glyph caches between frames).
 pub struct Renderer {
-    texts: HashMap<usize, (Arc<Node>, Arc<TextGeom>)>,
+    texts: PtrMap<usize, (Arc<Node>, Arc<TextGeom>)>,
     /// Context reused when rendering single-threaded (`threads == 0`).
     ctx_st: Option<RenderContext>,
     /// Worker threads for the multithreaded rasterizer (0 = single-threaded).
     pub threads: u16,
-    geom: HashMap<usize, GeomEntry>,
+    geom: PtrMap<usize, GeomEntry>,
+    /// Expanded stroke outlines keyed by (stroke layer address, width bits, tolerance level):
+    /// panning re-renders reuse them instead of re-expanding every stroke.
+    strokes: PtrMap<(usize, u64, i32), StrokeEntry>,
+    /// The node being drawn on the plain-path fast path (owner of cached stroke outlines).
+    cur: Option<Arc<Node>>,
     stamp: u64,
     /// Opacity folded into paint alpha for the leaf being drawn (avoids a compositing layer).
     alpha: f32,
@@ -179,10 +215,12 @@ struct Frame<'a> {
 impl Renderer {
     pub fn new() -> Self {
         Self {
-            texts: HashMap::new(),
+            texts: PtrMap::default(),
             ctx_st: None,
             threads: default_threads(),
-            geom: HashMap::new(),
+            geom: PtrMap::default(),
+            strokes: PtrMap::default(),
+            cur: None,
             stamp: 0,
             alpha: 1.0,
             ctx: None,
@@ -240,6 +278,9 @@ impl Renderer {
         let g = self.stamp;
         if self.geom.len() > 1024 {
             self.geom.retain(|_, e| g - e.stamp <= 3);
+        }
+        if self.strokes.len() > 1024 {
+            self.strokes.retain(|_, e| g - e.stamp <= 3);
         }
         ctx.flush();
         let mut pm = Pixmap::new(w, h);
@@ -386,7 +427,9 @@ impl Renderer {
             && let Some(bp) = self.path_of(a)
         {
             self.alpha = a.opacity.clamp(0.0, 1.0);
+            self.cur = Some(a.clone());
             self.draw_shape(ctx, f, a, &bp, *rule);
+            self.cur = None;
             self.alpha = 1.0;
             self.stats.drawn += 1;
             return;
@@ -507,7 +550,13 @@ impl Renderer {
             self.hairline(ctx, f, bp, [0, 0, 0, 255]);
             return;
         }
-        let bounds = bp.bounding_box();
+        // Bounds only matter to gradients and patterns (their geometry is relative to the object).
+        let solid = |p: &drawcraft_color::Paint| matches!(p, drawcraft_color::Paint::Solid { .. } | drawcraft_color::Paint::None);
+        let needs_bounds = n.appearance.items.iter().any(|i| match i {
+            AppearanceItem::Fill(fl) => !solid(&fl.paint),
+            AppearanceItem::Stroke(st) => !solid(&st.paint),
+        });
+        let bounds = if needs_bounds { bp.bounding_box() } else { Rect::ZERO };
         for item in &n.appearance.items {
             match item {
                 AppearanceItem::Fill(fl) => {
@@ -588,7 +637,7 @@ impl Renderer {
             }
             stroke = stroke.with_dashes(d.offset, pat);
         }
-        ctx.set_stroke(stroke);
+        ctx.set_stroke(stroke.clone());
         let inside = st.align == StrokeAlign::Inside && closed;
         if inside {
             ctx.set_fill_rule(fill_rule(rule));
@@ -597,6 +646,9 @@ impl Renderer {
         if paint::set_paint(ctx, &st.paint, bounds.inflate(st.width / 2.0, st.width / 2.0), f.doc) {
             self.fold_alpha(ctx, &st.paint);
             if let Some(o) = width::outline_for(bp, st, f.px * 0.25) {
+                ctx.set_fill_rule(peniko::Fill::NonZero);
+                ctx.fill_path(&o);
+            } else if let Some(o) = self.cached_stroke(f, bp, st, &stroke) {
                 ctx.set_fill_rule(peniko::Fill::NonZero);
                 ctx.fill_path(&o);
             } else {
@@ -627,6 +679,25 @@ impl Renderer {
         if layered {
             ctx.pop_layer();
         }
+    }
+
+    /// The stroke of the fast-path node `self.cur` expanded to a fill outline in document space,
+    /// cached across frames. The tolerance (vello's 0.25 device px) is bucketed to powers of two,
+    /// never coarser than needed, so zooming reuses outlines until the level changes.
+    fn cached_stroke(&mut self, f: &Frame, bp: &BezPath, st: &StrokeLayer, stroke: &kurbo::Stroke) -> Option<Arc<BezPath>> {
+        let node = self.cur.clone()?;
+        let level = (f.px * 0.25).log2().floor() as i32;
+        let key = (st as *const StrokeLayer as usize, stroke.width.to_bits(), level);
+        if let Some(e) = self.strokes.get_mut(&key)
+            && Arc::ptr_eq(&e.node, &node)
+        {
+            e.stamp = self.stamp;
+            return Some(e.outline.clone());
+        }
+        let tolerance = 2f64.powi(level);
+        let outline = Arc::new(kurbo::stroke(bp.iter(), stroke, &kurbo::StrokeOpts::default(), tolerance));
+        self.strokes.insert(key, StrokeEntry { node, outline: outline.clone(), stamp: self.stamp });
+        Some(outline)
     }
 
     fn draw_text(&mut self, ctx: &mut RenderContext, f: &Frame, n: &Node, t: &TextObject) {
