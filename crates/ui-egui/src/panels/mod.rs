@@ -21,6 +21,7 @@ pub mod info;
 pub mod layers;
 pub mod magic_wand;
 pub mod navigator;
+pub mod opentype;
 pub mod paragraph;
 pub mod pathfinder;
 pub mod pattern_options;
@@ -79,6 +80,7 @@ pub fn show_icon_panel(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "symbols" => symbols::show(app, ui),
         "patternOptions" => pattern_options::show(app, ui),
         "imageTrace" => image_trace::show(app, ui),
+        "openType" => opentype::show(app, ui),
         "docInfo" => doc_info::show(app, ui),
         "charStyles" => text_styles::show(app, ui, text_styles::Kind::Char),
         "paraStyles" => text_styles::show(app, ui, text_styles::Kind::Para),
@@ -115,6 +117,7 @@ pub fn panel_menu_items(app: &mut DrawcraftApp, ui: &mut Ui, id: &str) {
         "symbols" => symbols::menu(app, ui),
         "patternOptions" => pattern_options::menu(app, ui),
         "imageTrace" => image_trace::menu(app, ui),
+        "openType" => opentype::menu(app, ui),
         "docInfo" => doc_info::menu(app, ui),
         "charStyles" => text_styles::menu(app, ui, text_styles::Kind::Char),
         "paraStyles" => text_styles::menu(app, ui, text_styles::Kind::Para),

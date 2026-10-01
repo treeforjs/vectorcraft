@@ -52,6 +52,10 @@ pub struct CharStyle {
     pub strikethrough: bool,
     #[serde(default)]
     pub all_caps: bool,
+    /// OpenType features that differ from the defaults (OpenType panel), as tags: `"dlig"` turns
+    /// a feature on, `"-liga"` off.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub features: Vec<String>,
     /// Character style (Character Styles panel) these attributes come from; None = Normal.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub style_name: Option<String>,
@@ -83,6 +87,7 @@ impl Default for CharStyle {
             underline: false,
             strikethrough: false,
             all_caps: false,
+            features: vec![],
             style_name: None,
         }
     }

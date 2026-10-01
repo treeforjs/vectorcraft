@@ -26,7 +26,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Character",
             [],
             None,
-            "{id, start?: byte, end?: byte (default: all text), font?, style?, size?: pt, leading?: pt|\"auto\", tracking?, kerning?: 1/1000 em|\"auto\", baselineShift?: pt, hScale?: %, vScale?: %, rotation?: deg, fill?: colour|\"none\", stroke?: colour|\"none\", strokeWidth?: pt, underline?, strikethrough?, allCaps?: bool} style a character range (runs are split at the range ends) → {id, runs}",
+            "{id, start?: byte, end?: byte (default: all text), font?, style?, size?: pt, leading?: pt|\"auto\", tracking?, kerning?: 1/1000 em|\"auto\", baselineShift?: pt, hScale?: %, vScale?: %, rotation?: deg, fill?: colour|\"none\", stroke?: colour|\"none\", strokeWidth?: pt, underline?, strikethrough?, allCaps?: bool, features?: [\"dlig\", \"-liga\", …]} style a character range (runs are split at the range ends) → {id, runs}",
             has_doc,
             set_range_style
         ),
@@ -137,6 +137,17 @@ pub(crate) struct CharChange {
     underline: Option<bool>,
     strikethrough: Option<bool>,
     all_caps: Option<bool>,
+    features: Option<Vec<String>>,
+}
+
+/// `features: ["dlig", "-liga", …]` → the canonical tag list (differences from the defaults).
+pub(crate) fn features_param(p: &Value, cmd: &str) -> Result<Option<Vec<String>>> {
+    let Some(v) = p.get("features").filter(|v| !v.is_null()) else { return Ok(None) };
+    let tags: Vec<&str> = v.as_array().ok_or_else(|| bad(cmd, "features must be a list of tags"))?.iter().filter_map(Value::as_str).collect();
+    if let Some(t) = tags.iter().find(|t| !drawcraft_text::OtFeatures::known_tag(t)) {
+        return Err(bad(cmd, format!("unknown OpenType feature `{t}` (liga, calt, dlig, smcp, frac, onum, tnum, ordn, swsh; prefix - to turn off)")));
+    }
+    Ok(Some(drawcraft_text::OtFeatures::default().with_tags(tags).to_tags()))
 }
 
 fn paint_param(p: &Value, k: &str, cmd: &str) -> Result<Option<Paint>> {
@@ -176,6 +187,7 @@ impl CharChange {
             underline: flag("underline"),
             strikethrough: flag("strikethrough"),
             all_caps: flag("allCaps"),
+            features: features_param(p, cmd)?,
         };
         if c.size.is_some_and(|v| v <= 0.0) {
             return Err(bad(cmd, "size must be positive"));
@@ -200,6 +212,7 @@ impl CharChange {
             && self.underline.is_none()
             && self.strikethrough.is_none()
             && self.all_caps.is_none()
+            && self.features.is_none()
     }
 
     pub(crate) fn apply(&self, st: &mut CharStyle) {
@@ -257,6 +270,9 @@ impl CharChange {
         }
         if let Some(v) = self.all_caps {
             st.all_caps = v;
+        }
+        if let Some(v) = &self.features {
+            st.features = v.clone();
         }
     }
 }

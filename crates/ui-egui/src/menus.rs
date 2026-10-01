@@ -1039,7 +1039,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         panel("Character", "character"),
                         panel("Character Styles", "charStyles"),
                         panel("Glyphs", "glyphs"),
-                        todo("OpenType"),
+                        panel("OpenType", "openType"),
                         panel("Paragraph", "paragraph"),
                         panel("Paragraph Styles", "paraStyles"),
                         todo("Tabs"),

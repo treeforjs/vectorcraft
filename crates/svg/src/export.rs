@@ -191,7 +191,8 @@ impl Writer<'_> {
         match self.opts.styling {
             Styling::PresentationAttributes => {
                 // CSS-only properties go in a style attribute.
-                let (style, attrs): (Vec<_>, Vec<_>) = props.iter().partition(|(k, _)| matches!(*k, "mix-blend-mode" | "isolation"));
+                let (style, attrs): (Vec<_>, Vec<_>) =
+                    props.iter().partition(|(k, _)| matches!(*k, "mix-blend-mode" | "isolation" | "font-feature-settings"));
                 let mut s: String = attrs.iter().map(|(k, v)| format!(" {k}=\"{}\"", xml_escape(v))).collect();
                 if !style.is_empty() {
                     s.push_str(&format!(" style=\"{}\"", xml_escape(&css(&style))));
@@ -714,6 +715,17 @@ impl Writer<'_> {
         }
         if st.tracking != 0.0 {
             p.push(("letter-spacing", self.num(st.tracking / 1000.0 * st.size)));
+        }
+        if !st.features.is_empty() {
+            let v: Vec<String> = st
+                .features
+                .iter()
+                .map(|t| match t.strip_prefix('-') {
+                    Some(off) => format!("\"{off}\" 0"),
+                    None => format!("\"{t}\" 1"),
+                })
+                .collect();
+            p.push(("font-feature-settings", v.join(", ")));
         }
         match (st.underline, st.strikethrough) {
             (true, true) => p.push(("text-decoration", "underline line-through".into())),

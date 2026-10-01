@@ -54,7 +54,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Character",
             [],
             None,
-            "{ids?|id?, font?, style?, size?: pt, leading?: pt|\"auto\", tracking?: 1/1000 em, justify?: \"left\"|\"center\"|\"right\"|\"justifyAll\", fill?: colour}",
+            "{ids?|id?, font?, style?, size?: pt, leading?: pt|\"auto\", tracking?: 1/1000 em, justify?: \"left\"|\"center\"|\"right\"|\"justifyAll\", fill?: colour, features?: [\"dlig\", \"-liga\", …] OpenType}",
             has_doc,
             set_style
         ),
@@ -188,7 +188,16 @@ fn set_style(s: &mut Session, p: &Value) -> Result<Value> {
         Some(Value::String(n)) if n.eq_ignore_ascii_case("none") => Some(drawcraft_color::Paint::None),
         Some(v) => Some(drawcraft_color::Paint::solid(color_value(v).ok_or_else(|| bad(C, "bad fill colour"))?)),
     };
-    if font.is_none() && style.is_none() && size.is_none() && leading.is_none() && tracking.is_none() && justify.is_none() && fill.is_none() {
+    let features = super::textedit::features_param(p, C)?;
+    if font.is_none()
+        && style.is_none()
+        && size.is_none()
+        && leading.is_none()
+        && tracking.is_none()
+        && justify.is_none()
+        && fill.is_none()
+        && features.is_none()
+    {
         return Err(bad(C, "nothing to change"));
     }
     let ids = text_targets(s, p, C)?;
@@ -214,6 +223,9 @@ fn set_style(s: &mut Session, p: &Value) -> Result<Value> {
                 }
                 if let Some(f) = &fill {
                     st.fill = f.clone();
+                }
+                if let Some(f) = &features {
+                    st.features = f.clone();
                 }
             }
             if let Some(j) = justify {

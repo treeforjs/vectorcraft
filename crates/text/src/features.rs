@@ -50,7 +50,40 @@ fn f(tag: &[u8; 4], on: bool) -> Feature {
 impl OtFeatures {
     /// Parse a feature list like `["dlig", "smcp", "-liga"]` (unknown tags are ignored).
     pub fn from_tags<'a>(tags: impl IntoIterator<Item = &'a str>) -> Self {
-        let mut o = Self::default();
+        Self::default().with_tags(tags)
+    }
+
+    /// The tags this set differs from the defaults by (what `CharStyle::features` stores).
+    pub fn to_tags(&self) -> Vec<String> {
+        let d = Self::default();
+        let mut v = vec![];
+        for (on, def, tag) in [
+            (self.ligatures, d.ligatures, "liga"),
+            (self.contextual, d.contextual, "calt"),
+            (self.discretionary_ligatures, d.discretionary_ligatures, "dlig"),
+            (self.small_caps, d.small_caps, "smcp"),
+            (self.fractions, d.fractions, "frac"),
+            (self.oldstyle_figures, d.oldstyle_figures, "onum"),
+            (self.tabular_figures, d.tabular_figures, "tnum"),
+            (self.ordinals, d.ordinals, "ordn"),
+            (self.swash, d.swash, "swsh"),
+        ] {
+            if on != def {
+                v.push(if on { tag.to_string() } else { format!("-{tag}") });
+            }
+        }
+        v
+    }
+
+    /// Is `tag` (optionally prefixed with `-` or `+`) one this set understands?
+    pub fn known_tag(tag: &str) -> bool {
+        let t = tag.trim_start_matches(['-', '+']);
+        matches!(t, "liga" | "calt" | "dlig" | "smcp" | "frac" | "onum" | "tnum" | "ordn" | "swsh")
+    }
+
+    /// This set with `tags` applied on top.
+    pub fn with_tags<'a>(mut self, tags: impl IntoIterator<Item = &'a str>) -> Self {
+        let o = &mut self;
         for t in tags {
             let (on, t) = match t.strip_prefix('-') {
                 Some(r) => (false, r),
@@ -69,39 +102,65 @@ impl OtFeatures {
                 _ => {}
             }
         }
-        o
+        self
     }
 
     /// The harfrust features for text in style `st`.
     pub(crate) fn resolve(&self, st: &CharStyle) -> Vec<Feature> {
+        // The character's own OpenType settings override the layout-wide ones.
+        let own = self.with_tags(st.features.iter().map(String::as_str));
+        let s = &own;
         let mut v = Vec::with_capacity(8);
         if st.kerning.is_some() {
             v.push(f(b"kern", false));
         }
-        let liga = self.ligatures && st.tracking.abs() < 1e-9;
+        let liga = s.ligatures && st.tracking.abs() < 1e-9;
         if !liga {
             v.push(f(b"liga", false));
             v.push(f(b"clig", false));
         }
-        if !self.contextual {
+        if !s.contextual {
             v.push(f(b"calt", false));
         }
         if st.all_caps {
             v.push(f(b"case", true));
         }
         for (on, tag) in [
-            (self.discretionary_ligatures, b"dlig"),
-            (self.small_caps, b"smcp"),
-            (self.fractions, b"frac"),
-            (self.oldstyle_figures, b"onum"),
-            (self.tabular_figures, b"tnum"),
-            (self.ordinals, b"ordn"),
-            (self.swash, b"swsh"),
+            (s.discretionary_ligatures, b"dlig"),
+            (s.small_caps, b"smcp"),
+            (s.fractions, b"frac"),
+            (s.oldstyle_figures, b"onum"),
+            (s.tabular_figures, b"tnum"),
+            (s.ordinals, b"ordn"),
+            (s.swash, b"swsh"),
         ] {
             if on {
                 v.push(f(tag, true));
             }
         }
         v
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{FontDb, layout};
+    use drawcraft_doc::TextObject;
+    use drawcraft_geom::Point;
+
+    fn glyphs(features: &[&str]) -> usize {
+        let st = CharStyle { font_family: "Source Serif 4".into(), features: features.iter().map(|s| s.to_string()).collect(), ..Default::default() };
+        layout(FontDb::global(), &TextObject::point(Point::ZERO, "fi", st)).glyphs.len()
+    }
+
+    #[test]
+    fn per_character_features_drive_shaping() {
+        let with = glyphs(&[]);
+        let without = glyphs(&["-liga"]);
+        assert!(with < without, "the default ligature merges f+i ({with} vs {without})");
+        assert_eq!(OtFeatures::from_tags(["-liga", "dlig"]).to_tags(), ["-liga", "dlig"]);
+        assert!(OtFeatures::default().to_tags().is_empty());
+        assert!(OtFeatures::known_tag("-onum") && !OtFeatures::known_tag("zzzz"));
     }
 }
