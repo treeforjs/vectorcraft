@@ -818,8 +818,15 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         cp("Type on a Path Options…", "type.pathOptions", json!({"start": 0})),
                     ],
                 ),
-                sub("Threaded Text", vec![todo("Create"), todo("Release Selection"), todo("Remove Threading")]),
-                todo("Fit Headline"),
+                sub(
+                    "Threaded Text",
+                    vec![
+                        c("Create", "text.thread.create"),
+                        c("Release Selection", "text.thread.releaseSelection"),
+                        c("Remove Threading", "text.thread.remove"),
+                    ],
+                ),
+                c("Fit Headline", "text.fitHeadline"),
                 Sep,
                 todo("Find Font…"),
                 sub(

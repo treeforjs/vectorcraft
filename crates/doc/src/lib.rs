@@ -274,6 +274,9 @@ pub struct Document {
     /// Paragraph styles (besides the built-in [Normal Paragraph Style]).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub para_styles: Vec<TextStyleDef>,
+    /// Threaded text: area-type frames one story flows through, in order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub text_threads: Vec<Vec<NodeId>>,
     #[serde(default)]
     pub symbols: Vec<Symbol>,
     #[serde(default)]
@@ -324,6 +327,7 @@ impl Document {
             graphic_styles: default_graphic_styles(),
             char_styles: vec![],
             para_styles: vec![],
+            text_threads: vec![],
             symbols: vec![],
             guides: vec![],
             grid: GridPrefs::default(),

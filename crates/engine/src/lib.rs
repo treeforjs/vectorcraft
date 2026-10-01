@@ -547,13 +547,20 @@ impl Session {
         let before = st.doc.clone();
         let before_sel = st.selection.clone();
         let doc = Arc::make_mut(&mut st.doc);
-        let result = f(doc, &mut st.selection).and_then(|v| {
-            if doc_sane(&st.doc, &st.selection) {
-                Ok(v)
-            } else {
-                Err(EngineError::Other("result would exceed the canvas (coordinates out of range)".into()))
+        let result = match f(doc, &mut st.selection) {
+            Ok(v) => {
+                // Threaded text re-flows when any of its frames changed.
+                if !st.doc.text_threads.is_empty() {
+                    cmd::threads::reflow(&before, Arc::make_mut(&mut st.doc));
+                }
+                if doc_sane(&st.doc, &st.selection) {
+                    Ok(v)
+                } else {
+                    Err(EngineError::Other("result would exceed the canvas (coordinates out of range)".into()))
+                }
             }
-        });
+            Err(e) => Err(e),
+        };
         match result {
             Ok(v) => {
                 st.selection.prune(&st.doc);

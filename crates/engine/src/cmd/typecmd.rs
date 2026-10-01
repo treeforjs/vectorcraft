@@ -41,6 +41,15 @@ pub fn specs() -> Vec<CommandSpec> {
             area_options
         ),
         cmd!(
+            "text.fitHeadline",
+            "Fit Headline",
+            ["Type"],
+            None,
+            "{ids?} track the first line of area type so it fills the frame width → {tracking}",
+            has_selection,
+            fit_headline
+        ),
+        cmd!(
             "text.setStyle",
             "Character",
             [],
@@ -293,5 +302,77 @@ mod area_tests {
         s.execute("edit.undo", &json!({})).unwrap();
         assert_eq!(lay(&s).frames.len(), 1);
         assert!(s.execute("text.areaOptions", &json!({"firstBaseline": "nope"})).is_err());
+    }
+}
+
+/// Width of the first line and of the space it can fill, with `tracking` on the first paragraph.
+fn headline_fit(t: &TextObject, tracking: f64) -> Option<(f64, f64, usize)> {
+    let mut probe = t.clone();
+    let para_end = probe.plain_text().find('\n').unwrap_or(usize::MAX);
+    drawcraft_text::edit::style_range(&mut probe.runs, 0, para_end.min(drawcraft_text::edit::runs_len(&t.runs)), |st| st.tracking = tracking);
+    let lay = drawcraft_text::layout(drawcraft_text::FontDb::global(), &probe);
+    let cell = lay.frames.first()?;
+    let line = lay.lines.first()?;
+    let avail = cell.width() - 2.0 * t.area.inset - t.para.left_indent - t.para.right_indent;
+    Some((line.x1 - line.x0, avail, lay.lines.iter().filter(|l| l.start < para_end).count()))
+}
+
+fn fit_headline(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "text.fitHeadline";
+    let ids = text_targets(s, p, C)?;
+    let d = &s.doc()?.doc;
+    let mut plans = vec![];
+    for id in &ids {
+        let Some(NodeKind::Text(t)) = d.node(*id).map(|n| &n.kind) else { continue };
+        if !matches!(t.kind, drawcraft_doc::TextKind::Area { .. }) {
+            continue;
+        }
+        // Largest tracking that keeps the first paragraph on one line (bisection).
+        let one_line = |tr: f64| headline_fit(t, tr).is_some_and(|(_, _, lines)| lines == 1);
+        let (mut lo, mut hi) = (-200.0, 2000.0);
+        if !one_line(lo) {
+            continue;
+        }
+        for _ in 0..24 {
+            let mid = (lo + hi) / 2.0;
+            if one_line(mid) { lo = mid } else { hi = mid }
+        }
+        plans.push((*id, (lo * 10.0).floor() / 10.0));
+    }
+    let first = plans.first().map(|p| p.1).ok_or_else(|| bad(C, "select area type whose first line can fit its frame"))?;
+    s.edit("Fit Headline", |d, _| {
+        for (id, tr) in &plans {
+            if let Some(NodeKind::Text(t)) = d.node_mut(*id).map(|n| &mut n.kind) {
+                let end = t.plain_text().find('\n').unwrap_or(usize::MAX).min(drawcraft_text::edit::runs_len(&t.runs));
+                drawcraft_text::edit::style_range(&mut t.runs, 0, end, |st| st.tracking = *tr);
+                refresh_bounds(t);
+            }
+        }
+        Ok(())
+    })?;
+    Ok(json!({ "tracking": first }))
+}
+
+#[cfg(test)]
+mod headline_tests {
+    use super::*;
+
+    #[test]
+    fn fit_headline_fills_the_first_line() {
+        let mut s = Session::new();
+        s.execute("file.new", &json!({"width": 400, "height": 400})).unwrap();
+        let id = s
+            .execute("text.create", &json!({"x": 10, "y": 10, "text": "HEADLINE\nbody text", "size": 24, "area": {"width": 300, "height": 120}}))
+            .unwrap()["id"]
+            .as_u64()
+            .unwrap();
+        s.execute("select.set", &json!({"ids": [id]})).unwrap();
+        let tr = s.execute("text.fitHeadline", &json!({})).unwrap()["tracking"].as_f64().unwrap();
+        assert!(tr > 100.0, "a short word spreads out: {tr}");
+        let NodeKind::Text(t) = &s.doc().unwrap().doc.node(NodeId(id)).unwrap().kind else { panic!() };
+        let (w, avail, lines) = headline_fit(t, tr).unwrap();
+        assert_eq!(lines, 1);
+        assert!(avail - w < 30.0, "{w} of {avail}");
+        assert_eq!(t.runs.last().unwrap().style.tracking, 0.0, "the body keeps its tracking");
     }
 }

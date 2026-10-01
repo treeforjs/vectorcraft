@@ -16,6 +16,7 @@ mod fontdb;
 pub mod hyphen;
 mod layout;
 mod shape;
+pub mod thread;
 
 pub use drawcraft_doc::TextObject;
 pub use features::OtFeatures;

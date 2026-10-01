@@ -13,7 +13,7 @@ _Last updated: 2026-10-01._
 | Infrastructure (engine, command registry, history, render, formats, MCP, web, packaging, tests) | **~90%** |
 | Look & feel vs Illustrator 2026 default workspace (measured) | **~75–80%** |
 | Feature surface vs full Illustrator | **~45–50%** |
-| Estimated time to **checklist parity** (every menu item, tool, panel and dialog functional) | **~210–340 h** (sum of the milestone rows below) |
+| Estimated time to **checklist parity** (every menu item, tool, panel and dialog functional) | **~200–330 h** (sum of the milestone rows below) |
 | Estimated time to **1:1 feel** (edge cases, modifier nuances, typographic/colour fidelity) | **~500+ h** |
 
 ### Shipped so far
@@ -40,6 +40,7 @@ _Last updated: 2026-10-01._
 - **Geometry and effects:**
   - Pathfinder (10 exact curve booleans), Offset, Outline Stroke, Simplify, Clean Up, Split Into Grid, Divide Objects Below.
   - Live effects with previewing dialogs: Distort & Transform, Path, Convert to Shape, 15 Warp styles, Round Corners, Scribble, and raster drop shadow, glows and feather.
+- **Type:** Character and Paragraph Styles (override-preserving redefine), Area Type Options (rows/columns/inset/first baseline), threaded text across any closed shapes, Fit Headline.
 - **Transparency:** opacity masks (clip/invert/disable/link), exported as SVG `<mask>` and PDF soft masks.
 - **Advanced art:** live Blends (steps/distance/smooth colour, spine), Envelope Distort (warp/mesh/top object), Gradient Mesh, Shape Builder, Live Paint, Image Trace (12 presets), pattern swatches with pattern editing mode, live Repeat (radial/grid/mirror).
 - **Colour, type and file workflows:** Recolor Artwork (dialog with harmonies), Edit Colors, Find & Replace, Change Case, Smart Punctuation, Guides, Lock/Hide Above, Transform Each, Rasterize.
@@ -60,7 +61,7 @@ _Last updated: 2026-10-01._
 | M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 Export for Screens (PNG/JPG/WebP/SVG/PDF × scales) done; headless CLI/MCP export every format; system clipboard: copy puts SVG markup on it, paste takes SVG from other apps (Ctrl/Cmd+C/X/V now also work off macOS); PNG/PDF clipboard flavours, EPS/DXF pending | 8–12 |
 | M5 | Performance | 🟡 background render + caches + MT done; `drawcraft-cli bench` and `drawcraft-cli perf` (budget suite); file format v2 opens 3× faster (50k paths: 722 → 244 ms); raster effects (glows, shadows, blur, feather) no longer force the whole frame single-threaded (filtered offscreen per effect, verified equal to the single-threaded reference); effect-heavy demos need a clean-machine benchmark; dirty-region rendering, GPU backend spike pending | 10–20 |
 | M6 | Path operations (Pathfinder, Shape Builder, offset…) | ✅ mostly done (Shape Builder edge erase, large-offset bug open) | 3–6 |
-| M7 | Type (point/area/path, editing, styles, OpenType, threading, glyphs) | 🟡 in progress | 20–30 |
+| M7 | Type (point/area/path, editing, styles, OpenType, threading, glyphs) | 🟡 Character/Paragraph Styles, Area Type Options, threaded text, Fit Headline, Glyphs done; OpenType/Tabs panels, text wrap, Find Font, spell check pending | 12–20 |
 | M8 | Transform & distort (Puppet Warp, Liquify tools, Envelopes, Blends, Perspective Grid) | 🟡 live Blends, Envelopes (warp/mesh/top object), Width tool, Liquify tools, Puppet Warp and Perspective Grid landed; fidelity pass pending | 8–12 |
 | M9 | Live effects (+ 3D & Materials) | 🟡 2D effects done; 3D pending | 25–40 |
 | M10 | Brushes, symbols, patterns, Repeat | 🟡 pattern swatches (5 tile types, Pattern Options, editing mode, SVG `<pattern>`/PDF export) and live Repeat (radial/grid/mirror) done; brushes/symbols in progress | 8–15 |
@@ -70,7 +71,7 @@ _Last updated: 2026-10-01._
 | M14 | 1.0 polish (preferences, shortcut editor, workspaces, accessibility, packaging for all OSes) | 🟡 Preferences, shortcut editor, workspaces done; accessibility, Windows/Linux packaging pending | 12–20 |
 | — | Interaction fidelity pass (every tool's modifiers, Properties panel per context, isolation, nuance) | ⬜ | 40–60 |
 | — | Hardening at scale (big-file corpus, fuzzing, cross-platform + browser QA) | 🟡 | 30–50 |
-| | **Total to checklist parity** (sum of the rows above) | | **~210–340** |
+| | **Total to checklist parity** (sum of the rows above) | | **~200–330** |
 
 ## Out of scope (by design or by law)
 - **Native `.ai` private data:** it's undocumented. We read the PDF-compatible part, so Illustrator-only live objects arrive as appearance.
