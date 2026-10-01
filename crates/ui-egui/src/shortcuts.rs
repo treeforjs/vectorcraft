@@ -115,6 +115,27 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
         }
         return;
     }
+    // Clipboard keys arrive as events, not key presses (except where the native menu has them).
+    let mut clip = vec![];
+    ctx.input_mut(|i| {
+        i.events.retain(|e| {
+            let (id, text) = match e {
+                egui::Event::Copy => ("edit.copy", None),
+                egui::Event::Cut => ("edit.cut", None),
+                egui::Event::Paste(t) => ("edit.paste", Some(t.clone())),
+                _ => return true,
+            };
+            if app.native_shortcuts.contains(id) {
+                return true;
+            }
+            clip.push((id, text));
+            false
+        })
+    });
+    for (id, text) in clip {
+        app.clipboard_in = text;
+        crate::menus::invoke(app, id, json!({}));
+    }
     if busy {
         for (k, tk) in [(Key::ArrowUp, ToolKey::Up), (Key::ArrowDown, ToolKey::Down)] {
             if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, k)) {
@@ -185,6 +206,42 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// One headless frame delivering `events` to the shortcut handler.
+    fn frame(app: &mut DrawcraftApp, events: Vec<egui::Event>) -> egui::FullOutput {
+        let ctx = egui::Context::default();
+        let mut out = ctx.run_ui(egui::RawInput { events, ..Default::default() }, |ui| {
+            handle(app, ui.ctx());
+            app.logic(ui.ctx());
+        });
+        out.textures_delta.clear();
+        out
+    }
+
+    #[test]
+    fn copy_and_paste_events_use_the_system_clipboard() {
+        let mut app = DrawcraftApp::new(drawcraft_engine::Session::new(), Default::default());
+        app.session.execute("file.new", &json!({"width": 200, "height": 200})).unwrap();
+        let id = app.session.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap()["id"].clone();
+        app.session.execute("select.set", &json!({"ids": [id]})).unwrap();
+        // Copy publishes SVG to the system clipboard (egui's CopyText output command).
+        let out = frame(&mut app, vec![egui::Event::Copy]);
+        let copied = out.platform_output.commands.iter().find_map(|c| match c {
+            egui::OutputCommand::CopyText(t) => Some(t.clone()),
+            _ => None,
+        });
+        let svg = copied.expect("copy publishes SVG");
+        assert!(svg.contains("<svg"));
+        // Pasting our own SVG back uses the internal clipboard; foreign SVG replaces it.
+        frame(&mut app, vec![egui::Event::Paste(svg)]);
+        assert_eq!(app.session.doc().unwrap().doc.layers[0].children().unwrap().len(), 2);
+        let foreign = r##"<svg xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="5"/><circle cx="20" cy="5" r="5"/><circle cx="35" cy="5" r="5"/></svg>"##;
+        frame(&mut app, vec![egui::Event::Paste(foreign.into())]);
+        assert_eq!(app.session.doc().unwrap().doc.layers[0].children().unwrap().len(), 5);
+        // Plain text is not art: nothing is pasted from it (the internal clipboard is reused).
+        frame(&mut app, vec![egui::Event::Paste("hello".into())]);
+        assert_eq!(app.session.doc().unwrap().doc.layers[0].children().unwrap().len(), 8);
+    }
 
     #[test]
     fn parses() {

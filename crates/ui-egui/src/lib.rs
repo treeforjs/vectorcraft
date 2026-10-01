@@ -58,6 +58,9 @@ pub struct Services {
     pub download: Option<DownloadFn>,
     /// Web: start an async open (bytes arrive via `inbox`).
     pub open_async: Option<Box<dyn FnMut()>>,
+    /// Read the system clipboard's text (desktop). Without it, pasted text only arrives with
+    /// egui's Paste event (web, and keyboard paste everywhere).
+    pub clipboard_read: Option<Box<dyn FnMut() -> Option<String>>>,
 }
 
 /// Cached canvas raster.
@@ -122,6 +125,11 @@ pub struct DrawcraftApp {
     pub canvas_rect: Option<egui::Rect>,
     /// Hover position in document coordinates.
     pub hover_doc: Option<drawcraft_geom::Point>,
+    /// System clipboard: SVG to publish next frame, the last SVG we published (so pasting it back
+    /// uses the lossless internal clipboard) and text that arrived with a Paste event.
+    clipboard_out: Option<String>,
+    clipboard_published: Option<String>,
+    pub(crate) clipboard_in: Option<String>,
 }
 
 impl DrawcraftApp {
@@ -145,6 +153,9 @@ impl DrawcraftApp {
             native_menu: false,
             last_effect: None,
             native_shortcuts: Default::default(),
+            clipboard_out: None,
+            clipboard_published: None,
+            clipboard_in: None,
             control_rx: None,
             pending_screenshots: vec![],
             queued_screenshots: vec![],
@@ -197,7 +208,14 @@ impl DrawcraftApp {
         if let Some(r) = menus::run_ui_command(self, id, &params) {
             return r;
         }
+        if id.starts_with("edit.paste") {
+            self.adopt_system_clipboard();
+        }
         let r = self.session.execute(id, &params).map_err(|e| e.to_string());
+        if r.is_ok() && matches!(id, "edit.copy" | "edit.cut") && self.session.prefs.copy_as_svg {
+            self.clipboard_out = self.session.clipboard_svg();
+            self.clipboard_published = self.clipboard_out.clone();
+        }
         self.sync_views();
         match &r {
             Err(e) => self.ui.status = e.clone(),
@@ -208,6 +226,21 @@ impl DrawcraftApp {
             }
         }
         r
+    }
+
+    /// Before a paste: SVG that another app put on the system clipboard replaces the internal
+    /// clipboard (centred in the view). Our own published SVG keeps the lossless internal copy.
+    fn adopt_system_clipboard(&mut self) {
+        let text = self.clipboard_in.take().or_else(|| self.services.clipboard_read.as_mut().and_then(|f| f()));
+        let Some(text) = text.filter(|t| drawcraft_engine::cmd::clipboard::looks_like_svg(t)) else { return };
+        if self.clipboard_published.as_deref() == Some(text.as_str()) {
+            return;
+        }
+        let center = self.view().map(|v| [v.center.x, v.center.y]);
+        match self.session.execute("clipboard.importSvg", &serde_json::json!({ "svg": text, "center": center })) {
+            Ok(_) => self.clipboard_published = Some(text),
+            Err(e) => self.ui.status = format!("Couldn't paste SVG: {e}"),
+        }
     }
 
     /// Select a tool (also used by the toolbar and shortcuts).
@@ -354,6 +387,9 @@ impl DrawcraftApp {
         }
         self.collect_screenshots(ctx);
         self.issue_screenshots(ctx);
+        if let Some(t) = self.clipboard_out.take() {
+            ctx.copy_text(t);
+        }
         self.drain_inbox();
         if self.fonts_ready {
             shortcuts::handle(self, ctx);

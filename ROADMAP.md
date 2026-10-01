@@ -57,7 +57,7 @@ _Last updated: 2026-10-01._
 | M1 | Selection, transform, layers, MCP | ✅ mostly done (rotated persistent bbox pending) | 3–5 |
 | M2 | Drawing tools + smart guides | ✅ mostly done (Shaper, Pen modifier nuances) | 5–10 |
 | M3 | Paint & appearance (swatches, color, gradient, stroke, appearance, transparency, styles) | 🟡 panels done; opacity masks done (make/release, clip, invert, disable, link; render + SVG `<mask>` in/out + PDF soft mask); mask-editing mode, freeform gradients pending | 6–10 |
-| M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 Export for Screens (PNG/JPG/WebP/SVG/PDF × scales) done; headless CLI/MCP export every format; system clipboard SVG/PNG interop, EPS/DXF pending | 8–12 |
+| M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 Export for Screens (PNG/JPG/WebP/SVG/PDF × scales) done; headless CLI/MCP export every format; system clipboard: copy puts SVG markup on it, paste takes SVG from other apps (Ctrl/Cmd+C/X/V now also work off macOS); PNG/PDF clipboard flavours, EPS/DXF pending | 8–12 |
 | M5 | Performance | 🟡 background render + caches + MT done; `drawcraft-cli bench`; raster effects (glows, shadows, blur, feather) no longer force the whole frame single-threaded (filtered offscreen per effect, verified equal to the single-threaded reference); effect-heavy demos need a clean-machine benchmark; dirty-region rendering, GPU backend spike pending | 10–20 |
 | M6 | Path operations (Pathfinder, Shape Builder, offset…) | ✅ mostly done (Shape Builder edge erase, large-offset bug open) | 3–6 |
 | M7 | Type (point/area/path, editing, styles, OpenType, threading, glyphs) | 🟡 in progress | 20–30 |

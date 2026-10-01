@@ -206,7 +206,9 @@ pub fn place_bytes(app: &mut DrawcraftApp, name: &str, bytes: &[u8]) -> Result<(
         let src = drawcraft_svg::import(s).map_err(|e| e.to_string())?;
         let nodes: Vec<Node> = src.layers.iter().flat_map(|l| l.children().cloned().unwrap_or_default()).map(|n| (*n).clone()).collect();
         app.session.clipboard = nodes;
-        app.run("edit.pasteInPlace", serde_json::json!({}))?;
+        // Straight to the engine: `app.run` would let the system clipboard replace these nodes.
+        app.session.execute("edit.pasteInPlace", &serde_json::json!({})).map_err(|e| e.to_string())?;
+        app.sync_views();
         return Ok(());
     }
     let (w, h) = image_size(bytes)?;

@@ -2,6 +2,7 @@
 
 mod brushsym;
 mod buildcmds;
+pub mod clipboard;
 mod colorcmds;
 pub mod colormgmt;
 mod create;
@@ -126,6 +127,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
     SPECS.get_or_init(|| {
         let mut v = Vec::new();
         v.extend(edit::specs());
+        v.extend(clipboard::specs());
         v.extend(recolor::specs());
         v.extend(file::specs());
         v.extend(create::specs());
