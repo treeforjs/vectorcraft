@@ -532,11 +532,10 @@ pub fn show(app: &mut DrawcraftApp, ctx: &egui::Context) {
                 egui::ScrollArea::vertical().max_height(360.0).auto_shrink([false, false]).show(ui, |ui| {
                     for e in entries().iter().filter(|e| e.is_tool == tools) {
                         let sc = effective_in(&ov, &e.key);
-                        if !q.is_empty()
-                            && !(e.label.to_lowercase().contains(&q)
-                                || e.group.to_lowercase().contains(&q)
-                                || sc.as_deref().is_some_and(|s| s.to_lowercase().contains(&q)))
-                        {
+                        let matches = e.label.to_lowercase().contains(&q)
+                            || e.group.to_lowercase().contains(&q)
+                            || sc.as_deref().is_some_and(|s| s.to_lowercase().contains(&q));
+                        if !q.is_empty() && !matches {
                             continue;
                         }
                         let row = ui.horizontal(|ui| {

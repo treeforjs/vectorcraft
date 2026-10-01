@@ -61,7 +61,7 @@ pub(crate) fn raster_scale(s: f64, period: (f64, f64)) -> f64 {
 /// Rasterize `region` (pattern space) of the infinite tiling into a `w`×`h` pixmap.
 fn rasterize(r: &mut Renderer, doc: &Document, def: &PatternDef, region: Rect, w: u16, h: u16) -> Pixmap {
     let (w, h) = (w.max(1), h.max(1));
-    let mut ctx = RenderContext::new(w, h);
+    let mut ctx = crate::single_threaded_context(w, h);
     let view = Affine::scale_non_uniform(w as f64 / region.width().max(1e-9), h as f64 / region.height().max(1e-9))
         * Affine::translate(-region.origin().to_vec2());
     let opts = RenderOptions::default();

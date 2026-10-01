@@ -215,6 +215,9 @@ pub fn handle(app: &mut DrawcraftApp, ctx: &egui::Context, req: &ControlRequest)
             if let Some(pn) = s("panel") {
                 r = app.run("window.panel", json!({"panel": pn}));
             }
+            if let Some(st) = s("status") {
+                app.ui.status = st.to_string();
+            }
             for (k, flag) in [
                 ("rulers", "view.rulers"),
                 ("outline", "view.outline"),

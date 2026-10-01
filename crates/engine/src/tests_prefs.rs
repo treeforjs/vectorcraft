@@ -115,9 +115,7 @@ fn list_describes_every_pref() {
 
 #[test]
 fn prefs_serde_round_trip_and_tolerates_missing_fields() {
-    let mut p = Prefs::default();
-    p.ui_scaling = 1.25;
-    p.units_general = "millimeters".into();
+    let p = Prefs { ui_scaling: 1.25, units_general: "millimeters".into(), ..Default::default() };
     let back: Prefs = serde_json::from_value(p.to_json()).unwrap();
     assert_eq!(back, p);
     let partial: Prefs = serde_json::from_value(json!({"keyboardIncrement": 4})).unwrap();

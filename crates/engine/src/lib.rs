@@ -660,9 +660,9 @@ mod tests;
 #[cfg(test)]
 mod tests_brushsym;
 #[cfg(test)]
-mod tests_colormgmt;
-#[cfg(test)]
 mod tests_build;
+#[cfg(test)]
+mod tests_colormgmt;
 #[cfg(test)]
 mod tests_distort;
 #[cfg(test)]
@@ -676,11 +676,11 @@ mod tests_menucmds;
 #[cfg(test)]
 mod tests_panelcmds;
 #[cfg(test)]
-mod tests_prefs;
-#[cfg(test)]
 mod tests_pathops;
 #[cfg(test)]
 mod tests_pattern;
+#[cfg(test)]
+mod tests_prefs;
 #[cfg(test)]
 mod tests_textedit;
 #[cfg(test)]

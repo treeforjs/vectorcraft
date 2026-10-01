@@ -184,11 +184,8 @@ fn puppet_warp_satisfies_pins_and_keeps_area() {
     let mut s = session();
     let a = rect(&mut s, 100.0, 100.0, 300.0, 100.0);
     let n = undo_len(&s);
-    s.execute(
-        "object.puppetWarp",
-        &json!({"id": a.0, "pins": [[120, 150], [250, 150], [380, 150]], "moved": [[120, 150], [250, 150], [370, 90]]}),
-    )
-    .unwrap();
+    s.execute("object.puppetWarp", &json!({"id": a.0, "pins": [[120, 150], [250, 150], [380, 150]], "moved": [[120, 150], [250, 150], [370, 90]]}))
+        .unwrap();
     let p = path(&s, a);
     let area0 = 300.0 * 100.0;
     let area1 = p.to_bezpath().area().abs();

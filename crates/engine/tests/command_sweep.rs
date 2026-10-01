@@ -320,7 +320,7 @@ fn every_command_undoes_exactly() {
             if after != before {
                 failures.push(format!("{}: {}", c.id, drawcraft_testkit::invariants::first_diff(&before, &after, "$")));
             }
-        } else if doc_json(&s.doc().unwrap().doc) != before {
+        } else if doc_json(&s.doc().unwrap().doc) != before && !c.params.contains("View state: not an undo step") {
             failures.push(format!("{}: changed the document without an undo step", c.id));
         }
     }

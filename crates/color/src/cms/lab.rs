@@ -63,9 +63,11 @@ pub fn linear_to_srgb(v: f32) -> f32 {
     if v <= 0.003_130_8 { v * 12.92 } else { 1.055 * v.max(0.0).powf(1.0 / 2.4) - 0.055 }
 }
 
+#[allow(clippy::excessive_precision)]
 // ICC sRGB colorants, Bradford-adapted to D50.
 const SRGB_TO_XYZ: [[f32; 3]; 3] =
     [[0.436_074_7, 0.385_064_9, 0.143_080_4], [0.222_504_5, 0.716_878_6, 0.060_616_9], [0.013_932_2, 0.097_104_5, 0.714_173_3]];
+#[allow(clippy::excessive_precision)]
 const XYZ_TO_SRGB: [[f32; 3]; 3] =
     [[3.133_856_1, -1.616_866_7, -0.490_614_6], [-0.978_768_4, 1.916_141_5, 0.033_454], [0.071_945_3, -0.228_991_4, 1.405_242_7]];
 
@@ -90,7 +92,13 @@ pub fn xyz_to_srgb(xyz: [f32; 3]) -> [f32; 3] {
     // Snap float noise so paper white is exactly white.
     mul(&XYZ_TO_SRGB, xyz).map(|v| {
         let e = linear_to_srgb(v.clamp(0.0, 1.0));
-        if e > 0.99999 { 1.0 } else if e < 1e-6 { 0.0 } else { e }
+        if e > 0.99999 {
+            1.0
+        } else if e < 1e-6 {
+            0.0
+        } else {
+            e
+        }
     })
 }
 pub fn srgb_to_lab(rgb: [f32; 3]) -> Lab {

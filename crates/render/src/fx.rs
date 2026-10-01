@@ -272,6 +272,39 @@ mod tests {
     const WHITE: u32 = 765;
 
     #[test]
+    fn thumbnails_of_glowing_objects_render_without_panicking() {
+        // Regression: thumbnails used vello's default (multithreaded) context, which panics on filters.
+        let d = doc_with(
+            Rect::new(20.0, 20.0, 60.0, 60.0),
+            Color::BLACK,
+            vec![("stylize.outerGlow", json!({"color": "#ff0000", "opacity": 100, "blur": 6}))],
+        );
+        let id = d.layers[0].children().unwrap()[0].id;
+        let t = Renderer::new().render_thumbnail(&d, id, 48).unwrap();
+        assert_eq!((t.width, t.height), (48, 48));
+    }
+
+    #[test]
+    fn per_stroke_raster_effects_use_the_single_threaded_pipeline() {
+        let mut d = doc_with(Rect::new(20.0, 20.0, 60.0, 60.0), Color::BLACK, vec![]);
+        let l = d.layers[0].id;
+        let id = d.layers[0].children().unwrap()[0].id;
+        let mut n = (*d.node(id).unwrap()).clone();
+        n.appearance = Appearance::basic(Paint::None, Paint::solid(Color::BLACK), 4.0);
+        if let Some(drawcraft_doc::AppearanceItem::Stroke(s)) =
+            n.appearance.items.iter_mut().find(|i| matches!(i, drawcraft_doc::AppearanceItem::Stroke(_)))
+        {
+            s.effects =
+                vec![Effect { id: "stylize.outerGlow".into(), params: json!({"color": "#ff0000", "opacity": 100, "blur": 6}), visible: true }];
+        }
+        d.remove(id).unwrap();
+        d.insert(Some(l), 0, n).unwrap();
+        let mut r = Renderer::new();
+        r.threads = 4;
+        let _ = r.render(&d, 100, 100, Affine::IDENTITY, &RenderOptions::default());
+    }
+
+    #[test]
     fn drop_shadow_darkens_outside_the_shape() {
         let r = Rect::new(20.0, 20.0, 60.0, 60.0);
         let plain = render(&doc_with(r, Color::rgb(1.0, 0.0, 0.0), vec![]));

@@ -201,7 +201,7 @@ impl Renderer {
         // Raster filters (drop shadow, glows, blur) need the single-threaded pipeline.
         let mut has_filters = false;
         doc.walk(|n| {
-            if !has_filters && !n.appearance.effects.is_empty() && !drawcraft_effects::raster_effects(&n.appearance.effects).is_empty() {
+            if !has_filters && node_has_raster_fx(n) {
                 has_filters = true;
             }
         });
@@ -273,7 +273,7 @@ impl Renderer {
         let s = (size as f64 - 2.0) / b.width().max(b.height()).max(1e-6);
         let view = Affine::translate((size as f64 / 2.0, size as f64 / 2.0)) * Affine::scale(s) * Affine::translate(-b.center().to_vec2());
         let w = size.clamp(1, u16::MAX as u32) as u16;
-        let mut ctx = RenderContext::new(w, w);
+        let mut ctx = single_threaded_context(w, w);
         let frame = Frame { doc, view, visible: b.inflate(1.0, 1.0), px: 1.0 / s, opts: &RenderOptions::default() };
         self.draw_node(&mut ctx, &frame, n, true);
         ctx.flush();
@@ -694,6 +694,22 @@ impl Renderer {
 }
 
 /// Number of visible painted fill/stroke items (opacity folding is exact only for one).
+/// A render context on the calling thread. vello_cpu's `RenderContext::new` defaults to a
+/// multithreaded dispatcher, which panics on filter effects (glows, shadows, blur).
+pub(crate) fn single_threaded_context(w: u16, h: u16) -> RenderContext {
+    RenderContext::new_with(w, h, vello_cpu::RenderSettings { num_threads: 0, ..Default::default() })
+}
+
+/// Whether drawing `n` itself may push a raster filter (node-level or per fill/stroke effects).
+fn node_has_raster_fx(n: &Node) -> bool {
+    let raster = |e: &[_]| !e.is_empty() && !drawcraft_effects::raster_effects(e).is_empty();
+    raster(&n.appearance.effects)
+        || n.appearance.items.iter().any(|i| match i {
+            AppearanceItem::Fill(f) => raster(&f.effects),
+            AppearanceItem::Stroke(s) => raster(&s.effects),
+        })
+}
+
 fn painted_items(n: &Node) -> usize {
     n.appearance
         .items

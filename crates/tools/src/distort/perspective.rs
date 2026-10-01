@@ -239,7 +239,19 @@ impl PerspectiveGrid {
         if !(1..=3).contains(&self.kind) {
             return Err("kind must be 1, 2 or 3".into());
         }
-        let nums = [self.origin[0], self.origin[1], self.horizon, self.vp_left, self.vp_right, self.vp_vertical[0], self.vp_vertical[1], self.distance, self.cell, self.extent, self.height];
+        let nums = [
+            self.origin[0],
+            self.origin[1],
+            self.horizon,
+            self.vp_left,
+            self.vp_right,
+            self.vp_vertical[0],
+            self.vp_vertical[1],
+            self.distance,
+            self.cell,
+            self.extent,
+            self.height,
+        ];
         if nums.iter().any(|v| !v.is_finite() || v.abs() > 4.0e6) {
             return Err("grid values must be finite".into());
         }
@@ -411,7 +423,8 @@ pub fn grid_overlays(doc: &Document, tol: f64, tool_id: &str) -> Vec<Overlay> {
             && let Some(h) = g.homography(pl)
         {
             let d = g.domain(pl);
-            let corners: Vec<Point> = [(d.x0, d.y0), (d.x1, d.y0), (d.x1, d.y1), (d.x0, d.y1)].iter().filter_map(|&(x, y)| h.apply(Point::new(x, y))).collect();
+            let corners: Vec<Point> =
+                [(d.x0, d.y0), (d.x1, d.y0), (d.x1, d.y1), (d.x0, d.y1)].iter().filter_map(|&(x, y)| h.apply(Point::new(x, y))).collect();
             if corners.len() == 4 {
                 out.push(Overlay::Path { path: crate::xform::polygon(&corners, true), color, width: 2.0, dashed: false });
             }
@@ -427,7 +440,12 @@ pub fn grid_overlays(doc: &Document, tol: f64, tool_id: &str) -> Vec<Overlay> {
         out.push(Overlay::Highlight { quad: q, color: [cr, cg, cb, if pl == g.plane { 230 } else { 70 }] });
         out.push(Overlay::Path { path: crate::xform::polygon(&q, true), color: [0x40, 0x40, 0x40], width: 1.0, dashed: false });
     }
-    out.push(Overlay::Path { path: super::ellipse_path(c, r, r, 0.0), color: if g.plane == Plane::None { [0x20, 0x20, 0x20] } else { [0x99, 0x99, 0x99] }, width: 1.5, dashed: false });
+    out.push(Overlay::Path {
+        path: super::ellipse_path(c, r, r, 0.0),
+        color: if g.plane == Plane::None { [0x20, 0x20, 0x20] } else { [0x99, 0x99, 0x99] },
+        width: 1.5,
+        dashed: false,
+    });
     out
 }
 
@@ -520,7 +538,9 @@ impl Tool for PerspectiveGridTool {
                     return pre;
                 }
                 let tol = cx.tol(6.0);
-                if let Some((h, _)) = handles(&g).into_iter().filter(|(_, q)| q.distance(p) <= tol).min_by(|a, b| a.1.distance(p).total_cmp(&b.1.distance(p))) {
+                if let Some((h, _)) =
+                    handles(&g).into_iter().filter(|(_, q)| q.distance(p) <= tol).min_by(|a, b| a.1.distance(p).total_cmp(&b.1.distance(p)))
+                {
                     self.drag = Some(h);
                     pre.push(Action::Begin("Edit Perspective Grid".into()));
                 }
@@ -626,7 +646,12 @@ impl Tool for PerspectiveSelectionTool {
             if let (Some(pl), Some(n)) = (g.attached_plane(*id), cx.doc.node(*id))
                 && let Some(b) = n.geometric_bounds()
             {
-                out.push(Overlay::Path { path: crate::xform::polygon(&crate::xform::rect_corners(b), true), color: pl.color(), width: 1.0, dashed: true });
+                out.push(Overlay::Path {
+                    path: crate::xform::polygon(&crate::xform::rect_corners(b), true),
+                    color: pl.color(),
+                    width: 1.0,
+                    dashed: true,
+                });
             }
         }
         out
@@ -748,7 +773,10 @@ mod tests {
         let (faces, _) = g.widget(&d, 1.0);
         let q = faces[1].1;
         let centre = Point::new((q[0].x + q[1].x + q[2].x + q[3].x) / 4.0, (q[0].y + q[1].y + q[2].y + q[3].y) / 4.0);
-        assert_eq!(t.pointer(&c, &PointerEvent::new(PointerKind::Down, centre.x, centre.y)), vec![Action::Exec("perspective.plane.set".into(), json!({"plane": "right"}))]);
+        assert_eq!(
+            t.pointer(&c, &PointerEvent::new(PointerKind::Down, centre.x, centre.y)),
+            vec![Action::Exec("perspective.plane.set".into(), json!({"plane": "right"}))]
+        );
         // Drag the left vanishing point.
         let acts = t.pointer(&c, &PointerEvent::new(PointerKind::Down, g.vp_left, g.horizon));
         assert_eq!(acts, vec![Action::Begin("Edit Perspective Grid".into())]);

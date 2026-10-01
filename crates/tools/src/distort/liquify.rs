@@ -349,7 +349,12 @@ fn apply_dab(sp: &mut SubPath, prm: &LiquifyParams, c: Point, prev: Point, dab: 
         let ho = handle(old.h_out, prm.affect_out, 2);
         if np != old.p || hi != old.h_in || ho != old.h_out {
             changed = true;
-            *a = Anchor { p: np, h_in: hi, h_out: ho, kind: if old.kind == AnchorKind::Smooth && prm.kind == LiquifyKind::Crystallize { AnchorKind::Corner } else { old.kind } };
+            *a = Anchor {
+                p: np,
+                h_in: hi,
+                h_out: ho,
+                kind: if old.kind == AnchorKind::Smooth && prm.kind == LiquifyKind::Crystallize { AnchorKind::Corner } else { old.kind },
+            };
         }
     }
     changed
@@ -511,7 +516,12 @@ impl Tool for LiquifyTool {
     }
     fn overlays(&self, _cx: &ToolContext) -> Vec<Overlay> {
         let Some(c) = self.hover else { return vec![] };
-        vec![Overlay::Path { path: ellipse_path(c, self.params.width / 2.0, self.params.height / 2.0, self.params.angle), color: [0x80, 0x80, 0x80], width: 1.0, dashed: false }]
+        vec![Overlay::Path {
+            path: ellipse_path(c, self.params.width / 2.0, self.params.height / 2.0, self.params.angle),
+            color: [0x80, 0x80, 0x80],
+            width: 1.0,
+            dashed: false,
+        }]
     }
     fn cursor(&self, _cx: &ToolContext, _p: Point, _mods: Mods) -> Cursor {
         Cursor::Crosshair

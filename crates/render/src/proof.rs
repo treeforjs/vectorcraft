@@ -143,11 +143,7 @@ pub fn map_document_colors(doc: &mut Document, f: &mut dyn FnMut(&Color, Option<
 
 /// Ids marked Overprint Black.
 pub fn overprint_ids(doc: &Document) -> Vec<NodeId> {
-    doc.unknown
-        .get(OVERPRINT_KEY)
-        .and_then(|v| v.as_array())
-        .map(|a| a.iter().filter_map(|v| v.as_u64()).map(NodeId).collect())
-        .unwrap_or_default()
+    doc.unknown.get(OVERPRINT_KEY).and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|v| v.as_u64()).map(NodeId).collect()).unwrap_or_default()
 }
 
 /// 100% black ink with no other process ink.

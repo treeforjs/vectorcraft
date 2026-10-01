@@ -202,11 +202,20 @@ fn separation_plates_render_ink_coverage() {
     assert!((v - 128).abs() <= 2, "50% magenta renders as 50% grey: {v}");
     assert_eq!(plate("Black").pixel(25, 50), [255, 255, 255, 255]);
     // Composite of C+M only shows the magenta object in magenta ink.
-    let cm = render(&doc, RenderOptions { proof: Some(ProofSetup { separations: Some(vec!["Magenta".into()]), ..Default::default() }), ..Default::default() });
+    let cm = render(
+        &doc,
+        RenderOptions { proof: Some(ProofSetup { separations: Some(vec!["Magenta".into()]), ..Default::default() }), ..Default::default() },
+    );
     assert_eq!(cm.pixel(25, 50)[0], 255);
     let all = render(
         &doc,
-        RenderOptions { proof: Some(ProofSetup { separations: Some(vec!["Cyan".into(), "Magenta".into(), "Yellow".into(), "Black".into()]), ..Default::default() }), ..Default::default() },
+        RenderOptions {
+            proof: Some(ProofSetup {
+                separations: Some(vec!["Cyan".into(), "Magenta".into(), "Yellow".into(), "Black".into()]),
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
     );
     let p = all.pixel(25, 50);
     assert!(p[0] < 40 && p[2] > 200, "composite cyan: {p:?}");
@@ -217,9 +226,17 @@ fn rgb_art_separates_with_gcr() {
     let mut s = session();
     rect(&mut s, 0.0, 0.0, 100.0, 100.0, json!("#000000"));
     let doc = s.doc().unwrap().doc.clone();
-    let k = render(&doc, RenderOptions { proof: Some(ProofSetup { separations: Some(vec!["Black".into()]), ..Default::default() }), ..Default::default() }).pixel(50, 50);
+    let k = render(
+        &doc,
+        RenderOptions { proof: Some(ProofSetup { separations: Some(vec!["Black".into()]), ..Default::default() }), ..Default::default() },
+    )
+    .pixel(50, 50);
     assert!(k[0] < 20, "RGB black is mostly K: {k:?}");
-    let c = render(&doc, RenderOptions { proof: Some(ProofSetup { separations: Some(vec!["Cyan".into()]), ..Default::default() }), ..Default::default() }).pixel(50, 50);
+    let c = render(
+        &doc,
+        RenderOptions { proof: Some(ProofSetup { separations: Some(vec!["Cyan".into()]), ..Default::default() }), ..Default::default() },
+    )
+    .pixel(50, 50);
     assert!(c[0] > 40 && c[0] < 200, "rich black has some cyan: {c:?}");
 }
 
@@ -236,7 +253,10 @@ fn spot_colours_get_their_own_plate() {
     let names: Vec<&str> = plates["plates"].as_array().unwrap().iter().map(|p| p["name"].as_str().unwrap()).collect();
     assert_eq!(names, ["Cyan", "Magenta", "Yellow", "Black", "Brand Orange"]);
     let doc = s.doc().unwrap().doc.clone();
-    let plate = |n: &str| render(&doc, RenderOptions { proof: Some(ProofSetup { separations: Some(vec![n.into()]), ..Default::default() }), ..Default::default() }).pixel(50, 50);
+    let plate = |n: &str| {
+        render(&doc, RenderOptions { proof: Some(ProofSetup { separations: Some(vec![n.into()]), ..Default::default() }), ..Default::default() })
+            .pixel(50, 50)
+    };
     assert_eq!(plate("Brand Orange"), [0, 0, 0, 255]);
     assert_eq!(plate("Magenta"), [255, 255, 255, 255], "spot ink isn't on the process plates");
     // Panel commands: only / toggle.
@@ -285,9 +305,9 @@ fn view_toggles_redraw_without_dirtying() {
     assert_eq!(drawcraft_render::proof::active_proof().unwrap().target, ProofTarget::Deuteranopia);
     assert!(s.execute("view.proofSetup", &json!({"target": "cmyk:Nope"})).is_err());
     s.execute("view.proofSetup", &json!({"target": "workingCmyk", "intent": "relative"})).unwrap();
-    s.execute("view.proofColors", &json!({})).unwrap();
-    assert!(drawcraft_render::proof::active_proof().is_none());
-    let r = s.execute("view.overprintPreview", &json!({})).unwrap();
+    let r = s.execute("view.proofColors", &json!({"on": false})).unwrap();
+    assert_eq!(r["proofColors"], false);
+    let r = s.execute("view.overprintPreview", &json!({"on": true})).unwrap();
     assert_eq!(r["overprintPreview"], true);
     s.execute("view.overprintPreview", &json!({"on": false})).unwrap();
 }

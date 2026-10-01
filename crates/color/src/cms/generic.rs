@@ -97,8 +97,8 @@ impl GenericCmyk {
         let paper_xyz = lab_to_xyz(params.paper);
         let mut prim = [[0.0f32; 3]; 8];
         prim[0] = paper_xyz;
-        for i in 1..8 {
-            prim[i] = lab_to_xyz(params.solids[i - 1]);
+        for (p, lab) in prim[1..].iter_mut().zip(params.solids.iter()) {
+            *p = lab_to_xyz(*lab);
         }
         let k_xyz = lab_to_xyz(params.black);
         // Black over other inks: optical densities add, but saturate towards a maximum density
@@ -151,8 +151,8 @@ impl GenericCmyk {
             if w == 0.0 {
                 continue;
             }
-            for ch in 0..3 {
-                out[ch] += w * ((1.0 - k) * self.prim[i][ch] + k * self.prim_k[i][ch]);
+            for (ch, o) in out.iter_mut().enumerate() {
+                *o += w * ((1.0 - k) * self.prim[i][ch] + k * self.prim_k[i][ch]);
             }
         }
         out

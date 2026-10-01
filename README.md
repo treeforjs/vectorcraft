@@ -7,16 +7,44 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/drawcraft-hero.png" alt="DrawCraft editing the Dusk poster example: categorized toolbar, canvas with a selected sun, and the Layers panel" width="100%">
+  <img src="docs/images/shot-1-neon.png" alt="DrawCraft editing the Neon Drive poster: the title is selected, the Appearance panel shows its live Outer Glow, and the Properties panel shows its character settings" width="100%">
+  <br><sub><b>Neon Drive</b> — Pathfinder-cut sun, live Outer Glow on type and grid, clipping masks · <code>examples/neon-drive.drawcraft</code></sub>
 </p>
 
 <table>
 <tr>
-<td width="38%" valign="top">
-  <img src="docs/images/dusk-poster.png" alt="Dusk — an example poster made in DrawCraft" width="100%">
-  <p align="center"><sub><code>examples/dusk-poster.drawcraft</code> — built entirely through DrawCraft's command API</sub></p>
+<td width="50%" valign="top">
+  <img src="docs/images/shot-2-ribbons.png" alt="Three live blend ribbons of 55–70 steps with smooth colour, clipped to the artboard; Layers panel open" width="100%">
+  <p align="center"><sub><b>Live Blends</b> — editable key paths, smooth colour, clipped to the artboard</sub></p>
 </td>
-<td valign="top">
+<td width="50%" valign="top">
+  <img src="docs/images/shot-4-bezier.png" alt="Direct Selection tool showing anchor points and Bézier handles on a crescent built with Pathfinder" width="100%">
+  <p align="center"><sub><b>Pen &amp; Direct Selection</b> — real Bézier anchors and handles, contextual task bar</sub></p>
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top">
+  <img src="docs/images/shot-3-sheet.png" alt="Four artboards in the light UI theme: Pathfinder, Gradient Mesh, radial Repeat and Envelope Distort" width="100%">
+  <p align="center"><sub><b>Multiple artboards, light theme</b> — Pathfinder · Gradient Mesh · live radial Repeat · Envelope Distort · <code>examples/feature-sheet.drawcraft</code></sub></p>
+</td>
+</tr>
+</table>
+
+### Made in DrawCraft
+
+Every piece below was built entirely through DrawCraft's command API, the same one the MCP server exposes to agents, and exported by DrawCraft's own renderer. Source files are in [`examples/`](examples).
+
+<table>
+<tr>
+  <td width="33%"><img src="docs/images/art-neon-drive.png" alt="Neon Drive synthwave poster" width="100%"></td>
+  <td width="33%"><img src="docs/images/dusk-poster.png" alt="Dusk poster: gradient sky, glowing sun, layered mountains" width="100%"></td>
+  <td width="33%"><img src="docs/images/art-repeat.png" alt="Radial Repeat mandala" width="100%"><br><img src="docs/images/art-envelope.png" alt="Envelope Distort flag warp of striped type" width="100%"></td>
+</tr>
+<tr>
+  <td colspan="2"><img src="docs/images/art-ribbons.png" alt="Live blend ribbons" width="100%"></td>
+  <td><img src="docs/images/art-mesh.png" alt="Gradient mesh spheres" width="100%"><br><img src="docs/images/art-pathfinder.png" alt="Crescent and stars made with Pathfinder" width="100%"></td>
+</tr>
+</table>
 
 ### Why DrawCraft
 
@@ -26,10 +54,6 @@
 - **Open.** A documented native format (`.drawcraft`, JSON), first-class SVG, PDF (and PDF-compatible `.ai`) import/export, PNG/JPEG/WebP and Export for Screens.
 - **Agent-native.** Every menu item, tool gesture, panel and dialog is drivable over a JSON control channel and an **MCP server** — Claude and other agents can draw, edit and export like a human.
 - **Everywhere.** One codebase: desktop apps and the same UI in the browser.
-
-</td>
-</tr>
-</table>
 
 ## Quick start
 
@@ -51,7 +75,7 @@ DrawCraft is under active development. See **[ROADMAP.md](ROADMAP.md)** for what
 
 Workspace: `crates/{geom, color, doc, pathops, text, effects, trace, brush, render, svg, pdf, format, tools, engine, ui-egui, mcp, testkit}`, `apps/{drawcraft, drawcraft-cli, drawcraft-web}`. The egui frontend is a separate crate, so the UI can be swapped without touching the engine. Agent guide: [`CLAUDE.md`](CLAUDE.md).
 
-## The Craft suite
+## Crafting Apps
 
 Open-source, pure-Rust, clean-room creative tools — each engine-first, cross-platform, WASM-ready and fully agent-drivable.
 

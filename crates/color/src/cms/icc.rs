@@ -92,7 +92,7 @@ impl IccProfile {
             .clone()
     }
 
-    fn from_xf(&self, intent: Intent) -> Xf {
+    fn inverse_xf(&self, intent: Intent) -> Xf {
         self.from_srgb[intent_index(intent)]
             .get_or_init(|| self.srgb.create_transform_f32(Layout::Rgb, &self.profile, self.layout(), Self::opts(intent)).ok())
             .clone()
@@ -110,7 +110,7 @@ impl IccProfile {
 
     /// sRGB → device values.
     pub fn from_srgb(&self, rgb: [f32; 3], intent: Intent) -> Option<Vec<f32>> {
-        let xf = self.from_xf(intent)?;
+        let xf = self.inverse_xf(intent)?;
         let mut dst = vec![0.0f32; self.channels()];
         xf.transform(&rgb, &mut dst).ok()?;
         Some(dst.into_iter().map(|x| x.clamp(0.0, 1.0)).collect())
@@ -118,7 +118,7 @@ impl IccProfile {
 
     /// Whether transforms can be built for this profile (checked at registration).
     pub fn usable(&self) -> bool {
-        self.to_xf(Intent::RelativeColorimetric).is_some() && self.from_xf(Intent::RelativeColorimetric).is_some()
+        self.to_xf(Intent::RelativeColorimetric).is_some() && self.inverse_xf(Intent::RelativeColorimetric).is_some()
     }
 }
 

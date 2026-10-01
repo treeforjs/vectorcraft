@@ -435,10 +435,7 @@ mod tests {
 
     #[test]
     fn save_apply_round_trip() {
-        let mut ui = UiState::default();
-        ui.control_bar = true;
-        ui.dock_tab = DockTab::Layers;
-        ui.open_panel = Some("stroke".into());
+        let mut ui = UiState { control_bar: true, dock_tab: DockTab::Layers, open_panel: Some("stroke".into()), ..Default::default() };
         save_as(&mut ui, "Mine").unwrap();
         let w = find(&ui, ESSENTIALS).unwrap();
         apply(&mut ui, &w);

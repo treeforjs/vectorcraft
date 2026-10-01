@@ -260,7 +260,19 @@ Generated-in-code art is original and has no file to list. This covers the defau
 | `assets/icons/waves.svg` | Lucide Icons and Contributors | https://lucide.dev (lucide-static v1.49.0; header kept in file) | ISC (`assets/icons/LICENSE-lucide.txt`) |  |
 | `assets/icons/x.svg` | Lucide Icons and Contributors | https://lucide.dev (lucide-static v1.49.0; header kept in file) | ISC (`assets/icons/LICENSE-lucide.txt`) |  |
 | `assets/icons/zoom-in.svg` | Lucide Icons and Contributors | https://lucide.dev (lucide-static v1.49.0; header kept in file) | ISC (`assets/icons/LICENSE-lucide.txt`) |  |
-| `docs/images/drawcraft-hero.png` | DrawCraft contributors | Screenshot of DrawCraft itself (only DrawCraft/Lucide UI icons visible) | MIT OR Apache-2.0 |  |
 | `docs/images/dusk-poster.png` | DrawCraft contributors | Rendered by DrawCraft from `examples/dusk-poster.drawcraft` | MIT OR Apache-2.0 |  |
 | `examples/dusk-poster.drawcraft` | DrawCraft contributors | Original artwork built through the DrawCraft command API | MIT OR Apache-2.0 |  |
 | `examples/dusk-poster.svg` | DrawCraft contributors | SVG export of the above | MIT OR Apache-2.0 |  |
+| `docs/images/shot-1-neon.png` | DrawCraft contributors | Screenshot of DrawCraft itself (DrawCraft/Lucide UI icons only), editing `examples/neon-drive.drawcraft` | MIT OR Apache-2.0 |  |
+| `docs/images/shot-2-ribbons.png` | DrawCraft contributors | Screenshot of DrawCraft itself, editing `examples/ribbons.drawcraft` | MIT OR Apache-2.0 |  |
+| `docs/images/shot-3-sheet.png` | DrawCraft contributors | Screenshot of DrawCraft itself, editing `examples/feature-sheet.drawcraft` | MIT OR Apache-2.0 |  |
+| `docs/images/shot-4-bezier.png` | DrawCraft contributors | Screenshot of DrawCraft itself, editing `examples/feature-sheet.drawcraft` | MIT OR Apache-2.0 |  |
+| `docs/images/art-neon-drive.png` | DrawCraft contributors | Rendered by DrawCraft from `examples/neon-drive.drawcraft` | MIT OR Apache-2.0 |  |
+| `docs/images/art-ribbons.png` | DrawCraft contributors | Rendered by DrawCraft from `examples/ribbons.drawcraft` | MIT OR Apache-2.0 |  |
+| `docs/images/art-pathfinder.png` | DrawCraft contributors | Rendered by DrawCraft from `examples/feature-sheet.drawcraft` (artboard 1) | MIT OR Apache-2.0 |  |
+| `docs/images/art-mesh.png` | DrawCraft contributors | Rendered by DrawCraft from `examples/feature-sheet.drawcraft` (artboard 2) | MIT OR Apache-2.0 |  |
+| `docs/images/art-repeat.png` | DrawCraft contributors | Rendered by DrawCraft from `examples/feature-sheet.drawcraft` (artboard 3) | MIT OR Apache-2.0 |  |
+| `docs/images/art-envelope.png` | DrawCraft contributors | Rendered by DrawCraft from `examples/feature-sheet.drawcraft` (artboard 4) | MIT OR Apache-2.0 |  |
+| `examples/neon-drive.drawcraft` | DrawCraft contributors | Original artwork built through the DrawCraft command API | MIT OR Apache-2.0 |  |
+| `examples/ribbons.drawcraft` | DrawCraft contributors | Original artwork built through the DrawCraft command API | MIT OR Apache-2.0 |  |
+| `examples/feature-sheet.drawcraft` | DrawCraft contributors | Original artwork built through the DrawCraft command API | MIT OR Apache-2.0 |  |

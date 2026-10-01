@@ -58,7 +58,10 @@ pub fn warp_node_with(n: &mut Node, f: &dyn Fn(Point) -> Point) {
                 }
             }
         }
-        NodeKind::Layer { children, .. } | NodeKind::Group { children, .. } | NodeKind::Compound { children, .. } | NodeKind::Blend { children, .. } => {
+        NodeKind::Layer { children, .. }
+        | NodeKind::Group { children, .. }
+        | NodeKind::Compound { children, .. }
+        | NodeKind::Blend { children, .. } => {
             for c in children.iter_mut() {
                 warp_node_with(Arc::make_mut(c), f);
             }
@@ -137,7 +140,19 @@ mod tests {
 
     #[test]
     fn create_covers_all_distort_tools() {
-        for id in ["width", "warp", "twirl", "pucker", "bloat", "scallop", "crystallize", "wrinkle", "puppetWarp", "perspectiveGrid", "perspectiveSelection"] {
+        for id in [
+            "width",
+            "warp",
+            "twirl",
+            "pucker",
+            "bloat",
+            "scallop",
+            "crystallize",
+            "wrinkle",
+            "puppetWarp",
+            "perspectiveGrid",
+            "perspectiveSelection",
+        ] {
             assert_eq!(create(id).map(|t| t.id()), Some(id));
         }
         assert!(create("pen").is_none());

@@ -40,7 +40,7 @@ _Last updated: 2026-09-30._
 - **Geometry and effects:**
   - Pathfinder (10 exact curve booleans), Offset, Outline Stroke, Simplify, Clean Up, Split Into Grid, Divide Objects Below.
   - Live effects with previewing dialogs: Distort & Transform, Path, Convert to Shape, 15 Warp styles, Round Corners, Scribble, and raster drop shadow, glows and feather.
-- **Advanced art:** live Blends (steps/distance/smooth colour, spine), Envelope Distort (warp/mesh/top object), Gradient Mesh, Shape Builder, Live Paint, Image Trace (12 presets).
+- **Advanced art:** live Blends (steps/distance/smooth colour, spine), Envelope Distort (warp/mesh/top object), Gradient Mesh, Shape Builder, Live Paint, Image Trace (12 presets), pattern swatches with pattern editing mode, live Repeat (radial/grid/mirror).
 - **Colour, type and file workflows:** Recolor Artwork (dialog with harmonies), Edit Colors, Find & Replace, Change Case, Smart Punctuation, Guides, Lock/Hide Above, Transform Each, Rasterize.
 - **Formats:**
   - `.drawcraft` (lossless JSON), SVG import/export, PDF export/import (including PDF-compatible `.ai`).
@@ -62,7 +62,7 @@ _Last updated: 2026-09-30._
 | M7 | Type (point/area/path, editing, styles, OpenType, threading, glyphs) | 🟡 in progress | 20–30 |
 | M8 | Transform & distort (Puppet Warp, Liquify tools, Envelopes, Blends, Perspective Grid) | 🟡 live Blends + Envelopes (warp/mesh/top object) done; Puppet Warp, Liquify, Perspective Grid pending | 20–30 |
 | M9 | Live effects (+ 3D & Materials) | 🟡 2D effects done; 3D pending | 25–40 |
-| M10 | Brushes, symbols, patterns, Repeat | 🟡 brushes/symbols in progress; patterns, Repeat pending | 15–25 |
+| M10 | Brushes, symbols, patterns, Repeat | 🟡 pattern swatches (5 tile types, Pattern Options, editing mode, SVG `<pattern>`/PDF export) and live Repeat (radial/grid/mirror) done; brushes/symbols in progress | 8–15 |
 | M11 | Artboards & views (artboard panel/tool done; print tiling, multiple windows, presentation polish) | 🟡 | 10–15 |
 | M12 | Advanced color & art (CMYK/ICC, separations, Gradient Mesh, Live Paint, Image Trace, Graphs) | 🟡 Gradient Mesh, Live Paint, Image Trace (12 presets, 18 ms/1k² image), Recolor Artwork done; CMYK/ICC, separations, Graphs pending | 25–40 |
 | M13 | Automation (Actions ✅ record/playback, persisted; variables, scripting, batch) | 🟡 | 8–12 |

@@ -60,7 +60,11 @@ impl PuppetWarpTool {
         }
         self.ids = ids;
         self.selected = None;
-        self.pins = if self.ids.is_empty() { vec![] } else { mesh_for(cx.doc, &self.ids, self.expand_or_default()).map(|m| auto_pins(&m, 3)).unwrap_or_default() };
+        self.pins = if self.ids.is_empty() {
+            vec![]
+        } else {
+            mesh_for(cx.doc, &self.ids, self.expand_or_default()).map(|m| auto_pins(&m, 3)).unwrap_or_default()
+        };
     }
     fn expand_or_default(&self) -> f64 {
         if self.expand > 0.0 { self.expand } else { 3.0 }

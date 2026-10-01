@@ -222,7 +222,8 @@ impl Mesh {
                 if c.is_none() {
                     continue;
                 }
-                let cc = Point::new(self.origin.x + ((k % self.nx) as f64 + 0.5) * self.cell, self.origin.y + ((k / self.nx) as f64 + 0.5) * self.cell);
+                let cc =
+                    Point::new(self.origin.x + ((k % self.nx) as f64 + 0.5) * self.cell, self.origin.y + ((k / self.nx) as f64 + 0.5) * self.cell);
                 let d = cc.distance_squared(p);
                 if best.is_none_or(|(bd, _)| d < bd) {
                     best = Some((d, k));
@@ -526,7 +527,8 @@ mod tests {
     #[test]
     fn pins_at_rest_leave_the_mesh_unchanged() {
         let m = rect_mesh();
-        let pins: Vec<Pin> = [(20.0, 50.0), (180.0, 50.0), (100.0, 20.0)].iter().map(|&(x, y)| Pin { rest: Point::new(x, y), target: Point::new(x, y) }).collect();
+        let pins: Vec<Pin> =
+            [(20.0, 50.0), (180.0, 50.0), (100.0, 20.0)].iter().map(|&(x, y)| Pin { rest: Point::new(x, y), target: Point::new(x, y) }).collect();
         let d = deform(&m, &pins);
         let err = m.verts.iter().zip(&d).map(|(a, b)| a.distance(*b)).fold(0.0, f64::max);
         assert!(err < 1e-4, "{err}");
@@ -539,7 +541,10 @@ mod tests {
             let (s, c) = 0.5f64.sin_cos();
             Point::new(p.x * c - p.y * s + 30.0, p.x * s + p.y * c - 10.0)
         };
-        let pins: Vec<Pin> = [(20.0, 50.0), (180.0, 50.0), (100.0, 90.0)].iter().map(|&(x, y)| Pin { rest: Point::new(x, y), target: rot(Point::new(x, y)) }).collect();
+        let pins: Vec<Pin> = [(20.0, 50.0), (180.0, 50.0), (100.0, 90.0)]
+            .iter()
+            .map(|&(x, y)| Pin { rest: Point::new(x, y), target: rot(Point::new(x, y)) })
+            .collect();
         let d = deform(&m, &pins);
         let err = m.verts.iter().zip(&d).map(|(a, b)| rot(*a).distance(*b)).fold(0.0, f64::max);
         assert!(err < 1e-2, "{err}");
@@ -560,7 +565,8 @@ mod tests {
             assert!(got.distance(p.target) < 0.05, "pin {:?} → {got:?}", p.target);
         }
         // Area is preserved (as-rigid-as-possible): total within a few percent, no flipped triangles.
-        let (a0, a1): (f64, f64) = (0..m.tris.len()).map(|t| (m.tri_area(&m.verts, t), m.tri_area(&d, t))).fold((0.0, 0.0), |s, v| (s.0 + v.0, s.1 + v.1));
+        let (a0, a1): (f64, f64) =
+            (0..m.tris.len()).map(|t| (m.tri_area(&m.verts, t), m.tri_area(&d, t))).fold((0.0, 0.0), |s, v| (s.0 + v.0, s.1 + v.1));
         assert!((a1 / a0 - 1.0).abs() < 0.05, "area ratio {}", a1 / a0);
         assert!((0..m.tris.len()).all(|t| m.tri_area(&d, t) * m.tri_area(&m.verts, t) > 0.0));
         // Each triangle stays nearly congruent: edge lengths change by < 25%.

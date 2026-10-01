@@ -2,7 +2,7 @@
 
 use drawcraft_color::Paint;
 use drawcraft_doc::NodeKind;
-use egui::{Color32, CornerRadius, Sense, Stroke, StrokeKind, Ui, vec2};
+use egui::{CornerRadius, Sense, Stroke, StrokeKind, Ui, vec2};
 use serde_json::json;
 
 use crate::state::{ZOOM_STOPS, zoom_label};
@@ -15,11 +15,9 @@ pub fn app_bar(app: &mut DrawcraftApp, ui: &mut Ui) {
     let left = if app.integrated_titlebar { 78 } else { 8 };
     egui::Panel::top("app_bar").exact_size(44.0).frame(egui::Frame::NONE.fill(t.app_bar).inner_margin(egui::Margin { left, right: 14, top: 0, bottom: 0 }).stroke(Stroke::new(1.0, t.border))).show(ui, |ui| {
         ui.horizontal_centered(|ui| {
-            // Brand mark: a small rounded square with "Dc".
+            // Brand mark (our own artwork, matches the app icon).
             let (r, _) = ui.allocate_exact_size(vec2(22.0, 22.0), Sense::hover());
-            ui.painter().rect_filled(r, CornerRadius::same(5), Color32::from_rgb(0x2b, 0x1d, 0x0c));
-            ui.painter().rect_stroke(r, CornerRadius::same(5), Stroke::new(1.2, Color32::from_rgb(0xff, 0x9a, 0x00)), StrokeKind::Inside);
-            ui.painter().text(r.center(), egui::Align2::CENTER_CENTER, "Dc", theme::semibold(11.5), Color32::from_rgb(0xff, 0x9a, 0x00));
+            crate::brand::paint_mark(ui.painter(), r);
             ui.add_space(4.0);
             if widgets::icon_button(ui, "house", "Home", false, 24.0).clicked() {
                 app.ui.dialog = Some(crate::state::Dialog::new("newDocument", json!({"preset": "Letter", "width": "612 pt", "height": "792 pt", "units": "Points", "artboards": 1, "colorMode": "RGB", "name": "Untitled-1"})));

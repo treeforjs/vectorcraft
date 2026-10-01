@@ -74,7 +74,8 @@ fn plates_section(app: &mut DrawcraftApp, ui: &mut Ui) {
 }
 
 fn profile_dropdown(ui: &mut Ui, id: &str, current: &str, kind: ProfileKind, extra: Option<&str>) -> Option<String> {
-    let names: Vec<String> = extra.map(str::to_string).into_iter().chain(cms::profiles().into_iter().filter(|p| p.kind == kind).map(|p| p.name)).collect();
+    let names: Vec<String> =
+        extra.map(str::to_string).into_iter().chain(cms::profiles().into_iter().filter(|p| p.kind == kind).map(|p| p.name)).collect();
     let refs: Vec<&str> = names.iter().map(String::as_str).collect();
     widgets::dropdown(ui, id, current, &refs, 210.0).map(|i| names[i].clone())
 }
@@ -114,7 +115,8 @@ fn settings_section(app: &mut DrawcraftApp, ui: &mut Ui) {
             match app.run("color.gamutCheck", json!({})) {
                 Ok(r) => {
                     let n = r["outOfGamut"].as_array().map_or(0, Vec::len);
-                    app.ui.status = if n == 0 { "All colours are within the CMYK gamut".into() } else { format!("{n} colour(s) are out of the CMYK gamut") };
+                    app.ui.status =
+                        if n == 0 { "All colours are within the CMYK gamut".into() } else { format!("{n} colour(s) are out of the CMYK gamut") };
                 }
                 Err(e) => app.ui.status = e,
             }

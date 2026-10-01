@@ -5,6 +5,7 @@
 //! shortcuts, the ⌘K palette and the control channel ([`control`]).
 #![forbid(unsafe_code)]
 
+mod brand;
 pub mod canvas;
 pub mod chrome;
 pub mod control;

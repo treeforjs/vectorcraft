@@ -72,7 +72,7 @@ pub fn specs() -> Vec<CommandSpec> {
             [],
             None,
             "{ids?, colors?: [color]} colours that can't be printed in the working CMYK (selection, or the whole document when nothing is selected) → {checked, outOfGamut: [{hex, deltaE, count}]}",
-            always,
+            has_doc,
             gamut_check
         ),
         cmd!(
@@ -410,7 +410,10 @@ fn plates_json(s: &Session) -> Value {
 fn separations(s: &mut Session, p: &Value) -> Result<Value> {
     const C: &str = "view.separationsPreview";
     let mut v = proof::view();
-    let all: Vec<String> = s.active().map(|d| proof::plates(&d.doc).into_iter().map(|p| p.name).collect()).unwrap_or_else(|| cms::PROCESS_PLATES.iter().map(|s| s.to_string()).collect());
+    let all: Vec<String> = s
+        .active()
+        .map(|d| proof::plates(&d.doc).into_iter().map(|p| p.name).collect())
+        .unwrap_or_else(|| cms::PROCESS_PLATES.iter().map(|s| s.to_string()).collect());
     let check = |n: &str| if all.iter().any(|a| a == n) { Ok(n.to_string()) } else { Err(bad(C, format!("unknown plate `{n}`"))) };
     if let Some(on) = p.get("on").and_then(Value::as_bool) {
         v.separations = if on { Some(v.separations.take().unwrap_or_else(|| all.clone())) } else { None };

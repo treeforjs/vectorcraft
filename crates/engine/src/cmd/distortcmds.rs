@@ -251,7 +251,9 @@ fn liquify(s: &mut Session, p: &Value) -> Result<Value> {
         let sweep = dab_pts.iter().map(|c| prm.brush_bounds(*c)).reduce(|a, b| a.union(b)).unwrap();
         let mut all = vec![];
         doc.walk(|n| {
-            if matches!(n.kind, NodeKind::Path { guide: false, .. }) && n.geometric_bounds().is_some_and(|b| b.inflate(1e-6, 1e-6).intersect(sweep).area() > 0.0) {
+            if matches!(n.kind, NodeKind::Path { guide: false, .. })
+                && n.geometric_bounds().is_some_and(|b| b.inflate(1e-6, 1e-6).intersect(sweep).area() > 0.0)
+            {
                 all.push(n.id);
             }
         });
@@ -345,7 +347,11 @@ fn grid_set(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 fn grid_preset(s: &mut Session, p: &Value) -> Result<Value> {
-    let kind = p.get("kind").and_then(Value::as_u64).filter(|k| (1..=3).contains(k)).ok_or_else(|| bad("perspective.grid.preset", "kind must be 1, 2 or 3"))? as u8;
+    let kind = p
+        .get("kind")
+        .and_then(Value::as_u64)
+        .filter(|k| (1..=3).contains(k))
+        .ok_or_else(|| bad("perspective.grid.preset", "kind must be 1, 2 or 3"))? as u8;
     let old = grid_of(&s.doc()?.doc);
     let ab = s.doc()?.doc.artboards.first().map(|a| a.rect).ok_or_else(|| EngineError::Other("no artboard".into()))?;
     let g = PerspectiveGrid { attached: old.attached, ..PerspectiveGrid::preset(kind, ab) };
