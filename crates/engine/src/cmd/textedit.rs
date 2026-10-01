@@ -315,7 +315,14 @@ fn create_in_path(s: &mut Session, p: &Value) -> Result<Value> {
         _ => 0.0,
     };
     let kind = if on_path { TextKind::OnPath { path: path.clone(), start } } else { TextKind::Area { frame: path.clone() } };
-    let mut t = TextObject { kind, xf: Affine::IDENTITY, runs: vec![TextRun { text, style }], para: Default::default(), cached_bounds: None };
+    let mut t = TextObject {
+        kind,
+        xf: Affine::IDENTITY,
+        runs: vec![TextRun { text, style }],
+        para: Default::default(),
+        area: Default::default(),
+        cached_bounds: None,
+    };
     refresh_bounds(&mut t);
     let id = s.edit(if on_path { "Type on a Path" } else { "Area Type" }, |d, sel| {
         let (par, idx, _) = d.position(pid).ok_or(EngineError::NoNode(pid))?;
@@ -342,7 +349,14 @@ fn headline_tracking(t: &TextObject, target: f64) -> Option<f64> {
     }
     let head = edit::slice_runs(&t.runs, 0, end);
     let measure = |tr: f64| {
-        let mut h = TextObject { kind: TextKind::Point, xf: Affine::IDENTITY, runs: head.clone(), para: Default::default(), cached_bounds: None };
+        let mut h = TextObject {
+            kind: TextKind::Point,
+            xf: Affine::IDENTITY,
+            runs: head.clone(),
+            para: Default::default(),
+            area: Default::default(),
+            cached_bounds: None,
+        };
         for r in &mut h.runs {
             r.style.tracking = tr;
         }

@@ -32,6 +32,15 @@ pub fn specs() -> Vec<CommandSpec> {
             set_text
         ),
         cmd!(
+            "text.areaOptions",
+            "Area Type Options…",
+            ["Type"],
+            None,
+            "{ids?, rows?, columns?, gutter?: pt, inset?: pt, firstBaseline?: ascent|capHeight|xHeight|leading|fixed, firstBaselineMin?: pt} set the selected area type's options (none given: query) → the first object's options",
+            has_selection,
+            area_options
+        ),
+        cmd!(
             "text.setStyle",
             "Character",
             [],
@@ -206,4 +215,83 @@ fn set_style(s: &mut Session, p: &Value) -> Result<Value> {
         Ok(())
     })?;
     Ok(json!({ "ids": ids.iter().map(|i| i.0).collect::<Vec<_>>() }))
+}
+
+fn area_options(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "text.areaOptions";
+    let ids: Vec<NodeId> = {
+        let d = &s.doc()?.doc;
+        text_targets(s, p, C)?
+            .into_iter()
+            .filter(|i| matches!(d.node(*i).map(|n| &n.kind), Some(NodeKind::Text(t)) if matches!(t.kind, drawcraft_doc::TextKind::Area { .. })))
+            .collect()
+    };
+    let first = ids.first().ok_or_else(|| bad(C, "select area type (text in a frame)"))?;
+    let current = match &s.doc()?.doc.node(*first).map(|n| &n.kind) {
+        Some(NodeKind::Text(t)) => t.area.clone(),
+        _ => unreachable!(),
+    };
+    let mut v = serde_json::to_value(&current).map_err(|e| EngineError::Other(e.to_string()))?;
+    let mut changed = false;
+    if let (Some(o), Some(src)) = (v.as_object_mut(), p.as_object()) {
+        for (k, val) in src {
+            if o.contains_key(k) && k != "ids" {
+                o.insert(k.clone(), val.clone());
+                changed = true;
+            }
+        }
+    }
+    if !changed {
+        return Ok(v);
+    }
+    let mut opts: drawcraft_doc::AreaOptions = serde_json::from_value(v).map_err(|e| bad(C, e.to_string()))?;
+    opts.rows = opts.rows.clamp(1, 100);
+    opts.columns = opts.columns.clamp(1, 100);
+    opts.gutter = opts.gutter.clamp(0.0, 10_000.0);
+    opts.inset = opts.inset.clamp(0.0, 10_000.0);
+    opts.first_baseline_min = opts.first_baseline_min.clamp(0.0, 10_000.0);
+    let out = serde_json::to_value(&opts).map_err(|e| EngineError::Other(e.to_string()))?;
+    s.edit("Area Type Options", |d, _| {
+        for id in &ids {
+            if let Some(NodeKind::Text(t)) = d.node_mut(*id).map(|n| &mut n.kind) {
+                t.area = opts.clone();
+                refresh_bounds(t);
+            }
+        }
+        Ok(())
+    })?;
+    Ok(out)
+}
+
+#[cfg(test)]
+mod area_tests {
+    use super::*;
+
+    #[test]
+    fn area_options_columns_change_layout() {
+        let mut s = Session::new();
+        s.execute("file.new", &json!({"width": 400, "height": 400})).unwrap();
+        let text = "word ".repeat(80);
+        let id = s.execute("text.create", &json!({"x": 10, "y": 10, "text": text, "area": {"width": 300, "height": 120}})).unwrap()["id"]
+            .as_u64()
+            .unwrap();
+        s.execute("select.set", &json!({"ids": [id]})).unwrap();
+        let q = s.execute("text.areaOptions", &json!({})).unwrap();
+        assert_eq!((q["rows"].as_u64(), q["columns"].as_u64()), (Some(1), Some(1)));
+        let lay = |s: &Session| match &s.doc().unwrap().doc.node(NodeId(id)).unwrap().kind {
+            NodeKind::Text(t) => drawcraft_text::layout(drawcraft_text::FontDb::global(), t),
+            _ => panic!(),
+        };
+        assert_eq!(lay(&s).frames.len(), 1);
+        let r = s.execute("text.areaOptions", &json!({"columns": 3, "gutter": 12, "inset": 4, "firstBaseline": "capHeight"})).unwrap();
+        assert_eq!(r["firstBaseline"], "capHeight");
+        let l = lay(&s);
+        assert_eq!(l.frames.len(), 3, "three column cells");
+        // Glyphs land in more than one column.
+        let xs: Vec<f64> = l.glyphs.iter().map(|g| g.origin.x).collect();
+        assert!(xs.iter().any(|x| *x > 110.0 + 10.0) && xs.iter().any(|x| *x < 100.0));
+        s.execute("edit.undo", &json!({})).unwrap();
+        assert_eq!(lay(&s).frames.len(), 1);
+        assert!(s.execute("text.areaOptions", &json!({"firstBaseline": "nope"})).is_err());
+    }
 }

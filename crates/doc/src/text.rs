@@ -116,6 +116,42 @@ pub struct ParaStyle {
     pub style_name: Option<String>,
 }
 
+/// Area Type Options "First Baseline" offset.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum FirstBaseline {
+    /// The tallest glyph ascent touches the frame top (Illustrator's default).
+    #[default]
+    Ascent,
+    CapHeight,
+    XHeight,
+    /// The first line's leading.
+    Leading,
+    /// Exactly `first_baseline_min` below the top.
+    Fixed,
+}
+
+/// Area Type Options: rows and columns, gutters, inset and first baseline of area type.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct AreaOptions {
+    pub rows: usize,
+    pub columns: usize,
+    /// Gutter between rows/columns in points.
+    pub gutter: f64,
+    /// Inset from the frame edges in points.
+    pub inset: f64,
+    pub first_baseline: FirstBaseline,
+    /// Minimum first-baseline offset in points.
+    pub first_baseline_min: f64,
+}
+
+impl Default for AreaOptions {
+    fn default() -> Self {
+        Self { rows: 1, columns: 1, gutter: 18.0, inset: 0.0, first_baseline: FirstBaseline::Ascent, first_baseline_min: 0.0 }
+    }
+}
+
 /// A named character or paragraph style: the attributes it sets (a subset of [`CharStyle`] or
 /// [`ParaStyle`] fields, by their serialized names). Text using it records the name.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -152,6 +188,9 @@ pub struct TextObject {
     pub runs: Vec<TextRun>,
     #[serde(default)]
     pub para: ParaStyle,
+    /// Area Type Options (area type only).
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
+    pub area: AreaOptions,
     /// Cached layout bounds in text space, filled in by the layout engine (not serialized).
     #[serde(skip)]
     pub cached_bounds: Option<Rect>,
@@ -164,6 +203,7 @@ impl TextObject {
             xf: Affine::translate(origin.to_vec2()),
             runs: vec![TextRun { text: text.into(), style }],
             para: ParaStyle::default(),
+            area: AreaOptions::default(),
             cached_bounds: None,
         }
     }

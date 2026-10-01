@@ -805,7 +805,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 Sep,
                 c("Convert To Area Type", "type.convertToAreaType"),
                 c("Convert To Point Type", "type.convertToPointType"),
-                todo("Area Type Options…"),
+                c("Area Type Options…", "text.areaOptions"),
                 sub(
                     "Type on a Path",
                     vec![
@@ -1162,6 +1162,16 @@ pub fn invoke(app: &mut DrawcraftApp, id: &str, p: Value) {
         && let Some(fields) = crate::panels::pattern_options::repeat_fields(app)
     {
         let _ = app.run("ui.paramDialog", json!({"command": id, "label": "Repeat Options", "params": fields}));
+        return;
+    }
+    // Area Type Options: a dialog with the selected area type's current values.
+    if id == "text.areaOptions" && p.as_object().is_none_or(|o| o.is_empty()) {
+        match app.session.execute(id, &json!({})) {
+            Ok(fields) => {
+                let _ = app.run("ui.paramDialog", json!({"command": id, "label": "Area Type Options", "params": fields}));
+            }
+            Err(e) => app.status(e.to_string()),
+        }
         return;
     }
     if let Err(e) = app.run(id, p) {

@@ -23,19 +23,7 @@ pub use fontdb::{FALLBACK_FAMILY, FontDb, FontFace};
 use kurbo::{BezPath, Point, Rect, Vec2};
 pub use layout::{layout, layout_with};
 
-/// Area Type Options "First Baseline" offset.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum FirstBaseline {
-    /// The tallest glyph ascent touches the frame top (Illustrator's default).
-    #[default]
-    Ascent,
-    CapHeight,
-    XHeight,
-    /// The first line's leading.
-    Leading,
-    /// Exactly `first_baseline_min` below the top.
-    Fixed,
-}
+pub use drawcraft_doc::FirstBaseline;
 
 /// Paragraph composer (Paragraph panel menu).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -48,7 +36,7 @@ pub enum Composer {
 }
 
 /// Layout parameters that the document model doesn't store per object (Area Type Options,
-/// composer, OpenType features). [`layout`] uses the defaults.
+/// composer, OpenType features). [`layout`] takes rows/columns/inset/first baseline from the object.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LayoutOptions {
     /// Area type rows and columns (text flows down each column, then across).

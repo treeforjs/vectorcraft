@@ -690,7 +690,8 @@ fn text_fallback(im: &mut Importer, svg: &str, w: f64, h: f64, layer_mode: bool)
             Some("end") => Justify::Right,
             _ => Justify::Left,
         };
-        let mut obj = TextObject { kind: TextKind::Point, xf, runs: rb.runs, para: Default::default(), cached_bounds: None };
+        let mut obj =
+            TextObject { kind: TextKind::Point, xf, runs: rb.runs, para: Default::default(), area: Default::default(), cached_bounds: None };
         obj.para.justify = justify;
         let mut node = im.named(t.attribute("id").unwrap_or(""), NodeKind::Text(Box::new(obj)));
         if let Some(o) = ctx.own(t, "opacity").and_then(|o| o.trim().parse::<f32>().ok()) {

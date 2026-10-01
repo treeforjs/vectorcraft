@@ -53,7 +53,17 @@ impl Ctx<'_> {
 
 /// Lay out a text object into text-space glyph outlines (default [`LayoutOptions`]).
 pub fn layout(db: &FontDb, t: &TextObject) -> TextLayout {
-    layout_with(db, t, &LayoutOptions::default())
+    let a = &t.area;
+    let opts = LayoutOptions {
+        rows: a.rows,
+        columns: a.columns,
+        gutter: a.gutter,
+        inset: a.inset,
+        first_baseline: a.first_baseline,
+        first_baseline_min: a.first_baseline_min,
+        ..LayoutOptions::default()
+    };
+    layout_with(db, t, &opts)
 }
 
 /// Lay out a text object with explicit options (area type rows/columns, inset, first baseline,

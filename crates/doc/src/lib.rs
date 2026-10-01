@@ -37,7 +37,7 @@ pub use live::{BlendOrientation, BlendSpacing, BlendSpec, EnvelopeKind, Gradient
 pub use node::{ImageObject, LAYER_COLORS, LayerColor, LiveShape, Node, NodeId, NodeKind, OpacityMask};
 pub use pattern::{Overlap, PatternDef, PatternEdit, RepeatKind, RepeatSpec, TileType};
 pub use selection::{AnchorRef, Selection};
-pub use text::{CharStyle, Justify, ParaStyle, TextKind, TextObject, TextRun, TextStyleDef};
+pub use text::{AreaOptions, CharStyle, FirstBaseline, Justify, ParaStyle, TextKind, TextObject, TextRun, TextStyleDef};
 
 use drawcraft_color::{Swatch, SwatchGroup};
 use drawcraft_geom::{Point, Rect};
