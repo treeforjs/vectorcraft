@@ -8,6 +8,7 @@
 mod brand;
 pub mod canvas;
 pub mod chrome;
+pub mod community;
 pub mod control;
 pub mod cursors;
 pub mod dialogs;
@@ -44,6 +45,9 @@ pub type WriteFn = Box<dyn FnMut(&str, &[u8]) -> Result<(), String>>;
 pub type Inbox = Arc<Mutex<Vec<(String, Vec<u8>)>>>;
 pub type DownloadFn = Box<dyn FnMut(&str, &[u8])>;
 
+/// Opens a URL in the system browser.
+pub type OpenUrlFn = Box<dyn FnMut(&str)>;
+
 /// Platform services injected by the host app (desktop or web).
 #[derive(Default)]
 pub struct Services {
@@ -62,6 +66,8 @@ pub struct Services {
     /// Read the system clipboard's text (desktop). Without it, pasted text only arrives with
     /// egui's Paste event (web, and keyboard paste everywhere).
     pub clipboard_read: Option<Box<dyn FnMut() -> Option<String>>>,
+    /// Open a URL in the system browser (desktop). Without it, egui opens it (a new tab on the web).
+    pub open_url: Option<OpenUrlFn>,
 }
 
 /// Cached canvas raster.
@@ -131,6 +137,8 @@ pub struct VectorcraftApp {
     clipboard_out: Option<String>,
     clipboard_published: Option<String>,
     pub(crate) clipboard_in: Option<String>,
+    /// A URL to open through egui next frame (when the host has no `open_url` service).
+    pending_url: Option<String>,
 }
 
 impl VectorcraftApp {
@@ -157,6 +165,7 @@ impl VectorcraftApp {
             clipboard_out: None,
             clipboard_published: None,
             clipboard_in: None,
+            pending_url: None,
             control_rx: None,
             pending_screenshots: vec![],
             queued_screenshots: vec![],
@@ -241,6 +250,25 @@ impl VectorcraftApp {
         match self.session.execute("clipboard.importSvg", &serde_json::json!({ "svg": text, "center": center })) {
             Ok(_) => self.clipboard_published = Some(text),
             Err(e) => self.ui.status = format!("Couldn't paste SVG: {e}"),
+        }
+    }
+
+    /// Open a link in the browser (Help → Discord, website, GitHub…).
+    pub fn open_url(&mut self, url: &str) {
+        match self.services.open_url.as_mut() {
+            Some(open) => open(url),
+            None => self.pending_url = Some(url.to_string()),
+        }
+        self.ui.status = format!("Opened {url}");
+    }
+
+    /// Run a Help link command and open the URL it returns.
+    pub fn open_link(&mut self, id: &str) {
+        if let Ok(v) = self.run(id, serde_json::json!({}))
+            && let Some(u) = v["url"].as_str()
+        {
+            let u = u.to_string();
+            self.open_url(&u);
         }
     }
 
@@ -388,6 +416,9 @@ impl VectorcraftApp {
         }
         self.collect_screenshots(ctx);
         self.issue_screenshots(ctx);
+        if let Some(u) = self.pending_url.take() {
+            ctx.open_url(egui::OpenUrl::new_tab(u));
+        }
         if let Some(t) = self.clipboard_out.take() {
             ctx.copy_text(t);
         }

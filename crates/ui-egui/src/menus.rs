@@ -512,6 +512,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
             "VectorCraft",
             vec![
                 c("About VectorCraft", "help.about"),
+                c("Join Our Discord", "help.discord"),
                 Sep,
                 c("Settings…", "edit.preferences"),
                 Sep,
@@ -1058,7 +1059,20 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 sub("Symbol Libraries", vec![todo("Arrows"), todo("Charts"), todo("Web Buttons and Bars")]),
             ],
         ),
-        ("Help", vec![c("Search Commands…", "help.commandPalette"), todos("VectorCraft Help…", "F1"), Sep, c("About VectorCraft", "help.about")]),
+        (
+            "Help",
+            vec![
+                c("Join Our Discord", "help.discord"),
+                c("ArtCraft Website", "help.website"),
+                c("VectorCraft on getartcraft.com", "help.appPage"),
+                c("VectorCraft on GitHub", "help.github"),
+                Sep,
+                c("Search Commands…", "help.commandPalette"),
+                todos("VectorCraft Help…", "F1"),
+                Sep,
+                c("About VectorCraft", "help.about"),
+            ],
+        ),
     ]
 }
 
@@ -1184,6 +1198,11 @@ pub fn invoke(app: &mut VectorcraftApp, id: &str, p: Value) {
             }
             Err(e) => app.status(e.to_string()),
         }
+        return;
+    }
+    // Help links: the command returns the URL; a menu click opens it (agents just get the URL).
+    if matches!(id, "help.discord" | "help.website" | "help.appPage" | "help.github") {
+        app.open_link(id);
         return;
     }
     if let Err(e) = app.run(id, p) {

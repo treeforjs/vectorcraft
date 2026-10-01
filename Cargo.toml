@@ -55,6 +55,7 @@ eframe = { version = "0.36", default-features = false }
 egui_kittest = "0.36"
 rfd = "0.17"
 arboard = { version = "3.6", default-features = false }
+webbrowser = "1"
 
 [workspace.lints.rust]
 unsafe_code = "deny"

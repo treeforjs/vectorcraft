@@ -851,6 +851,10 @@ fn home(app: &mut VectorcraftApp, ui: &mut Ui, rect: egui::Rect) {
             }
         }
     });
+    ui.add_space(28.0);
+    ui.label(egui::RichText::new("Community").font(theme::semibold(14.0)).color(t.text));
+    ui.add_space(10.0);
+    crate::community::links(app, ui);
 }
 
 fn kurbo_flatten(p: &BezPath, tol: f64, f: &mut impl FnMut(PathEl)) {

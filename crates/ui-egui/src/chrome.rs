@@ -30,7 +30,7 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
                 menus::menu_bar(app, ui);
             }
             let full = ui.max_rect();
-            let right = egui::Rect::from_min_max(egui::pos2(full.right() - 340.0, full.top()), full.right_bottom());
+            let right = egui::Rect::from_min_max(egui::pos2(full.right() - 440.0, full.top()), full.right_bottom());
             let mut rui = ui.new_child(egui::UiBuilder::new().max_rect(right).layout(egui::Layout::right_to_left(egui::Align::Center)));
             let ui = &mut rui;
             // Workspace switcher: shows the current workspace, opens Window → Workspace.
@@ -52,6 +52,8 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
                 app.ui.palette_open = true;
                 app.ui.palette_query.clear();
             }
+            ui.add_space(10.0);
+            crate::community::discord_button(app, ui, false);
         });
     });
 }

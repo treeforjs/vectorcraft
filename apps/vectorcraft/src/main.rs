@@ -108,6 +108,10 @@ fn services() -> Services {
         write: Some(Box::new(|p: &str, b: &[u8]| std::fs::write(p, b).map_err(|e| e.to_string()))),
         // Menu-bar Paste never sees egui's Paste event, so read the clipboard directly.
         clipboard_read: Some(Box::new(|| arboard::Clipboard::new().ok()?.get_text().ok())),
+        // Help → Discord / website / GitHub, the Discord button, About and Home links.
+        open_url: Some(Box::new(|url: &str| {
+            let _ = webbrowser::open(url);
+        })),
         ..Default::default()
     }
 }
