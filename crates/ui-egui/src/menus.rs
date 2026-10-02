@@ -1210,7 +1210,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         panel("OpenType", "openType"),
                         panel("Paragraph", "paragraph"),
                         panel("Paragraph Styles", "paraStyles"),
-                        todo("Tabs"),
+                        panel("Tabs", "tabs"),
                     ],
                 ),
                 todo("Variables"),

@@ -30,6 +30,7 @@ pub mod separations;
 pub mod stroke;
 pub mod swatches;
 pub mod symbols;
+pub mod tabs;
 pub mod text_styles;
 pub mod transform;
 pub mod transparency;
@@ -85,6 +86,7 @@ pub fn show_icon_panel(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) {
         "charStyles" => text_styles::show(app, ui, text_styles::Kind::Char),
         "paraStyles" => text_styles::show(app, ui, text_styles::Kind::Para),
         "magicWand" => magic_wand::show(app, ui),
+        "tabs" => tabs::show(app, ui),
         _ => {
             dim_label(ui, "This panel is on the roadmap (see the parity plan).");
         }
@@ -122,6 +124,7 @@ pub fn panel_menu_items(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) {
         "charStyles" => text_styles::menu(app, ui, text_styles::Kind::Char),
         "paraStyles" => text_styles::menu(app, ui, text_styles::Kind::Para),
         "magicWand" => magic_wand::menu(app, ui),
+        "tabs" => tabs::menu(app, ui),
         _ => {
             ui.add_enabled(false, egui::Button::new("No options").frame(false));
         }

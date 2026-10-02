@@ -38,7 +38,8 @@ pub use node::{ImageObject, LAYER_COLORS, LayerColor, LiveShape, Node, NodeId, N
 pub use pattern::{Overlap, PatternDef, PatternEdit, RepeatKind, RepeatSpec, TileType};
 pub use selection::{AnchorRef, Selection};
 pub use text::{
-    AreaOptions, CharStyle, FirstBaseline, Justify, ParaStyle, PathEffect, TextKind, TextObject, TextRun, TextStyleDef, TextWrap, WrapShape,
+    AreaOptions, CharStyle, FirstBaseline, Justify, ParaStyle, PathEffect, TabAlign, TabStop, TextKind, TextObject, TextRun, TextStyleDef, TextWrap,
+    WrapShape,
 };
 pub use vectorcraft_color as color;
 pub use vectorcraft_geom as geom;

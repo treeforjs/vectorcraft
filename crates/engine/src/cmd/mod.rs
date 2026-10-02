@@ -31,6 +31,7 @@ pub mod prefscmds;
 pub mod rasterfx;
 mod recolor;
 mod select;
+pub(crate) mod tabs;
 mod textedit;
 pub mod textstyles;
 pub(crate) mod textwrap;
@@ -169,6 +170,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(rasterfx::specs());
         v.extend(views::specs());
         v.extend(maskedit::specs());
+        v.extend(tabs::specs());
         v.extend(docmenu::specs());
         v.extend(docinfo::specs());
         v.extend(panelcmds::specs());

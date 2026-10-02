@@ -389,3 +389,33 @@ fn layout_is_fast() {
     let budget = if cfg!(debug_assertions) { 100.0 } else { 5.0 };
     assert!(per < budget, "{per} ms");
 }
+
+#[test]
+fn tab_stops_position_text() {
+    use vectorcraft_doc::{TabAlign, TabStop};
+    let stop = |position: f64, align: TabAlign| TabStop { position, align, leader: String::new(), align_on: '.' };
+    let x_of = |t: &TextObject, byte: usize| layout(db(), t).glyphs.iter().find(|g| g.byte == byte).map(|g| g.origin.x).unwrap();
+    // Default stops every 36 pt.
+    let mut t = point("a\tb", style(12.0));
+    assert!((x_of(&t, 2) - 36.0).abs() < 1e-6);
+    // A left stop at 100.
+    t.para.tabs = vec![stop(100.0, TabAlign::Left)];
+    assert!((x_of(&t, 2) - 100.0).abs() < 1e-6);
+    // A right stop: the text after the tab ends at 200.
+    let mut r = point("a\t12345", style(12.0));
+    r.para.tabs = vec![stop(200.0, TabAlign::Right)];
+    let lay = layout(db(), &r);
+    let last = lay.glyphs.last().unwrap();
+    assert!((last.origin.x + last.advance - 200.0).abs() < 1e-6);
+    // A decimal stop: the decimal points of two lines line up.
+    let mut d = point("x\t12.5\ny\t1234.75", style(12.0));
+    d.para.tabs = vec![stop(150.0, TabAlign::Decimal)];
+    let lay = layout(db(), &d);
+    let dots: Vec<f64> = lay.glyphs.iter().filter(|g| d.plain_text()[g.byte..].starts_with('.')).map(|g| g.origin.x).collect();
+    assert_eq!(dots.len(), 2);
+    assert!((dots[0] - 150.0).abs() < 1e-6 && (dots[1] - 150.0).abs() < 1e-6, "{dots:?}");
+    // Past the last explicit stop, default stops resume.
+    let mut p = point("a\tb\tc", style(12.0));
+    p.para.tabs = vec![stop(50.0, TabAlign::Left)];
+    assert!((x_of(&p, 4) - 72.0).abs() < 1e-6);
+}

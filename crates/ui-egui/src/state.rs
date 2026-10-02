@@ -79,6 +79,7 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("charStyles", "Character Styles", "type"),
     ("openType", "OpenType", "dc-touch-type"),
     ("paraStyles", "Paragraph Styles", "pilcrow"),
+    ("tabs", "Tabs", "align-horizontal-justify-start"),
     ("history", "History", "history"),
     ("actions", "Actions", "dc-actions"),
     ("info", "Info", "info"),

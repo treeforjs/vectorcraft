@@ -36,7 +36,8 @@ impl Ctx<'_> {
 
     fn emit(&mut self, g: &SGlyph, pre: Affine, origin: Point, angle: f64, advance: f64, line: usize) {
         let src = self.db.outline(&g.face, g.gid);
-        let outline = if src.elements().is_empty() || g.is_soft_hyphen() {
+        // Control characters (tabs) and soft hyphens draw nothing (fonts map them to .notdef).
+        let outline = if src.elements().is_empty() || g.is_soft_hyphen() || g.ch.is_control() {
             BezPath::new()
         } else {
             let local = Affine::rotate(-g.rotation.to_radians()) * Affine::translate((g.dx, g.dy - g.bshift)) * Affine::scale_non_uniform(g.sx, g.sy);
@@ -403,6 +404,32 @@ impl Pen<'_> {
     }
 }
 
+/// Advance of a tab at pen position `x`: up to the next stop after it (explicit stops first, then
+/// every ½ inch). Right, centre and decimal stops align the text that follows (`rest`, up to the
+/// next tab) on the stop.
+fn tab_advance(tabs: &[vectorcraft_doc::TabStop], origin: f64, x: f64, rest: &[SGlyph]) -> f64 {
+    use vectorcraft_doc::TabAlign;
+    let rel = x - origin;
+    let seg: Vec<&SGlyph> = rest.iter().take_while(|g| g.ch != '\t').collect();
+    let width: f64 = seg.iter().map(|g| g.adv).sum();
+    let target = |pos: f64, align: TabAlign, on: char| match align {
+        TabAlign::Left => pos,
+        TabAlign::Right => pos - width,
+        TabAlign::Center => pos - width / 2.0,
+        TabAlign::Decimal => pos - seg.iter().take_while(|g| g.ch != on).map(|g| g.adv).sum::<f64>(),
+    };
+    let explicit = tabs.iter().find_map(|t| {
+        let at = target(t.position, t.align, t.align_on);
+        (at > rel + 1e-6).then_some(at)
+    });
+    let at = explicit.unwrap_or_else(|| {
+        let last = tabs.iter().map(|t| t.position).fold(0.0, f64::max).max(0.0);
+        let base = rel.max(last);
+        ((base / vectorcraft_doc::text::DEFAULT_TAB_INTERVAL).floor() + 1.0) * vectorcraft_doc::text::DEFAULT_TAB_INTERVAL
+    });
+    (at - rel).max(0.0)
+}
+
 /// Greedy break: returns (end glyph index, hyphenated) for a line starting at `i` of `width`.
 fn break_line(text: &str, g: &[SGlyph], i: usize, width: f64, hyphenate: bool) -> (usize, bool) {
     if !width.is_finite() {
@@ -653,9 +680,13 @@ fn flow(cx: &mut Ctx<'_>, paras: &[Range<usize>], para: &ParaStyle, regions: Opt
             let glyph_start = cx.out.glyphs.len();
             let mut x = start_x;
             let mut x_end = start_x;
+            // Tab stops are measured from the frame's left edge (point type: the origin).
+            let tab_origin = if regions.is_some() { x0 } else { 0.0 };
             for (j, g) in sg.iter().enumerate().take(end).skip(i) {
                 let mut adv = g.adv;
-                if j < trimmed {
+                if g.ch == '\t' {
+                    adv = tab_advance(&para.tabs, tab_origin, x, &sg[j + 1..trimmed.max(j + 1)]);
+                } else if j < trimmed {
                     if g.is_space() {
                         adv += per_space;
                     } else if j + 1 < trimmed {

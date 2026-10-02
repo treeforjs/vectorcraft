@@ -99,6 +99,40 @@ impl CharStyle {
     }
 }
 
+/// Tab stop alignment (Tabs panel).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TabAlign {
+    #[default]
+    Left,
+    Center,
+    Right,
+    /// Aligns on the first `align_on` character (a decimal point by default).
+    Decimal,
+}
+
+/// A tab stop, measured from the left edge of the text (area type: the frame's left edge).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TabStop {
+    pub position: f64,
+    #[serde(default)]
+    pub align: TabAlign,
+    /// Leader characters repeated across the tab's gap (e.g. ". ").
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub leader: String,
+    /// Decimal tabs align on this character.
+    #[serde(default = "default_align_on")]
+    pub align_on: char,
+}
+
+fn default_align_on() -> char {
+    '.'
+}
+
+/// Distance between default tab stops when no explicit stop applies (½ inch).
+pub const DEFAULT_TAB_INTERVAL: f64 = 36.0;
+
 /// Paragraph attributes (the Paragraph panel).
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct ParaStyle {
@@ -116,6 +150,9 @@ pub struct ParaStyle {
     pub space_after: f64,
     #[serde(default)]
     pub hyphenate: bool,
+    /// Tab stops (Tabs panel), sorted by position.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tabs: Vec<TabStop>,
     /// Paragraph style (Paragraph Styles panel) these attributes come from; None = Normal.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub style_name: Option<String>,
