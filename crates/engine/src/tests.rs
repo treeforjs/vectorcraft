@@ -1,7 +1,7 @@
 use serde_json::json;
 
 use super::*;
-use vectorcraft_tools::{PointerEvent, PointerKind};
+use vectorcraft_tools::{PointerEvent, PointerKind, ToolKey};
 
 fn session() -> Session {
     let mut s = Session::new();
@@ -319,6 +319,9 @@ fn flare_tool_two_step_gesture_is_one_undo() {
     s.select_tool("flare", v).unwrap();
     s.pointer(&PointerEvent::new(PointerKind::Down, 200.0, 200.0), v).unwrap();
     s.pointer(&PointerEvent::new(PointerKind::Drag, 240.0, 200.0), v).unwrap();
+    // ↓ twice: 13 rays (one compound path with a subpath per ray).
+    s.tool_key(ToolKey::Down, Default::default(), v).unwrap();
+    s.tool_key(ToolKey::Down, Default::default(), v).unwrap();
     s.pointer(&PointerEvent::new(PointerKind::Up, 240.0, 200.0), v).unwrap();
     s.pointer(&PointerEvent::new(PointerKind::Move, 500.0, 400.0), v).unwrap();
     s.pointer(&PointerEvent::new(PointerKind::Down, 500.0, 400.0), v).unwrap();
@@ -334,6 +337,8 @@ fn flare_tool_two_step_gesture_is_one_undo() {
     assert!(b.x1 > 400.0 && b.y1 > 300.0, "{b:?}");
     let centre = children.iter().find(|c| c.name.as_deref() == Some("Center")).unwrap().geometric_bounds().unwrap();
     assert!((centre.width() - 80.0).abs() < 0.5);
+    let rays = children.iter().find(|c| c.name.as_deref() == Some("Rays")).unwrap();
+    assert_eq!(rays.path_data().unwrap().subpaths.len(), 13);
 }
 
 #[test]

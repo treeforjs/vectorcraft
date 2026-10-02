@@ -27,11 +27,16 @@ pub struct FlareTool {
     placed: Option<(Point, f64)>,
     hover: Point,
     began: bool,
+    /// Ray count changed with ↑/↓ during the gesture (None = the command's default, 15).
+    rays: Option<u64>,
 }
 
 impl FlareTool {
-    fn params(c: Point, diameter: f64, end: Option<Point>) -> Value {
+    fn params(&self, c: Point, diameter: f64, end: Option<Point>) -> Value {
         let mut v = json!({ "cx": c.x, "cy": c.y, "diameter": diameter.max(1.0) });
+        if let Some(r) = self.rays {
+            v["rays"] = json!(r);
+        }
         if let Some(e) = end {
             v["x2"] = json!(e.x);
             v["y2"] = json!(e.y);
@@ -63,21 +68,21 @@ impl Tool for FlareTool {
                         self.began = true;
                         return vec![
                             Action::Begin("Flare".into()),
-                            Action::Preview("shape.flare".into(), Self::params(c, 2.0 * ev.pos.distance(c), None)),
+                            Action::Preview("shape.flare".into(), self.params(c, 2.0 * ev.pos.distance(c), None)),
                         ];
                     }
                     if self.began {
-                        return vec![Action::Preview("shape.flare".into(), Self::params(c, 2.0 * ev.pos.distance(c), None))];
+                        return vec![Action::Preview("shape.flare".into(), self.params(c, 2.0 * ev.pos.distance(c), None))];
                     }
                 } else if let Some((c, d)) = self.placed {
-                    return vec![Action::Preview("shape.flare".into(), Self::params(c, d, Some(ev.pos)))];
+                    return vec![Action::Preview("shape.flare".into(), self.params(c, d, Some(ev.pos)))];
                 }
                 vec![]
             }
             PointerKind::Up => {
                 if let Some((c, d)) = self.placed.take() {
                     self.began = false;
-                    return vec![Action::Preview("shape.flare".into(), Self::params(c, d, Some(ev.pos))), Action::Commit];
+                    return vec![Action::Preview("shape.flare".into(), self.params(c, d, Some(ev.pos))), Action::Commit];
                 }
                 let Some((c, p)) = self.drag.take() else { return vec![] };
                 if self.began {
@@ -90,7 +95,7 @@ impl Tool for FlareTool {
             }
             PointerKind::Move => {
                 if let Some((c, d)) = self.placed {
-                    return vec![Action::Preview("shape.flare".into(), Self::params(c, d, Some(ev.pos)))];
+                    return vec![Action::Preview("shape.flare".into(), self.params(c, d, Some(ev.pos)))];
                 }
                 vec![]
             }
@@ -98,7 +103,19 @@ impl Tool for FlareTool {
         }
     }
     fn key(&mut self, _cx: &ToolContext, key: ToolKey, _mods: Mods) -> Vec<Action> {
+        // ↑/↓ while drawing add/remove rays.
+        if matches!(key, ToolKey::Up | ToolKey::Down) && self.began {
+            let r = self.rays.unwrap_or(15);
+            self.rays = Some(if key == ToolKey::Up { (r + 1).min(50) } else { r.saturating_sub(1) });
+            let preview = match (self.drag, self.placed) {
+                (Some((c, p)), _) => self.params(c, 2.0 * p.distance(c), None),
+                (_, Some((c, d))) => self.params(c, d, Some(self.hover)),
+                _ => return vec![],
+            };
+            return vec![Action::Preview("shape.flare".into(), preview)];
+        }
         if key == ToolKey::Escape && self.busy() {
+            self.rays = None;
             self.drag = None;
             self.placed = None;
             let began = std::mem::take(&mut self.began);
