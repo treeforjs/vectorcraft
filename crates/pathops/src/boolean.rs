@@ -196,7 +196,12 @@ impl Tidy {
 impl Arrangement {
     pub(crate) fn new(paths: &[(BezPath, FillRule)]) -> Result<Self, PathOpsError> {
         let eps = eps_for(paths.iter().map(|p| &p.0))?;
-        let top = Topology::<Multi>::from_paths(paths.iter().enumerate().map(|(i, (p, _))| (p, i)), eps).map_err(|_| PathOpsError::OpenPath)?;
+        // The sweep can panic on rare near-degenerate input; that must never take the app down,
+        // so it becomes an error (callers fall back to leaving the art unchanged).
+        let sweep = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            Topology::<Multi>::from_paths(paths.iter().enumerate().map(|(i, (p, _))| (p, i)), eps)
+        }));
+        let top = sweep.map_err(|_| PathOpsError::Degenerate)?.map_err(|_| PathOpsError::OpenPath)?;
         let tidy = Tidy::keeping(DEFAULT_PRECISION, paths.iter().map(|p| &p.0));
         Ok(Self { top, rules: paths.iter().map(|p| p.1).collect(), tidy })
     }

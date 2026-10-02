@@ -26,4 +26,6 @@ pub enum PathOpsError {
     NonFinite,
     #[error("input path could not be closed")]
     OpenPath,
+    #[error("the shapes are too degenerate to combine")]
+    Degenerate,
 }
