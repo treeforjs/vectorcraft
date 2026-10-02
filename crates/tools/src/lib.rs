@@ -13,6 +13,7 @@ pub mod catalog;
 pub mod direct;
 pub mod distort;
 pub mod draw2;
+pub mod extra;
 pub mod guides;
 pub mod meshblend;
 pub mod pen;
@@ -257,6 +258,7 @@ pub fn create(id: &str) -> Box<dyn Tool> {
             .or_else(|| xform::create(other))
             .or_else(|| meshblend::create(other))
             .or_else(|| distort::create(other))
+            .or_else(|| extra::create(other))
             .unwrap_or_else(|| Box::new(NoopTool(tool_info(other).map(|t| t.id).unwrap_or("selection")))),
     }
 }

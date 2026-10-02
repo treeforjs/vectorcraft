@@ -310,3 +310,45 @@ fn every_command_survives_empty_params() {
         }
     }
 }
+
+#[test]
+fn flare_tool_two_step_gesture_is_one_undo() {
+    let mut s = session();
+    let v = ViewInfo::default();
+    let undo_before = s.doc().unwrap().history.undo.len();
+    s.select_tool("flare", v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Down, 200.0, 200.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Drag, 240.0, 200.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Up, 240.0, 200.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Move, 500.0, 400.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Down, 500.0, 400.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Up, 500.0, 400.0), v).unwrap();
+    let st = s.doc().unwrap();
+    assert_eq!(st.history.undo.len(), undo_before + 1);
+    let g = st.doc.node(st.selection.objects[0]).unwrap();
+    assert_eq!(g.name.as_deref(), Some("Flare"));
+    // Halo + rays + centre + 10 rings; the rings reach towards the end point.
+    let NodeKind::Group { children, .. } = &g.kind else { panic!("flare is a group") };
+    assert_eq!(children.len(), 13);
+    let b = g.geometric_bounds().unwrap();
+    assert!(b.x1 > 400.0 && b.y1 > 300.0, "{b:?}");
+    let centre = children.iter().find(|c| c.name.as_deref() == Some("Center")).unwrap().geometric_bounds().unwrap();
+    assert!((centre.width() - 80.0).abs() < 0.5);
+}
+
+#[test]
+fn reshape_moves_the_grabbed_point_and_its_neighbourhood() {
+    let mut s = session();
+    let r = rect(&mut s, 0.0, 0.0, 100.0, 100.0);
+    // Grab the middle of the top edge: a new anchor appears there and moves the full delta.
+    s.execute("path.reshape", &json!({"id": r.0, "x": 50.0, "y": 0.0, "dx": 0.0, "dy": -40.0})).unwrap();
+    let st = s.doc().unwrap();
+    let pd = st.doc.node(r).unwrap().path_data().unwrap().clone();
+    assert_eq!(pd.anchor_count(), 5);
+    let pts: Vec<_> = pd.anchors().map(|(_, _, a)| a.p).collect();
+    assert!(pts.iter().any(|p| (p.x - 50.0).abs() < 1e-6 && (p.y + 40.0).abs() < 1e-6), "{pts:?}");
+    // Top corners follow partially, bottom corners (far away) stay put.
+    let tl = pts.iter().find(|p| p.x < 1.0 && p.y < 0.0).expect("top-left moved up");
+    assert!(tl.y > -40.0);
+    assert!(pts.iter().filter(|p| (p.y - 100.0).abs() < 1e-9).count() == 2);
+}

@@ -86,6 +86,15 @@ pub fn specs() -> Vec<CommandSpec> {
             has_selection,
             delete_anchors
         ),
+        cmd!(
+            "path.reshape",
+            "Reshape",
+            [],
+            None,
+            "{id, x, y, dx, dy, tol=3, radius?} Reshape tool: grab the path at (x, y) (adding an anchor there unless one is within tol) and drag it by (dx, dy); nearby anchors follow with a smooth falloff over radius (default: half the subpath's size)",
+            has_doc,
+            reshape
+        ),
         cmd!("path.insertAnchor", "Add Anchor Point", [], None, "{id, subpath, segment, t: 0..1}", has_doc, insert_anchor),
         cmd!("path.cutAtAnchors", "Cut Path at Selected Anchor Points", [], None, "{}", has_selection, cut_at_anchors),
     ]
@@ -411,6 +420,44 @@ pub(crate) fn delete_anchors(s: &mut Session, _: &Value) -> Result<Value> {
             }
         }
         selection.clear();
+        Ok(())
+    })?;
+    ok()
+}
+
+fn reshape(s: &mut Session, p: &Value) -> Result<Value> {
+    let id = id_param(p, "id").ok_or_else(|| bad("path.reshape", "missing id"))?;
+    let at = Point::new(f64_req(p, "x", "path.reshape")?, f64_req(p, "y", "path.reshape")?);
+    let delta = Vec2::new(f64_or(p, "dx", 0.0), f64_or(p, "dy", 0.0));
+    let tol = f64_or(p, "tol", 3.0).max(0.0);
+    let radius = p.get("radius").and_then(Value::as_f64);
+    s.edit("Reshape", |d, _| {
+        let path = path_mut(d, id)?;
+        let (si, seg, t, _, _) = path.nearest(at).ok_or_else(|| EngineError::Other("empty path".into()))?;
+        let sp = &mut path.subpaths[si];
+        let grabbed = match sp.anchors.iter().enumerate().map(|(i, a)| (i, a.p.distance(at))).min_by(|a, b| a.1.total_cmp(&b.1)) {
+            Some((i, dist)) if dist <= tol => i,
+            _ => sp.insert_anchor(seg, t),
+        };
+        let origin = sp.anchors[grabbed].p;
+        let r = radius.unwrap_or_else(|| {
+            let mut bp = vectorcraft_geom::BezPath::new();
+            sp.to_bezpath_into(&mut bp);
+            let b = vectorcraft_geom::Shape::bounding_box(&bp);
+            (b.width().hypot(b.height()) / 2.0).max(1.0)
+        });
+        for (i, a) in sp.anchors.iter_mut().enumerate() {
+            let w = if i == grabbed {
+                1.0
+            } else {
+                let q = (a.p.distance(origin) / r).min(1.0);
+                (1.0 - q * q).powi(2)
+            };
+            let v = delta * w;
+            a.p += v;
+            a.h_in += v;
+            a.h_out += v;
+        }
         Ok(())
     })?;
     ok()

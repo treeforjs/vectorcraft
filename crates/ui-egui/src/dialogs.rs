@@ -17,6 +17,12 @@ pub fn open_tool_dialog(app: &mut VectorcraftApp, kind: &str, p: Value) {
         "polygon" => Dialog::new(kind, json!({"x": x, "y": y, "radius": "50 pt", "sides": 6})),
         "star" => Dialog::new(kind, json!({"x": x, "y": y, "radius1": "50 pt", "radius2": "25 pt", "points": 5})),
         "lineSegment" => Dialog::new(kind, json!({"x": x, "y": y, "length": "100 pt", "angle": 0})),
+        // Flare Tool Options (Center / Halo / Rays / Rings), applied through the generic command dialog.
+        "flare" => Dialog::new(
+            "command",
+            json!({"__command": "shape.flare", "__label": "Flare Tool Options", "cx": x, "cy": y, "diameter": 100, "opacity": 50, "brightness": 30,
+                "growth": 20, "fuzziness": 50, "rays": 15, "longest": 300, "rayFuzziness": 100, "pathLength": 300, "rings": 10, "largest": 50, "direction": 45}),
+        ),
         "rotate" | "reflect" | "scale" | "shear" | "artboardOptions" => {
             let mut base = match kind {
                 "rotate" => json!({"angle": 0}),
