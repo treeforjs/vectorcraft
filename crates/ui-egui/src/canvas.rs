@@ -728,6 +728,7 @@ fn selection_overlay(app: &VectorcraftApp, p: &egui::Painter, xf: &Xf) {
     // Bounding box with handles (Selection tool).
     // Live corner widgets (Direct Selection on a single live rectangle).
     if tool == "directSelection"
+        && app.ui.view.corner_widgets
         && st.selection.len() == 1
         && let Some(NodeKind::Path { live: Some(vectorcraft_doc::LiveShape::Rectangle { w, h, radii, xf: lxf }), .. }) =
             st.doc.node(st.selection.objects[0]).map(|n| &n.kind)

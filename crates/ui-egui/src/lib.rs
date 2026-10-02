@@ -234,6 +234,14 @@ impl VectorcraftApp {
                 if id == "file.new" {
                     self.ui.status.clear();
                 }
+                if id == "text.setStyle"
+                    && let Some(font) = params.get("font").and_then(Value::as_str)
+                {
+                    let r = &mut self.ui.recent_fonts;
+                    r.retain(|f| f != font);
+                    r.insert(0, font.to_string());
+                    r.truncate(10);
+                }
             }
         }
         r

@@ -60,6 +60,16 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("file.openRecent8", "Open Recent File 8", "", "{}"),
     ("file.openRecent9", "Open Recent File 9", "", "{}"),
     ("file.openRecent10", "Open Recent File 10", "", "{}"),
+    ("type.recentFont1", "Recent Font 1", "", "{} apply the 1. most recently used font"),
+    ("type.recentFont2", "Recent Font 2", "", "{} apply the 2. most recently used font"),
+    ("type.recentFont3", "Recent Font 3", "", "{} apply the 3. most recently used font"),
+    ("type.recentFont4", "Recent Font 4", "", "{} apply the 4. most recently used font"),
+    ("type.recentFont5", "Recent Font 5", "", "{} apply the 5. most recently used font"),
+    ("type.recentFont6", "Recent Font 6", "", "{} apply the 6. most recently used font"),
+    ("type.recentFont7", "Recent Font 7", "", "{} apply the 7. most recently used font"),
+    ("type.recentFont8", "Recent Font 8", "", "{} apply the 8. most recently used font"),
+    ("type.recentFont9", "Recent Font 9", "", "{} apply the 9. most recently used font"),
+    ("type.recentFont10", "Recent Font 10", "", "{} apply the 10. most recently used font"),
     ("file.clearRecent", "Clear Recent Files", "", "{}"),
     ("type.findFont", "Find Font…", "", "{} open the Find Font dialog (engine: text.fonts / text.replaceFont / select.font)"),
     ("file.recentFiles", "Recent Files", "", "{} → [path…] most recent first"),
@@ -80,6 +90,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("view.outline", "Outline", "Cmd+Y", "{} toggle Outline/Preview"),
     ("view.pixelPreview", "Pixel Preview", "Cmd+Alt+Y", "{}"),
     ("view.trimView", "Trim View", "", "{} toggle: hide everything outside the artboards"),
+    ("view.cornerWidget", "Hide Corner Widget", "", "{} toggle the live corner widgets"),
     ("view.zoomIn", "Zoom In", "Cmd+=", "{}"),
     ("view.zoomOut", "Zoom Out", "Cmd+-", "{}"),
     ("view.fitArtboard", "Fit Artboard in Window", "Cmd+0", "{}"),
@@ -236,6 +247,14 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         "view.outline" => flag(&mut app.ui.view.outline),
         "view.pixelPreview" => flag(&mut app.ui.view.pixel_preview),
         "view.trimView" => flag(&mut app.ui.view.trim_view),
+        "view.cornerWidget" => flag(&mut app.ui.view.corner_widgets),
+        id if id.starts_with("type.recentFont") => {
+            let n: usize = id["type.recentFont".len()..].parse().unwrap_or(0);
+            match n.checked_sub(1).and_then(|i| app.ui.recent_fonts.get(i)).cloned() {
+                Some(font) => app.run("text.setStyle", json!({ "font": font })),
+                None => Err("no such recent font".into()),
+            }
+        }
         "view.edges" => flag(&mut app.ui.view.edges),
         "view.artboards" => flag(&mut app.ui.view.artboards),
         "view.rulers" => flag(&mut app.ui.view.rulers),
@@ -458,6 +477,11 @@ pub fn dynamic_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
         "view.outline" => if v.outline { "Preview" } else { "Outline" }.into(),
         "window.workspace.reset" => format!("Reset {}", app.ui.workspace),
         "view.edges" => if v.edges { "Hide Edges" } else { "Show Edges" }.into(),
+        "view.cornerWidget" => if v.corner_widgets { "Hide Corner Widget" } else { "Show Corner Widget" }.into(),
+        id if id.starts_with("type.recentFont") => {
+            let n: usize = id["type.recentFont".len()..].parse().unwrap_or(0);
+            n.checked_sub(1).and_then(|i| app.ui.recent_fonts.get(i)).cloned().unwrap_or_else(|| "—".into())
+        }
         "view.artboards" => if v.artboards { "Hide Artboards" } else { "Show Artboards" }.into(),
         "view.rulers" => if v.rulers { "Hide Rulers" } else { "Show Rulers" }.into(),
         "view.boundingBox" => if v.bounding_box { "Hide Bounding Box" } else { "Show Bounding Box" }.into(),
@@ -492,6 +516,20 @@ const RECENT_IDS: [&str; 10] = [
     "file.openRecent10",
 ];
 
+/// Type → Recent Fonts slots.
+const RECENT_FONT_IDS: [&str; 10] = [
+    "type.recentFont1",
+    "type.recentFont2",
+    "type.recentFont3",
+    "type.recentFont4",
+    "type.recentFont5",
+    "type.recentFont6",
+    "type.recentFont7",
+    "type.recentFont8",
+    "type.recentFont9",
+    "type.recentFont10",
+];
+
 /// Effective shortcut of a command: the user's override (Edit → Keyboard Shortcuts) or the default.
 pub fn shortcut_of(id: &str) -> Option<&'static str> {
     crate::shortcut_editor::command_shortcut(id)
@@ -521,6 +559,9 @@ pub fn enabled(app: &VectorcraftApp, id: &str) -> bool {
             id["file.openRecent".len()..].parse::<usize>().is_ok_and(|n| n >= 1 && n <= app.ui.recent_files.len())
         }
         "file.clearRecent" => !app.ui.recent_files.is_empty(),
+        id if id.starts_with("type.recentFont") => {
+            id["type.recentFont".len()..].parse::<usize>().is_ok_and(|n| n >= 1 && n <= app.ui.recent_fonts.len()) && app.session.active().is_some()
+        }
         "effect.dialog" | "ui.recolorDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "effect.applyLast" => app.last_effect.is_some() && app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "file.export.pdf" => app.session.active().is_some(),
@@ -839,7 +880,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
             "Type",
             vec![
                 sub("Font", font_items()),
-                todo("Recent Fonts"),
+                sub("Recent Fonts", RECENT_FONT_IDS.iter().map(|id| c("Recent Font", id)).collect()),
                 sub("Size", TYPE_SIZES.iter().map(|(l, n)| cp(l, "text.setStyle", json!({ "size": n }))).collect()),
                 Sep,
                 panel("Glyphs", "glyphs"),
@@ -1001,7 +1042,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Show Transparency Grid", "view.transparencyGrid"),
                 todos("Hide Text Threads", "Cmd+Shift+Y"),
                 todos("Hide Gradient Annotator", "Cmd+Alt+G"),
-                todo("Hide Corner Widget"),
+                c("Hide Corner Widget", "view.cornerWidget"),
                 Sep,
                 sub(
                     "Guides",
@@ -1460,6 +1501,25 @@ fn effect_menu() -> Vec<Item> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn recent_fonts_and_corner_widget_toggle() {
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), crate::Services::default());
+        app.run("file.new", json!({})).unwrap();
+        let fams = vectorcraft_text::FontDb::global().families();
+        let (a, b) = (fams[0].clone(), fams[fams.len() - 1].clone());
+        app.run("text.create", json!({"x": 10, "y": 10, "text": "Hi"})).unwrap();
+        app.run("text.setStyle", json!({"font": a})).unwrap();
+        app.run("text.setStyle", json!({"font": b})).unwrap();
+        assert_eq!(app.ui.recent_fonts, vec![b.clone(), a.clone()]);
+        assert_eq!(dynamic_label(&app, "type.recentFont2", "Recent Font"), a);
+        assert!(enabled(&app, "type.recentFont2") && !enabled(&app, "type.recentFont3"));
+        app.run("type.recentFont2", json!({})).unwrap();
+        assert_eq!(app.ui.recent_fonts[0], a);
+        assert_eq!(dynamic_label(&app, "view.cornerWidget", ""), "Hide Corner Widget");
+        app.run("view.cornerWidget", json!({})).unwrap();
+        assert_eq!(dynamic_label(&app, "view.cornerWidget", ""), "Show Corner Widget");
+    }
 
     #[test]
     fn recent_files_track_opens_and_saves() {

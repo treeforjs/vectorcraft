@@ -117,6 +117,8 @@ pub struct ViewFlags {
     pub edges: bool,
     /// View → Trim View: hide everything outside the artboards.
     pub trim_view: bool,
+    /// View → Hide/Show Corner Widget (live corner widgets on rectangles).
+    pub corner_widgets: bool,
 }
 
 impl Default for ViewFlags {
@@ -135,6 +137,7 @@ impl Default for ViewFlags {
             transparency_grid: false,
             edges: true,
             trim_view: false,
+            corner_widgets: true,
         }
     }
 }
@@ -224,6 +227,9 @@ pub struct UiState {
     /// File → Open Recent Files, most recent first.
     #[serde(default)]
     pub recent_files: Vec<String>,
+    /// Type → Recent Fonts, most recent first.
+    #[serde(default)]
+    pub recent_fonts: Vec<String>,
     /// Engine preferences (Edit → Preferences), persisted alongside the UI state.
     #[serde(default)]
     pub engine_prefs: Value,
@@ -276,6 +282,7 @@ impl Default for UiState {
             workspace: default_workspace(),
             custom_workspaces: vec![],
             recent_files: vec![],
+            recent_fonts: vec![],
             engine_prefs: Value::Null,
         }
     }
