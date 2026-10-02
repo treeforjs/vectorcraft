@@ -294,6 +294,36 @@ fn on_path_placement() {
 }
 
 #[test]
+fn on_path_effects_orient_glyphs() {
+    use vectorcraft_doc::PathEffect;
+    let mut diag = BezPath::new();
+    diag.move_to((0.0, 0.0));
+    diag.line_to((400.0, 400.0));
+    let mut t = point("H", style(40.0));
+    t.kind = TextKind::OnPath { path: PathData::from_bezpath(&diag), start: 0.1 };
+    let bbox = |t: &TextObject| layout(db(), t).glyphs[0].outline.bounding_box();
+    let rainbow = bbox(&t);
+    t.path_effect = PathEffect::StairStep;
+    let stair = bbox(&t);
+    // Unrotated: as tall as the cap height, narrower than the rotated glyph's box.
+    assert!(stair.height() < rainbow.height() && stair.height() > 20.0, "{stair:?} {rainbow:?}");
+    t.path_effect = PathEffect::Skew;
+    let skew = bbox(&t);
+    // Vertical stems stay vertical: the box spans the cap height plus the slant of the baseline.
+    assert!(skew.height() > stair.height() && skew.width() < rainbow.width() + 1e-6, "{skew:?}");
+    // Gravity on a circle: glyphs point away from the centre (same as Rainbow on a circle).
+    let circle = kurbo::Circle::new((0.0, 0.0), 100.0).to_path(0.1);
+    t.kind = TextKind::OnPath { path: PathData::from_bezpath(&circle), start: 0.0 };
+    t.path_effect = PathEffect::Rainbow;
+    let a = layout(db(), &t).glyphs[0].outline.bounding_box();
+    t.path_effect = PathEffect::Gravity;
+    let b = layout(db(), &t).glyphs[0].outline.bounding_box();
+    assert!((a.center() - b.center()).hypot() < 2.0, "{a:?} {b:?}");
+    assert_eq!(PathEffect::parse("3D Ribbon"), Some(PathEffect::Ribbon3d));
+    assert_eq!(PathEffect::parse("stair step"), Some(PathEffect::StairStep));
+}
+
+#[test]
 fn on_path_circle_and_overflow() {
     let circle = kurbo::Circle::new((0.0, 0.0), 100.0).to_path(0.1);
     let mut t = point("Around the circle", style(14.0));

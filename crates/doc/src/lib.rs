@@ -35,7 +35,7 @@ pub use live::{BlendOrientation, BlendSpacing, BlendSpec, EnvelopeKind, Gradient
 pub use node::{ImageObject, LAYER_COLORS, LayerColor, LiveShape, Node, NodeId, NodeKind, OpacityMask};
 pub use pattern::{Overlap, PatternDef, PatternEdit, RepeatKind, RepeatSpec, TileType};
 pub use selection::{AnchorRef, Selection};
-pub use text::{AreaOptions, CharStyle, FirstBaseline, Justify, ParaStyle, TextKind, TextObject, TextRun, TextStyleDef};
+pub use text::{AreaOptions, CharStyle, FirstBaseline, Justify, ParaStyle, PathEffect, TextKind, TextObject, TextRun, TextStyleDef};
 pub use vectorcraft_color as color;
 pub use vectorcraft_geom as geom;
 

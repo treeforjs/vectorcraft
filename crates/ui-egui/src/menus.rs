@@ -400,6 +400,15 @@ pub fn checked(app: &VectorcraftApp, id: &str, p: &Value) -> Option<bool> {
         "view.outline" => v.outline,
         "view.pixelPreview" => v.pixel_preview,
         "view.trimView" => v.trim_view,
+        // Type on a Path effect of the selected path type.
+        "type.pathOptions" if p.get("effect").is_some() => {
+            let st = app.session.active()?;
+            let t = st.selection.objects.iter().find_map(|id| match st.doc.node(*id).map(|n| &n.kind) {
+                Some(vectorcraft_engine::doc::NodeKind::Text(t)) if matches!(t.kind, vectorcraft_engine::doc::TextKind::OnPath { .. }) => Some(t),
+                _ => None,
+            })?;
+            p.get("effect").and_then(Value::as_str) == Some(t.path_effect.id())
+        }
         "view.smartGuides" => v.smart_guides,
         "view.grid" => v.grid,
         "view.snapToGrid" => v.snap_to_grid,
@@ -826,11 +835,11 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 sub(
                     "Type on a Path",
                     vec![
-                        todo("Rainbow"),
-                        todo("Skew"),
-                        todo("3D Ribbon"),
-                        todo("Stair Step"),
-                        todo("Gravity"),
+                        cp("Rainbow", "type.pathOptions", json!({"effect": "rainbow"})),
+                        cp("Skew", "type.pathOptions", json!({"effect": "skew"})),
+                        cp("3D Ribbon", "type.pathOptions", json!({"effect": "3dRibbon"})),
+                        cp("Stair Step", "type.pathOptions", json!({"effect": "stairStep"})),
+                        cp("Gravity", "type.pathOptions", json!({"effect": "gravity"})),
                         Sep,
                         cp("Type on a Path Options…", "type.pathOptions", json!({"start": 0})),
                     ],

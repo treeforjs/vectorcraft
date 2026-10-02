@@ -3,7 +3,7 @@
 use std::ops::Range;
 
 use kurbo::{Affine, BezPath, ParamCurve, ParamCurveArclen, PathEl, PathSeg, Point, Rect, Shape, Vec2};
-use vectorcraft_doc::{CharStyle, Justify, ParaStyle, TextKind, TextObject};
+use vectorcraft_doc::{CharStyle, Justify, ParaStyle, PathEffect, TextKind, TextObject};
 
 use crate::composer::{Breakpoint, compose};
 use crate::fontdb::FontDb;
@@ -93,7 +93,7 @@ pub fn layout_with(db: &FontDb, t: &TextObject, opts: &LayoutOptions) -> TextLay
             cx.out.frames = regions.iter().map(|r| r.cell).collect();
             flow(&mut cx, &paras, &t.para, Some(&regions));
         }
-        TextKind::OnPath { path, start } => on_path(&mut cx, &paras, &t.para, &path.to_bezpath(), *start, path.is_closed()),
+        TextKind::OnPath { path, start } => on_path(&mut cx, &paras, &t.para, &path.to_bezpath(), *start, path.is_closed(), t.path_effect),
     }
     finish_bounds(&mut cx.out);
     cx.out
@@ -624,7 +624,8 @@ impl ArcPath {
     }
 }
 
-fn on_path(cx: &mut Ctx<'_>, paras: &[Range<usize>], para: &ParaStyle, path: &BezPath, start: f64, closed: bool) {
+#[allow(clippy::too_many_arguments)]
+fn on_path(cx: &mut Ctx<'_>, paras: &[Range<usize>], para: &ParaStyle, path: &BezPath, start: f64, closed: bool, effect: PathEffect) {
     cx.out.on_path = true;
     let mut sg = Vec::new();
     for pr in paras {
@@ -652,6 +653,7 @@ fn on_path(cx: &mut Ctx<'_>, paras: &[Range<usize>], para: &ParaStyle, path: &Be
         });
         return;
     }
+    let centre = path.bounding_box().center();
     let s_start = start.clamp(0.0, 1.0) * ap.len;
     let avail = if closed { ap.len } else { ap.len - s_start };
     let w: f64 = sg.iter().map(|g| g.adv).sum();
@@ -673,7 +675,37 @@ fn on_path(cx: &mut Ctx<'_>, paras: &[Range<usize>], para: &ParaStyle, path: &Be
         }
         let (p, dir) = ap.at(mid);
         let angle = dir.y.atan2(dir.x);
-        let pre = Affine::translate(p.to_vec2()) * Affine::rotate(angle) * Affine::translate((-g.adv * 0.5, 0.0));
+        let half = Affine::translate((-g.adv * 0.5, 0.0));
+        // Glyph space: x along the advance, y down from the baseline; `pre` maps it onto the path.
+        let pre = match effect {
+            PathEffect::Rainbow => Affine::translate(p.to_vec2()) * Affine::rotate(angle) * half,
+            // x axis along the tangent, y axis stays vertical.
+            PathEffect::Skew => Affine::translate(p.to_vec2()) * Affine::new([dir.x, dir.y, 0.0, 1.0, 0.0, 0.0]) * half,
+            // x axis stays horizontal (facing the path's direction), y axis perpendicular to the path.
+            PathEffect::Ribbon3d => {
+                let sx = if dir.x < 0.0 { -1.0 } else { 1.0 };
+                Affine::translate(p.to_vec2()) * Affine::new([sx, 0.0, -dir.y * sx, dir.x * sx, 0.0, 0.0]) * half
+            }
+            PathEffect::StairStep => {
+                let s_left = if closed { s.rem_euclid(ap.len) } else { s };
+                Affine::translate(ap.at(s_left).0.to_vec2())
+            }
+            // x axis along the tangent; vertical edges point at the path's centre (kept on the glyph's
+            // up side, and never closer than ~17° to the baseline so glyphs stay legible).
+            PathEffect::Gravity => {
+                let n = Vec2::new(dir.y, -dir.x);
+                let mut up = p - centre;
+                up = if up.hypot() < 1e-9 { n } else { up / up.hypot() };
+                if up.dot(n) < 0.0 {
+                    up = -up;
+                }
+                if up.dot(n) < 0.3 {
+                    let t = up - n * up.dot(n);
+                    up = n * 0.3 + t / t.hypot().max(1e-9) * (1.0 - 0.09f64).sqrt();
+                }
+                Affine::translate(p.to_vec2()) * Affine::new([dir.x, dir.y, -up.x, -up.y, 0.0, 0.0]) * half
+            }
+        };
         cx.emit(g, pre, p - dir * (g.adv * 0.5), angle, g.adv, 0);
         x += g.adv;
     }

@@ -136,6 +136,41 @@ pub enum FirstBaseline {
     Fixed,
 }
 
+/// Type on a Path effect: how each glyph is oriented on the path (Type → Type on a Path).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum PathEffect {
+    /// Glyphs rotate with the path (the default).
+    #[default]
+    Rainbow,
+    /// Vertical edges stay vertical; the baseline follows the path.
+    Skew,
+    /// Horizontal edges stay horizontal; vertical edges are perpendicular to the path.
+    #[serde(rename = "3dRibbon")]
+    Ribbon3d,
+    /// No rotation: the left end of each glyph's baseline sits on the path.
+    StairStep,
+    /// The baseline centre sits on the path and glyphs point away from the path's centre.
+    Gravity,
+}
+
+impl PathEffect {
+    pub const ALL: [PathEffect; 5] = [PathEffect::Rainbow, PathEffect::Skew, PathEffect::Ribbon3d, PathEffect::StairStep, PathEffect::Gravity];
+    pub fn id(self) -> &'static str {
+        match self {
+            PathEffect::Rainbow => "rainbow",
+            PathEffect::Skew => "skew",
+            PathEffect::Ribbon3d => "3dRibbon",
+            PathEffect::StairStep => "stairStep",
+            PathEffect::Gravity => "gravity",
+        }
+    }
+    pub fn parse(s: &str) -> Option<Self> {
+        let k = s.to_ascii_lowercase().replace([' ', '-', '_'], "");
+        Self::ALL.into_iter().find(|e| e.id().to_ascii_lowercase() == k || (k == "ribbon3d" && *e == PathEffect::Ribbon3d))
+    }
+}
+
 /// Area Type Options: rows and columns, gutters, inset and first baseline of area type.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -196,6 +231,9 @@ pub struct TextObject {
     /// Area Type Options (area type only).
     #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub area: AreaOptions,
+    /// Type on a Path effect (type on a path only).
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
+    pub path_effect: PathEffect,
     /// Cached layout bounds in text space, filled in by the layout engine (not serialized).
     #[serde(skip)]
     pub cached_bounds: Option<Rect>,
@@ -209,6 +247,7 @@ impl TextObject {
             runs: vec![TextRun { text: text.into(), style }],
             para: ParaStyle::default(),
             area: AreaOptions::default(),
+            path_effect: PathEffect::default(),
             cached_bounds: None,
         }
     }

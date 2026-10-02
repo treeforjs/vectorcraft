@@ -52,7 +52,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Type on a Path Options…",
             ["Type", "Type on a Path"],
             None,
-            "{start?: 0..1 (fraction of the path length), flip?: bool (reverse the path), ids?}",
+            "{start?: 0..1 (fraction of the path length), flip?: bool (reverse the path), effect?: rainbow|skew|3dRibbon|stairStep|gravity, ids?}",
             has_selection,
             path_options
         ),
@@ -367,6 +367,10 @@ fn path_options(s: &mut Session, p: &Value) -> Result<Value> {
     let ids = texts(s, p, C)?;
     let start = p.get("start").and_then(Value::as_f64);
     let flip = bool_or(p, "flip", false);
+    let effect = match str_param(p, "effect") {
+        Some(e) => Some(vectorcraft_doc::PathEffect::parse(e).ok_or_else(|| bad(C, format!("unknown effect `{e}`")))?),
+        None => None,
+    };
     let n = s.edit("Type on a Path Options", |d, _| {
         let mut n = 0;
         for id in &ids {
@@ -377,6 +381,9 @@ fn path_options(s: &mut Session, p: &Value) -> Result<Value> {
             }
             if flip {
                 path.reverse();
+            }
+            if let Some(e) = effect {
+                t.path_effect = e;
             }
             n += 1;
             refresh_bounds(t);

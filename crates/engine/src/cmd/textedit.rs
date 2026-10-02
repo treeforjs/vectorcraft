@@ -337,6 +337,7 @@ fn create_in_path(s: &mut Session, p: &Value) -> Result<Value> {
         runs: vec![TextRun { text, style }],
         para: Default::default(),
         area: Default::default(),
+        path_effect: Default::default(),
         cached_bounds: None,
     };
     refresh_bounds(&mut t);
@@ -371,6 +372,7 @@ fn headline_tracking(t: &TextObject, target: f64) -> Option<f64> {
             runs: head.clone(),
             para: Default::default(),
             area: Default::default(),
+            path_effect: Default::default(),
             cached_bounds: None,
         };
         for r in &mut h.runs {
