@@ -782,7 +782,15 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 ),
                 sub("Text Wrap", vec![todo("Make"), todo("Release"), todo("Text Wrap Options…")]),
                 Sep,
-                sub("Clipping Mask", vec![c("Make", "object.clippingMask.make"), c("Release", "object.clippingMask.release"), todo("Edit Contents")]),
+                sub(
+                    "Clipping Mask",
+                    vec![
+                        c("Make", "object.clippingMask.make"),
+                        c("Release", "object.clippingMask.release"),
+                        c("Edit Contents", "object.clippingMask.editContents"),
+                        c("Edit Clipping Path", "object.clippingMask.editMask"),
+                    ],
+                ),
                 sub("Compound Path", vec![c("Make", "object.compoundPath.make"), c("Release", "object.compoundPath.release")]),
                 sub(
                     "Artboards",

@@ -178,6 +178,11 @@ fn clipping_and_compound() {
     assert_eq!(s.doc().unwrap().selection.len(), 2);
     let g = s.execute("object.clippingMask.make", &json!({})).unwrap()["id"].as_u64().unwrap();
     assert_eq!(s.doc().unwrap().doc.node(NodeId(g)).unwrap().kind_label(), "Clip Group");
+    // Edit Contents selects the clipped art; Edit Clipping Path the mask (also from inside the group).
+    s.execute("object.clippingMask.editContents", &json!({})).unwrap();
+    assert_eq!(s.doc().unwrap().selection.objects, vec![a]);
+    s.execute("object.clippingMask.editMask", &json!({})).unwrap();
+    assert_eq!(s.doc().unwrap().selection.objects, vec![b]);
 }
 
 #[test]

@@ -89,6 +89,24 @@ pub fn specs() -> Vec<CommandSpec> {
         cmd!("object.compoundPath.release", "Release", ["Object", "Compound Path"], Some("Cmd+Alt+Shift+8"), "{}", has_selection, compound_release),
         cmd!("object.clippingMask.make", "Make", ["Object", "Clipping Mask"], Some("Cmd+7"), "{}", has_multi, clip_make),
         cmd!("object.clippingMask.release", "Release", ["Object", "Clipping Mask"], Some("Cmd+Alt+7"), "{}", has_selection, clip_release),
+        cmd!(
+            "object.clippingMask.editContents",
+            "Edit Contents",
+            ["Object", "Clipping Mask"],
+            None,
+            "{} select the clipped art of the selected clip groups → {count}",
+            has_selection,
+            |s, _| clip_edit(s, false)
+        ),
+        cmd!(
+            "object.clippingMask.editMask",
+            "Edit Clipping Path",
+            ["Object", "Clipping Mask"],
+            None,
+            "{} select the clipping paths of the selected clip groups → {count}",
+            has_selection,
+            |s, _| clip_edit(s, true)
+        ),
         cmd!("object.isolate", "Enter Isolation Mode", [], None, "{id}", has_doc, isolate),
         cmd!("object.exitIsolation", "Exit Isolation Mode", [], None, "{}", has_doc, exit_isolation),
         cmd!(
@@ -541,6 +559,33 @@ fn clip_release(s: &mut Session, _: &Value) -> Result<Value> {
         Ok(())
     })?;
     ok()
+}
+
+/// Selects the clipping path (`mask`) or the clipped contents of every selected clip group (or of the
+/// clip group containing a selected object), like Illustrator's Edit Contents / Edit Clipping Path toggle.
+fn clip_edit(s: &mut Session, mask: bool) -> Result<Value> {
+    let st = s.doc()?;
+    let mut ids = vec![];
+    for id in st.selection.objects.iter().copied() {
+        let mut cur = Some(id);
+        while let Some(c) = cur {
+            if let Some(NodeKind::Group { children, clip: true }) = st.doc.node(c).map(|n| &n.kind) {
+                if mask {
+                    ids.extend(children.first().map(|c| c.id));
+                } else {
+                    ids.extend(children.iter().skip(1).map(|c| c.id));
+                }
+                break;
+            }
+            cur = st.doc.position(c).and_then(|(par, _, _)| par);
+        }
+    }
+    ids.dedup();
+    if ids.is_empty() {
+        return Err(EngineError::Other("select a clip group".into()));
+    }
+    s.select(|_, sel| sel.set(ids.iter().copied()))?;
+    Ok(json!({ "count": ids.len() }))
 }
 
 fn isolate(s: &mut Session, p: &Value) -> Result<Value> {
