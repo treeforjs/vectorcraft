@@ -4226,6 +4226,7 @@ dependencies = [
  "vectorcraft-effects",
  "vectorcraft-geom",
  "vectorcraft-testkit",
+ "vectorcraft-text",
 ]
 
 [[package]]

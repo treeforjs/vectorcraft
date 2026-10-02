@@ -382,3 +382,57 @@ fn headless_backend_methods() {
     assert!(h.call("ui.tool.list", json!({})).unwrap().is_array());
     assert!(h.call("ui.resize", json!({})).is_err());
 }
+
+// ---------- workflow tools ----------
+
+fn id_of(result: &Value) -> u64 {
+    let v: Value = serde_json::from_str(&text_of(result)).unwrap();
+    v["id"].as_u64().unwrap_or_else(|| panic!("no id in {v}"))
+}
+
+fn doc_json(s: &mut Server) -> Value {
+    let r = call(s, 900, "run_command", json!({"command": "document.json"}));
+    serde_json::from_str(&text_of(&r)).unwrap()
+}
+
+#[test]
+fn text_effect_pathfinder_transform_graph_and_wrap_tools() {
+    let mut s = server();
+    // Text: point, area and on a path with an effect.
+    let t = id_of(&call(&mut s, 1, "add_text", json!({"text": "Hello", "x": 50, "y": 60, "size": 24})));
+    assert!(t > 0);
+    let area = id_of(&call(&mut s, 2, "add_text", json!({"text": "word ".repeat(80), "x": 40, "y": 100, "width": 300, "height": 200})));
+    let p = call(&mut s, 3, "draw_path", json!({"d": "M40 400 C150 300 250 500 360 400"}));
+    let pid = id_of(&p);
+    let ot = id_of(&call(&mut s, 4, "add_text", json!({"text": "On a wave", "path": pid, "mode": "onPath", "pathEffect": "skew"})));
+    let d = doc_json(&mut s);
+    assert!(d.to_string().contains("\"pathEffect\":\"skew\""), "{ot}");
+    // Effects: catalogue, then a drop shadow on the selection.
+    let cat = call(&mut s, 5, "apply_effect", json!({}));
+    assert!(text_of(&cat).contains("stylize.dropShadow"));
+    let r1 = id_of(&call(&mut s, 6, "draw_shape", json!({"shape": "rectangle", "x": 400, "y": 50, "width": 100, "height": 100})));
+    let r2 = id_of(&call(&mut s, 7, "draw_shape", json!({"shape": "rectangle", "x": 450, "y": 100, "width": 100, "height": 100})));
+    let fx = call(&mut s, 8, "apply_effect", json!({"effect": "stylize.dropShadow", "params": {"x": 4}, "ids": [r2]}));
+    assert!(fx.get("isError").is_none_or(|e| e == false), "{fx}");
+    // Pathfinder unite over two ids.
+    let u = call(&mut s, 9, "pathfinder", json!({"operation": "unite", "ids": [r1, r2]}));
+    assert!(text_of(&u).contains("ids"), "{u}");
+    // Transform: move + rotate on the selection.
+    let tr = call(&mut s, 10, "transform", json!({"dx": 10, "rotate": 45}));
+    assert!(text_of(&tr).contains("rotate"));
+    let bad = call(&mut s, 11, "transform", json!({}));
+    assert_eq!(bad["isError"], true);
+    // Graph.
+    let g = id_of(&call(&mut s, 12, "create_graph", json!({"type": "pie", "x": 50, "y": 450, "width": 200, "height": 150, "csv": ",A,B\nX,1,3"})));
+    assert!(doc_json(&mut s).to_string().contains("\"kind\":\"pie\""), "{g}");
+    // Text wrap: a circle over the area type.
+    let c = id_of(&call(&mut s, 13, "draw_shape", json!({"shape": "ellipse", "x": 40, "y": 120, "width": 120, "height": 120})));
+    let w = call(&mut s, 14, "text_wrap", json!({"ids": [c], "offset": 8}));
+    assert!(w.get("isError").is_none_or(|e| e == false), "{w}");
+    let d = doc_json(&mut s);
+    let ds = d.to_string();
+    // The wrap object carries the options and the area type resolved its shape.
+    assert!(ds.contains("\"wrap\":{\"invert\":false,\"offset\":8.0}") && ds.contains("\"wrap\":[{\"invert\":false,\"offset\":8.0"), "{area}");
+    call(&mut s, 15, "text_wrap", json!({"ids": [c], "release": true}));
+    assert!(!doc_json(&mut s).to_string().contains("\"offset\":8.0"));
+}

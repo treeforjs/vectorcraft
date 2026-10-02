@@ -4,6 +4,8 @@
 //! vectorcraft-cli mcp [--connect 127.0.0.1:7979 | --headless]
 //! vectorcraft-cli run [--in file.vectorcraft|file.svg] [--cmd id [--params '{json}']]... [--export out.svg|.png|.pdf|.jpg|.webp|.vectorcraft]... [--scale 2]
 //! vectorcraft-cli commands
+//! vectorcraft-cli convert IN OUT [--scale 2] [--artboard 0] [--outline-text]
+//! vectorcraft-cli info FILE
 //! vectorcraft-cli bench FILE [--size 2880x1800] [--iters 5]
 //! vectorcraft-cli perf [--paths 50000]
 //! ```
@@ -32,6 +34,13 @@ USAGE:
   vectorcraft-cli commands
       Print the command catalogue as JSON.
 
+  vectorcraft-cli convert IN OUT [--scale N] [--artboard I] [--outline-text]
+      Open IN (.vectorcraft, .svg, .pdf/.ai, images) and export OUT by extension (.svg, .pdf, .png,
+      .jpg, .webp, .vectorcraft). Live effects are kept; --outline-text writes SVG text as paths.
+
+  vectorcraft-cli info FILE
+      Print a JSON summary: title, colour mode, units, artboards, object counts by kind, fonts.
+
   vectorcraft-cli bench FILE [--size WxH] [--iters N]
       Render FILE (.vectorcraft/.svg) fitted to WxH (default 2880x1800) and print ms per frame
       (warm), multithreaded and single-threaded.
@@ -47,6 +56,8 @@ fn main() -> ExitCode {
         Some("mcp") => mcp(&args[1..]),
         Some("run") => run(&args[1..]),
         Some("commands") => commands(),
+        Some("convert") => convert(&args[1..]),
+        Some("info") => info(&args[1..]),
         Some("bench") => bench(&args[1..]),
         Some("perf") => perf::run(&args[1..]),
         Some("-h" | "--help" | "help") | None => {
@@ -102,6 +113,47 @@ fn mcp(args: &[String]) -> Result<(), String> {
 fn commands() -> Result<(), String> {
     let mut h = Headless::new();
     let v = h.call("engine.commands", json!({}))?;
+    println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
+    Ok(())
+}
+
+fn convert(args: &[String]) -> Result<(), String> {
+    let mut files = vec![];
+    let (mut scale, mut artboard, mut outline_text) = (1.0f64, 0u64, false);
+    let mut it = args.iter();
+    while let Some(a) = it.next() {
+        match a.as_str() {
+            "--scale" | "-s" => scale = it.next().and_then(|v| v.parse().ok()).ok_or("--scale needs a number")?,
+            "--artboard" | "-a" => artboard = it.next().and_then(|v| v.parse().ok()).ok_or("--artboard needs an index")?,
+            "--outline-text" => outline_text = true,
+            f => files.push(f.to_string()),
+        }
+    }
+    let [input, output] = <[String; 2]>::try_from(files).map_err(|_| "convert needs IN and OUT")?;
+    let mut h = Headless::new();
+    h.call("app.open", json!({"path": input})).map_err(|e| format!("open {input}: {e}"))?;
+    let r = h
+        .call(
+            "engine.execute",
+            json!({"command": "document.export", "params": {"path": output, "scale": scale, "artboard": artboard, "outlineText": outline_text}}),
+        )
+        .map_err(|e| format!("export {output}: {e}"))?;
+    println!("{r}");
+    Ok(())
+}
+
+fn info(args: &[String]) -> Result<(), String> {
+    let file = args.first().ok_or("info needs a FILE")?;
+    let mut h = Headless::new();
+    h.call("app.open", json!({"path": file})).map_err(|e| format!("open {file}: {e}"))?;
+    let base = h.call("engine.execute", json!({"command": "file.info", "params": {}}))?;
+    let doc = h.session.doc().map_err(|e| e.to_string())?.doc.clone();
+    let mut kinds: std::collections::BTreeMap<&'static str, usize> = Default::default();
+    doc.walk(|n| *kinds.entry(n.kind_label()).or_default() += 1);
+    let fonts = h.call("engine.execute", json!({"command": "text.fonts", "params": {}})).unwrap_or(Value::Null);
+    let artboards: Vec<Value> =
+        doc.artboards.iter().map(|a| json!({"name": a.name, "rect": [a.rect.x0, a.rect.y0, a.rect.width(), a.rect.height()]})).collect();
+    let v = json!({"file": file, "info": base, "artboards": artboards, "kinds": kinds, "fonts": fonts});
     println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
     Ok(())
 }

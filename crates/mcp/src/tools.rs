@@ -260,14 +260,122 @@ pub fn tool_definitions() -> Vec<Value> {
         tool(
             "export",
             "Export",
-            "Export the active document: svg (artboard viewBox), png (rendered artboard) or vectorcraft (native).",
+            "Export the active document: svg (artboard viewBox), pdf, png/jpg/webp (rendered artboard) or vectorcraft (native). `selection: true` exports only the selected objects, cropped to their bounds. Live effects are kept (geometry baked, SVG filters for shadows/glows/blur).",
             obj(
                 json!({
                     "format": {"type": "string", "enum": ["svg", "png", "pdf", "jpg", "webp", "vectorcraft"], "description": "Default: from the path's extension"},
                     "path": string("Destination file"),
                     "scale": num("PNG pixels per point (default 1)"),
+                    "selection": {"type": "boolean", "description": "Export only the selection, cropped to it"},
+                    "outlineText": {"type": "boolean", "description": "SVG: text as outlines (viewable without the fonts)"},
                 }),
                 &["path"],
+            ),
+            false,
+        ),
+        tool(
+            "add_text",
+            "Add text",
+            "Create point type at (x, y) (the first baseline), area type when width/height are given, or type in/on an existing path (`path` id + `mode` area|onPath; `pathEffect` rainbow|skew|3dRibbon|stairStep|gravity). Returns the text object id.",
+            obj(
+                json!({
+                    "text": {"type": "string"},
+                    "x": num("Baseline origin x (point/area type: left)"),
+                    "y": num("First baseline y (area type: top)"),
+                    "width": num("Area type frame width"),
+                    "height": num("Area type frame height"),
+                    "path": {"type": "integer", "description": "Existing path id to flow the text in (area) or along (onPath)"},
+                    "mode": {"type": "string", "enum": ["area", "onPath"]},
+                    "pathEffect": {"type": "string", "enum": ["rainbow", "skew", "3dRibbon", "stairStep", "gravity"]},
+                    "size": num("Font size in pt"),
+                    "font": {"type": "string", "description": "Font family"},
+                    "color": paint_schema("Text colour (#rrggbb)"),
+                }),
+                &["text"],
+            ),
+            false,
+        ),
+        tool(
+            "apply_effect",
+            "Apply live effect",
+            "Append a live effect (Effect menu) to the selection or `ids`. Omit `effect` to get the catalogue (ids, parameters, defaults). Examples: stylize.dropShadow {x, y, blur, opacity}, distort.roughen, warp.arc {bend}, path.offsetPath {offset}, pathfinder.add (on groups), blur.gaussian {radius}.",
+            obj(
+                json!({
+                    "effect": {"type": "string", "description": "Effect id (see the catalogue)"},
+                    "params": {"type": "object", "description": "Effect parameters; missing keys take Illustrator's dialog defaults"},
+                    "ids": {"type": "array", "items": {"type": "integer"}},
+                }),
+                &[],
+            ),
+            false,
+        ),
+        tool(
+            "pathfinder",
+            "Pathfinder",
+            "Combine the selected (or `ids`) objects destructively, back to front: unite, minusFront, intersect, exclude, divide, trim, merge, crop, outline, minusBack. For a non-destructive version apply the pathfinder.* effect to a group.",
+            obj(
+                json!({
+                    "operation": {"type": "string", "enum": ["unite", "minusFront", "intersect", "exclude", "divide", "trim", "merge", "crop", "outline", "minusBack"]},
+                    "ids": {"type": "array", "items": {"type": "integer"}},
+                }),
+                &["operation"],
+            ),
+            false,
+        ),
+        tool(
+            "transform",
+            "Transform",
+            "Move, rotate, scale, reflect or shear the selection (or `ids`); several may be combined and run in that order. Angles in degrees (counter-clockwise), scale in %. `origin` [x,y] defaults to the selection centre; `copy` transforms a copy.",
+            obj(
+                json!({
+                    "ids": {"type": "array", "items": {"type": "integer"}},
+                    "dx": num("Move right"),
+                    "dy": num("Move down"),
+                    "rotate": num("Rotation in degrees"),
+                    "scale": num("Uniform scale in %"),
+                    "scaleX": num("Horizontal scale in %"),
+                    "scaleY": num("Vertical scale in %"),
+                    "reflect": {"type": "string", "enum": ["vertical", "horizontal"]},
+                    "shear": num("Shear angle in degrees (horizontal axis)"),
+                    "origin": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                    "copy": {"type": "boolean"},
+                }),
+                &[],
+            ),
+            false,
+        ),
+        tool(
+            "create_graph",
+            "Create graph",
+            "Create a graph (Illustrator graph tools) in the plot rectangle. Data as `csv` (first row: empty cell then series names; then one row per category: label, values…) or `series`/`categories`/`rows`. Edit later with run_command graph.setData / graph.setType.",
+            obj(
+                json!({
+                    "type": {"type": "string", "enum": ["column", "stackedColumn", "bar", "stackedBar", "line", "area", "scatter", "pie", "radar"]},
+                    "x": num("Plot left"),
+                    "y": num("Plot top"),
+                    "width": num("Plot width"),
+                    "height": num("Plot height"),
+                    "csv": {"type": "string"},
+                    "series": {"type": "array", "items": {"type": "string"}},
+                    "categories": {"type": "array", "items": {"type": "string"}},
+                    "rows": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}},
+                }),
+                &["x", "y", "width", "height"],
+            ),
+            false,
+        ),
+        tool(
+            "text_wrap",
+            "Text wrap",
+            "Make the selected (or `ids`) objects wrap objects: area type below them in the same layer flows around them (offset in pt, invert = flow inside). `release: true` removes the wrap.",
+            obj(
+                json!({
+                    "ids": {"type": "array", "items": {"type": "integer"}},
+                    "offset": num("Gap between text and object (default 6 pt)"),
+                    "invert": {"type": "boolean"},
+                    "release": {"type": "boolean"},
+                }),
+                &[],
             ),
             false,
         ),
@@ -381,6 +489,90 @@ fn draw_shape(b: &mut dyn Backend, a: &Args) -> Result<Value, String> {
     let r = exec(b, cmd, Value::Object(p))?;
     let paint = apply_paint(b, a, created_id(&r))?;
     Ok(json!({"id": r.get("id"), "shape": shape, "paint": paint}))
+}
+
+/// Select `ids` when given (tools that act on the selection).
+fn select_ids(b: &mut dyn Backend, a: &Args) -> Result<(), String> {
+    if let Some(ids) = a.get("ids") {
+        exec(b, "select.set", json!({"ids": ids}))?;
+    }
+    Ok(())
+}
+
+fn add_text(b: &mut dyn Backend, a: &Args) -> Result<Value, String> {
+    let text = a.get("text").and_then(Value::as_str).ok_or("missing string argument `text`")?;
+    let mut style = json!({});
+    for k in ["size", "font"] {
+        if let Some(v) = a.get(k) {
+            style[k] = v.clone();
+        }
+    }
+    let r = if let Some(path) = a.get("path") {
+        let mut p = json!({"path": path, "mode": a.get("mode").cloned().unwrap_or(json!("onPath")), "text": text});
+        for (k, v) in style.as_object().unwrap() {
+            p[k.as_str()] = v.clone();
+        }
+        exec(b, "text.createInPath", p)?
+    } else {
+        let x = a.get("x").and_then(Value::as_f64).ok_or("give `x` and `y` (or a `path`)")?;
+        let y = a.get("y").and_then(Value::as_f64).ok_or("give `x` and `y` (or a `path`)")?;
+        let mut p = json!({"x": x, "y": y, "text": text});
+        for (k, v) in style.as_object().unwrap() {
+            p[k.as_str()] = v.clone();
+        }
+        if let Some(c) = a.get("color") {
+            p["color"] = c.clone();
+        }
+        if let (Some(w), Some(h)) = (a.get("width"), a.get("height")) {
+            p["area"] = json!({"width": w, "height": h});
+        }
+        exec(b, "text.create", p)?
+    };
+    if let Some(e) = a.get("pathEffect").and_then(Value::as_str) {
+        exec(b, "type.pathOptions", json!({"effect": e}))?;
+    }
+    Ok(json!({"id": r.get("id")}))
+}
+
+fn transform(b: &mut dyn Backend, a: &Args) -> Result<Value, String> {
+    select_ids(b, a)?;
+    // With `copy`, the first operation duplicates and the rest transform the copy (the new selection).
+    let copy = std::cell::Cell::new(a.get("copy").and_then(Value::as_bool).unwrap_or(false));
+    let with = |mut p: Value| {
+        if let Some(o) = a.get("origin") {
+            p["origin"] = o.clone();
+        }
+        p["copy"] = json!(copy.replace(false));
+        p
+    };
+    let mut done = vec![];
+    if a.contains_key("dx") || a.contains_key("dy") {
+        let num = |k: &str| a.get(k).and_then(Value::as_f64).unwrap_or(0.0);
+        exec(b, "object.move", json!({"dx": num("dx"), "dy": num("dy"), "copy": copy.replace(false)}))?;
+        done.push("move");
+    }
+    if let Some(r) = a.get("rotate").and_then(Value::as_f64) {
+        exec(b, "object.rotate", with(json!({"angle": r})))?;
+        done.push("rotate");
+    }
+    let s = a.get("scale").and_then(Value::as_f64);
+    let (sx, sy) = (a.get("scaleX").and_then(Value::as_f64).or(s), a.get("scaleY").and_then(Value::as_f64).or(s));
+    if sx.is_some() || sy.is_some() {
+        exec(b, "object.scale", with(json!({"sx": sx.unwrap_or(100.0), "sy": sy.unwrap_or(100.0)})))?;
+        done.push("scale");
+    }
+    if let Some(axis) = a.get("reflect").and_then(Value::as_str) {
+        exec(b, "object.reflect", with(json!({"axis": axis})))?;
+        done.push("reflect");
+    }
+    if let Some(sh) = a.get("shear").and_then(Value::as_f64) {
+        exec(b, "object.shear", with(json!({"angle": sh})))?;
+        done.push("shear");
+    }
+    if done.is_empty() {
+        return Err("give at least one of dx/dy, rotate, scale/scaleX/scaleY, reflect, shear".into());
+    }
+    Ok(json!({"applied": done}))
 }
 
 fn screenshot(b: &mut dyn Backend, a: &Args) -> Result<ToolResult, String> {
@@ -547,11 +739,58 @@ fn dispatch(b: &mut dyn Backend, name: &str, a: &Args) -> Result<ToolResult, Str
                 return Err(format!("unknown export format `{fmt}` (svg, png, pdf, jpg, webp, vectorcraft)"));
             }
             let scale = a.get("scale").and_then(Value::as_f64).unwrap_or(1.0);
+            if a.get("selection").and_then(Value::as_bool) == Some(true) {
+                return j(exec(
+                    b,
+                    "document.exportSelection",
+                    json!({"path": path, "format": fmt, "scale": scale, "outlineText": a.get("outlineText")}),
+                )?);
+            }
+            if a.get("outlineText").and_then(Value::as_bool) == Some(true) {
+                return j(exec(b, "document.export", json!({"path": path, "format": fmt, "scale": scale, "outlineText": true}))?);
+            }
             // The desktop app exports native files through Save (which also sets the document path).
             if fmt == "vectorcraft" && b.has_ui() {
                 return j(b.call("app.save", json!({"path": path}))?);
             }
             j(b.call("app.export", json!({"format": fmt, "path": path, "scale": scale}))?)
+        }
+        "add_text" => j(add_text(b, a)?),
+        "apply_effect" => {
+            let Some(effect) = a.get("effect").and_then(Value::as_str) else {
+                let all = exec(b, "effect.list", json!({}))?;
+                return j(json!({"catalog": all.get("catalog")}));
+            };
+            let mut p = json!({"effect": effect, "params": a.get("params").cloned().unwrap_or(json!({}))});
+            if let Some(ids) = a.get("ids") {
+                p["ids"] = ids.clone();
+            }
+            j(exec(b, "effect.apply", p)?)
+        }
+        "pathfinder" => {
+            select_ids(b, a)?;
+            j(exec(b, &format!("object.pathfinder.{}", req_str(a, "operation")?), json!({}))?)
+        }
+        "transform" => j(transform(b, a)?),
+        "create_graph" => {
+            let mut p = Value::Object(a.clone());
+            if p.get("type").is_none() {
+                p["type"] = json!("column");
+            }
+            j(exec(b, "graph.create", p)?)
+        }
+        "text_wrap" => {
+            select_ids(b, a)?;
+            if a.get("release").and_then(Value::as_bool) == Some(true) {
+                return j(exec(b, "object.textWrap.release", json!({}))?);
+            }
+            let mut p = json!({});
+            for k in ["offset", "invert"] {
+                if let Some(v) = a.get(k) {
+                    p[k] = v.clone();
+                }
+            }
+            j(exec(b, "object.textWrap.make", p)?)
         }
         "undo" => j(exec(b, "edit.undo", json!({}))?),
         "redo" => j(exec(b, "edit.redo", json!({}))?),

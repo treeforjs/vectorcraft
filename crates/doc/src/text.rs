@@ -256,7 +256,7 @@ pub struct TextObject {
     #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub area: AreaOptions,
     /// Type on a Path effect (type on a path only).
-    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
+    #[serde(default, rename = "pathEffect", skip_serializing_if = "crate::skip::is_default")]
     pub path_effect: PathEffect,
     /// Wrap objects above this area type, resolved by the engine after each edit (text space).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

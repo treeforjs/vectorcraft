@@ -59,7 +59,13 @@ or a full `paint.setFill` params object (`{"gradient": …}`, `{"swatch": "name"
 | `screenshot` | `{path?, scale?, artboard?, window?}` | Returns MCP image content (`image/png`, base64) plus a text block. Renders the artboard; `window:true` captures the app window (remote only). |
 | `open_file` | `{path}` | Opens `.vectorcraft` or `.svg` as a new active document. |
 | `save_file` | `{path?}` | Saves in the native `.vectorcraft` format. |
-| `export` | `{path, format?, scale?}` | `svg`, `png` or `vectorcraft`. When `format` is omitted, it comes from the path's extension. |
+| `export` | `{path, format?, scale?, selection?}` | `svg`, `pdf`, `png`, `jpg`, `webp` or `vectorcraft`. When `format` is omitted, it comes from the path's extension. `selection: true` exports the selected objects cropped to their bounds; `outlineText: true` writes SVG text as paths. Live effects are kept. |
+| `add_text` | `{text, x?, y?, width?, height?, path?, mode?, pathEffect?, size?, font?, color?}` | Point type at (x, y); area type with `width`/`height`; or `path` + `mode` (`area`/`onPath`) to flow text in or along a path, with `pathEffect` (`rainbow`, `skew`, `3dRibbon`, `stairStep`, `gravity`). |
+| `apply_effect` | `{effect?, params?, ids?}` | Appends a live effect. Without `effect`, returns the effect catalogue with parameters and defaults. |
+| `pathfinder` | `{operation, ids?}` | `unite`, `minusFront`, `intersect`, `exclude`, `divide`, `trim`, `merge`, `crop`, `outline`, `minusBack`. For a live version, apply the `pathfinder.*` effect to a group. |
+| `transform` | `{ids?, dx?, dy?, rotate?, scale?, scaleX?, scaleY?, reflect?, shear?, origin?, copy?}` | Runs move, rotate, scale, reflect, shear in that order. With `copy`, the first step duplicates. |
+| `create_graph` | `{type?, x, y, width, height, csv? \| series?, categories?, rows?}` | The nine Illustrator graph types. Edit later with `graph.setData` / `graph.setType` via `run_command`. |
+| `text_wrap` | `{ids?, offset?, invert?, release?}` | Area type below the objects (same layer) flows around them. |
 | `undo` / `redo` | `{}` | |
 
 Errors (unknown tool, bad arguments, a disabled or failing command) come back as a normal result with

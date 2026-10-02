@@ -655,6 +655,7 @@ impl Writer<'_> {
                 }
                 self.shape(n, &d.join(" "), *rule, n.geometric_bounds());
             }
+            NodeKind::Text(t) if self.opts.outline_text => self.text_outlines(n, t),
             NodeKind::Text(t) => self.text(n, t),
             NodeKind::Image(im) => {
                 let href = match self.doc.images.get(&im.key) {
@@ -814,6 +815,37 @@ impl Writer<'_> {
             _ => {}
         }
         p
+    }
+
+    /// Text as glyph outlines: one compound path per run, painted like the run.
+    fn text_outlines(&mut self, n: &Node, t: &TextObject) {
+        let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
+        let m = self.xf * t.xf;
+        let mut runs: Vec<(usize, kurbo::BezPath)> = vec![];
+        for g in &lay.glyphs {
+            match runs.last_mut() {
+                Some((r, bp)) if *r == g.run => bp.extend(g.outline.iter()),
+                _ => runs.push((g.run, g.outline.clone())),
+            }
+        }
+        let id = self.id_attr(n);
+        let a = self.attrs(&Self::node_props(n));
+        self.line(&format!("<g{id}{a}>"));
+        self.depth += 1;
+        for (r, mut bp) in runs {
+            let Some(run) = t.runs.get(r) else { continue };
+            bp.apply_affine(m);
+            let pd = PathData::from_bezpath(&bp);
+            let st = &run.style;
+            // An unnamed id: the pieces carry no id attribute (the group has it).
+            let glyphs =
+                Node::path(NodeId(u64::MAX), pd.clone(), vectorcraft_doc::Appearance::basic(st.fill.clone(), st.stroke.clone(), st.stroke_width));
+            let d = self.path_d(&pd, Affine::IDENTITY);
+            let bounds = pd.bounds();
+            self.shape(&glyphs, &d, FillRule::NonZero, bounds);
+        }
+        self.depth -= 1;
+        self.line("</g>");
     }
 
     fn text(&mut self, n: &Node, t: &TextObject) {

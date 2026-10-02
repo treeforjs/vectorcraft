@@ -15,7 +15,7 @@ fn all_options() -> Vec<ExportOptions> {
     let mut v = vec![];
     for styling in [Styling::PresentationAttributes, Styling::InlineStyle, Styling::InternalCss] {
         for (minify, decimals, object_ids, responsive) in [(false, 3, true, false), (true, 1, false, true), (false, 7, true, true)] {
-            v.push(ExportOptions { artboard: Some(0), styling, decimals, object_ids, minify, responsive });
+            v.push(ExportOptions { artboard: Some(0), styling, decimals, object_ids, minify, responsive, outline_text: false });
         }
     }
     v.push(ExportOptions { artboard: None, ..Default::default() });

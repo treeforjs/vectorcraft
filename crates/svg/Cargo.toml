@@ -13,6 +13,7 @@ vectorcraft-geom = { workspace = true }
 vectorcraft-color = { workspace = true }
 vectorcraft-doc = { workspace = true }
 vectorcraft-effects = { workspace = true }
+vectorcraft-text = { workspace = true }
 kurbo = { workspace = true }
 usvg = { workspace = true }
 thiserror = { workspace = true }

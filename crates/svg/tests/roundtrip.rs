@@ -711,3 +711,22 @@ fn live_effects_export_as_geometry_and_filters() {
     let b = art(&back).iter().filter_map(|n| n.geometric_bounds()).fold(None, |a: Option<Rect>, b| Some(a.map_or(b, |a| a.union(b)))).unwrap();
     assert!((b.width() - 120.0).abs() < 1.0, "{b:?}");
 }
+
+#[test]
+fn outline_text_writes_glyph_paths() {
+    let mut d = Document::new(300.0, 100.0);
+    let mut st = CharStyle { size: 30.0, ..CharStyle::default() };
+    st.fill = Paint::solid(Color::rgb(1.0, 0.0, 0.0));
+    let t = TextObject::point(Point::new(10.0, 50.0), "Hi there", st);
+    let id = d.alloc_id();
+    let l = d.layers[0].id;
+    d.insert(Some(l), 0, Node::new(id, NodeKind::Text(Box::new(t)))).unwrap();
+    let plain = export(&d, &ExportOptions::default());
+    assert!(plain.contains("<text"));
+    let s = export(&d, &ExportOptions { outline_text: true, ..Default::default() });
+    assert!(!s.contains("<text") && s.contains("<path") && s.contains("#ff0000"), "{s}");
+    // The outlines come back as paths spanning the text's width.
+    let back = import(&s).unwrap();
+    let b = art(&back).iter().filter_map(|n| n.geometric_bounds()).reduce(|a, b| a.union(b)).unwrap();
+    assert!(b.width() > 80.0 && b.x0 >= 9.0, "{b:?}");
+}

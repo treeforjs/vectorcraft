@@ -21,7 +21,15 @@ pub fn specs() -> Vec<CommandSpec> {
         ),
         cmd!("document.save", "Save Document", [], None, "{path?} native .vectorcraft (default: the document's path) → {path}", has_doc, save),
         cmd!(query "document.serialize", "Serialize Document", [], None, "{format: vectorcraft|svg|pdf|png} → {dataBase64 | text}", has_doc, serialize),
-        cmd!("document.export", "Export Document", [], None, "{format: svg|png|pdf|vectorcraft, path, scale?: 1, artboard?: 0}", has_doc, export),
+        cmd!(
+            "document.export",
+            "Export Document",
+            [],
+            None,
+            "{format: svg|png|pdf|jpg|webp|vectorcraft, path, scale?: 1, artboard?: 0, outlineText?: bool (SVG: text as outlines)}",
+            has_doc,
+            export
+        ),
         cmd!(
             "document.exportSelection",
             "Export Selection…",
@@ -114,9 +122,15 @@ pub(crate) fn encode(s: &Session, format: &str, scale: f64, artboard: usize) -> 
 }
 
 fn encode_doc(doc: &vectorcraft_doc::Document, format: &str, scale: f64, artboard: usize) -> Result<Vec<u8>> {
+    encode_doc_with(doc, format, scale, artboard, false)
+}
+
+/// `outline_text`: SVG text as glyph outlines (Illustrator's SVG Options → Fonts → Convert to Outlines).
+fn encode_doc_with(doc: &vectorcraft_doc::Document, format: &str, scale: f64, artboard: usize, outline_text: bool) -> Result<Vec<u8>> {
     Ok(match format {
         "vectorcraft" => vectorcraft_format::save_file(doc),
-        "svg" => vectorcraft_svg::export(doc, &vectorcraft_svg::ExportOptions { artboard: Some(artboard), ..Default::default() }).into_bytes(),
+        "svg" => vectorcraft_svg::export(doc, &vectorcraft_svg::ExportOptions { artboard: Some(artboard), outline_text, ..Default::default() })
+            .into_bytes(),
         "pdf" => vectorcraft_pdf::export(doc, &vectorcraft_pdf::PdfOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?,
         "png" | "jpg" | "jpeg" | "webp" => {
             let r = doc.artboards.get(artboard).map(|a| a.rect).ok_or_else(|| EngineError::Other("no such artboard".into()))?;
@@ -145,7 +159,8 @@ fn export(s: &mut Session, p: &Value) -> Result<Value> {
     let f = str_param(p, "format")
         .map(str::to_string)
         .unwrap_or_else(|| std::path::Path::new(path).extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_else(|| "png".into()));
-    let bytes = encode(s, &f, f64_or(p, "scale", 1.0), p.get("artboard").and_then(Value::as_u64).unwrap_or(0) as usize)?;
+    let artboard = p.get("artboard").and_then(Value::as_u64).unwrap_or(0) as usize;
+    let bytes = encode_doc_with(&s.doc()?.doc, &f, f64_or(p, "scale", 1.0), artboard, bool_or(p, "outlineText", false))?;
     std::fs::write(path, &bytes).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
     Ok(json!({ "path": path, "bytes": bytes.len() }))
 }
@@ -172,7 +187,7 @@ fn export_selection(s: &mut Session, p: &Value) -> Result<Value> {
     ab.rect = bounds;
     ab.name = "Selection".into();
     d.artboards = vec![ab];
-    let bytes = encode_doc(&d, &f, f64_or(p, "scale", 1.0), 0)?;
+    let bytes = encode_doc_with(&d, &f, f64_or(p, "scale", 1.0), 0, bool_or(p, "outlineText", false))?;
     let b = [bounds.x0, bounds.y0, bounds.width(), bounds.height()];
     match path {
         Some(path) => {

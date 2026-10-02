@@ -57,11 +57,21 @@ pub struct ExportOptions {
     pub minify: bool,
     /// Omit `width`/`height` so the SVG scales to its container.
     pub responsive: bool,
+    /// Fonts → Convert to Outlines: text becomes paths (portable, no font needed to view it).
+    pub outline_text: bool,
 }
 
 impl Default for ExportOptions {
     fn default() -> Self {
-        Self { artboard: Some(0), styling: Styling::PresentationAttributes, decimals: 3, object_ids: true, minify: false, responsive: false }
+        Self {
+            artboard: Some(0),
+            styling: Styling::PresentationAttributes,
+            decimals: 3,
+            object_ids: true,
+            minify: false,
+            responsive: false,
+            outline_text: false,
+        }
     }
 }
 
