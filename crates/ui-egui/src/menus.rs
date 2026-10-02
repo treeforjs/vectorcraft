@@ -47,6 +47,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("file.save", "Save", "Cmd+S", "{path?}"),
     ("file.saveAs", "Save As…", "Cmd+Shift+S", "{path?}"),
     ("file.saveCopy", "Save a Copy…", "Cmd+Alt+S", "{path?}"),
+    ("file.newFromTemplate", "New from Template…", "Cmd+Shift+N", "{path?} open a template as a new untitled document"),
     ("file.revert", "Revert", "F12", "{}"),
     ("file.place", "Place…", "Cmd+Shift+P", "{path?}"),
     ("file.openRecent1", "Open Recent File 1", "", "{}"),
@@ -153,6 +154,16 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         },
         "file.save" => io::save(app, s("path"), false).map(|p| json!({"path": p})),
         "file.saveAs" | "file.saveCopy" => io::save(app, s("path"), true).map(|p| json!({"path": p})),
+        "document.exportSelection" => {
+            io::save_command_output(app, id, "png", if p.is_object() { p.clone() } else { json!({}) }).map(|p| json!({"path": p}))
+        }
+        "file.saveAsTemplate" => {
+            io::save_command_output(app, id, "vectorcraft", if p.is_object() { p.clone() } else { json!({}) }).map(|p| json!({"path": p}))
+        }
+        "file.newFromTemplate" => match s("path") {
+            Some(path) => io::open_path(app, &path).map(|_| Value::Null),
+            None => io::open_dialog(app).map(|_| Value::Null),
+        },
         "file.revert" => {
             let path = app.session.active().and_then(|d| d.path.clone());
             match path {
@@ -537,7 +548,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
             "File",
             vec![
                 c("New…", "file.newDialog"),
-                todos("New from Template…", "Cmd+Shift+N"),
+                c("New from Template…", "file.newFromTemplate"),
                 c("Open…", "file.open"),
                 sub("Open Recent Files", {
                     let mut v: Vec<Item> = RECENT_IDS.iter().map(|id| c("Recent File", id)).collect();
@@ -551,7 +562,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Save", "file.save"),
                 c("Save As…", "file.saveAs"),
                 c("Save a Copy…", "file.saveCopy"),
-                todo("Save as Template…"),
+                c("Save as Template…", "file.saveAsTemplate"),
                 c("Revert", "file.revert"),
                 Sep,
                 c("Place…", "file.place"),
@@ -565,7 +576,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         todos("Save for Web (Legacy)…", "Cmd+Alt+Shift+S"),
                     ],
                 ),
-                todo("Export Selection…"),
+                c("Export Selection…", "document.exportSelection"),
                 Sep,
                 todos("Package…", "Cmd+Alt+Shift+P"),
                 sub("Scripts", vec![todos("Other Script…", "Cmd+F12")]),

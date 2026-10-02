@@ -23,6 +23,24 @@ pub fn specs() -> Vec<CommandSpec> {
         cmd!(query "document.serialize", "Serialize Document", [], None, "{format: vectorcraft|svg|pdf|png} → {dataBase64 | text}", has_doc, serialize),
         cmd!("document.export", "Export Document", [], None, "{format: svg|png|pdf|vectorcraft, path, scale?: 1, artboard?: 0}", has_doc, export),
         cmd!(
+            "document.exportSelection",
+            "Export Selection…",
+            ["File"],
+            None,
+            "{path?, format?: png|jpg|webp|svg|pdf (default: from the extension, else png), scale?: 1} the selected objects cropped to their bounds → {path, bytes, bounds} (no path → {dataBase64, bounds})",
+            has_selection,
+            export_selection
+        ),
+        cmd!(
+            "file.saveAsTemplate",
+            "Save as Template…",
+            ["File"],
+            None,
+            "{path?} a native copy that opens as a new untitled document (no path → {dataBase64})",
+            has_doc,
+            save_template
+        ),
+        cmd!(
             "document.exportForScreens",
             "Export for Screens",
             ["File", "Export"],
@@ -66,8 +84,14 @@ fn open(s: &mut Session, p: &Value) -> Result<Value> {
         ),
         _ => return Err(bad("document.open", "give path or dataBase64")),
     };
-    let doc = load(&name, &bytes)?;
-    let native = vectorcraft_format::is_native_name(&name);
+    let mut doc = load(&name, &bytes)?;
+    let mut native = vectorcraft_format::is_native_name(&name);
+    if doc.template {
+        // A template opens as a new untitled document (saving asks for a new name).
+        doc.template = false;
+        doc.title = s.next_untitled();
+        native = false;
+    }
     let i = s.add_document(doc, if native { path } else { None });
     Ok(json!({ "index": i }))
 }
@@ -86,7 +110,10 @@ fn save(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 pub(crate) fn encode(s: &Session, format: &str, scale: f64, artboard: usize) -> Result<Vec<u8>> {
-    let doc = &s.doc()?.doc;
+    encode_doc(&s.doc()?.doc, format, scale, artboard)
+}
+
+fn encode_doc(doc: &vectorcraft_doc::Document, format: &str, scale: f64, artboard: usize) -> Result<Vec<u8>> {
     Ok(match format {
         "vectorcraft" => vectorcraft_format::save_file(doc),
         "svg" => vectorcraft_svg::export(doc, &vectorcraft_svg::ExportOptions { artboard: Some(artboard), ..Default::default() }).into_bytes(),
@@ -121,6 +148,53 @@ fn export(s: &mut Session, p: &Value) -> Result<Value> {
     let bytes = encode(s, &f, f64_or(p, "scale", 1.0), p.get("artboard").and_then(Value::as_u64).unwrap_or(0) as usize)?;
     std::fs::write(path, &bytes).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
     Ok(json!({ "path": path, "bytes": bytes.len() }))
+}
+
+/// File → Export Selection: the selected objects alone, cropped to their visual bounds.
+fn export_selection(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "document.exportSelection";
+    let path = str_param(p, "path");
+    let f = str_param(p, "format")
+        .map(str::to_string)
+        .or_else(|| path.and_then(|p| std::path::Path::new(p).extension()).map(|e| e.to_string_lossy().to_ascii_lowercase()))
+        .unwrap_or_else(|| "png".into());
+    let ids = super::edit::selected_roots(s)?;
+    let st = s.doc()?;
+    let nodes: Vec<std::sync::Arc<vectorcraft_doc::Node>> = ids.iter().filter_map(|id| st.doc.node(*id).cloned().map(std::sync::Arc::new)).collect();
+    let bounds = nodes.iter().filter_map(|n| n.visual_bounds()).reduce(|a, b| a.union(b)).ok_or_else(|| bad(C, "select something to export"))?;
+    let mut d = (*st.doc).clone();
+    let mut layer = vectorcraft_doc::Node::layer(d.alloc_id(), "Selection", vectorcraft_doc::LayerColor::Preset(0));
+    if let Some(ch) = layer.children_mut() {
+        *ch = nodes;
+    }
+    d.layers = vec![std::sync::Arc::new(layer)];
+    let mut ab = d.artboards.first().cloned().ok_or_else(|| bad(C, "the document has no artboard"))?;
+    ab.rect = bounds;
+    ab.name = "Selection".into();
+    d.artboards = vec![ab];
+    let bytes = encode_doc(&d, &f, f64_or(p, "scale", 1.0), 0)?;
+    let b = [bounds.x0, bounds.y0, bounds.width(), bounds.height()];
+    match path {
+        Some(path) => {
+            std::fs::write(path, &bytes).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
+            Ok(json!({ "path": path, "bytes": bytes.len(), "bounds": b }))
+        }
+        None => Ok(json!({ "dataBase64": vectorcraft_format::base64_encode(&bytes), "bounds": b })),
+    }
+}
+
+/// File → Save as Template: a native copy flagged so opening it starts a new untitled document.
+fn save_template(s: &mut Session, p: &Value) -> Result<Value> {
+    let mut d = (*s.doc()?.doc).clone();
+    d.template = true;
+    let bytes = vectorcraft_format::save_file(&d);
+    match str_param(p, "path") {
+        Some(path) => {
+            std::fs::write(path, bytes).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
+            Ok(json!({ "path": path }))
+        }
+        None => Ok(json!({ "dataBase64": vectorcraft_format::base64_encode(&bytes) })),
+    }
 }
 
 fn batch(s: &mut Session, p: &Value) -> Result<Value> {

@@ -257,6 +257,9 @@ pub struct Document {
     pub version: u32,
     #[serde(default)]
     pub title: String,
+    /// Saved with File → Save as Template: opening it starts a new untitled document.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub template: bool,
     #[serde(default)]
     pub units: Unit,
     #[serde(default)]
@@ -314,6 +317,7 @@ impl Document {
         let mut d = Self {
             version: FORMAT_VERSION,
             title: "Untitled-1".into(),
+            template: false,
             units: Unit::Points,
             color_mode: ColorMode::Rgb,
             artboards: vec![Artboard {

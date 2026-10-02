@@ -82,10 +82,17 @@ pub fn open_bytes(app: &mut VectorcraftApp, name: &str, bytes: &[u8], path: Opti
     let e = ext(name);
     let (doc, keep_path) = if vectorcraft_format::is_native_ext(&e) || vectorcraft_format::sniff(bytes) {
         let mut d = vectorcraft_format::load(bytes).map_err(|e| e.to_string())?;
-        if d.title.is_empty() {
-            d.title = name.to_string();
+        if d.template {
+            // Templates open as a new untitled document.
+            d.template = false;
+            d.title = app.session.next_untitled();
+            (d, false)
+        } else {
+            if d.title.is_empty() {
+                d.title = name.to_string();
+            }
+            (d, true)
         }
-        (d, true)
     } else if e == "svg" || bytes.starts_with(b"<?xml") || bytes.starts_with(b"<svg") {
         let s = std::str::from_utf8(bytes).map_err(|_| "SVG is not UTF-8".to_string())?;
         let (mut d, warnings) = vectorcraft_svg::import_with_report(s).map_err(|e| e.to_string())?;
@@ -206,6 +213,31 @@ pub fn export(app: &mut VectorcraftApp, format: &str, path: Option<String>, scal
     };
     write_out(app, &path, &bytes)?;
     app.status(format!("Exported {path}"));
+    Ok(path)
+}
+
+/// Run an engine command that returns `{dataBase64}` and write the bytes to a picked path
+/// (Export Selection, Save as Template).
+pub fn save_command_output(app: &mut VectorcraftApp, id: &str, ext: &str, mut params: serde_json::Value) -> Result<String, String> {
+    let path = match params.get("path").and_then(serde_json::Value::as_str) {
+        Some(p) => p.to_string(),
+        None if app.services.download.is_some() => suggested(app, ext),
+        None => {
+            let s = suggested(app, ext);
+            app.services.pick_save.as_mut().and_then(|f| f(&s)).ok_or("cancelled")?
+        }
+    };
+    if let Some(o) = params.as_object_mut() {
+        o.remove("path");
+        if o.get("format").is_none() && id == "document.exportSelection" {
+            let e = std::path::Path::new(&path).extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_else(|| ext.into());
+            o.insert("format".into(), serde_json::json!(e));
+        }
+    }
+    let v = app.session.execute(id, &params).map_err(|e| e.to_string())?;
+    let bytes = v["dataBase64"].as_str().and_then(vectorcraft_format::base64_decode).ok_or("no data")?;
+    write_out(app, &path, &bytes)?;
+    app.status(format!("Saved {path}"));
     Ok(path)
 }
 

@@ -149,3 +149,37 @@ fn recolor_maps_fills_strokes_gradients() {
         other => panic!("{other:?}"),
     }
 }
+
+#[test]
+fn export_selection_crops_to_the_selection() {
+    let mut s = session();
+    s.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 50, "height": 50})).unwrap();
+    s.execute("shape.rectangle", &json!({"x": 200, "y": 100, "width": 80, "height": 40})).unwrap();
+    let v = s.execute("document.exportSelection", &json!({"format": "png", "scale": 2})).unwrap();
+    let b = v["bounds"].as_array().unwrap();
+    // Only the selected (last) rectangle, with its stroke.
+    let w = b[2].as_f64().unwrap();
+    assert!((81.0..90.0).contains(&w) && b[0].as_f64().unwrap() > 190.0, "{v}");
+    let png = vectorcraft_format::base64_decode(v["dataBase64"].as_str().unwrap()).unwrap();
+    assert_eq!(&png[..4], b"\x89PNG");
+    assert_eq!(u32::from_be_bytes([png[16], png[17], png[18], png[19]]), (w * 2.0).round() as u32);
+    let svg = s.execute("document.exportSelection", &json!({"format": "svg"})).unwrap();
+    let text = String::from_utf8(vectorcraft_format::base64_decode(svg["dataBase64"].as_str().unwrap()).unwrap()).unwrap();
+    assert_eq!(text.matches("<path").count(), 1, "{text}");
+}
+
+#[test]
+fn template_opens_as_untitled() {
+    let mut s = session();
+    s.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 50, "height": 50})).unwrap();
+    let dir = std::env::temp_dir().join(format!("vc-tpl-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("letterhead.vectorcraft");
+    s.execute("file.saveAsTemplate", &json!({"path": path.to_str().unwrap()})).unwrap();
+    s.execute("document.open", &json!({"path": path.to_str().unwrap()})).unwrap();
+    let st = s.doc().unwrap();
+    assert!(st.path.is_none() && !st.doc.template);
+    assert!(st.doc.title.starts_with("Untitled-"), "{}", st.doc.title);
+    assert_eq!(st.doc.layers[0].children().unwrap().len(), 1);
+    let _ = std::fs::remove_dir_all(dir);
+}
