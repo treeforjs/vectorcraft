@@ -59,7 +59,7 @@ _Last updated: 2026-10-02._
 | M0 | Skeleton + vertical slice | ✅ done | — |
 | M1 | Selection, transform, layers, MCP | ✅ mostly done (rotated persistent bbox pending) | 4–6 |
 | M2 | Drawing tools + smart guides | ✅ mostly done (Flare, Reshape landed; Shaper, Pen modifier nuances) | 15–20 |
-| M3 | Paint & appearance (swatches, color, gradient, stroke, appearance, transparency, styles) | 🟡 panels done; opacity masks done (make/release, clip, invert, disable, link; render + SVG `<mask>` in/out + PDF soft mask); mask-editing mode, freeform gradients pending | 18–27 |
+| M3 | Paint & appearance (swatches, color, gradient, stroke, appearance, transparency, styles) | 🟡 panels done; opacity masks done (make/release, clip, invert, disable, link; render + SVG `<mask>` in/out + PDF soft mask); mask-editing mode (click the mask thumbnail; live update) done; freeform gradients pending | 18–27 |
 | M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 Export for Screens (PNG/JPG/WebP/SVG/PDF × scales) done; headless CLI/MCP export every format; system clipboard: copy puts SVG markup on it, paste takes SVG from other apps (Ctrl/Cmd+C/X/V now also work off macOS); live effects now survive SVG/PDF/clipboard export (geometry baked, SVG filters for shadows/glows/blur/feather); PDF raster effects, PNG/PDF clipboard flavours, EPS/DXF pending | 52–73 |
 | M5 | Performance | 🟡 background render + caches + MT done; `vectorcraft-cli bench` and `vectorcraft-cli perf` (budget suite); file format v2 opens 3× faster (50k paths: 722 → 244 ms); raster effects (glows, shadows, blur, feather) no longer force the whole frame single-threaded (filtered offscreen per effect, verified equal to the single-threaded reference); effect-heavy demos need a clean-machine benchmark; dirty-region rendering, GPU backend spike pending | 15–25 |
 | M6 | Path operations (Pathfinder, Shape Builder, offset…) | ✅ mostly done (Shape Builder edge erase, large-offset bug open) | 3–6 |
@@ -92,7 +92,7 @@ are counted bottom-up.
 | Path operations, Pathfinder, Shape Builder, Live Paint | 5 | 85% | Live Paint gap options, Shape Builder edge cases | 3–6 |
 | Colour, swatches, gradients, patterns, mesh, recolor | 7 | 75% | freeform gradients, swatch libraries (original), Tile Edge Color | 10–15 |
 | Strokes, brushes, width profiles | 5 | 65% | brush options depth, brush libraries (generated in code) | 15–25 |
-| Appearance, transparency, graphic styles, masks | 5 | 80% | opacity-mask editing mode, Flatten Transparency, style libraries | 8–12 |
+| Appearance, transparency, graphic styles, masks | 5 | 85% | Flatten Transparency, style libraries, mask view (Alt-click) | 6–10 |
 | Live vector effects | 5 | 85% | Outline Object, Pathfinder Hard/Soft Mix and Trap, SVG Filters | 6–10 |
 | Raster effects (Effect Gallery, Document Raster Effects Settings) | 4 | 15% | ~55 filters (Artistic, Brush Strokes, Distort, Pixelate, Sketch, Texture…), resolution setting, raster effects in PDF | 30–45 |
 | 3D and Materials | 4 | 0% | Extrude & Bevel, Revolve, Inflate, Rotate, lighting, materials (software renderer) | 50–80 |

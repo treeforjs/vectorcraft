@@ -213,6 +213,13 @@ pub struct Artboard {
     pub show_cross_hairs: bool,
 }
 
+/// Opacity-mask editing mode: `object`'s mask art lives on the temporary `layer` while editing.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct MaskEdit {
+    pub object: NodeId,
+    pub layer: NodeId,
+}
+
 /// A saved view (View → New View…): zoom, centre and rotation, listed at the bottom of the View menu.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SavedView {
@@ -313,6 +320,9 @@ pub struct Document {
     /// Pattern editing mode, while active.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pattern_edit: Option<PatternEdit>,
+    /// Opacity-mask editing mode, while active.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mask_edit: Option<MaskEdit>,
     next_id: u64,
     /// Foreign data preserved on round-trip.
     #[serde(default, skip_serializing_if = "serde_json::Map::is_empty")]
@@ -357,6 +367,7 @@ impl Document {
             images: BTreeMap::new(),
             patterns: vec![],
             pattern_edit: None,
+            mask_edit: None,
             next_id: 1,
             unknown: Default::default(),
         };

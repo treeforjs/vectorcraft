@@ -18,6 +18,7 @@ pub(crate) mod graph;
 pub mod help;
 mod layer;
 mod live;
+pub(crate) mod maskedit;
 pub(crate) mod menucmds;
 mod object;
 mod opacitymask;
@@ -167,6 +168,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(graph::specs());
         v.extend(rasterfx::specs());
         v.extend(views::specs());
+        v.extend(maskedit::specs());
         v.extend(docmenu::specs());
         v.extend(docinfo::specs());
         v.extend(panelcmds::specs());

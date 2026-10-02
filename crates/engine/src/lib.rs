@@ -580,6 +580,10 @@ impl Session {
             Ok(v) => {
                 // Text Wrap: area type follows its wrap objects; then threads re-flow.
                 cmd::textwrap::refresh(Arc::make_mut(&mut st.doc));
+                // Opacity-mask editing: the mask follows its art on the editing layer.
+                if st.doc.mask_edit.is_some() {
+                    cmd::maskedit::sync(Arc::make_mut(&mut st.doc));
+                }
                 // Threaded text re-flows when any of its frames changed.
                 if !st.doc.text_threads.is_empty() {
                     cmd::threads::reflow(&before, Arc::make_mut(&mut st.doc));

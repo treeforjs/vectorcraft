@@ -293,7 +293,9 @@ impl Renderer {
             ctx.push_clip_layer(&clip);
         }
         if !self.draw_pattern_edit(&mut ctx, &frame) {
-            for layer in &doc.layers {
+            // While editing an opacity mask its art is seen only through the mask (Illustrator).
+            let mask_layer = doc.mask_edit.map(|m| m.layer);
+            for layer in doc.layers.iter().filter(|l| Some(l.id) != mask_layer) {
                 self.draw_arc(&mut ctx, &frame, layer);
             }
         }
