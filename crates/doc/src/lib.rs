@@ -213,6 +213,16 @@ pub struct Artboard {
     pub show_cross_hairs: bool,
 }
 
+/// A saved view (View → New View…): zoom, centre and rotation, listed at the bottom of the View menu.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct SavedView {
+    pub name: String,
+    pub center: Point,
+    pub zoom: f64,
+    #[serde(default)]
+    pub rotation: f64,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Guide {
     /// true = vertical guide at `pos` (x), false = horizontal at `pos` (y).
@@ -288,6 +298,9 @@ pub struct Document {
     pub symbols: Vec<Symbol>,
     #[serde(default)]
     pub guides: Vec<Guide>,
+    /// View → New View… (up to 25, like Illustrator).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub views: Vec<SavedView>,
     #[serde(default)]
     pub grid: GridPrefs,
     #[serde(default = "ppi72")]
@@ -338,6 +351,7 @@ impl Document {
             text_threads: vec![],
             symbols: vec![],
             guides: vec![],
+            views: vec![],
             grid: GridPrefs::default(),
             raster_effects_ppi: 72.0,
             images: BTreeMap::new(),

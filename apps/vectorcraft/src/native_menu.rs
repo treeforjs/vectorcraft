@@ -95,6 +95,9 @@ impl NativeMenu {
                             | "view.transparencyGrid"
                             | "window.workspace.reset"
                     ) || cmd.starts_with("file.openRecent")
+                        || cmd.starts_with("type.recentFont")
+                        || cmd.starts_with("view.goto")
+                        || cmd == "view.cornerWidget"
                     {
                         i.set_text(menus::dynamic_label(app, cmd, ""));
                     }

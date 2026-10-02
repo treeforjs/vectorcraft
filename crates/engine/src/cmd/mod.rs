@@ -36,6 +36,7 @@ pub(crate) mod textwrap;
 pub(crate) mod threads;
 pub(crate) mod typecmd;
 mod typemenu;
+pub(crate) mod views;
 pub mod wand;
 mod xform;
 
@@ -165,6 +166,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(textwrap::specs());
         v.extend(graph::specs());
         v.extend(rasterfx::specs());
+        v.extend(views::specs());
         v.extend(docmenu::specs());
         v.extend(docinfo::specs());
         v.extend(panelcmds::specs());

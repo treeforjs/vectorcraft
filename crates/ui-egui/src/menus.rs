@@ -60,6 +60,16 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("file.openRecent8", "Open Recent File 8", "", "{}"),
     ("file.openRecent9", "Open Recent File 9", "", "{}"),
     ("file.openRecent10", "Open Recent File 10", "", "{}"),
+    ("view.goto1", "Saved View 1", "", "{} go to the 1. saved view"),
+    ("view.goto2", "Saved View 2", "", "{} go to the 2. saved view"),
+    ("view.goto3", "Saved View 3", "", "{} go to the 3. saved view"),
+    ("view.goto4", "Saved View 4", "", "{} go to the 4. saved view"),
+    ("view.goto5", "Saved View 5", "", "{} go to the 5. saved view"),
+    ("view.goto6", "Saved View 6", "", "{} go to the 6. saved view"),
+    ("view.goto7", "Saved View 7", "", "{} go to the 7. saved view"),
+    ("view.goto8", "Saved View 8", "", "{} go to the 8. saved view"),
+    ("view.goto9", "Saved View 9", "", "{} go to the 9. saved view"),
+    ("view.goto10", "Saved View 10", "", "{} go to the 10. saved view"),
     ("type.recentFont1", "Recent Font 1", "", "{} apply the 1. most recently used font"),
     ("type.recentFont2", "Recent Font 2", "", "{} apply the 2. most recently used font"),
     ("type.recentFont3", "Recent Font 3", "", "{} apply the 3. most recently used font"),
@@ -507,6 +517,10 @@ pub fn dynamic_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
             let n: usize = id["type.recentFont".len()..].parse().unwrap_or(0);
             n.checked_sub(1).and_then(|i| app.ui.recent_fonts.get(i)).cloned().unwrap_or_else(|| "—".into())
         }
+        id if id.starts_with("view.goto") => {
+            let n: usize = id["view.goto".len()..].parse().unwrap_or(0);
+            app.session.active().and_then(|d| n.checked_sub(1).and_then(|i| d.doc.views.get(i)).map(|v| v.name.clone())).unwrap_or_else(|| "—".into())
+        }
         "view.artboards" => if v.artboards { "Hide Artboards" } else { "Show Artboards" }.into(),
         "view.rulers" => if v.rulers { "Hide Rulers" } else { "Show Rulers" }.into(),
         "view.boundingBox" => if v.bounding_box { "Hide Bounding Box" } else { "Show Bounding Box" }.into(),
@@ -586,6 +600,9 @@ pub fn enabled(app: &VectorcraftApp, id: &str) -> bool {
         "file.clearRecent" => !app.ui.recent_files.is_empty(),
         id if id.starts_with("type.recentFont") => {
             id["type.recentFont".len()..].parse::<usize>().is_ok_and(|n| n >= 1 && n <= app.ui.recent_fonts.len()) && app.session.active().is_some()
+        }
+        id if id.starts_with("view.goto") => {
+            id["view.goto".len()..].parse::<usize>().is_ok_and(|n| n >= 1 && app.session.active().is_some_and(|d| n <= d.doc.views.len()))
         }
         "effect.dialog" | "ui.recolorDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "effect.applyLast" => app.last_effect.is_some() && app.session.active().is_some_and(|d| !d.selection.is_empty()),
@@ -1243,6 +1260,10 @@ fn render_items(app: &VectorcraftApp, ui: &mut egui::Ui, items: &[Item], clicked
             }
             Item::Cmd(label, id, p) => {
                 let en = enabled(app, id);
+                // Unused saved-view slots are hidden (Illustrator lists only the saved views).
+                if !en && id.starts_with("view.goto") {
+                    continue;
+                }
                 let label = dynamic_label(app, id, label);
                 let sc = if p.is_null() { shortcut_of(id).map(pretty_shortcut).unwrap_or_default() } else { String::new() };
                 let chk = checked(app, id, p);
@@ -1330,6 +1351,23 @@ pub fn invoke(app: &mut VectorcraftApp, id: &str, p: Value) {
         }
         return;
     }
+    // New View… / Edit Views…: name dialogs.
+    if id == "view.saved.new" && p.as_object().is_none_or(|o| o.is_empty()) {
+        let n = app.session.active().map_or(0, |d| d.doc.views.len()) + 1;
+        let _ = app.run("ui.paramDialog", json!({"command": id, "label": "New View", "params": {"name": format!("View {n}")}}));
+        return;
+    }
+    if id == "view.saved.edit" && p.as_object().is_none_or(|o| o.is_empty()) {
+        let first = app.session.active().and_then(|d| d.doc.views.first().map(|v| v.name.clone()));
+        match first {
+            Some(name) => {
+                let _ = app
+                    .run("ui.paramDialog", json!({"command": id, "label": "Edit Views", "params": {"name": name, "newName": "", "delete": false}}));
+            }
+            None => app.status("No saved views (View → New View…)"),
+        }
+        return;
+    }
     // Document Raster Effects Settings: a dialog with the current resolution.
     if id == "document.rasterEffectsSettings" && p.as_object().is_none_or(|o| o.is_empty()) {
         match app.session.execute(id, &json!({})) {
@@ -1402,6 +1440,7 @@ pub fn menu_entries(app: &VectorcraftApp) -> Vec<MenuEntry> {
     fn walk(app: &VectorcraftApp, path: Vec<String>, items: &[Item], out: &mut Vec<MenuEntry>) {
         for it in items {
             match it {
+                Item::Cmd(_, id, _) if id.starts_with("view.goto") && !enabled(app, id) => {}
                 Item::Cmd(l, id, p) => out.push(MenuEntry {
                     path: path.clone(),
                     label: dynamic_label(app, id, l),
@@ -1562,6 +1601,26 @@ fn effect_menu() -> Vec<Item> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn saved_views_store_and_restore_the_view() {
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), crate::Services::default());
+        app.run("file.new", json!({})).unwrap();
+        {
+            let v = app.view_mut().unwrap();
+            v.zoom = 3.0;
+            v.center = vectorcraft_geom::Point::new(120.0, 80.0);
+        }
+        app.run("view.saved.new", json!({"name": "Detail"})).unwrap();
+        assert!(enabled(&app, "view.goto1") && !enabled(&app, "view.goto2"));
+        assert_eq!(dynamic_label(&app, "view.goto1", ""), "Detail");
+        app.view_mut().unwrap().zoom = 0.5;
+        app.run("view.goto1", json!({})).unwrap();
+        let v = app.view().unwrap();
+        assert_eq!((v.zoom, v.center.x, v.center.y), (3.0, 120.0, 80.0));
+        // Unused slots stay out of the menu listing agents see.
+        assert!(!menu_entries(&app).iter().any(|e| e.command.as_deref() == Some("view.goto2")));
+    }
 
     #[test]
     fn recent_fonts_and_corner_widget_toggle() {
