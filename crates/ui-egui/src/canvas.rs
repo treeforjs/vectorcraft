@@ -314,8 +314,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
 fn cursor_icon(c: Cursor) -> egui::CursorIcon {
     use egui::CursorIcon as C;
     match c {
-        Cursor::Arrow => C::Default,
-        Cursor::ArrowHollow => C::Default,
+        Cursor::Arrow | Cursor::ArrowHollow | Cursor::CornerRadius => C::Default,
         Cursor::Move => C::Move,
         Cursor::Crosshair => C::Crosshair,
         Cursor::ResizeH => C::ResizeHorizontal,
@@ -795,23 +794,19 @@ fn selection_overlay(app: &VectorcraftApp, p: &egui::Painter, xf: &Xf) {
             p.circle_filled(o, 2.5, color);
         }
     }
-    // Bounding box with handles (Selection tool).
-    // Live corner widgets (Direct Selection on a single live rectangle).
-    if tool == "directSelection"
+    // Live Corners widgets (Selection / Direct Selection on a single live rectangle).
+    if matches!(tool, "selection" | "directSelection")
         && app.ui.view.corner_widgets
-        && st.selection.len() == 1
-        && let Some(NodeKind::Path { live: Some(vectorcraft_doc::LiveShape::Rectangle { w, h, radii, xf: lxf }), .. }) =
-            st.doc.node(st.selection.objects[0]).map(|n| &n.kind)
+        && let Some(w) = vectorcraft_tools::corners::CornerWidgets::of(&st.doc, &st.selection, xf.zoom)
     {
-        let color = c32(st.doc.layer_color(st.selection.objects[0]));
-        let inset = (radii[0].max(10.0 / xf.zoom)).min(w.min(*h) / 2.0);
-        for (cx, cy) in [(inset, inset), (w - inset, inset), (w - inset, h - inset), (inset, h - inset)] {
-            let sp = xf.to_screen(*lxf * Point::new(cx, cy));
+        let color = c32(st.doc.layer_color(w.id));
+        for sp in w.points.map(|q| xf.to_screen(q)) {
             p.circle_filled(sp, 3.0, Color32::WHITE);
             p.circle_stroke(sp, 3.0, Stroke::new(1.0, color));
             p.circle_filled(sp, 1.0, color);
         }
     }
+    // Bounding box with handles (Selection tool).
     if tool == "selection" && app.ui.view.bounding_box && !st.selection.is_empty() && st.selection.anchors.is_empty() {
         let Some(b) = st.doc.bounds_of(&st.selection.objects, false) else { return };
         let color = c32(st.doc.layer_color(st.selection.objects[0]));
