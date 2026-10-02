@@ -35,7 +35,7 @@ _Last updated: 2026-10-02._
   - **Drawing:** Pen, Curvature, anchor tools, Pencil, Paintbrush, Blob Brush, Smooth, Path Eraser, Join.
   - **Shapes:** all shape tools (including Flare) and the line, arc, spiral and grid tools.
   - **Cutting:** Eraser, Scissors, Knife.
-  - **Transform:** Rotate, Reflect, Scale, Shear, Reshape, Free Transform (distort/perspective).
+  - **Transform:** Rotate, Reflect, Scale, Shear (click or Alt-click snaps the reference point to anchors and centres), Reshape, Free Transform (distort/perspective).
   - **Live Corners:** drag a live rectangle's corner widgets (Selection or Direct Selection) to round all corners, with a radius readout.
   - **Graphs:** Column, Stacked Column, Bar, Stacked Bar, Line, Area, Scatter, Pie and Radar graph tools with Graph Data and Graph Type.
   - **Other:** Eyedropper, Gradient annotator, Artboard, Measure, Type, Hand, Zoom, Rotate View.
@@ -58,7 +58,7 @@ _Last updated: 2026-10-02._
 | # | Milestone | Status | Est. remaining, one agent (h) |
 |---|---|---|---|
 | M0 | Skeleton + vertical slice | ✅ done | — |
-| M1 | Selection, transform, layers, MCP | ✅ mostly done (rotated persistent bbox pending) | 4–6 |
+| M1 | Selection, transform, layers, MCP | ✅ mostly done (transform reference point snaps to anchors/centres; rotated persistent bbox pending) | 4–6 |
 | M2 | Drawing tools + smart guides | ✅ mostly done (Flare, Reshape, Live Corners widget dragging landed; Shaper, Pen modifier nuances) | 15–20 |
 | M3 | Paint & appearance (swatches, color, gradient, stroke, appearance, transparency, styles) | 🟡 panels done; opacity masks done (make/release, clip, invert, disable, link; render + SVG `<mask>` in/out + PDF soft mask); mask-editing mode (click the mask thumbnail; live update) done; freeform gradients pending | 18–27 |
 | M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 Export for Screens (PNG/JPG/WebP/SVG/PDF × scales) done; headless CLI/MCP export every format; system clipboard: copy puts SVG markup on it, paste takes SVG from other apps (Ctrl/Cmd+C/X/V now also work off macOS); live effects now survive SVG/PDF/clipboard export (geometry baked, SVG filters for shadows/glows/blur/feather); PDF raster effects, PNG/PDF clipboard flavours, EPS/DXF pending | 52–73 |

@@ -212,6 +212,7 @@ impl VectorcraftApp {
             snap_to_grid: self.ui.view.snap_to_grid,
             snap_to_pixel: self.ui.view.snap_to_pixel,
             show_bbox: self.ui.view.bounding_box,
+            snap_to_point: self.ui.view.snap_to_point,
             corner_widgets: self.ui.view.corner_widgets,
         }
     }
