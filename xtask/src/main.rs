@@ -8,6 +8,7 @@ mod bundle;
 mod ico;
 mod layers;
 mod stats;
+mod version;
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
@@ -39,6 +40,7 @@ fn main() -> ExitCode {
         Some("corpus") => cmd_corpus(rest.contains(&"--download")),
         Some("bundle") => bundle::run(&root()),
         Some("ico") => ico::run(&rest),
+        Some("version") => version::run(&root(), &rest),
         Some("stats") => stats::run(&root(), rest.contains(&"--exact")),
         Some("-h" | "--help" | "help") | None => {
             print!("{USAGE}");
