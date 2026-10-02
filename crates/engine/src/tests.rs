@@ -396,3 +396,46 @@ fn stale_current_layer_id_never_targets_a_reused_id() {
     s.execute("layer.delete", &json!({})).ok();
     assert!(s.doc().unwrap().doc.node(c).is_some());
 }
+
+#[test]
+fn object_mosaic_tiles_follow_the_image_colours() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 50.0, 50.0);
+    s.execute("paint.setFill", &json!({"color": "#ff0000", "ids": [a.0]})).unwrap();
+    s.execute("paint.setStroke", &json!({"none": true, "ids": [a.0]})).unwrap();
+    let b = rect(&mut s, 50.0, 0.0, 50.0, 50.0);
+    s.execute("paint.setFill", &json!({"color": "#0000ff", "ids": [b.0]})).unwrap();
+    s.execute("paint.setStroke", &json!({"none": true, "ids": [b.0]})).unwrap();
+    s.execute("select.set", &json!({"ids": [a.0, b.0]})).unwrap();
+    s.execute("object.rasterize", &json!({"ppi": 72})).unwrap();
+    let r = s.execute("object.createObjectMosaic", &json!({"columns": 2, "rows": 1, "spacingX": 4, "deleteRaster": true})).unwrap();
+    assert_eq!(r["tiles"], json!(2));
+    let st = s.doc().unwrap();
+    let g = st.doc.node(NodeId(r["id"].as_u64().unwrap())).unwrap();
+    let tiles = g.children().unwrap();
+    let fill = |n: &vectorcraft_doc::Node| n.appearance.fill_paint();
+    assert_eq!(fill(&tiles[0]), vectorcraft_color::Paint::solid(vectorcraft_color::Color::rgb(1.0, 0.0, 0.0)));
+    assert_eq!(fill(&tiles[1]), vectorcraft_color::Paint::solid(vectorcraft_color::Color::rgb(0.0, 0.0, 1.0)));
+    // 4 pt spacing: each 50 pt tile shrinks to 46 pt; the image is gone.
+    assert!((tiles[0].geometric_bounds().unwrap().width() - 46.0).abs() < 1e-6);
+    assert!(!st.doc.layers[0].children().unwrap().iter().any(|n| matches!(n.kind, vectorcraft_doc::NodeKind::Image(_))));
+}
+
+#[test]
+fn snap_to_pixel_rounds_drawing_and_moves() {
+    let mut s = session();
+    let v = ViewInfo { snap_to_pixel: true, smart_guides: false, ..Default::default() };
+    s.select_tool("rectangle", v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Down, 10.3, 10.6), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Drag, 60.4, 40.2), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Up, 60.4, 40.2), v).unwrap();
+    let id = s.doc().unwrap().selection.objects[0];
+    let b = s.doc().unwrap().doc.node(id).unwrap().geometric_bounds().unwrap();
+    assert_eq!((b.x0, b.y0, b.x1, b.y1), (10.0, 11.0, 60.0, 40.0));
+    s.select_tool("selection", v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Down, 30.0, 30.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Drag, 37.3, 34.8), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Up, 37.3, 34.8), v).unwrap();
+    let b = s.doc().unwrap().doc.node(id).unwrap().geometric_bounds().unwrap();
+    assert_eq!((b.x0, b.y0), (17.0, 16.0));
+}

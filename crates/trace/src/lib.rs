@@ -24,12 +24,14 @@
 
 mod contour;
 mod fit;
+mod mosaic;
 mod quantize;
 
 use serde::{Deserialize, Serialize};
 use vectorcraft_geom::PathData;
 
 pub use contour::{Component, Loop, trace_mask};
+pub use mosaic::mosaic;
 pub use quantize::{Quantized, TRANSPARENT, denoise, quantize};
 
 /// Errors decoding a raster.

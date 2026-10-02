@@ -102,6 +102,15 @@ pub fn specs() -> Vec<CommandSpec> {
             rasterize
         ),
         cmd!(
+            "object.createObjectMosaic",
+            "Create Object Mosaic…",
+            ["Object"],
+            None,
+            "{columns=10, rows=10, width?, height? (new size in pt; default the image's), spacingX=0, spacingY=0 (pt between tiles), gray?: bool, deleteRaster?: bool} a group of rectangles coloured by the selected image's average tile colours → {id, tiles}",
+            has_image,
+            object_mosaic
+        ),
+        cmd!(
             "object.cropImage",
             "Crop Image",
             ["Object"],
@@ -438,6 +447,81 @@ fn has_image(s: &Session) -> std::result::Result<(), String> {
     } else {
         Err("select an image".into())
     }
+}
+
+fn object_mosaic(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "object.createObjectMosaic";
+    let st = s.doc()?;
+    let id = st
+        .selection
+        .objects
+        .iter()
+        .copied()
+        .find(|id| matches!(st.doc.node(*id).map(|n| &n.kind), Some(NodeKind::Image(_))))
+        .ok_or_else(|| bad(C, "select an image"))?;
+    let node = st.doc.node(id).cloned().ok_or(EngineError::NoNode(id))?;
+    let NodeKind::Image(im) = &node.kind else { unreachable!() };
+    let blob = st.doc.images.get(&im.key).filter(|b| !b.bytes.is_empty()).ok_or_else(|| bad(C, "the image has no embedded pixels"))?;
+    let raster = vectorcraft_trace::Raster::decode(&blob.bytes).map_err(|e| bad(C, e.to_string()))?;
+    let cols = p.get("columns").and_then(Value::as_u64).unwrap_or(10).clamp(1, 1000) as u32;
+    let rows = p.get("rows").and_then(Value::as_u64).unwrap_or(10).clamp(1, 1000) as u32;
+    let gray = bool_or(p, "gray", false);
+    let colors = vectorcraft_trace::mosaic(&raster, cols, rows);
+    // Tiles in image space, placed by the image transform (scaled to a new size if asked).
+    let b = node.geometric_bounds().ok_or_else(|| bad(C, "image has no bounds"))?;
+    let (nw, nh) = (f64_or(p, "width", b.width()).max(0.1), f64_or(p, "height", b.height()).max(0.1));
+    let resize = Affine::translate(b.origin().to_vec2())
+        * Affine::scale_non_uniform(nw / b.width().max(1e-9), nh / b.height().max(1e-9))
+        * Affine::translate(-b.origin().to_vec2());
+    let xf = resize * im.xf;
+    let (tw, th) = (im.width as f64 / cols as f64, im.height as f64 / rows as f64);
+    // Spacing is in points; convert to image pixels along each axis.
+    let ppx = (xf * Point::new(1.0, 0.0) - xf * Point::ZERO).hypot().max(1e-9);
+    let ppy = (xf * Point::new(0.0, 1.0) - xf * Point::ZERO).hypot().max(1e-9);
+    let (gx, gy) = ((f64_or(p, "spacingX", 0.0).max(0.0) / ppx).min(tw * 0.9), (f64_or(p, "spacingY", 0.0).max(0.0) / ppy).min(th * 0.9));
+    let delete = bool_or(p, "deleteRaster", false);
+    let (gid, n) = s.edit("Create Object Mosaic", |d, sel| {
+        let mut tiles = vec![];
+        for r in 0..rows {
+            for c in 0..cols {
+                let [cr, cg, cb, ca] = colors[(r * cols + c) as usize];
+                if ca == 0 {
+                    continue;
+                }
+                let x0 = c as f64 * tw + gx / 2.0;
+                let y0 = r as f64 * th + gy / 2.0;
+                let quad = [Point::new(x0, y0), Point::new(x0 + tw - gx, y0), Point::new(x0 + tw - gx, y0 + th - gy), Point::new(x0, y0 + th - gy)]
+                    .map(|q| xf * q);
+                let color = if gray {
+                    let l = (0.299 * cr as f32 + 0.587 * cg as f32 + 0.114 * cb as f32) / 255.0;
+                    Color::rgb(l, l, l)
+                } else {
+                    Color::rgb(cr as f32 / 255.0, cg as f32 / 255.0, cb as f32 / 255.0)
+                };
+                let mut tile = Node::path(d.alloc_id(), polygon_path(&quad), Appearance::basic(Paint::solid(color), Paint::None, 0.0));
+                if ca < 255 {
+                    tile.opacity = ca as f32 / 255.0;
+                }
+                tiles.push(Arc::new(tile));
+            }
+        }
+        let n = tiles.len();
+        let (par, idx, _) = d.position(id).ok_or(EngineError::NoNode(id))?;
+        let gid = d.alloc_id();
+        let mut g = Node::group(gid, tiles);
+        g.name = Some("Object Mosaic".into());
+        d.insert(par, idx + 1, g)?;
+        if delete {
+            d.remove(id)?;
+        }
+        sel.set([gid]);
+        Ok((gid, n))
+    })?;
+    Ok(json!({ "id": gid.0, "tiles": n }))
+}
+
+fn polygon_path(pts: &[Point]) -> PathData {
+    PathData::single(vectorcraft_geom::SubPath::new(pts.iter().map(|p| Anchor::corner(*p)).collect(), true))
 }
 
 fn crop_image(s: &mut Session, p: &Value) -> Result<Value> {

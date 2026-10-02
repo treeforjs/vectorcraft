@@ -749,7 +749,11 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Crop Image", "object.cropImage"),
                 cp("Rasterize…", "object.rasterize", json!({"ppi": 72, "background": "transparent"})),
                 cp("Create Gradient Mesh…", "object.mesh.create", json!({"rows": 4, "cols": 4, "appearance": "flat", "highlight": 100})),
-                todo("Create Object Mosaic…"),
+                cp(
+                    "Create Object Mosaic…",
+                    "object.createObjectMosaic",
+                    json!({"columns": 10, "rows": 10, "spacingX": 0, "spacingY": 0, "gray": false, "deleteRaster": false}),
+                ),
                 c("Create Trim Marks", "object.createTrimMarks"),
                 todo("Flatten Transparency…"),
                 Sep,
