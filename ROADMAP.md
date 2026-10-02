@@ -88,7 +88,7 @@ are counted bottom-up.
 | Area | Weight | Done | Missing (main items) | One agent (h) |
 |---|---:|---:|---|---:|
 | Selection, transform & align tools | 6 | 85% | rotated persistent bounding box, Start Global Edit, transform nuances | 4–6 |
-| Drawing tools | 7 | 80% | Shaper, pen/pencil modifier nuances, Touch Type | 15–20 |
+| Drawing tools | 7 | 85% | Shaper Groups (merge/punch overlapping shapes), pen/pencil modifier nuances, Touch Type | 10–15 |
 | Path operations, Pathfinder, Shape Builder, Live Paint | 5 | 85% | Live Paint gap options, Shape Builder edge cases | 3–6 |
 | Colour, swatches, gradients, patterns, mesh, recolor | 7 | 75% | freeform gradients, swatch libraries (original), Tile Edge Color | 10–15 |
 | Strokes, brushes, width profiles | 5 | 65% | brush options depth, brush libraries (generated in code) | 15–25 |
@@ -118,8 +118,8 @@ With 4–6 agents working on disjoint crates (as the layering allows) the wall-c
 (integration, review and shared files such as `menus.rs` serialize some work): **~85–140 h** to feature parity,
 **~115–190 h** to full parity.
 
-_Inventories (2026-10-02):_ 426 engine commands + ~60 UI commands; 316 menu items wired, ~70 still disabled; 68 of 79
-tools implemented (missing: Shaper, Slice ×2, Touch Type, vertical type ×3, Print Tiling); 31 panels of ~45; 44 live
+_Inventories (2026-10-02):_ 426 engine commands + ~60 UI commands; 316 menu items wired, ~70 still disabled; 69 of 79
+tools implemented (missing: Slice ×2, Touch Type, vertical type ×3, Print Tiling); 31 panels of ~45; 44 live
 effects of ~110 (Illustrator effects 44/54, Photoshop-style raster effects 1/56); ~1,050 tests.
 
 _Where we already beat Illustrator:_ exact curve booleans, off-thread multithreaded rendering, undo that never runs out,

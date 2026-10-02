@@ -1,4 +1,4 @@
-//! Flare, Reshape and Graph tools.
+//! Flare, Reshape, Shaper and Graph tools.
 //!
 //! Flare: drag sets the centre and its size (click without dragging opens the Flare Tool Options),
 //! then a click sets the end point of the rings. Reshape: drag a point of a selected path; the
@@ -14,6 +14,7 @@ pub fn create(id: &str) -> Option<Box<dyn Tool>> {
     Some(match id {
         "flare" => Box::new(FlareTool::default()),
         "reshape" => Box::new(ReshapeTool::default()),
+        "shaper" => Box::new(ShaperTool::default()),
         id if vectorcraft_doc::GraphKind::parse(id).is_some() && id.ends_with("Graph") => Box::new(GraphTool::new(id)),
         _ => return None,
     })
@@ -215,6 +216,85 @@ impl Tool for ReshapeTool {
     }
 }
 
+/// Shaper Tool: draw a rough shape and it becomes a clean live shape (rectangle, ellipse,
+/// triangle/polygon, line); scribble over art to delete it.
+#[derive(Default)]
+pub struct ShaperTool {
+    points: Vec<Point>,
+}
+
+impl Tool for ShaperTool {
+    fn id(&self) -> &'static str {
+        "shaper"
+    }
+    fn busy(&self) -> bool {
+        !self.points.is_empty()
+    }
+    fn pointer(&mut self, cx: &ToolContext, ev: &PointerEvent) -> Vec<Action> {
+        use vectorcraft_geom::recognize::{Recognized, recognize};
+        match ev.kind {
+            PointerKind::Down => {
+                self.points = vec![ev.pos];
+                vec![]
+            }
+            PointerKind::Drag => {
+                if !self.points.is_empty() && self.points.last().is_none_or(|l| l.distance(ev.pos) >= cx.tol(1.5)) {
+                    self.points.push(ev.pos);
+                }
+                vec![]
+            }
+            PointerKind::Up => {
+                let pts = std::mem::take(&mut self.points);
+                let r = |x: vectorcraft_geom::Rect| json!({ "x": x.x0, "y": x.y0, "width": x.width(), "height": x.height() });
+                match recognize(&pts) {
+                    Some(Recognized::Line { a, b }) => vec![Action::Exec("shape.line".into(), json!({ "x1": a.x, "y1": a.y, "x2": b.x, "y2": b.y }))],
+                    Some(Recognized::Rectangle(x)) => vec![Action::Exec("shape.rectangle".into(), r(x))],
+                    Some(Recognized::Ellipse(x)) => vec![Action::Exec("shape.ellipse".into(), r(x))],
+                    Some(Recognized::Polygon { center, radius, sides, rotation }) => {
+                        vec![Action::Exec(
+                            "shape.polygon".into(),
+                            json!({ "cx": center.x, "cy": center.y, "radius": radius, "sides": sides, "rotation": rotation }),
+                        )]
+                    }
+                    Some(Recognized::Scribble(_)) => {
+                        // Delete the topmost objects the scribble crosses.
+                        let mut ids: Vec<u64> = vec![];
+                        for p in &pts {
+                            if let Some(h) = vectorcraft_doc::hit::hit_test(cx.doc, *p, cx.hit_options()) {
+                                let id = h.top_object(cx.isolation).0;
+                                if !ids.contains(&id) {
+                                    ids.push(id);
+                                }
+                            }
+                        }
+                        if ids.is_empty() {
+                            return vec![];
+                        }
+                        vec![Action::Exec("select.set".into(), json!({ "ids": ids })), Action::Exec("edit.clear".into(), json!({ "ids": ids }))]
+                    }
+                    None => vec![],
+                }
+            }
+            _ => vec![],
+        }
+    }
+    fn key(&mut self, _cx: &ToolContext, key: ToolKey, _mods: Mods) -> Vec<Action> {
+        if key == ToolKey::Escape {
+            self.points.clear();
+        }
+        vec![]
+    }
+    fn overlays(&self, _cx: &ToolContext) -> Vec<Overlay> {
+        if self.points.len() < 2 {
+            return vec![];
+        }
+        vec![Overlay::Path { path: crate::draw2::polyline(&self.points), color: BLUE, width: 1.5, dashed: false }]
+    }
+    fn cursor(&self, _cx: &ToolContext, _p: Point, _mods: Mods) -> Cursor {
+        Cursor::Crosshair
+    }
+}
+
 /// Graph tools: drag the plot rectangle (Shift = square, Alt = from the centre); a click opens the
 /// size dialog. A new graph opens the Graph Data dialog.
 pub struct GraphTool {
@@ -303,6 +383,7 @@ mod tests {
     fn create_covers_both() {
         assert_eq!(create("flare").unwrap().id(), "flare");
         assert_eq!(create("reshape").unwrap().id(), "reshape");
+        assert_eq!(create("shaper").unwrap().id(), "shaper");
         assert!(create("pen").is_none());
         for g in
             ["columnGraph", "stackedColumnGraph", "barGraph", "stackedBarGraph", "lineGraph", "areaGraph", "scatterGraph", "pieGraph", "radarGraph"]

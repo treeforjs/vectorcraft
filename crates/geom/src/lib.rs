@@ -9,6 +9,7 @@
 
 pub mod hit;
 pub mod path;
+pub mod recognize;
 pub mod shapes;
 pub mod snap;
 

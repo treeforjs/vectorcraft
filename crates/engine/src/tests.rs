@@ -439,3 +439,40 @@ fn snap_to_pixel_rounds_drawing_and_moves() {
     let b = s.doc().unwrap().doc.node(id).unwrap().geometric_bounds().unwrap();
     assert_eq!((b.x0, b.y0), (17.0, 16.0));
 }
+
+#[test]
+fn shaper_turns_rough_strokes_into_live_shapes_and_scribbles_delete() {
+    let mut s = session();
+    let v = ViewInfo { smart_guides: false, ..Default::default() };
+    s.select_tool("shaper", v).unwrap();
+    let stroke = |s: &mut Session, pts: &[(f64, f64)]| {
+        s.pointer(&PointerEvent::new(PointerKind::Down, pts[0].0, pts[0].1), v).unwrap();
+        for p in &pts[1..] {
+            s.pointer(&PointerEvent::new(PointerKind::Drag, p.0, p.1), v).unwrap();
+        }
+        let l = pts[pts.len() - 1];
+        s.pointer(&PointerEvent::new(PointerKind::Up, l.0, l.1), v).unwrap();
+    };
+    // A rough rectangle.
+    let mut rect = vec![];
+    for (a, b) in
+        [((100.0, 100.0), (300.0, 102.0)), ((300.0, 102.0), (298.0, 200.0)), ((298.0, 200.0), (101.0, 199.0)), ((101.0, 199.0), (103.0, 104.0))]
+    {
+        for i in 0..20 {
+            let t = i as f64 / 20.0;
+            rect.push((a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t));
+        }
+    }
+    stroke(&mut s, &rect);
+    let id = s.doc().unwrap().selection.objects[0];
+    let n = s.doc().unwrap().doc.node(id).unwrap().clone();
+    assert!(
+        matches!(n.kind, vectorcraft_doc::NodeKind::Path { live: Some(vectorcraft_doc::LiveShape::Rectangle { .. }), .. }),
+        "{:?}",
+        n.kind_label()
+    );
+    // A zig-zag over it deletes it.
+    let zig: Vec<(f64, f64)> = (0..30).map(|i| (150.0 + (i % 2) as f64 * 80.0, 120.0 + i as f64 * 2.0)).collect();
+    stroke(&mut s, &zig);
+    assert!(s.doc().unwrap().doc.node(id).is_none());
+}
