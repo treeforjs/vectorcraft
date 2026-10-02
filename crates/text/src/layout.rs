@@ -255,13 +255,19 @@ impl Region {
 
     /// Widest horizontal span inside the frame (and the cell) over the band `top..bottom`.
     fn span(&self, top: f64, bottom: f64) -> Option<(f64, f64)> {
+        self.spans(top, bottom).into_iter().max_by(|x, y| (x.1 - x.0).total_cmp(&(y.1 - y.0)))
+    }
+
+    /// Every horizontal span inside the frame (and the cell) over the band `top..bottom`, left to
+    /// right (text wraps on both sides of an object).
+    fn spans(&self, top: f64, bottom: f64) -> Vec<(f64, f64)> {
         let clip = |(a, b): (f64, f64)| {
             let (a, b) = (a.max(self.cell.x0) + self.inset, b.min(self.cell.x1) - self.inset);
             (b > a).then_some((a, b))
         };
         let plain = self.polys.is_empty() || self.rect;
         if plain && self.wraps.is_empty() {
-            return (self.cell.width() > 0.0).then_some((self.cell.x0, self.cell.x1)).and_then(clip);
+            return (self.cell.width() > 0.0).then_some((self.cell.x0, self.cell.x1)).and_then(clip).into_iter().collect();
         }
         let fb = if plain {
             self.cell
@@ -274,6 +280,11 @@ impl Region {
         let mut rows: Vec<Vec<(f64, f64)>> =
             (0..samples).map(|k| self.intervals(clamp(top + (bottom - top) * k as f64 / (samples - 1) as f64))).collect();
         let mid = rows.swap_remove(samples / 2);
+        if !self.wraps.is_empty() {
+            // Wrap objects split lines: keep exactly what is free on every sampled row.
+            let free = rows.iter().fold(mid, |acc, r| intersect_intervals(&acc, r));
+            return free.into_iter().filter_map(clip).collect();
+        }
         mid.into_iter()
             .filter_map(|(mut a, mut b)| {
                 for o in &rows {
@@ -284,7 +295,7 @@ impl Region {
                 }
                 clip((a, b))
             })
-            .max_by(|x, y| (x.1 - x.0).total_cmp(&(y.1 - y.0)))
+            .collect()
     }
 }
 
@@ -335,16 +346,23 @@ struct Pen<'r> {
     pending: f64,
     fb: FirstBaseline,
     fb_min: f64,
+    /// Further spans at the current baseline (text wrapping on both sides of an object).
+    queued: Vec<(f64, f64, f64)>,
 }
 
 impl Pen<'_> {
     /// Baseline and horizontal span for a line with estimated metrics `est` and indents; `None` =
     /// the frame is full (overflow).
-    fn place(&mut self, est: Metrics, ind_l: f64, ind_r: f64) -> Option<(f64, f64, f64)> {
+    /// The `bool` is true for a further span at the previous line's baseline.
+    fn place(&mut self, est: Metrics, ind_l: f64, ind_r: f64) -> Option<(f64, f64, f64, bool)> {
         let Some(regions) = self.regions else {
             let b = self.prev.map_or(0.0, |b| b + est.lead + self.pending);
-            return Some((b, f64::NEG_INFINITY, f64::INFINITY));
+            return Some((b, f64::NEG_INFINITY, f64::INFINITY, false));
         };
+        if !self.queued.is_empty() {
+            let (b, x0, x1) = self.queued.remove(0);
+            return Some((b, x0, x1, true));
+        }
         loop {
             let r = regions.get(self.ri)?;
             let mut baseline = match self.prev {
@@ -355,15 +373,29 @@ impl Pen<'_> {
                 if baseline + est.desc > r.bottom() + 0.01 {
                     break;
                 }
-                match r.span(baseline - est.asc, baseline + est.desc) {
-                    Some((a, b)) if b - a - ind_l - ind_r > est.asc.max(1.0) => return Some((baseline, a, b)),
-                    _ => baseline += est.lead.max(1.0),
+                let fits = |&(a, b): &(f64, f64)| b - a - ind_l - ind_r > est.asc.max(1.0);
+                if r.wraps.is_empty() {
+                    match r.span(baseline - est.asc, baseline + est.desc) {
+                        Some(s) if fits(&s) => return Some((baseline, s.0, s.1, false)),
+                        _ => baseline += est.lead.max(1.0),
+                    }
+                } else {
+                    // Wrap objects can split a line: fill every span, left to right.
+                    let mut spans: Vec<(f64, f64)> = r.spans(baseline - est.asc, baseline + est.desc).into_iter().filter(fits).collect();
+                    if spans.is_empty() {
+                        baseline += est.lead.max(1.0);
+                        continue;
+                    }
+                    let (a, b) = spans.remove(0);
+                    self.queued = spans.into_iter().map(|(a, b)| (baseline, a, b)).collect();
+                    return Some((baseline, a, b, false));
                 }
             }
             // Next row/column.
             self.ri += 1;
             self.prev = None;
             self.pending = 0.0;
+            self.queued.clear();
         }
     }
     fn bottom(&self) -> f64 {
@@ -502,7 +534,7 @@ fn compose_para(cx: &Ctx<'_>, sg: &[SGlyph], para: &ParaStyle, pen: &Pen<'_>) ->
     while widths.len() < sg.len() {
         let first = widths.is_empty();
         let ind_l = para.left_indent + if first { para.first_line_indent } else { 0.0 };
-        let Some((b, x0, x1)) = sim.place(m, ind_l, para.right_indent) else { break };
+        let Some((b, x0, x1, _)) = sim.place(m, ind_l, para.right_indent) else { break };
         let w = x1 - x0 - ind_l - para.right_indent;
         widths.push(w);
         acc += w.max(1.0);
@@ -520,7 +552,7 @@ fn compose_para(cx: &Ctx<'_>, sg: &[SGlyph], para: &ParaStyle, pen: &Pen<'_>) ->
 }
 
 fn flow(cx: &mut Ctx<'_>, paras: &[Range<usize>], para: &ParaStyle, regions: Option<&[Region]>) {
-    let mut pen = Pen { regions, ri: 0, prev: None, pending: 0.0, fb: cx.opts.first_baseline, fb_min: cx.opts.first_baseline_min };
+    let mut pen = Pen { regions, ri: 0, prev: None, pending: 0.0, fb: cx.opts.first_baseline, fb_min: cx.opts.first_baseline_min, queued: vec![] };
     'paras: for (pi, pr) in paras.iter().enumerate() {
         let sg = cx.shape_para(pr.clone());
         let pm = {
@@ -543,7 +575,7 @@ fn flow(cx: &mut Ctx<'_>, paras: &[Range<usize>], para: &ParaStyle, regions: Opt
             // next row/column if it no longer fits).
             let (baseline, x0, x1, end, hyph, m) = loop {
                 let first_in_region = pen.prev.is_none();
-                let Some((mut baseline, x0, x1)) = pen.place(est, ind_l, para.right_indent) else {
+                let Some((mut baseline, x0, x1, same_baseline)) = pen.place(est, ind_l, para.right_indent) else {
                     cx.out.overflow = cx.text.len() > if i < n { sg[i].byte } else { pr.start };
                     break 'paras;
                 };
@@ -554,7 +586,7 @@ fn flow(cx: &mut Ctx<'_>, paras: &[Range<usize>], para: &ParaStyle, regions: Opt
                     _ => (n, false),
                 };
                 let m = Metrics::max(&sg[i..end]).unwrap_or(pm);
-                baseline += if pen.regions.is_none() && first_in_region {
+                baseline += if same_baseline || (pen.regions.is_none() && first_in_region) {
                     0.0
                 } else if first_in_region {
                     m.first_baseline(pen.fb, pen.fb_min) - est.first_baseline(pen.fb, pen.fb_min)
@@ -566,6 +598,7 @@ fn flow(cx: &mut Ctx<'_>, paras: &[Range<usize>], para: &ParaStyle, regions: Opt
                     pen.ri += 1;
                     pen.prev = None;
                     pen.pending = 0.0;
+                    pen.queued.clear();
                     continue;
                 }
                 break (baseline, x0, x1, end, hyph, m);
@@ -654,6 +687,10 @@ fn flow(cx: &mut Ctx<'_>, paras: &[Range<usize>], para: &ParaStyle, regions: Opt
                 avail: if regions.is_some() { (ax0, ax1) } else { (start_x, x_end) },
             });
             pen.prev = Some(baseline);
+            // Further spans of this line band share the settled baseline.
+            for q in &mut pen.queued {
+                q.0 = baseline;
+            }
             li_para += 1;
             i = end;
             if i >= n {

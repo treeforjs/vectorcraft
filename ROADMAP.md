@@ -63,7 +63,7 @@ _Last updated: 2026-10-02._
 | M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 Export for Screens (PNG/JPG/WebP/SVG/PDF × scales) done; headless CLI/MCP export every format; system clipboard: copy puts SVG markup on it, paste takes SVG from other apps (Ctrl/Cmd+C/X/V now also work off macOS); live effects now survive SVG/PDF/clipboard export (geometry baked, SVG filters for shadows/glows/blur/feather); PDF raster effects, PNG/PDF clipboard flavours, EPS/DXF pending | 52–73 |
 | M5 | Performance | 🟡 background render + caches + MT done; `vectorcraft-cli bench` and `vectorcraft-cli perf` (budget suite); file format v2 opens 3× faster (50k paths: 722 → 244 ms); raster effects (glows, shadows, blur, feather) no longer force the whole frame single-threaded (filtered offscreen per effect, verified equal to the single-threaded reference); effect-heavy demos need a clean-machine benchmark; dirty-region rendering, GPU backend spike pending | 15–25 |
 | M6 | Path operations (Pathfinder, Shape Builder, offset…) | ✅ mostly done (Shape Builder edge erase, large-offset bug open) | 3–6 |
-| M7 | Type (point/area/path, editing, styles, OpenType, threading, glyphs) | 🟡 Character/Paragraph Styles, Area Type Options, threaded text, Fit Headline, Glyphs, OpenType panel, Find Font, Text Wrap (offset, invert; follows edits), Type on a Path effects done; Tabs panel, spell check, vertical type, wrap on both sides of an object pending | 45–60 |
+| M7 | Type (point/area/path, editing, styles, OpenType, threading, glyphs) | 🟡 Character/Paragraph Styles, Area Type Options, threaded text, Fit Headline, Glyphs, OpenType panel, Find Font, Text Wrap (offset, invert, both sides of an object; follows edits), Type on a Path effects done; Tabs panel, spell check, vertical type pending | 45–60 |
 | M8 | Transform & distort (Puppet Warp, Liquify tools, Envelopes, Blends, Perspective Grid) | 🟡 live Blends, Envelopes (warp/mesh/top object), Width tool, Liquify tools, Puppet Warp and Perspective Grid landed; fidelity pass pending | 8–12 |
 | M9 | Live effects (+ 3D & Materials) | 🟡 2D effects done incl. Effect → Pathfinder; SVG Filters, Document Raster Effects Settings, 3D pending | 86–135 |
 | M10 | Brushes, symbols, patterns, Repeat | 🟡 pattern swatches (5 tile types, Pattern Options, editing mode, SVG `<pattern>`/PDF export) and live Repeat (radial/grid/mirror) done; brushes/symbols in progress | 23–37 |
@@ -96,7 +96,7 @@ are counted bottom-up.
 | Live vector effects | 5 | 85% | Outline Object, Pathfinder Hard/Soft Mix and Trap, SVG Filters | 6–10 |
 | Raster effects (Effect Gallery, Document Raster Effects Settings) | 4 | 15% | ~55 filters (Artistic, Brush Strokes, Distort, Pixelate, Sketch, Texture…), resolution setting, raster effects in PDF | 30–45 |
 | 3D and Materials | 4 | 0% | Extrude & Bevel, Revolve, Inflate, Rotate, lighting, materials (software renderer) | 50–80 |
-| Type core | 9 | 75% | wrap on both sides of an object, composer/hyphenation options, Optical Margin Alignment, hidden characters | 15–20 |
+| Type core | 9 | 78% | composer/hyphenation options, Optical Margin Alignment, hidden characters | 15–20 |
 | Type advanced | 4 | 25% | vertical type/CJK, Tabs panel, spell check (open dictionary), Touch Type, Retype | 30–40 |
 | Symbols, blends, envelopes, Repeat, perspective | 5 | 75% | symbol libraries (original), dynamic symbols, perspective edge cases | 8–12 |
 | Image Trace, graphs, image tools | 3 | 70% | graph Design/Column/Marker, Create Object Mosaic, Crop Image polish | 6–10 |

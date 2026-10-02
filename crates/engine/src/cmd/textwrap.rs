@@ -248,4 +248,32 @@ mod tests {
         s.execute("object.arrange.sendToBack", &json!({})).unwrap();
         assert_eq!(lines(&s, t), plain);
     }
+
+    #[test]
+    fn text_flows_on_both_sides_of_a_centred_object() {
+        let mut s = Session::new();
+        s.execute("file.new", &json!({"width": 600, "height": 600})).unwrap();
+        let t = s
+            .execute("text.create", &json!({"x": 0, "y": 0, "text": "word ".repeat(300), "size": 12, "area": {"width": 400, "height": 400}}))
+            .unwrap()["id"]
+            .as_u64()
+            .unwrap();
+        let r = s.execute("shape.ellipse", &json!({"x": 150, "y": 100, "width": 100, "height": 100})).unwrap()["id"].as_u64().unwrap();
+        s.execute("select.set", &json!({"ids": [r]})).unwrap();
+        s.execute("object.textWrap.make", &json!({})).unwrap();
+        let Some(NodeKind::Text(tx)) = s.doc().unwrap().doc.node(NodeId(t)).map(|n| n.kind.clone()) else { panic!() };
+        let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), &tx);
+        // Beside the circle each line band holds two lines: left of it and right of it.
+        let beside: Vec<_> = lay.lines.iter().filter(|l| l.baseline > 120.0 && l.baseline < 180.0).collect();
+        assert!(
+            beside.iter().any(|l| l.avail.1 < 150.0) && beside.iter().any(|l| l.avail.0 > 250.0),
+            "{:?}",
+            beside.iter().map(|l| l.avail).collect::<Vec<_>>()
+        );
+        let left = beside.iter().find(|l| l.avail.1 < 150.0).unwrap();
+        assert!(beside.iter().any(|l| l.avail.0 > 250.0 && (l.baseline - left.baseline).abs() < 1e-9), "same baseline on both sides");
+        // Reading order: the right-hand line follows the left-hand one.
+        let li = lay.lines.iter().position(|l| std::ptr::eq(l, *left)).unwrap();
+        assert!(lay.lines[li + 1].avail.0 > 250.0);
+    }
 }
