@@ -8,6 +8,14 @@ Generated-in-code art is original and has no file to list. This covers the defau
 
 | Asset | Author | Source | Licence | Notes |
 |---|---|---|---|---|
+| `docs/brand/artcraft-logo-white.png` | ArtCraft team (project owner) | https://getartcraft.com/ | ArtCraft brand mark, owned by the project (licence/trademark terms to be confirmed by the owner) | Used in README only; not shipped in the app |
+| `docs/brand/artcraft-logo-white.svg` | ArtCraft team (project owner) | https://getartcraft.com/ | ArtCraft brand mark, owned by the project (licence/trademark terms to be confirmed by the owner) | Used in README only; not shipped in the app |
+| `docs/brand/artcraft-logo.png` | ArtCraft team (project owner) | https://getartcraft.com/ | ArtCraft brand mark, owned by the project (licence/trademark terms to be confirmed by the owner) | Used in README only; not shipped in the app |
+| `docs/brand/artcraft-logo.svg` | ArtCraft team (project owner) | https://getartcraft.com/ | ArtCraft brand mark, owned by the project (licence/trademark terms to be confirmed by the owner) | Used in README only; not shipped in the app |
+| `docs/brand/artcraft-mark-black.png` | ArtCraft team (project owner) | https://getartcraft.com/ | ArtCraft brand mark, owned by the project (licence/trademark terms to be confirmed by the owner) | Used in README only; not shipped in the app |
+| `docs/brand/artcraft-mark-black.svg` | ArtCraft team (project owner) | https://getartcraft.com/ | ArtCraft brand mark, owned by the project (licence/trademark terms to be confirmed by the owner) | Used in README only; not shipped in the app |
+| `docs/brand/artcraft-mark.png` | ArtCraft team (project owner) | https://getartcraft.com/ | ArtCraft brand mark, owned by the project (licence/trademark terms to be confirmed by the owner) | Used in README only; not shipped in the app |
+| `docs/brand/artcraft-mark.svg` | ArtCraft team (project owner) | https://getartcraft.com/ | ArtCraft brand mark, owned by the project (licence/trademark terms to be confirmed by the owner) | Used in README only; not shipped in the app |
 | `assets/fonts/Inter-Medium.ttf` | Rasmus Andersson / The Inter Project Authors | https://github.com/rsms/inter | OFL-1.1 (`assets/fonts/OFL-Inter.txt`) | Open-source typeface, not product iconography or artwork |
 | `assets/fonts/Inter-Regular.ttf` | Rasmus Andersson / The Inter Project Authors | https://github.com/rsms/inter | OFL-1.1 (`assets/fonts/OFL-Inter.txt`) | Open-source typeface, not product iconography or artwork |
 | `assets/fonts/Inter-SemiBold.ttf` | Rasmus Andersson / The Inter Project Authors | https://github.com/rsms/inter | OFL-1.1 (`assets/fonts/OFL-Inter.txt`) | Open-source typeface, not product iconography or artwork |
