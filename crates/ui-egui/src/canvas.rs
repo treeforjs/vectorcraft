@@ -175,6 +175,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         w,
         h,
         outline: app.ui.view.outline,
+        trim: app.ui.view.trim_view,
         ppp,
         hidden: vec![],
         rot: v.rotation,
@@ -203,6 +204,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         let opts = vectorcraft_render::RenderOptions {
             proof: vectorcraft_render::proof::active_proof(),
             overprint_preview: vectorcraft_render::proof::overprint_preview_on(),
+            trim: app.ui.view.trim_view,
             ..opts
         };
         // Light documents render synchronously (no lag vs overlays); heavy ones go to the worker.

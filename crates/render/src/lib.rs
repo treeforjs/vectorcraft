@@ -46,11 +46,22 @@ pub struct RenderOptions {
     pub proof: Option<proof::ProofSetup>,
     /// Overprint Preview (see [`proof`] for what overprints).
     pub overprint_preview: bool,
+    /// Trim View: clip the artwork to the artboards (nothing on the pasteboard is drawn).
+    pub trim: bool,
 }
 
 impl Default for RenderOptions {
     fn default() -> Self {
-        Self { outline: false, background: None, artboards: false, hidden: vec![], dim_templates: true, proof: None, overprint_preview: false }
+        Self {
+            outline: false,
+            background: None,
+            artboards: false,
+            hidden: vec![],
+            dim_templates: true,
+            proof: None,
+            overprint_preview: false,
+            trim: false,
+        }
     }
 }
 
@@ -269,10 +280,22 @@ impl Renderer {
             }
         }
         self.stamp += 1;
+        let trim = opts.trim && !doc.artboards.is_empty();
+        if trim {
+            let mut clip = BezPath::new();
+            for ab in &doc.artboards {
+                clip.extend(ab.rect.path_elements(0.1));
+            }
+            ctx.set_transform(view);
+            ctx.push_clip_layer(&clip);
+        }
         if !self.draw_pattern_edit(&mut ctx, &frame) {
             for layer in &doc.layers {
                 self.draw_arc(&mut ctx, &frame, layer);
             }
+        }
+        if trim {
+            ctx.pop_layer();
         }
         // Drop cache entries not seen for a few frames.
         let g = self.stamp;

@@ -115,6 +115,8 @@ pub struct ViewFlags {
     pub artboards: bool,
     pub transparency_grid: bool,
     pub edges: bool,
+    /// View → Trim View: hide everything outside the artboards.
+    pub trim_view: bool,
 }
 
 impl Default for ViewFlags {
@@ -132,6 +134,7 @@ impl Default for ViewFlags {
             artboards: true,
             transparency_grid: false,
             edges: true,
+            trim_view: false,
         }
     }
 }

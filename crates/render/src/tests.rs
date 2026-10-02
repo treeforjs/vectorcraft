@@ -257,3 +257,16 @@ fn linked_mask_moves_with_object() {
     let img = Renderer::new().render(&d, 100, 100, Affine::IDENTITY, &opts);
     assert_eq!(img.pixel(52, 50), [255, 0, 0, 255], "mask art moved by 5 too");
 }
+
+#[test]
+fn trim_view_clips_to_artboards() {
+    let mut d = Document::new(50.0, 50.0);
+    let n = rect_node(&mut d, Rect::new(0.0, 0.0, 100.0, 100.0), Paint::solid(Color::rgb(1.0, 0.0, 0.0)), Paint::None, 0.0);
+    let l = d.layers[0].id;
+    d.insert(Some(l), 0, n).unwrap();
+    let opts = RenderOptions { background: Some([255, 255, 255, 255]), trim: true, ..Default::default() };
+    let r = Renderer::new().render(&d, 100, 100, Affine::IDENTITY, &opts);
+    assert_eq!(r.pixel(25, 25), [255, 0, 0, 255]);
+    assert_eq!(r.pixel(75, 75), [255, 255, 255, 255]);
+    assert_eq!(render(&d).pixel(75, 75), [255, 0, 0, 255]);
+}

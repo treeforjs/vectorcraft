@@ -90,6 +90,7 @@ pub struct CacheKey {
     pub w: u32,
     pub h: u32,
     pub outline: bool,
+    pub trim: bool,
     pub ppp: f32,
     pub hidden: Vec<u64>,
     pub rot: f64,

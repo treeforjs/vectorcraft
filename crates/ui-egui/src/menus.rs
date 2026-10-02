@@ -78,6 +78,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("shortcuts.import", "Import Keyboard Shortcuts…", "", "{path? | data?}"),
     ("view.outline", "Outline", "Cmd+Y", "{} toggle Outline/Preview"),
     ("view.pixelPreview", "Pixel Preview", "Cmd+Alt+Y", "{}"),
+    ("view.trimView", "Trim View", "", "{} toggle: hide everything outside the artboards"),
     ("view.zoomIn", "Zoom In", "Cmd+=", "{}"),
     ("view.zoomOut", "Zoom Out", "Cmd+-", "{}"),
     ("view.fitArtboard", "Fit Artboard in Window", "Cmd+0", "{}"),
@@ -223,6 +224,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         }
         "view.outline" => flag(&mut app.ui.view.outline),
         "view.pixelPreview" => flag(&mut app.ui.view.pixel_preview),
+        "view.trimView" => flag(&mut app.ui.view.trim_view),
         "view.edges" => flag(&mut app.ui.view.edges),
         "view.artboards" => flag(&mut app.ui.view.artboards),
         "view.rulers" => flag(&mut app.ui.view.rulers),
@@ -397,6 +399,7 @@ pub fn checked(app: &VectorcraftApp, id: &str, p: &Value) -> Option<bool> {
     Some(match id {
         "view.outline" => v.outline,
         "view.pixelPreview" => v.pixel_preview,
+        "view.trimView" => v.trim_view,
         "view.smartGuides" => v.smart_guides,
         "view.grid" => v.grid,
         "view.snapToGrid" => v.snap_to_grid,
@@ -929,7 +932,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Outline", "view.outline"),
                 c("Overprint Preview", "view.overprintPreview"),
                 c("Pixel Preview", "view.pixelPreview"),
-                todo("Trim View"),
+                c("Trim View", "view.trimView"),
                 c("Presentation Mode", "view.presentation"),
                 sub(
                     "Screen Mode",
