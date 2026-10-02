@@ -121,6 +121,12 @@ pub struct ViewFlags {
     pub corner_widgets: bool,
     /// View → Snap to Pixel.
     pub snap_to_pixel: bool,
+    /// View → Show/Hide Text Threads.
+    pub text_threads: bool,
+    /// View → Show/Hide Gradient Annotator.
+    pub gradient_annotator: bool,
+    /// Type → Show Hidden Characters.
+    pub hidden_chars: bool,
 }
 
 impl Default for ViewFlags {
@@ -141,6 +147,9 @@ impl Default for ViewFlags {
             trim_view: false,
             corner_widgets: true,
             snap_to_pixel: false,
+            text_threads: true,
+            gradient_annotator: true,
+            hidden_chars: false,
         }
     }
 }

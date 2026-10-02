@@ -97,7 +97,10 @@ impl NativeMenu {
                     ) || cmd.starts_with("file.openRecent")
                         || cmd.starts_with("type.recentFont")
                         || cmd.starts_with("view.goto")
-                        || cmd == "view.cornerWidget"
+                        || matches!(
+                            cmd.as_str(),
+                            "view.cornerWidget" | "view.textThreads" | "view.gradientAnnotator" | "effect.last" | "type.hiddenCharacters"
+                        )
                     {
                         i.set_text(menus::dynamic_label(app, cmd, ""));
                     }

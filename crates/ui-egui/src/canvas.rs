@@ -267,10 +267,19 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     if app.ui.view.edges {
         hover_highlight(app, &painter, &xf);
         selection_overlay(app, &painter, &xf);
+        if app.ui.view.text_threads {
+            thread_overlay(app, &painter, &xf);
+        }
+        if app.ui.view.hidden_chars {
+            hidden_chars_overlay(app, &painter, &xf);
+        }
     }
     let view_info = app.view_info();
-    let overlays = app.session.overlays(view_info);
-    draw_overlays(&painter, &xf, &overlays, &t);
+    // View → Hide Gradient Annotator hides the Gradient tool's annotator.
+    if app.session.tool_id() != "gradient" || app.ui.view.gradient_annotator {
+        let overlays = app.session.overlays(view_info);
+        draw_overlays(&painter, &xf, &overlays, &t);
+    }
 
     if app.ui.view.rulers && app.ui.screen_mode < 3 {
         rulers(ui, full, &xf, app.hover_doc, &t);
@@ -676,6 +685,67 @@ fn anchor_square(p: &egui::Painter, c: Pos2, color: Color32, filled: bool, size:
     } else {
         p.rect_filled(r, 0.0, Color32::WHITE);
         p.rect_stroke(r, 0.0, Stroke::new(1.0, color), StrokeKind::Inside);
+    }
+}
+
+/// Type → Show Hidden Characters: spaces as dots, ¶ at paragraph ends, # at the end of a story.
+fn hidden_chars_overlay(app: &VectorcraftApp, p: &egui::Painter, xf: &Xf) {
+    let Some(st) = app.session.active() else { return };
+    let clip = p.clip_rect();
+    let color = Color32::from_rgb(0x4f, 0x9d, 0xff);
+    let font = egui::FontId::proportional(((10.0 * xf.zoom) as f32).clamp(7.0, 18.0));
+    st.doc.walk(|n| {
+        let NodeKind::Text(tx) = &n.kind else { return };
+        if !n.visible || n.geometric_bounds().is_none_or(|b| !xf.rect_to_screen(b).intersects(clip)) {
+            return;
+        }
+        let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), tx);
+        if lay.on_path {
+            return;
+        }
+        let text = tx.plain_text();
+        let to = |q: Point| xf.to_screen(tx.xf * q);
+        for g in &lay.glyphs {
+            if text.get(g.byte..).is_some_and(|s| s.starts_with(' ')) {
+                p.circle_filled(to(Point::new(g.origin.x + g.advance / 2.0, g.origin.y - 3.0)), 1.2, color);
+            }
+        }
+        for (i, line) in lay.lines.iter().enumerate() {
+            let last = i + 1 == lay.lines.len();
+            let breaks = text.get(line.end..).is_some_and(|s| s.starts_with('\n'));
+            let (glyph, at) = if last && line.end >= text.len() {
+                ("#", true)
+            } else if breaks {
+                ("¶", true)
+            } else {
+                ("", false)
+            };
+            if at {
+                p.text(to(Point::new(line.x1 + 1.0, line.baseline)), egui::Align2::LEFT_BOTTOM, glyph, font.clone(), color);
+            }
+        }
+    });
+}
+
+/// Text threads of the selected frames: a line from each frame's out port (bottom right) to the
+/// next frame's in port (top left), like Illustrator's thread indicators.
+fn thread_overlay(app: &VectorcraftApp, p: &egui::Painter, xf: &Xf) {
+    let Some(st) = app.session.active() else { return };
+    for thread in &st.doc.text_threads {
+        if !thread.iter().any(|id| st.selection.objects.contains(id)) {
+            continue;
+        }
+        let color = c32(st.doc.layer_color(thread[0]));
+        let frames: Vec<vectorcraft_geom::Rect> = thread.iter().filter_map(|id| st.doc.node(*id).and_then(|n| n.geometric_bounds())).collect();
+        for w in frames.windows(2) {
+            let (out, inp) = (xf.to_screen(Point::new(w[0].x1, w[0].y1)), xf.to_screen(Point::new(w[1].x0, w[1].y0)));
+            p.line_segment([out, inp], Stroke::new(1.0, color));
+            for port in [out, inp] {
+                p.rect_filled(egui::Rect::from_center_size(port, egui::vec2(7.0, 7.0)), 0.0, Color32::WHITE);
+                p.rect_stroke(egui::Rect::from_center_size(port, egui::vec2(7.0, 7.0)), 0.0, Stroke::new(1.0, color), egui::StrokeKind::Inside);
+                p.line_segment([port - egui::vec2(2.0, 0.0), port + egui::vec2(2.0, 0.0)], Stroke::new(1.0, color));
+            }
+        }
     }
 }
 

@@ -102,6 +102,10 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("view.trimView", "Trim View", "", "{} toggle: hide everything outside the artboards"),
     ("view.cornerWidget", "Hide Corner Widget", "", "{} toggle the live corner widgets"),
     ("view.snapToPixel", "Snap to Pixel", "", "{} toggle: drawing and moving land on whole pixels"),
+    ("view.textThreads", "Hide Text Threads", "Cmd+Shift+Y", "{} toggle the thread lines between threaded text frames"),
+    ("view.gradientAnnotator", "Hide Gradient Annotator", "Cmd+Alt+G", "{} toggle the Gradient tool's annotator"),
+    ("type.hiddenCharacters", "Show Hidden Characters", "Cmd+Alt+I", "{} toggle markers for spaces, paragraph ends and story ends"),
+    ("effect.last", "Last Effect…", "Cmd+Alt+Shift+E", "{} open the dialog of the last effect applied"),
     ("view.zoomIn", "Zoom In", "Cmd+=", "{}"),
     ("view.zoomOut", "Zoom Out", "Cmd+-", "{}"),
     ("view.fitArtboard", "Fit Artboard in Window", "Cmd+0", "{}"),
@@ -282,6 +286,21 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             }
         }
         "view.snapToPixel" => flag(&mut app.ui.view.snap_to_pixel),
+        "view.textThreads" => flag(&mut app.ui.view.text_threads),
+        "type.hiddenCharacters" => flag(&mut app.ui.view.hidden_chars),
+        "view.gradientAnnotator" => flag(&mut app.ui.view.gradient_annotator),
+        "effect.last" => match app.last_effect.clone() {
+            Some((e, params)) => {
+                let label = vectorcraft_effects::effect_info(&e).map(|i| i.label.trim_end_matches('…').to_string()).unwrap_or_else(|| e.clone());
+                let mut fields = params.as_object().cloned().unwrap_or_default();
+                fields.insert("__effect".into(), json!(e));
+                fields.insert("__label".into(), json!(label));
+                fields.insert("preview".into(), json!(true));
+                app.ui.dialog = Some(crate::state::Dialog { kind: "effect".into(), fields });
+                Ok(Value::Null)
+            }
+            None => Err("no effect applied yet".into()),
+        },
         id if id.starts_with("type.recentFont") => {
             let n: usize = id["type.recentFont".len()..].parse().unwrap_or(0);
             match n.checked_sub(1).and_then(|i| app.ui.recent_fonts.get(i)).cloned() {
@@ -513,6 +532,13 @@ pub fn dynamic_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
         "window.workspace.reset" => format!("Reset {}", app.ui.workspace),
         "view.edges" => if v.edges { "Hide Edges" } else { "Show Edges" }.into(),
         "view.cornerWidget" => if v.corner_widgets { "Hide Corner Widget" } else { "Show Corner Widget" }.into(),
+        "view.textThreads" => if v.text_threads { "Hide Text Threads" } else { "Show Text Threads" }.into(),
+        "type.hiddenCharacters" => if v.hidden_chars { "Hide Hidden Characters" } else { "Show Hidden Characters" }.into(),
+        "view.gradientAnnotator" => if v.gradient_annotator { "Hide Gradient Annotator" } else { "Show Gradient Annotator" }.into(),
+        "effect.last" => match &app.last_effect {
+            Some((e, _)) => format!("Last Effect: {}", vectorcraft_effects::effect_info(e).map(|i| i.label).unwrap_or(e.as_str())),
+            None => label.into(),
+        },
         id if id.starts_with("type.recentFont") => {
             let n: usize = id["type.recentFont".len()..].parse().unwrap_or(0);
             n.checked_sub(1).and_then(|i| app.ui.recent_fonts.get(i)).cloned().unwrap_or_else(|| "—".into())
@@ -605,7 +631,7 @@ pub fn enabled(app: &VectorcraftApp, id: &str) -> bool {
             id["view.goto".len()..].parse::<usize>().is_ok_and(|n| n >= 1 && app.session.active().is_some_and(|d| n <= d.doc.views.len()))
         }
         "effect.dialog" | "ui.recolorDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
-        "effect.applyLast" => app.last_effect.is_some() && app.session.active().is_some_and(|d| !d.selection.is_empty()),
+        "effect.applyLast" | "effect.last" => app.last_effect.is_some() && app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "file.export.pdf" => app.session.active().is_some(),
         _ => true,
     }
@@ -976,7 +1002,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 Sep,
                 c("Fill with Placeholder Text", "type.fillPlaceholder"),
                 Sep,
-                todos("Show Hidden Characters", "Cmd+Alt+I"),
+                c("Show Hidden Characters", "type.hiddenCharacters"),
                 sub("Type Orientation", vec![todo("Horizontal"), todo("Vertical")]),
             ],
         ),
@@ -1086,8 +1112,8 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 sub("Rulers", vec![c("Show Rulers", "view.rulers"), todos("Change to Global Rulers", "Cmd+Alt+R"), todo("Show Video Rulers")]),
                 c("Hide Bounding Box", "view.boundingBox"),
                 c("Show Transparency Grid", "view.transparencyGrid"),
-                todos("Hide Text Threads", "Cmd+Shift+Y"),
-                todos("Hide Gradient Annotator", "Cmd+Alt+G"),
+                c("Hide Text Threads", "view.textThreads"),
+                c("Hide Gradient Annotator", "view.gradientAnnotator"),
                 c("Hide Corner Widget", "view.cornerWidget"),
                 Sep,
                 sub(
@@ -1552,7 +1578,7 @@ fn effect_menu() -> Vec<Item> {
     let cat = vectorcraft_effects::effect_catalog();
     let mut out = vec![
         c("Apply Last Effect", "effect.applyLast"),
-        todos("Last Effect", "Cmd+Alt+Shift+E"),
+        c("Last Effect…", "effect.last"),
         Sep,
         c("Document Raster Effects Settings…", "document.rasterEffectsSettings"),
         Sep,
@@ -1601,6 +1627,29 @@ fn effect_menu() -> Vec<Item> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn last_effect_dialog_and_view_toggles() {
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), crate::Services::default());
+        app.run("file.new", json!({})).unwrap();
+        app.run("shape.rectangle", json!({"x": 10, "y": 10, "width": 50, "height": 50})).unwrap();
+        assert!(!enabled(&app, "effect.last"));
+        app.last_effect = Some(("distort.roughen".into(), json!({"size": 9})));
+        assert!(enabled(&app, "effect.last"));
+        assert_eq!(dynamic_label(&app, "effect.last", "Last Effect…"), "Last Effect: Roughen…");
+        app.run("effect.last", json!({})).unwrap();
+        let d = app.ui.dialog.as_ref().unwrap();
+        assert_eq!((d.kind.as_str(), d.str("__effect"), d.f64("size", 0.0)), ("effect", "distort.roughen".to_string(), 9.0));
+        for (id, on, off) in [
+            ("view.textThreads", "Hide Text Threads", "Show Text Threads"),
+            ("view.gradientAnnotator", "Hide Gradient Annotator", "Show Gradient Annotator"),
+            ("type.hiddenCharacters", "Show Hidden Characters", "Hide Hidden Characters"),
+        ] {
+            assert_eq!(dynamic_label(&app, id, ""), on);
+            app.run(id, json!({})).unwrap();
+            assert_eq!(dynamic_label(&app, id, ""), off);
+        }
+    }
 
     #[test]
     fn saved_views_store_and_restore_the_view() {
