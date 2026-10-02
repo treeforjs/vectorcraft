@@ -131,7 +131,7 @@ fn encode_doc_with(doc: &vectorcraft_doc::Document, format: &str, scale: f64, ar
         "vectorcraft" => vectorcraft_format::save_file(doc),
         "svg" => vectorcraft_svg::export(doc, &vectorcraft_svg::ExportOptions { artboard: Some(artboard), outline_text, ..Default::default() })
             .into_bytes(),
-        "pdf" => vectorcraft_pdf::export(doc, &vectorcraft_pdf::PdfOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?,
+        "pdf" => super::rasterfx::export_pdf(doc, &vectorcraft_pdf::PdfOptions::default()).map_err(|e| EngineError::Other(e.to_string()))?,
         "png" | "jpg" | "jpeg" | "webp" => {
             let r = doc.artboards.get(artboard).map(|a| a.rect).ok_or_else(|| EngineError::Other("no such artboard".into()))?;
             let img = vectorcraft_render::Renderer::new().render_region(doc, r, scale.clamp(0.01, 64.0), format != "png" && format != "webp");

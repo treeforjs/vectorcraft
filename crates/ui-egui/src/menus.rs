@@ -1290,6 +1290,16 @@ pub fn invoke(app: &mut VectorcraftApp, id: &str, p: Value) {
         }
         return;
     }
+    // Document Raster Effects Settings: a dialog with the current resolution.
+    if id == "document.rasterEffectsSettings" && p.as_object().is_none_or(|o| o.is_empty()) {
+        match app.session.execute(id, &json!({})) {
+            Ok(v) => {
+                let _ = app.run("ui.paramDialog", json!({"command": id, "label": "Document Raster Effects Settings", "params": v}));
+            }
+            Err(e) => app.status(e.to_string()),
+        }
+        return;
+    }
     // Text Wrap Options: a dialog with the selected wrap object's current values.
     if id == "object.textWrap.options" && p.as_object().is_none_or(|o| o.is_empty()) {
         match app.session.execute(id, &json!({})) {
@@ -1465,7 +1475,7 @@ fn effect_menu() -> Vec<Item> {
         c("Apply Last Effect", "effect.applyLast"),
         todos("Last Effect", "Cmd+Alt+Shift+E"),
         Sep,
-        todo("Document Raster Effects Settings…"),
+        c("Document Raster Effects Settings…", "document.rasterEffectsSettings"),
         Sep,
         Item::Header("Illustrator Effects"),
     ];

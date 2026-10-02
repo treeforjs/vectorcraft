@@ -27,6 +27,7 @@ mod path;
 mod pathops;
 mod patterncmds;
 pub mod prefscmds;
+pub mod rasterfx;
 mod recolor;
 mod select;
 mod textedit;
@@ -163,6 +164,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(threads::specs());
         v.extend(textwrap::specs());
         v.extend(graph::specs());
+        v.extend(rasterfx::specs());
         v.extend(docmenu::specs());
         v.extend(docinfo::specs());
         v.extend(panelcmds::specs());

@@ -18,6 +18,7 @@ use vectorcraft_doc::{Document, NodeId, NodeKind, Selection};
 use vectorcraft_geom::Affine;
 use vectorcraft_tools::{PaintDefaults, Tool};
 
+pub use cmd::rasterfx::{export_pdf, flatten_raster_effects};
 pub use cmd::{CommandInfo, CommandSpec, command_specs, find_command};
 pub use tooling::{UiRequest, ViewInfo};
 pub use vectorcraft_doc as doc;
