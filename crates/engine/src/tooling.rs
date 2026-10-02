@@ -14,11 +14,13 @@ pub struct ViewInfo {
     pub smart_guides: bool,
     pub snap_to_grid: bool,
     pub show_bbox: bool,
+    /// View → Snap to Pixel: drawing and moving land on whole pixels (points at 72 ppi).
+    pub snap_to_pixel: bool,
 }
 
 impl Default for ViewInfo {
     fn default() -> Self {
-        Self { zoom: 1.0, outline: false, smart_guides: true, snap_to_grid: false, show_bbox: true }
+        Self { zoom: 1.0, outline: false, smart_guides: true, snap_to_grid: false, show_bbox: true, snap_to_pixel: false }
     }
 }
 
@@ -60,6 +62,7 @@ impl Session {
             smart_guides: view.smart_guides,
             snap_to_grid: view.snap_to_grid,
             show_bbox: view.show_bbox,
+            snap_to_pixel: view.snap_to_pixel,
         };
         f(self.tool.as_mut(), &cx)
     }

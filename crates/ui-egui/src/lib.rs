@@ -210,6 +210,7 @@ impl VectorcraftApp {
             outline: self.ui.view.outline,
             smart_guides: self.ui.view.smart_guides,
             snap_to_grid: self.ui.view.snap_to_grid,
+            snap_to_pixel: self.ui.view.snap_to_pixel,
             show_bbox: self.ui.view.bounding_box,
         }
     }

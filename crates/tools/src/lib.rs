@@ -148,6 +148,8 @@ pub struct ToolContext<'a> {
     pub snap_to_grid: bool,
     /// Bounding box shown (View → Show/Hide Bounding Box).
     pub show_bbox: bool,
+    /// View → Snap to Pixel.
+    pub snap_to_pixel: bool,
 }
 
 impl ToolContext<'_> {
@@ -312,6 +314,7 @@ pub(crate) mod testutil {
             smart_guides: true,
             snap_to_grid: false,
             show_bbox: true,
+            snap_to_pixel: false,
         }
     }
 }

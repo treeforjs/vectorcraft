@@ -119,6 +119,8 @@ pub struct ViewFlags {
     pub trim_view: bool,
     /// View → Hide/Show Corner Widget (live corner widgets on rectangles).
     pub corner_widgets: bool,
+    /// View → Snap to Pixel.
+    pub snap_to_pixel: bool,
 }
 
 impl Default for ViewFlags {
@@ -138,6 +140,7 @@ impl Default for ViewFlags {
             edges: true,
             trim_view: false,
             corner_widgets: true,
+            snap_to_pixel: false,
         }
     }
 }

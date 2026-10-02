@@ -135,6 +135,9 @@ impl Targets {
 
 /// Snap `p` for a drawing tool when smart guides (or grid snapping) are on.
 pub fn snap_draw(cx: &ToolContext, p: Point, exclude: &[NodeId]) -> (Point, Vec<Overlay>) {
+    if cx.snap_to_pixel {
+        return (Point::new(p.x.round(), p.y.round()), vec![]);
+    }
     if cx.snap_to_grid {
         let s = cx.doc.grid.spacing / cx.doc.grid.subdivisions.max(1) as f64;
         return (vectorcraft_geom::snap::snap_point_to_grid(p, s), vec![]);

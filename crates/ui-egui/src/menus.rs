@@ -91,6 +91,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("view.pixelPreview", "Pixel Preview", "Cmd+Alt+Y", "{}"),
     ("view.trimView", "Trim View", "", "{} toggle: hide everything outside the artboards"),
     ("view.cornerWidget", "Hide Corner Widget", "", "{} toggle the live corner widgets"),
+    ("view.snapToPixel", "Snap to Pixel", "", "{} toggle: drawing and moving land on whole pixels"),
     ("view.zoomIn", "Zoom In", "Cmd+=", "{}"),
     ("view.zoomOut", "Zoom Out", "Cmd+-", "{}"),
     ("view.fitArtboard", "Fit Artboard in Window", "Cmd+0", "{}"),
@@ -248,6 +249,29 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         "view.pixelPreview" => flag(&mut app.ui.view.pixel_preview),
         "view.trimView" => flag(&mut app.ui.view.trim_view),
         "view.cornerWidget" => flag(&mut app.ui.view.corner_widgets),
+        // New View: the engine stores the current zoom, centre and rotation under the given name.
+        "view.saved.new" if p.get("zoom").is_none() => {
+            let Some(v) = app.view().copied() else { return Some(Err("no document".into())) };
+            let mut params = if p.is_object() { p.clone() } else { json!({}) };
+            params["center"] = json!([v.center.x, v.center.y]);
+            params["zoom"] = json!(v.zoom);
+            params["rotation"] = json!(v.rotation);
+            app.session.execute(id, &params).map_err(|e| e.to_string())
+        }
+        id if id.starts_with("view.goto") => {
+            let n: usize = id["view.goto".len()..].parse().unwrap_or(0);
+            let saved = app.session.active().and_then(|d| n.checked_sub(1).and_then(|i| d.doc.views.get(i)).cloned());
+            match (saved, app.view_mut()) {
+                (Some(sv), Some(v)) => {
+                    v.center = sv.center;
+                    v.zoom = sv.zoom;
+                    v.rotation = sv.rotation;
+                    Ok(json!({ "name": sv.name }))
+                }
+                _ => Err("no such view".into()),
+            }
+        }
+        "view.snapToPixel" => flag(&mut app.ui.view.snap_to_pixel),
         id if id.starts_with("type.recentFont") => {
             let n: usize = id["type.recentFont".len()..].parse().unwrap_or(0);
             match n.checked_sub(1).and_then(|i| app.ui.recent_fonts.get(i)).cloned() {
@@ -430,6 +454,7 @@ pub fn checked(app: &VectorcraftApp, id: &str, p: &Value) -> Option<bool> {
         "view.outline" => v.outline,
         "view.pixelPreview" => v.pixel_preview,
         "view.trimView" => v.trim_view,
+        "view.snapToPixel" => v.snap_to_pixel,
         // Type on a Path effect of the selected path type.
         "type.pathOptions" if p.get("effect").is_some() => {
             let st = app.session.active()?;
@@ -1072,12 +1097,23 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 ),
                 c("Show Grid", "view.grid"),
                 c("Snap to Grid", "view.snapToGrid"),
-                todo("Snap to Pixel"),
+                c("Snap to Pixel", "view.snapToPixel"),
                 c("Snap to Point", "view.snapToPoint"),
                 todo("Snap to Glyph"),
                 Sep,
-                todo("New View…"),
-                todo("Edit Views…"),
+                c("New View…", "view.saved.new"),
+                c("Edit Views…", "view.saved.edit"),
+                Sep,
+                c("Saved View 1", "view.goto1"),
+                c("Saved View 2", "view.goto2"),
+                c("Saved View 3", "view.goto3"),
+                c("Saved View 4", "view.goto4"),
+                c("Saved View 5", "view.goto5"),
+                c("Saved View 6", "view.goto6"),
+                c("Saved View 7", "view.goto7"),
+                c("Saved View 8", "view.goto8"),
+                c("Saved View 9", "view.goto9"),
+                c("Saved View 10", "view.goto10"),
             ],
         ),
         (

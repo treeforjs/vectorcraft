@@ -146,6 +146,13 @@ impl Tool for SelectionTool {
                     d += adj;
                     self.guides = ov;
                 }
+                // Snap to Pixel: the moved selection's top-left lands on whole pixels.
+                if cx.snap_to_pixel
+                    && let Some(b) = self.start_bounds
+                {
+                    d = vectorcraft_geom::Vec2::new((b.x0 + d.x).round() - b.x0, (b.y0 + d.y).round() - b.y0);
+                    self.guides.clear();
+                }
                 self.state = State::Moving { start, began: true };
                 self.measure = Some((p, format!("dX: {:.2} pt\ndY: {:.2} pt", d.x, d.y)));
                 out.push(Action::Preview("object.transform".into(), json!({ "matrix": matrix_json(Affine::translate(d)), "copy": m.alt })));
