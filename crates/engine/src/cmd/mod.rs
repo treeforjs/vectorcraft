@@ -30,6 +30,7 @@ mod recolor;
 mod select;
 mod textedit;
 pub mod textstyles;
+pub(crate) mod textwrap;
 pub(crate) mod threads;
 pub(crate) mod typecmd;
 mod typemenu;
@@ -159,6 +160,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(fonts::specs());
         v.extend(help::specs());
         v.extend(threads::specs());
+        v.extend(textwrap::specs());
         v.extend(docmenu::specs());
         v.extend(docinfo::specs());
         v.extend(panelcmds::specs());

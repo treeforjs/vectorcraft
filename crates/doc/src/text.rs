@@ -136,6 +136,30 @@ pub enum FirstBaseline {
     Fixed,
 }
 
+/// Text Wrap Options of a wrap object (Object → Text Wrap).
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TextWrap {
+    /// Distance kept between the text and the object, in points (Illustrator's default 6 pt).
+    pub offset: f64,
+    /// Invert Wrap: text flows inside the object instead of around it.
+    pub invert: bool,
+}
+
+impl Default for TextWrap {
+    fn default() -> Self {
+        Self { offset: 6.0, invert: false }
+    }
+}
+
+/// A resolved wrap shape on an area text object: the outline of a wrap object in text space.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct WrapShape {
+    pub path: PathData,
+    #[serde(flatten)]
+    pub wrap: TextWrap,
+}
+
 /// Type on a Path effect: how each glyph is oriented on the path (Type → Type on a Path).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -234,6 +258,9 @@ pub struct TextObject {
     /// Type on a Path effect (type on a path only).
     #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub path_effect: PathEffect,
+    /// Wrap objects above this area type, resolved by the engine after each edit (text space).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub wrap: Vec<WrapShape>,
     /// Cached layout bounds in text space, filled in by the layout engine (not serialized).
     #[serde(skip)]
     pub cached_bounds: Option<Rect>,
@@ -248,6 +275,7 @@ impl TextObject {
             para: ParaStyle::default(),
             area: AreaOptions::default(),
             path_effect: PathEffect::default(),
+            wrap: Vec::new(),
             cached_bounds: None,
         }
     }

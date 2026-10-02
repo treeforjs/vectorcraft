@@ -573,6 +573,8 @@ impl Session {
         let doc = Arc::make_mut(&mut st.doc);
         let result = match f(doc, &mut st.selection) {
             Ok(v) => {
+                // Text Wrap: area type follows its wrap objects; then threads re-flow.
+                cmd::textwrap::refresh(Arc::make_mut(&mut st.doc));
                 // Threaded text re-flows when any of its frames changed.
                 if !st.doc.text_threads.is_empty() {
                     cmd::threads::reflow(&before, Arc::make_mut(&mut st.doc));

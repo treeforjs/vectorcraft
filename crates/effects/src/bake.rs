@@ -132,6 +132,7 @@ fn bake_leaf(d: &mut Document, n: &Node) -> Option<Node> {
                 knockout: false,
                 mask: None,
                 trace: None,
+                wrap: None,
                 kind,
                 ..n.clone()
             })

@@ -792,7 +792,14 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         c("Expand", "imageTrace.expand"),
                     ],
                 ),
-                sub("Text Wrap", vec![todo("Make"), todo("Release"), todo("Text Wrap Options…")]),
+                sub(
+                    "Text Wrap",
+                    vec![
+                        c("Make", "object.textWrap.make"),
+                        c("Release", "object.textWrap.release"),
+                        c("Text Wrap Options…", "object.textWrap.options"),
+                    ],
+                ),
                 Sep,
                 sub(
                     "Clipping Mask",
@@ -1215,6 +1222,16 @@ pub fn invoke(app: &mut VectorcraftApp, id: &str, p: Value) {
         match app.session.execute(id, &json!({})) {
             Ok(fields) => {
                 let _ = app.run("ui.paramDialog", json!({"command": id, "label": "Area Type Options", "params": fields}));
+            }
+            Err(e) => app.status(e.to_string()),
+        }
+        return;
+    }
+    // Text Wrap Options: a dialog with the selected wrap object's current values.
+    if id == "object.textWrap.options" && p.as_object().is_none_or(|o| o.is_empty()) {
+        match app.session.execute(id, &json!({})) {
+            Ok(fields) => {
+                let _ = app.run("ui.paramDialog", json!({"command": id, "label": "Text Wrap Options", "params": fields}));
             }
             Err(e) => app.status(e.to_string()),
         }

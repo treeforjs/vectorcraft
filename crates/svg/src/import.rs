@@ -697,6 +697,7 @@ fn text_fallback(im: &mut Importer, svg: &str, w: f64, h: f64, layer_mode: bool)
             para: Default::default(),
             area: Default::default(),
             path_effect: Default::default(),
+            wrap: Vec::new(),
             cached_bounds: None,
         };
         obj.para.justify = justify;

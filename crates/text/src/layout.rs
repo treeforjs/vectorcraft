@@ -89,7 +89,7 @@ pub fn layout_with(db: &FontDb, t: &TextObject, opts: &LayoutOptions) -> TextLay
     match &t.kind {
         TextKind::Point => flow(&mut cx, &paras, &t.para, None),
         TextKind::Area { frame } => {
-            let regions = Region::cells(&frame.to_bezpath(), opts);
+            let regions = Region::cells(&frame.to_bezpath(), opts, &t.wrap);
             cx.out.frames = regions.iter().map(|r| r.cell).collect();
             flow(&mut cx, &paras, &t.para, Some(&regions));
         }
@@ -124,21 +124,94 @@ struct Region {
     polys: Vec<Vec<Point>>,
     /// The frame is its own bounding rectangle (spans need no polygon intersection).
     rect: bool,
+    /// Text Wrap shapes: (polygons, offset, invert).
+    wraps: Vec<(Vec<Vec<Point>>, f64, bool)>,
+}
+
+/// Flattened closed polygons of a path.
+fn polygons(path: &BezPath) -> Vec<Vec<Point>> {
+    let mut polys: Vec<Vec<Point>> = Vec::new();
+    kurbo::flatten(path, 0.1, |el| match el {
+        PathEl::MoveTo(p) => polys.push(vec![p]),
+        PathEl::LineTo(p) => {
+            if let Some(v) = polys.last_mut() {
+                v.push(p);
+            }
+        }
+        _ => {}
+    });
+    polys.retain(|p| p.len() >= 3);
+    polys
+}
+
+/// Inside intervals (even-odd) of the horizontal line at `y` through `polys`.
+fn poly_intervals(polys: &[Vec<Point>], y: f64) -> Vec<(f64, f64)> {
+    let mut xs = Vec::new();
+    for poly in polys {
+        for i in 0..poly.len() {
+            let a = poly[i];
+            let b = poly[(i + 1) % poly.len()];
+            if (a.y <= y) != (b.y <= y) {
+                xs.push(a.x + (y - a.y) / (b.y - a.y) * (b.x - a.x));
+            }
+        }
+    }
+    xs.sort_by(f64::total_cmp);
+    xs.chunks_exact(2).map(|c| (c[0], c[1])).collect()
+}
+
+/// Union of sorted-or-not intervals.
+fn union_intervals(mut v: Vec<(f64, f64)>) -> Vec<(f64, f64)> {
+    v.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let mut out: Vec<(f64, f64)> = Vec::with_capacity(v.len());
+    for (a, b) in v {
+        match out.last_mut() {
+            Some(l) if a <= l.1 => l.1 = l.1.max(b),
+            _ => out.push((a, b)),
+        }
+    }
+    out
+}
+
+/// `a` minus `b` (both unions of disjoint intervals).
+fn subtract_intervals(a: &[(f64, f64)], b: &[(f64, f64)]) -> Vec<(f64, f64)> {
+    let mut out = vec![];
+    for &(mut s, e) in a {
+        for &(c, d) in b {
+            if d <= s || c >= e {
+                continue;
+            }
+            if c > s {
+                out.push((s, c));
+            }
+            s = s.max(d);
+        }
+        if e > s {
+            out.push((s, e));
+        }
+    }
+    out
+}
+
+/// `a` ∩ `b`.
+fn intersect_intervals(a: &[(f64, f64)], b: &[(f64, f64)]) -> Vec<(f64, f64)> {
+    let mut out = vec![];
+    for &(s, e) in a {
+        for &(c, d) in b {
+            let (x, y) = (s.max(c), e.min(d));
+            if y > x {
+                out.push((x, y));
+            }
+        }
+    }
+    out
 }
 
 impl Region {
-    fn cells(path: &BezPath, opts: &LayoutOptions) -> Vec<Region> {
-        let mut polys: Vec<Vec<Point>> = Vec::new();
-        kurbo::flatten(path, 0.1, |el| match el {
-            PathEl::MoveTo(p) => polys.push(vec![p]),
-            PathEl::LineTo(p) => {
-                if let Some(v) = polys.last_mut() {
-                    v.push(p);
-                }
-            }
-            _ => {}
-        });
-        polys.retain(|p| p.len() >= 3);
+    fn cells(path: &BezPath, opts: &LayoutOptions, wrap: &[vectorcraft_doc::WrapShape]) -> Vec<Region> {
+        let polys = polygons(path);
+        let wraps: Vec<(Vec<Vec<Point>>, f64, bool)> =
+            wrap.iter().map(|w| (polygons(&w.path.to_bezpath()), w.wrap.offset.max(0.0), w.wrap.invert)).filter(|w| !w.0.is_empty()).collect();
         let bbox = path.bounding_box();
         let rect = polys.len() == 1 && {
             let area: f64 = polys[0].iter().zip(polys[0].iter().cycle().skip(1)).map(|(a, b)| a.x * b.y - b.x * a.y).sum::<f64>().abs() * 0.5;
@@ -155,7 +228,7 @@ impl Region {
                 let x0 = bbox.x0 + c as f64 * (cw + gutter);
                 let y0 = bbox.y0 + r as f64 * (rh + gutter);
                 let cell = if rows * cols == 1 { bbox } else { Rect::new(x0, y0, x0 + cw, y0 + rh) };
-                out.push(Region { cell, inset: opts.inset.max(0.0), polys: polys.clone(), rect });
+                out.push(Region { cell, inset: opts.inset.max(0.0), polys: polys.clone(), rect, wraps: wraps.clone() });
             }
         }
         out
@@ -168,20 +241,16 @@ impl Region {
         self.cell.y1 - self.inset
     }
 
-    /// Inside intervals (even-odd) of the horizontal line at `y`.
+    /// Inside intervals (even-odd) of the horizontal line at `y`, minus the wrap objects (or
+    /// inside them, for Invert Wrap). Offsets grow each wrap shape vertically and horizontally.
     fn intervals(&self, y: f64) -> Vec<(f64, f64)> {
-        let mut xs = Vec::new();
-        for poly in &self.polys {
-            for i in 0..poly.len() {
-                let a = poly[i];
-                let b = poly[(i + 1) % poly.len()];
-                if (a.y <= y) != (b.y <= y) {
-                    xs.push(a.x + (y - a.y) / (b.y - a.y) * (b.x - a.x));
-                }
-            }
+        let mut iv = if self.polys.is_empty() || self.rect { vec![(self.cell.x0, self.cell.x1)] } else { poly_intervals(&self.polys, y) };
+        for (polys, off, invert) in &self.wraps {
+            let ys = if *off > 0.0 { vec![y - off, y - off * 0.5, y, y + off * 0.5, y + off] } else { vec![y] };
+            let w = union_intervals(ys.into_iter().flat_map(|y| poly_intervals(polys, y)).map(|(a, b)| (a - off, b + off)).collect());
+            iv = if *invert { intersect_intervals(&iv, &w) } else { subtract_intervals(&iv, &w) };
         }
-        xs.sort_by(f64::total_cmp);
-        xs.chunks_exact(2).map(|c| (c[0], c[1])).collect()
+        iv
     }
 
     /// Widest horizontal span inside the frame (and the cell) over the band `top..bottom`.
@@ -190,11 +259,16 @@ impl Region {
             let (a, b) = (a.max(self.cell.x0) + self.inset, b.min(self.cell.x1) - self.inset);
             (b > a).then_some((a, b))
         };
-        if self.polys.is_empty() || self.rect {
+        let plain = self.polys.is_empty() || self.rect;
+        if plain && self.wraps.is_empty() {
             return (self.cell.width() > 0.0).then_some((self.cell.x0, self.cell.x1)).and_then(clip);
         }
-        let fb = self.polys.iter().flatten().fold(Rect::new(f64::MAX, f64::MAX, f64::MIN, f64::MIN), |r, p| r.union_pt(*p));
-        let clamp = |y: f64| y.clamp(fb.y0 + 1e-4, fb.y1 - 1e-4);
+        let fb = if plain {
+            self.cell
+        } else {
+            self.polys.iter().flatten().fold(Rect::new(f64::MAX, f64::MAX, f64::MIN, f64::MIN), |r, p| r.union_pt(*p))
+        };
+        let clamp = |y: f64| if plain { y } else { y.clamp(fb.y0 + 1e-4, fb.y1 - 1e-4) };
         // Sample the band densely enough for curved frames (circles, blobs).
         let samples = 5;
         let mut rows: Vec<Vec<(f64, f64)>> =

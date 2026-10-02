@@ -263,6 +263,9 @@ pub struct Node {
     /// Image Trace object: `{preset, params}` it was traced with (the Image Trace panel shows them).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub trace: Option<Box<serde_json::Value>>,
+    /// Object → Text Wrap: area type below this object (in the same layer) flows around it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wrap: Option<crate::text::TextWrap>,
     pub kind: NodeKind,
 }
 
@@ -305,6 +308,7 @@ impl Node {
             appearance: Appearance::default(),
             mask: None,
             trace: None,
+            wrap: None,
             kind,
         }
     }
