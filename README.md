@@ -7,6 +7,10 @@
   </a>
 </p>
 
+<p align="center">
+  <img alt="VectorCraft app icon: an engraved dragon on VectorCraft red" src="assets/app-icon/vectorcraft-1024.png" width="128">
+</p>
+
 <h1 align="center">VectorCraft</h1>
 
 <p align="center">
@@ -220,6 +224,8 @@ And [**ArtCraft**](https://getartcraft.com/) itself, our AI image and video stud
 
 MIT OR Apache-2.0. Bundled fonts are OFL, Lucide icons are ISC, and all other icons and art are
 original. Per-asset attribution is in [`ASSETS.md`](ASSETS.md) (see also [`NOTICE`](NOTICE)).
+The app icon (an engraved dragon on VectorCraft red, `#e8573f`) is the owner's original artwork; its
+palette and files are in [`assets/app-icon/`](assets/app-icon/README.md).
 
 <sub>VectorCraft is an independent project and is not affiliated with or endorsed by Adobe. "Adobe", "Illustrator", "Photoshop", "Premiere Pro", "Lightroom" and "Acrobat" are trademarks of Adobe Inc., used here only to describe compatibility and workflow familiarity.</sub>
 

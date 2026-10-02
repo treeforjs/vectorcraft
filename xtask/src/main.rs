@@ -5,6 +5,7 @@
 
 mod assets;
 mod bundle;
+mod ico;
 mod layers;
 mod stats;
 
@@ -21,7 +22,9 @@ commands:
   ci              fmt --check, clippy -D warnings, test, assets, layers, wasm (stops at first failure)
   corpus [--download]
                   show where test corpora live; --download fetches PngSuite into corpus/pngsuite
-  bundle          build dist/VectorCraft.app (macOS) with an icon rendered by VectorCraft
+  bundle          build dist/VectorCraft.app (macOS) with assets/app-icon/vectorcraft.icns
+  ico <out.ico> <png>...
+                  pack PNGs into a Windows .ico (used by packaging/icons.sh)
   stats [--exact] count tests and lines per crate (--exact: ask the test harness via `-- --list`)
 ";
 
@@ -35,6 +38,7 @@ fn main() -> ExitCode {
         Some("ci") => cmd_ci(),
         Some("corpus") => cmd_corpus(rest.contains(&"--download")),
         Some("bundle") => bundle::run(&root()),
+        Some("ico") => ico::run(&rest),
         Some("stats") => stats::run(&root(), rest.contains(&"--exact")),
         Some("-h" | "--help" | "help") | None => {
             print!("{USAGE}");

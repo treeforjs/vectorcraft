@@ -116,6 +116,17 @@ fn services() -> Services {
     }
 }
 
+/// The window, Dock, taskbar and app-switcher icon (`assets/app-icon/`, see its README). macOS gets
+/// the version with Apple's transparent margin; elsewhere the full-bleed tile. The app ID matches
+/// `packaging/linux/ai.storyteller.vectorcraft.desktop` so Wayland docks find the launcher icon.
+fn app_icon() -> egui::IconData {
+    #[cfg(target_os = "macos")]
+    let png: &[u8] = include_bytes!("../../../assets/app-icon/vectorcraft-macos-512.png");
+    #[cfg(not(target_os = "macos"))]
+    let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ai.storyteller.vectorcraft.png");
+    eframe::icon_data::from_png_bytes(png).unwrap_or_default()
+}
+
 fn main() -> eframe::Result {
     let mut control_port: Option<u16> = std::env::var("VECTORCRAFT_CONTROL_PORT").ok().and_then(|p| p.parse().ok());
     let mut files = Vec::new();
@@ -138,7 +149,9 @@ fn main() -> eframe::Result {
             .with_drag_and_drop(true)
             .with_fullsize_content_view(true)
             .with_titlebar_shown(false)
-            .with_title_shown(false),
+            .with_title_shown(false)
+            .with_icon(app_icon())
+            .with_app_id("ai.storyteller.vectorcraft"),
         ..Default::default()
     };
     eframe::run_native(
