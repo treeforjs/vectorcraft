@@ -321,7 +321,9 @@ fn arrange(s: &mut Session, how: Arrange) -> Result<Value> {
 
 fn send_to_current_layer(s: &mut Session, _: &Value) -> Result<Value> {
     let ids = selected_roots(s)?;
-    let layer = s.doc()?.active_layer.ok_or_else(|| EngineError::Other("no current layer".into()))?;
+    // Ids are reused after undo: the remembered current layer must still be a layer.
+    let st = s.doc()?;
+    let layer = st.current_layer().or_else(|| st.doc.default_layer()).ok_or_else(|| EngineError::Other("no current layer".into()))?;
     s.edit("Send to Current Layer", |d, _| {
         for id in &ids {
             d.move_node(*id, Some(layer), usize::MAX)?;

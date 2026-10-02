@@ -357,3 +357,42 @@ fn reshape_moves_the_grabbed_point_and_its_neighbourhood() {
     assert!(tl.y > -40.0);
     assert!(pts.iter().filter(|p| (p.y - 100.0).abs() < 1e-9).count() == 2);
 }
+
+#[test]
+fn graph_tool_drag_creates_a_graph_and_asks_for_data() {
+    let mut s = session();
+    let v = ViewInfo::default();
+    let undo_before = s.doc().unwrap().history.undo.len();
+    s.select_tool("pieGraph", v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Down, 100.0, 100.0), v).unwrap();
+    s.pointer(&PointerEvent::new(PointerKind::Drag, 300.0, 250.0), v).unwrap();
+    let ui = s.pointer(&PointerEvent::new(PointerKind::Up, 300.0, 250.0), v).unwrap();
+    assert!(ui.iter().any(|r| matches!(r, crate::UiRequest::Dialog(k, _) if k == "graphData")), "{ui:?}");
+    let st = s.doc().unwrap();
+    assert_eq!(st.history.undo.len(), undo_before + 1);
+    let g = st.doc.node(st.selection.objects[0]).unwrap();
+    assert_eq!(g.graph.as_ref().unwrap().kind, vectorcraft_doc::GraphKind::Pie);
+    assert_eq!(g.graph.as_ref().unwrap().rect, vectorcraft_geom::Rect::new(100.0, 100.0, 300.0, 250.0));
+}
+
+#[test]
+fn stale_current_layer_id_never_targets_a_reused_id() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 10.0, 10.0);
+    let b = rect(&mut s, 5.0, 5.0, 10.0, 10.0);
+    let layer = NodeId(s.execute("layer.new", &json!({})).unwrap()["id"].as_u64().unwrap());
+    s.execute("edit.undo", &json!({})).unwrap();
+    // The undone layer's id is handed out again, here to a compound path.
+    s.execute("select.set", &json!({"ids": [a.0, b.0]})).unwrap();
+    let c = NodeId(s.execute("object.compoundPath.make", &json!({})).unwrap()["id"].as_u64().unwrap());
+    assert_eq!(c, layer, "precondition: id reused");
+    let d = rect(&mut s, 50.0, 50.0, 10.0, 10.0);
+    s.execute("select.set", &json!({"ids": [d.0]})).unwrap();
+    s.execute("object.arrange.sendToCurrentLayer", &json!({})).unwrap();
+    let doc = &s.doc().unwrap().doc;
+    assert!(doc.node(c).unwrap().children().unwrap().iter().all(|n| n.path_data().is_some()));
+    assert!(doc.parent_of(d).is_some_and(|p| doc.node(p).unwrap().is_layer()));
+    // layer.delete without an id must not delete the compound path.
+    s.execute("layer.delete", &json!({})).ok();
+    assert!(s.doc().unwrap().doc.node(c).is_some());
+}

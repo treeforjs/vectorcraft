@@ -66,7 +66,7 @@ fn new_layer(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 fn new_sublayer(s: &mut Session, p: &Value) -> Result<Value> {
-    let parent = id_param(p, "parent").or(s.doc()?.active_layer).ok_or_else(|| bad("layer.newSublayer", "no parent layer"))?;
+    let parent = id_param(p, "parent").or(s.doc()?.current_layer()).ok_or_else(|| bad("layer.newSublayer", "no parent layer"))?;
     let name = str_param(p, "name").map(str::to_string);
     let id = s.edit("New Sublayer", |d, _| {
         let n = d.node(parent).and_then(|n| n.children()).map(|c| c.iter().filter(|c| c.is_layer()).count()).unwrap_or(0);
@@ -80,7 +80,7 @@ fn new_sublayer(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 fn delete_layer(s: &mut Session, p: &Value) -> Result<Value> {
-    let id = id_param(p, "id").or(s.doc()?.active_layer).ok_or_else(|| bad("layer.delete", "no layer"))?;
+    let id = id_param(p, "id").or(s.doc()?.current_layer()).ok_or_else(|| bad("layer.delete", "no layer"))?;
     let st = s.doc()?;
     if st.doc.layers.len() == 1 && st.doc.layers[0].id == id {
         return Err(EngineError::Other("a document needs at least one layer".into()));
@@ -98,7 +98,7 @@ fn delete_layer(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 fn duplicate_layer(s: &mut Session, p: &Value) -> Result<Value> {
-    let id = id_param(p, "id").or(s.doc()?.active_layer).ok_or_else(|| bad("layer.duplicate", "no layer"))?;
+    let id = id_param(p, "id").or(s.doc()?.current_layer()).ok_or_else(|| bad("layer.duplicate", "no layer"))?;
     let nid = s.edit("Duplicate Layer", |d, _| {
         let (par, idx, _) = d.position(id).ok_or(EngineError::NoNode(id))?;
         let n = d.node(id).cloned().ok_or(EngineError::NoNode(id))?;

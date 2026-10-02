@@ -138,6 +138,10 @@ impl DocState {
             .unwrap_or_else(|| self.doc.title.clone())
     }
     /// Where new art is inserted: the isolation container, else the active layer.
+    /// The current layer, if the remembered id still names a layer (ids are reused after undo).
+    pub fn current_layer(&self) -> Option<NodeId> {
+        self.active_layer.filter(|l| self.doc.node(*l).is_some_and(|n| n.is_layer()))
+    }
     pub fn insertion_parent(&self) -> Option<NodeId> {
         // Ids are reused after undo (the id counter is part of the document), so a remembered
         // layer or isolated group must still be one: a pasted group must never land in a path.
