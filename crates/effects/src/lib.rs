@@ -210,20 +210,26 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
     v
 }
 
+/// The catalogue built once, indexed by id (lookups run per effect per rendered frame).
+fn catalog_index() -> &'static std::collections::HashMap<&'static str, EffectInfo> {
+    static INDEX: std::sync::OnceLock<std::collections::HashMap<&'static str, EffectInfo>> = std::sync::OnceLock::new();
+    INDEX.get_or_init(|| effect_catalog().into_iter().map(|e| (e.id, e)).collect())
+}
+
 /// Catalogue entry for `id`.
 pub fn effect_info(id: &str) -> Option<EffectInfo> {
-    effect_catalog().into_iter().find(|e| e.id == id)
+    catalog_index().get(id).cloned()
 }
 
 /// Dialog defaults for `id` (`None` for unknown effects).
 pub fn default_params(id: &str) -> Option<Value> {
-    effect_info(id).map(|e| e.defaults)
+    catalog_index().get(id).map(|e| e.defaults.clone())
 }
 
 /// `params` layered over the defaults of `id` (unknown keys are kept).
 pub fn merged_params(id: &str, params: &Value) -> Value {
-    let mut out = match default_params(id) {
-        Some(Value::Object(m)) => m,
+    let mut out = match catalog_index().get(id).map(|e| &e.defaults) {
+        Some(Value::Object(m)) => m.clone(),
         _ => Map::new(),
     };
     if let Value::Object(p) = params {
@@ -236,7 +242,7 @@ pub fn merged_params(id: &str, params: &Value) -> Value {
 
 /// A new effect record with default parameters (overridden by `params`).
 pub fn new_effect(id: &str, params: &Value) -> Option<Effect> {
-    effect_info(id)?;
+    catalog_index().get(id)?;
     Some(Effect { id: id.to_string(), params: merged_params(id, params), visible: true })
 }
 
@@ -247,7 +253,7 @@ pub fn is_raster(id: &str) -> bool {
 
 /// Does `id` change geometry?
 pub fn is_geometry(id: &str) -> bool {
-    !is_raster(id) && !is_pathfinder(id) && effect_info(id).is_some()
+    !is_raster(id) && !is_pathfinder(id) && catalog_index().contains_key(id)
 }
 
 /// Any visible geometry effect in the list?

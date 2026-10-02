@@ -270,3 +270,55 @@ fn trim_view_clips_to_artboards() {
     assert_eq!(r.pixel(75, 75), [255, 255, 255, 255]);
     assert_eq!(render(&d).pixel(75, 75), [255, 0, 0, 255]);
 }
+
+#[test]
+fn drop_shadow_profile_and_cache() {
+    let mut d = Document::new(100.0, 100.0);
+    let mut n = rect_node(&mut d, Rect::new(20.0, 20.0, 60.0, 60.0), Paint::solid(Color::WHITE), Paint::None, 0.0);
+    n.appearance.effects.push(vectorcraft_doc::Effect {
+        id: "stylize.dropShadow".into(),
+        params: serde_json::json!({"x": 10.0, "y": 10.0, "blur": 4.0, "opacity": 75.0}),
+        visible: true,
+    });
+    let l = d.layers[0].id;
+    d.insert(Some(l), 0, n).unwrap();
+    let opts = RenderOptions { background: Some([255, 255, 255, 255]), ..Default::default() };
+    for threads in [0, 4] {
+        let mut r = Renderer::new();
+        r.threads = threads;
+        let a = r.render(&d, 100, 100, Affine::IDENTITY, &opts);
+        // Inside the shadow (not under the object): 75% black. At its blurred edge: about half.
+        let inside = a.pixel(65, 50)[0] as i32;
+        assert!((inside - 64).abs() <= 6, "inside {inside}");
+        let edge = a.pixel(70, 50)[0] as i32;
+        assert!((edge - 160).abs() <= 20, "edge {edge}");
+        assert_eq!(a.pixel(85, 50), [255, 255, 255, 255]);
+        // Second frame comes from the cache: identical. A pan moves it rigidly.
+        let b = r.render(&d, 100, 100, Affine::IDENTITY, &opts);
+        assert_eq!(a.pixels, b.pixels);
+        let c = r.render(&d, 100, 100, Affine::translate((-5.0, 0.0)), &opts);
+        assert_eq!(c.pixel(60, 50), a.pixel(65, 50));
+        assert_eq!(c.pixel(65, 50), a.pixel(70, 50));
+    }
+}
+
+#[test]
+fn blend_mode_on_a_single_fill_is_exact_without_a_layer() {
+    let mut d = Document::new(100.0, 100.0);
+    let red = rect_node(&mut d, Rect::new(0.0, 0.0, 50.0, 100.0), Paint::solid(Color::rgb(1.0, 0.0, 0.0)), Paint::None, 0.0);
+    let mut over = rect_node(&mut d, Rect::new(25.0, 0.0, 75.0, 100.0), Paint::solid(Color::rgb(0.5, 0.5, 1.0)), Paint::None, 0.0);
+    over.blend = vectorcraft_color::BlendMode::Multiply;
+    let l = d.layers[0].id;
+    d.insert(Some(l), 0, red).unwrap();
+    d.insert(Some(l), 1, over).unwrap();
+    for threads in [0, 4] {
+        let mut r = Renderer::new();
+        r.threads = threads;
+        let img = r.render(&d, 100, 100, Affine::IDENTITY, &RenderOptions { background: Some([255, 255, 255, 255]), ..Default::default() });
+        let [rr, g, b, _] = img.pixel(35, 50);
+        assert!((rr as i32 - 128).abs() <= 2 && g <= 1 && b <= 1, "multiply over red: {:?}", img.pixel(35, 50));
+        let [rr, g, b, _] = img.pixel(65, 50);
+        assert!((rr as i32 - 128).abs() <= 2 && (g as i32 - 128).abs() <= 2 && b >= 253, "multiply over white");
+        assert_eq!(img.pixel(10, 50), [255, 0, 0, 255]);
+    }
+}

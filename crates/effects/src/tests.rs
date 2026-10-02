@@ -323,3 +323,15 @@ fn bad_params_fall_back_to_defaults() {
     let out = run("path.offsetPath", json!({"offset": "12 pt"}), &square());
     assert!(close(out.bounds().unwrap().width(), 124.0, 0.1));
 }
+
+#[test]
+#[ignore]
+fn bench_catalog_lookup() {
+    let t = std::time::Instant::now();
+    let mut n = 0;
+    for _ in 0..10_000 {
+        n += crate::is_geometry("distort.roughen") as usize;
+        n += crate::merged_params("stylize.dropShadow", &serde_json::Value::Null).as_object().unwrap().len();
+    }
+    eprintln!("10k lookups: {:?} ({n})", t.elapsed());
+}

@@ -129,7 +129,165 @@ fn pcolor(c: &vectorcraft_doc::color::Color) -> peniko::Color {
     peniko::Color::new([r, g, b, 1.0])
 }
 
+/// A cached shadow / glow raster: premultiplied, already tinted and faded, positioned relative to
+/// the view-space position of `anchor` (a document point).
+pub(crate) struct ShadowEntry {
+    node: Node,
+    linear: [u64; 4],
+    anchor: vectorcraft_geom::Point,
+    /// Pixel offset of the raster's top-left from the anchor's view position.
+    rel: (f64, f64),
+    image: std::sync::Arc<vello_cpu::Pixmap>,
+    pub(crate) stamp: u64,
+}
+
+/// Box sizes approximating a Gaussian of `sigma` with three box blurs.
+fn gauss_boxes(sigma: f64) -> [usize; 3] {
+    let n = 3.0;
+    let w_ideal = (12.0 * sigma * sigma / n + 1.0).sqrt();
+    let mut wl = w_ideal.floor() as i64;
+    if wl % 2 == 0 {
+        wl -= 1;
+    }
+    let wu = wl + 2;
+    let m_ideal = (12.0 * sigma * sigma - n * (wl * wl) as f64 - 4.0 * n * wl as f64 - 3.0 * n) / (-4.0 * wl as f64 - 4.0);
+    let m = m_ideal.round() as i64;
+    let r = |i: i64| (((if i < m { wl } else { wu }) - 1) / 2).max(0) as usize;
+    [r(0), r(1), r(2)]
+}
+
+/// One horizontal box-blur pass of radius `r` over rows of `w` (running sum, edges as zero).
+fn box_blur_h(src: &[f32], dst: &mut [f32], w: usize, h: usize, r: usize) {
+    if r == 0 {
+        dst.copy_from_slice(src);
+        return;
+    }
+    let norm = 1.0 / (2 * r + 1) as f32;
+    for y in 0..h {
+        let row = &src[y * w..(y + 1) * w];
+        let out = &mut dst[y * w..(y + 1) * w];
+        let mut acc: f32 = row.iter().take(r + 1).sum();
+        for x in 0..w {
+            out[x] = acc * norm;
+            if x + r + 1 < w {
+                acc += row[x + r + 1];
+            }
+            if x >= r {
+                acc -= row[x - r];
+            }
+        }
+    }
+}
+
+fn transpose(src: &[f32], dst: &mut [f32], w: usize, h: usize) {
+    for y in 0..h {
+        for x in 0..w {
+            dst[x * h + y] = src[y * w + x];
+        }
+    }
+}
+
+/// Gaussian-blur an alpha plane in place (three box passes per axis).
+fn blur_alpha(a: &mut Vec<f32>, w: usize, h: usize, sigma: f64) {
+    if sigma < 0.2 {
+        return;
+    }
+    let boxes = gauss_boxes(sigma);
+    let mut tmp = vec![0.0; a.len()];
+    for r in boxes {
+        box_blur_h(a, &mut tmp, w, h, r);
+        std::mem::swap(a, &mut tmp);
+    }
+    transpose(a, &mut tmp, w, h);
+    std::mem::swap(a, &mut tmp);
+    for r in boxes {
+        box_blur_h(a, &mut tmp, h, w, r);
+        std::mem::swap(a, &mut tmp);
+    }
+    transpose(a, &mut tmp, h, w);
+    std::mem::swap(a, &mut tmp);
+}
+
 impl Renderer {
+    /// Drop shadow / outer glow `fx` (index `i` in the object's raster effects) from a cached raster:
+    /// the silhouette is rendered once into a small crop, blurred and tinted on the CPU, and reused
+    /// while the object and the zoom/rotation are unchanged (pans only move it). Returns false when
+    /// the effect isn't a shadow/glow or the raster would be too large (caller falls back).
+    #[allow(clippy::too_many_arguments)]
+    fn draw_shadow_cached(
+        &mut self,
+        ctx: &mut RenderContext,
+        f: &Frame,
+        n: &Node,
+        i: usize,
+        fx: &RasterFx,
+        g: &BezPath,
+        rule: FillRule,
+        gctx: &GeomContext,
+        reach: Rect,
+    ) -> bool {
+        let (mode, opacity, dx, dy, blur, color) = match fx {
+            RasterFx::DropShadow { mode, opacity, dx, dy, blur, color } => (*mode, *opacity, *dx, *dy, *blur, *color),
+            RasterFx::OuterGlow { mode, opacity, blur, color } => (*mode, *opacity, 0.0, 0.0, *blur, *color),
+            _ => return false,
+        };
+        let c = f.view.as_coeffs();
+        let linear = [c[0].to_bits(), c[1].to_bits(), c[2].to_bits(), c[3].to_bits()];
+        let key = (n as *const Node as usize, i);
+        let stamp = self.stamp;
+        let hit = self.shadows.get_mut(&key).filter(|e| e.linear == linear && e.node == *n);
+        let (image, x, y) = match hit {
+            Some(e) => {
+                e.stamp = stamp;
+                let p = f.view * e.anchor;
+                (e.image.clone(), (p.x + e.rel.0).round(), (p.y + e.rel.1).round())
+            }
+            None => {
+                let spread = blur.max(0.0) * 1.5 / f.px + 2.0;
+                let reach = reach + vectorcraft_geom::Vec2::new(dx, dy);
+                let r = f.view.transform_rect_bbox(reach).inflate(spread, spread);
+                let (x0, y0) = (r.x0.floor(), r.y0.floor());
+                let (w, h) = (r.x1.ceil() - x0, r.y1.ceil() - y0);
+                if !(1.0..=8192.0).contains(&w) || !(1.0..=8192.0).contains(&h) || w * h > 4.0e6 {
+                    return false;
+                }
+                let (w, h) = (w as u16, h as u16);
+                // Silhouette (the object's painted alpha), offset by the shadow distance.
+                let mut off = crate::single_threaded_context(w, h);
+                let shifted = Frame { mt: false, view: Affine::translate((-x0, -y0)) * f.view * Affine::translate((dx, dy)), ..*f };
+                self.paint_items(&mut off, &shifted, n, g, rule, gctx);
+                off.flush();
+                let mut pm = vello_cpu::Pixmap::new(w, h);
+                off.render(&mut pm, &mut self.resources);
+                let (wu, hu) = (w as usize, h as usize);
+                let mut a: Vec<f32> = pm.data().iter().map(|p| p.a as f32).collect();
+                blur_alpha(&mut a, wu, hu, blur / 2.0 / f.px);
+                let [cr, cg, cb] = color.to_rgb();
+                let tint = |v: f32, ch: f32| (v * ch).round().clamp(0.0, 255.0) as u8;
+                for (px, av) in pm.data_mut().iter_mut().zip(&a) {
+                    let al = (av * opacity).clamp(0.0, 255.0);
+                    *px = vello_cpu::color::PremulRgba8 { r: tint(al, cr), g: tint(al, cg), b: tint(al, cb), a: al.round() as u8 };
+                }
+                let image = std::sync::Arc::new(pm);
+                let anchor = reach.origin();
+                let p = f.view * anchor;
+                self.shadows.insert(key, ShadowEntry { node: n.clone(), linear, anchor, rel: (x0 - p.x, y0 - p.y), image: image.clone(), stamp });
+                (image, x0, y0)
+            }
+        };
+        // The blend mode applies per draw: a blend layer would be a full-viewport compositing pass
+        // per shadow. The raster sits on whole pixels, so the cheapest sampler is exact.
+        let (w, h) = (image.width() as f64, image.height() as f64);
+        ctx.set_transform(Affine::translate((x, y)));
+        ctx.set_blend_mode(blend_mode(mode));
+        let sampler = peniko::ImageSampler { quality: peniko::ImageQuality::Low, ..Default::default() };
+        ctx.set_paint(vello_cpu::Image { image: vello_cpu::ImageSource::Pixmap(image), sampler });
+        ctx.fill_rect(&Rect::new(0.0, 0.0, w, h));
+        ctx.set_blend_mode(blend_mode(vectorcraft_doc::color::BlendMode::Normal));
+        ctx.set_transform(Affine::IDENTITY);
+        true
+    }
+
     /// `draw_shape` for nodes with live effects.
     pub(crate) fn draw_shape_fx(&mut self, ctx: &mut RenderContext, f: &Frame, n: &Node, bp: &BezPath, rule: FillRule) {
         let g = effected_path(n, bp);
@@ -146,7 +304,10 @@ impl Renderer {
         let outset = n.appearance.outset();
         let reach = g.bounding_box().inflate(outset, outset);
         // Below the object: shadows and outer glows.
-        for fx in rfx.iter().filter(|x| x.is_below()) {
+        for (i, fx) in rfx.iter().enumerate().filter(|(_, x)| x.is_below()) {
+            if self.draw_shadow_cached(ctx, f, n, i, fx, &g, rule, &gctx, reach) {
+                continue;
+            }
             // The offset is applied to the geometry rather than in the filter: vello_cpu drops
             // layer content that lies entirely outside the viewport before filtering.
             let (mode, opacity, dx, dy, blur, filter) = match fx {

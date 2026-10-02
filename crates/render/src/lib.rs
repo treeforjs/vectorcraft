@@ -195,6 +195,8 @@ pub struct Renderer {
     brushes: brush_fx::BrushCache,
     /// Evaluated blends/envelopes and tessellated meshes.
     live: live::LiveCache,
+    /// Blurred, tinted drop shadow / outer glow rasters per object and effect (see `fx`).
+    shadows: PtrMap<(usize, usize), fx::ShadowEntry>,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -239,6 +241,7 @@ impl Renderer {
             images: HashMap::new(),
             stats: FrameStats::default(),
             brushes: Default::default(),
+            shadows: PtrMap::default(),
             live: live::LiveCache::default(),
         }
     }
@@ -304,6 +307,9 @@ impl Renderer {
         }
         if self.strokes.len() > 1024 {
             self.strokes.retain(|_, e| g - e.stamp <= 3);
+        }
+        if self.shadows.len() > 256 {
+            self.shadows.retain(|_, e| g - e.stamp <= 3);
         }
         ctx.flush();
         let mut pm = Pixmap::new(w, h);
@@ -441,9 +447,12 @@ impl Renderer {
     /// Everything [`Self::draw_arc`] does after culling.
     fn draw_arc_body(&mut self, ctx: &mut RenderContext, f: &Frame, a: &Arc<Node>) {
         // Fast path for plain paths: cached geometry, opacity folded into the paint.
+        // A blend mode on a single plain fill applies per draw (exact for one paint operation);
+        // a blend layer would composite the whole viewport.
+        let blended = a.blend != vectorcraft_color::BlendMode::Normal;
         if let NodeKind::Path { rule, guide: false, .. } = &a.kind
             && !f.opts.outline
-            && a.blend == vectorcraft_color::BlendMode::Normal
+            && (!blended || single_plain_fill(a))
             && !a.isolate
             && !fx::has_fx(a)
             && (a.opacity >= 1.0 || painted_items(a) == 1)
@@ -451,7 +460,13 @@ impl Renderer {
         {
             self.alpha = a.opacity.clamp(0.0, 1.0);
             self.cur = Some(a.clone());
+            if blended {
+                ctx.set_blend_mode(blend_mode(a.blend));
+            }
             self.draw_shape(ctx, f, a, &bp, *rule);
+            if blended {
+                ctx.set_blend_mode(blend_mode(vectorcraft_color::BlendMode::Normal));
+            }
             self.cur = None;
             self.alpha = 1.0;
             self.stats.drawn += 1;
@@ -838,6 +853,16 @@ fn mask_value(r: u8, g: u8, b: u8, a: u8, clip: bool, invert: bool) -> u8 {
 /// multithreaded dispatcher, which panics on filter effects (glows, shadows, blur).
 pub(crate) fn single_threaded_context(w: u16, h: u16) -> RenderContext {
     RenderContext::new_with(w, h, vello_cpu::RenderSettings { num_threads: 0, ..Default::default() })
+}
+
+/// Exactly one visible painted item, a fill with its own Normal blend and full opacity (one
+/// paint operation, so an object blend mode can be applied per draw).
+fn single_plain_fill(n: &Node) -> bool {
+    let mut painted = n.appearance.items.iter().filter(|i| match i {
+        AppearanceItem::Fill(f) => f.visible && !f.paint.is_none(),
+        AppearanceItem::Stroke(s) => s.visible && !s.paint.is_none() && s.width > 0.0,
+    });
+    matches!((painted.next(), painted.next()), (Some(AppearanceItem::Fill(f)), None) if f.blend == vectorcraft_color::BlendMode::Normal && f.opacity >= 1.0 && !matches!(f.paint, vectorcraft_color::Paint::Pattern { .. }))
 }
 
 /// Number of visible painted fill/stroke items (opacity folding is exact only for one).
