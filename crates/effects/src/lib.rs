@@ -16,6 +16,7 @@
 #![forbid(unsafe_code)]
 
 mod distort;
+mod group;
 mod raster;
 mod stylize;
 mod util;
@@ -28,6 +29,7 @@ use serde_json::{Map, Value, json};
 use vectorcraft_doc::Effect;
 use vectorcraft_geom::{BezPath, PathData, Rect};
 
+pub use group::{OutlineHook, PATHFINDER_EFFECTS, has_pathfinder, is_pathfinder, pathfinder_children};
 pub use raster::{RasterFx, outset, raster_effects};
 pub use warp::{WarpStyle, warp_point};
 
@@ -56,6 +58,7 @@ const SHAPE: &[&str] = &["Effect", "Convert to Shape"];
 const STYLIZE: &[&str] = &["Effect", "Stylize"];
 const WARP: &[&str] = &["Effect", "Warp"];
 const BLUR: &[&str] = &["Effect", "Blur"];
+const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 
 /// The warp styles in Illustrator's Style menu order: (id suffix, label).
 pub const WARP_STYLES: [(&str, &str); 15] = [
@@ -199,6 +202,9 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
         };
         v.push(g(id, label, WARP, WARP_DOC, json!({"bend": 50.0, "horizontal": 0.0, "vertical": 0.0, "orientation": "horizontal"})));
     }
+    for (id, label, _) in PATHFINDER_EFFECTS {
+        v.push(g(id, label, PATHFINDER, "{} (groups and layers: live Pathfinder over the members)", json!({})));
+    }
     v
 }
 
@@ -239,7 +245,7 @@ pub fn is_raster(id: &str) -> bool {
 
 /// Does `id` change geometry?
 pub fn is_geometry(id: &str) -> bool {
-    !is_raster(id) && effect_info(id).is_some()
+    !is_raster(id) && !is_pathfinder(id) && effect_info(id).is_some()
 }
 
 /// Any visible geometry effect in the list?

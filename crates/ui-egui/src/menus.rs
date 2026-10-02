@@ -1386,7 +1386,11 @@ fn effect_menu() -> Vec<Item> {
         let items: Vec<Item> = cat
             .iter()
             .filter(|e| e.menu.last().copied() == Some(sub_name))
-            .map(|e| Item::Cmd(e.label, "effect.dialog", json!({ "effect": e.id })))
+            .map(|e| match e.defaults.as_object().is_some_and(|o| o.is_empty()) {
+                // No options (Effect → Pathfinder): apply directly, like Illustrator.
+                true => Item::Cmd(e.label, "effect.apply", json!({ "effect": e.id })),
+                false => Item::Cmd(e.label, "effect.dialog", json!({ "effect": e.id })),
+            })
             .collect();
         if sub_name == "Blur" {
             if !items.is_empty() {
@@ -1399,7 +1403,6 @@ fn effect_menu() -> Vec<Item> {
         if items.is_empty() {
             let placeholder = match sub_name {
                 "3D and Materials" => vec![todo("Extrude & Bevel…"), todo("Revolve…"), todo("Inflate…"), todo("Rotate…"), todo("Materials…")],
-                "Pathfinder" => vec![todo("Add"), todo("Intersect"), todo("Exclude"), todo("Subtract")],
                 "SVG Filters" => vec![todo("Apply SVG Filter…")],
                 _ => continue,
             };

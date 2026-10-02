@@ -188,6 +188,24 @@ fn node_geometry(n: &Node) -> Option<(PathData, FillRule)> {
 /// Bake the object-level geometry effects of `id` (and, recursively, of group members).
 fn expand_node(d: &mut vectorcraft_doc::Document, id: NodeId, out: &mut Vec<NodeId>) {
     let Some(n) = d.node(id).cloned() else { return };
+    // Effect → Pathfinder: the group's members become the Pathfinder result.
+    if let Some(result) = effects::pathfinder_children(&n, None) {
+        let children = result
+            .into_iter()
+            .map(|c| {
+                let mut c = Arc::unwrap_or_clone(c);
+                c.id = d.alloc_id();
+                Arc::new(c)
+            })
+            .collect();
+        let Some(m) = d.node_mut(id) else { return };
+        if let Some(ch) = m.children_mut() {
+            *ch = children;
+        }
+        m.appearance.effects.retain(|e| !effects::is_pathfinder(&e.id));
+        out.push(id);
+        return;
+    }
     if let Some(children) = n.children()
         && matches!(n.kind, NodeKind::Group { .. })
     {
@@ -314,5 +332,25 @@ mod tests {
         assert!(matches!(n.kind, NodeKind::Compound { .. }));
         let b = n.geometric_bounds().unwrap();
         assert!((b.x1 - 320.0).abs() < 1e-6, "{b:?}");
+    }
+
+    #[test]
+    fn pathfinder_effect_on_a_group_renders_live_and_expands() {
+        let (mut s, a) = session_with_rect();
+        let b = s.execute("shape.rectangle", &json!({"x": 150, "y": 100, "width": 100, "height": 100})).unwrap();
+        s.execute("select.set", &json!({"ids": [a.0, b["id"]]})).unwrap();
+        let g = NodeId(s.execute("object.group", &json!({})).unwrap()["id"].as_u64().unwrap());
+        s.execute("effect.apply", &json!({"effect": "pathfinder.subtract"})).unwrap();
+        // Live: the renderer shows only the back square minus the front one.
+        let doc = s.doc().unwrap().doc.clone();
+        let img = vectorcraft_render::Renderer::new().render(&doc, 400, 400, vectorcraft_geom::Affine::IDENTITY, &Default::default());
+        assert!(img.pixel(125, 150)[3] > 0);
+        assert_eq!(img.pixel(200, 150)[3], 0);
+        s.execute("effect.expandAppearance", &json!({})).unwrap();
+        let n = node(&s, g);
+        assert!(n.appearance.effects.is_empty());
+        let ch = n.children().unwrap();
+        assert_eq!(ch.len(), 1);
+        assert!((ch[0].geometric_bounds().unwrap().width() - 50.0).abs() < 1e-6);
     }
 }

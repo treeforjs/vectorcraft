@@ -86,7 +86,11 @@ impl Renderer {
             e.2 = self.live.stamp;
             return e.1.clone();
         }
-        let v: Expanded = Arc::new(expand_live(a).into_iter().map(Arc::new).collect());
+        let hook: &dyn Fn(&Node) -> Option<Node> = &outline_text;
+        let v: Expanded = match crate::effects::pathfinder_children(a, Some(hook)) {
+            Some(children) => Arc::new(children),
+            None => Arc::new(expand_live(a).into_iter().map(Arc::new).collect()),
+        };
         if cache {
             self.live.expanded.insert(key, (a.clone(), v.clone(), self.live.stamp));
         }
@@ -129,7 +133,7 @@ impl Renderer {
     pub(crate) fn draw_live_body(&mut self, ctx: &mut RenderContext, f: &Frame, a: &Arc<Node>, cache: bool) {
         match &a.kind {
             NodeKind::Mesh(m) => self.draw_mesh(ctx, f, a, m, cache),
-            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Repeat(_) => {
+            NodeKind::Blend { .. } | NodeKind::Envelope { .. } | NodeKind::Repeat(_) | NodeKind::Group { .. } | NodeKind::Layer { .. } => {
                 let items = self.live_expanded(a, cache);
                 for c in items.iter() {
                     self.draw_arc(ctx, f, c);
