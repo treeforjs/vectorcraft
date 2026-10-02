@@ -14,6 +14,9 @@ use crate::{ExportOptions, Styling, base64_encode, fmt_num, xml_escape};
 type Props = Vec<(&'static str, String)>;
 
 pub(crate) fn export(doc: &Document, opts: &ExportOptions) -> String {
+    // Live geometry effects (Roughen, Warp, Offset Path, Effect → Pathfinder…) export as their result.
+    let baked = vectorcraft_effects::bake_document(doc);
+    let doc = baked.as_ref().unwrap_or(doc);
     let rect = opts
         .artboard
         .and_then(|i| doc.artboards.get(i))
@@ -589,6 +592,9 @@ impl Writer<'_> {
         if !n.visible {
             return;
         }
+        if n.appearance.effects.iter().any(|e| e.visible && vectorcraft_effects::is_raster(&e.id)) {
+            return self.filtered(n);
+        }
         if let Some(m) = n.mask.as_deref()
             && !m.disabled
         {
@@ -686,6 +692,78 @@ impl Writer<'_> {
                 let g = vectorcraft_doc::live::expand_deep(n, None);
                 self.node(&g);
             }
+        }
+    }
+
+    /// Raster effects (drop shadow, glows, Gaussian blur, feather) as SVG filters: one `<g filter>`
+    /// per effect, the first effect innermost (Illustrator's stacking order).
+    fn filtered(&mut self, n: &Node) {
+        use vectorcraft_effects::RasterFx;
+        let fx = vectorcraft_effects::raster_effects(&n.appearance.effects);
+        let mut inner = n.clone();
+        inner.appearance.effects.retain(|e| !vectorcraft_effects::is_raster(&e.id));
+        let reach: f64 = fx.iter().map(RasterFx::outset).sum::<f64>() + 2.0;
+        let region = n.visual_bounds().map(|b| self.xf.transform_rect_bbox(b).inflate(reach, reach));
+        let mut opened = 0;
+        for f in fx.iter().rev() {
+            let fid = self.fresh_id("filter");
+            let region_attr = match region {
+                Some(r) => format!(
+                    " filterUnits=\"userSpaceOnUse\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"",
+                    self.num(r.x0),
+                    self.num(r.y0),
+                    self.num(r.width()),
+                    self.num(r.height())
+                ),
+                None => String::new(),
+            };
+            let sd = |blur: f64| fmt_num((blur / 2.0).max(0.0), 3);
+            let flood = |c: &vectorcraft_color::Color, o: f32| {
+                format!("<feFlood flood-color=\"{}\" flood-opacity=\"{}\"/>", c.to_hex(), fmt_num(o as f64, 3))
+            };
+            let body = match f {
+                RasterFx::DropShadow { opacity, dx, dy, blur, color, .. } => format!(
+                    "<feGaussianBlur in=\"SourceAlpha\" stdDeviation=\"{}\"/><feOffset dx=\"{}\" dy=\"{}\" result=\"shadow\"/>{}<feComposite in2=\"shadow\" operator=\"in\" result=\"paint\"/><feMerge><feMergeNode in=\"paint\"/><feMergeNode in=\"SourceGraphic\"/></feMerge>",
+                    sd(*blur),
+                    self.num(*dx),
+                    self.num(*dy),
+                    flood(color, *opacity)
+                ),
+                RasterFx::OuterGlow { opacity, blur, color, .. } => format!(
+                    "<feGaussianBlur in=\"SourceAlpha\" stdDeviation=\"{}\" result=\"glow\"/>{}<feComposite in2=\"glow\" operator=\"in\" result=\"paint\"/><feMerge><feMergeNode in=\"paint\"/><feMergeNode in=\"SourceGraphic\"/></feMerge>",
+                    sd(*blur),
+                    flood(color, *opacity)
+                ),
+                RasterFx::InnerGlow { opacity, blur, color, center, .. } => {
+                    // Edge: the blurred inverse silhouette; Center: the blurred silhouette; both clipped to the shape.
+                    let src = if *center {
+                        "<feGaussianBlur in=\"SourceAlpha\" stdDeviation=\"SD\" result=\"glow\"/>".replace("SD", &sd(*blur))
+                    } else {
+                        format!(
+                            "<feComponentTransfer in=\"SourceAlpha\"><feFuncA type=\"table\" tableValues=\"1 0\"/></feComponentTransfer><feGaussianBlur stdDeviation=\"{}\" result=\"glow\"/>",
+                            sd(*blur)
+                        )
+                    };
+                    format!(
+                        "{src}{}<feComposite in2=\"glow\" operator=\"in\"/><feComposite in2=\"SourceAlpha\" operator=\"in\" result=\"paint\"/><feMerge><feMergeNode in=\"SourceGraphic\"/><feMergeNode in=\"paint\"/></feMerge>",
+                        flood(color, *opacity)
+                    )
+                }
+                RasterFx::Feather { radius } => format!(
+                    "<feGaussianBlur in=\"SourceAlpha\" stdDeviation=\"{}\" result=\"soft\"/><feComposite in=\"SourceGraphic\" in2=\"soft\" operator=\"in\" result=\"f\"/><feComposite in=\"f\" in2=\"SourceAlpha\" operator=\"in\"/>",
+                    sd(*radius)
+                ),
+                RasterFx::GaussianBlur { radius } => format!("<feGaussianBlur in=\"SourceGraphic\" stdDeviation=\"{}\"/>", sd(*radius)),
+            };
+            self.def(1, &format!("<filter id=\"{fid}\"{region_attr} color-interpolation-filters=\"sRGB\">{body}</filter>"));
+            self.line(&format!("<g filter=\"url(#{fid})\">"));
+            self.depth += 1;
+            opened += 1;
+        }
+        self.node(&inner);
+        for _ in 0..opened {
+            self.depth -= 1;
+            self.line("</g>");
         }
     }
 

@@ -25,6 +25,9 @@ pub fn export(doc: &Document, opts: &PdfOptions) -> Result<Vec<u8>, PdfError> {
 
 /// Like [`export`], also returning warnings about approximated or dropped features.
 pub fn export_with_report(doc: &Document, opts: &PdfOptions) -> Result<ExportReport, PdfError> {
+    // Live geometry effects export as their result; raster effects are reported below.
+    let baked = vectorcraft_effects::bake_document(doc);
+    let doc = baked.as_ref().unwrap_or(doc);
     if doc.artboards.is_empty() {
         return Err(PdfError::NoArtboards);
     }
@@ -358,8 +361,8 @@ impl Exporter<'_> {
             None if !n.is_container() => return,
             _ => {}
         }
-        if !n.appearance.effects.is_empty() {
-            self.warn("live effects are not exported to PDF yet");
+        if n.appearance.effects.iter().any(|e| e.visible && vectorcraft_effects::is_raster(&e.id)) {
+            self.warn("raster effects (shadows, glows, blur, feather) are not exported to PDF yet");
         }
         let container = n.is_container() && !matches!(n.kind, NodeKind::Compound { .. });
         let mut pushes = 0;
@@ -464,8 +467,8 @@ impl Exporter<'_> {
                     if !fl.visible || fl.paint.is_none() {
                         continue;
                     }
-                    if !fl.effects.is_empty() {
-                        self.warn("live effects are not exported to PDF yet");
+                    if fl.effects.iter().any(|e| e.visible && vectorcraft_effects::is_raster(&e.id)) {
+                        self.warn("raster effects (shadows, glows, blur, feather) are not exported to PDF yet");
                     }
                     // Pattern fills: the tile instances covering the shape, clipped to it.
                     let doc = self.doc;

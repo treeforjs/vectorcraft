@@ -15,6 +15,7 @@
 //! noise (`seed` parameter, default 0).
 #![forbid(unsafe_code)]
 
+mod bake;
 mod distort;
 mod group;
 mod raster;
@@ -29,6 +30,7 @@ use serde_json::{Map, Value, json};
 use vectorcraft_doc::Effect;
 use vectorcraft_geom::{BezPath, PathData, Rect};
 
+pub use bake::{bake_document, needs_bake};
 pub use group::{OutlineHook, PATHFINDER_EFFECTS, has_pathfinder, is_pathfinder, pathfinder_children};
 pub use raster::{RasterFx, outset, raster_effects};
 pub use warp::{WarpStyle, warp_point};

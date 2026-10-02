@@ -4186,6 +4186,7 @@ dependencies = [
  "thiserror 2.0.21",
  "vectorcraft-color",
  "vectorcraft-doc",
+ "vectorcraft-effects",
  "vectorcraft-geom",
  "vectorcraft-text",
 ]
@@ -4216,11 +4217,13 @@ dependencies = [
  "image",
  "kurbo 0.13.1",
  "proptest",
+ "serde_json",
  "svgtypes 0.16.1",
  "thiserror 2.0.21",
  "usvg 0.48.1",
  "vectorcraft-color",
  "vectorcraft-doc",
+ "vectorcraft-effects",
  "vectorcraft-geom",
  "vectorcraft-testkit",
 ]

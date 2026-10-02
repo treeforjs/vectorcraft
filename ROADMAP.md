@@ -32,14 +32,14 @@ _Last updated: 2026-10-01._
 - **Tools:**
   - **Selection:** Selection, Direct/Group Selection, Magic Wand, Lasso.
   - **Drawing:** Pen, Curvature, anchor tools, Pencil, Paintbrush, Blob Brush, Smooth, Path Eraser, Join.
-  - **Shapes:** all shape tools and the line, arc, spiral and grid tools.
+  - **Shapes:** all shape tools (including Flare) and the line, arc, spiral and grid tools.
   - **Cutting:** Eraser, Scissors, Knife.
-  - **Transform:** Rotate, Reflect, Scale, Shear, Free Transform (distort/perspective).
+  - **Transform:** Rotate, Reflect, Scale, Shear, Reshape, Free Transform (distort/perspective).
   - **Other:** Eyedropper, Gradient annotator, Artboard, Measure, Type, Hand, Zoom, Rotate View.
 - **Drawing aids:** Smart Guides and snapping, and Draw Normal / Behind / Inside modes.
 - **Geometry and effects:**
   - Pathfinder (10 exact curve booleans), Offset, Outline Stroke, Simplify, Clean Up, Split Into Grid, Divide Objects Below.
-  - Live effects with previewing dialogs: Distort & Transform, Path, Convert to Shape, 15 Warp styles, Round Corners, Scribble, and raster drop shadow, glows and feather.
+  - Live effects with previewing dialogs: Distort & Transform, Path, Convert to Shape, 15 Warp styles, Round Corners, Scribble, Effect → Pathfinder (all 10 operations, live on groups), and raster drop shadow, glows and feather. SVG and PDF export keep live effects (geometry baked; SVG raster effects as filters).
 - **Type:** Character and Paragraph Styles (override-preserving redefine), Area Type Options (rows/columns/inset/first baseline), threaded text across any closed shapes, Fit Headline.
 - **Transparency:** opacity masks (clip/invert/disable/link), exported as SVG `<mask>` and PDF soft masks.
 - **Advanced art:** live Blends (steps/distance/smooth colour, spine), Envelope Distort (warp/mesh/top object), Gradient Mesh, Shape Builder, Live Paint, Image Trace (12 presets), pattern swatches with pattern editing mode, live Repeat (radial/grid/mirror).
@@ -56,16 +56,16 @@ _Last updated: 2026-10-01._
 |---|---|---|---|
 | M0 | Skeleton + vertical slice | ✅ done | — |
 | M1 | Selection, transform, layers, MCP | ✅ mostly done (rotated persistent bbox pending) | 3–5 |
-| M2 | Drawing tools + smart guides | ✅ mostly done (Shaper, Pen modifier nuances) | 5–10 |
+| M2 | Drawing tools + smart guides | ✅ mostly done (Flare, Reshape landed; Shaper, Pen modifier nuances) | 4–8 |
 | M3 | Paint & appearance (swatches, color, gradient, stroke, appearance, transparency, styles) | 🟡 panels done; opacity masks done (make/release, clip, invert, disable, link; render + SVG `<mask>` in/out + PDF soft mask); mask-editing mode, freeform gradients pending | 6–10 |
-| M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 Export for Screens (PNG/JPG/WebP/SVG/PDF × scales) done; headless CLI/MCP export every format; system clipboard: copy puts SVG markup on it, paste takes SVG from other apps (Ctrl/Cmd+C/X/V now also work off macOS); PNG/PDF clipboard flavours, EPS/DXF pending | 8–12 |
+| M4 | Files (native, SVG, PDF, raster, Export for Screens, clipboard interop) | 🟡 Export for Screens (PNG/JPG/WebP/SVG/PDF × scales) done; headless CLI/MCP export every format; system clipboard: copy puts SVG markup on it, paste takes SVG from other apps (Ctrl/Cmd+C/X/V now also work off macOS); live effects now survive SVG/PDF/clipboard export (geometry baked, SVG filters for shadows/glows/blur/feather); PDF raster effects, PNG/PDF clipboard flavours, EPS/DXF pending | 7–11 |
 | M5 | Performance | 🟡 background render + caches + MT done; `vectorcraft-cli bench` and `vectorcraft-cli perf` (budget suite); file format v2 opens 3× faster (50k paths: 722 → 244 ms); raster effects (glows, shadows, blur, feather) no longer force the whole frame single-threaded (filtered offscreen per effect, verified equal to the single-threaded reference); effect-heavy demos need a clean-machine benchmark; dirty-region rendering, GPU backend spike pending | 10–20 |
 | M6 | Path operations (Pathfinder, Shape Builder, offset…) | ✅ mostly done (Shape Builder edge erase, large-offset bug open) | 3–6 |
-| M7 | Type (point/area/path, editing, styles, OpenType, threading, glyphs) | 🟡 Character/Paragraph Styles, Area Type Options, threaded text, Fit Headline, Glyphs done; OpenType/Tabs panels, text wrap, Find Font, spell check pending | 12–20 |
+| M7 | Type (point/area/path, editing, styles, OpenType, threading, glyphs) | 🟡 Character/Paragraph Styles, Area Type Options, threaded text, Fit Headline, Glyphs, OpenType panel, Find Font done; Tabs panel, text wrap, spell check, vertical type pending | 10–17 |
 | M8 | Transform & distort (Puppet Warp, Liquify tools, Envelopes, Blends, Perspective Grid) | 🟡 live Blends, Envelopes (warp/mesh/top object), Width tool, Liquify tools, Puppet Warp and Perspective Grid landed; fidelity pass pending | 8–12 |
-| M9 | Live effects (+ 3D & Materials) | 🟡 2D effects done; 3D pending | 25–40 |
+| M9 | Live effects (+ 3D & Materials) | 🟡 2D effects done incl. Effect → Pathfinder; SVG Filters, Document Raster Effects Settings, 3D pending | 24–38 |
 | M10 | Brushes, symbols, patterns, Repeat | 🟡 pattern swatches (5 tile types, Pattern Options, editing mode, SVG `<pattern>`/PDF export) and live Repeat (radial/grid/mirror) done; brushes/symbols in progress | 8–15 |
-| M11 | Artboards & views (artboard panel/tool done; print tiling, multiple windows, presentation polish) | 🟡 | 10–15 |
+| M11 | Artboards & views (artboard panel/tool done, Trim View; print tiling, multiple windows, presentation polish) | 🟡 | 9–14 |
 | M12 | Advanced color & art (CMYK/ICC, separations, Gradient Mesh, Live Paint, Image Trace, Graphs) | 🟡 Gradient Mesh, Live Paint, Image Trace (12 presets, 18 ms/1k² image), Recolor Artwork, colour management (ICC, soft proofing, separations preview) done; Graphs pending | 12–20 |
 | M13 | Automation (Actions ✅ record/playback, persisted; variables, scripting, batch) | 🟡 | 8–12 |
 | M14 | 1.0 polish (preferences, shortcut editor, workspaces, accessibility, packaging for all OSes) | 🟡 Preferences, shortcut editor, workspaces done; accessibility, Windows/Linux packaging pending | 12–20 |

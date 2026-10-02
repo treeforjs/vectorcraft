@@ -693,3 +693,21 @@ fn opentype_features_export_as_css() {
     let s = export(&d, &ExportOptions::default());
     assert!(s.contains("font-feature-settings:&quot;liga&quot; 0, &quot;dlig&quot; 1"), "{s}");
 }
+
+#[test]
+fn live_effects_export_as_geometry_and_filters() {
+    let mut d = Document::new(400.0, 400.0);
+    let mut n = rect_node(&mut d, Rect::new(100.0, 100.0, 200.0, 200.0), Appearance::default_art());
+    let fx = |id: &str, p: serde_json::Value| vectorcraft_doc::Effect { id: id.into(), params: p, visible: true };
+    n.appearance.effects.push(fx("path.offsetPath", serde_json::json!({"offset": 10.0})));
+    n.appearance.effects.push(fx("stylize.dropShadow", serde_json::json!({"x": 7.0, "y": 7.0, "blur": 5.0})));
+    let l = d.layers[0].id;
+    d.insert(Some(l), 0, n).unwrap();
+    let s = export(&d, &ExportOptions { artboard: Some(0), ..Default::default() });
+    assert!(s.contains("<filter id=") && s.contains("feGaussianBlur") && s.contains("dx=\"7\""), "{s}");
+    assert!(s.contains("filter=\"url(#"), "{s}");
+    // The offset path (120 × 120) comes back on import.
+    let back = import(&s).unwrap();
+    let b = art(&back).iter().filter_map(|n| n.geometric_bounds()).fold(None, |a: Option<Rect>, b| Some(a.map_or(b, |a| a.union(b)))).unwrap();
+    assert!((b.width() - 120.0).abs() < 1.0, "{b:?}");
+}
