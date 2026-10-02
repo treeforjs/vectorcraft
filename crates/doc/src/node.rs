@@ -266,6 +266,9 @@ pub struct Node {
     /// Object → Text Wrap: area type below this object (in the same layer) flows around it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wrap: Option<crate::text::TextWrap>,
+    /// Graph object: the group's children are generated from this spec (Object → Graph).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub graph: Option<Box<crate::graph::GraphSpec>>,
     pub kind: NodeKind,
 }
 
@@ -309,6 +312,7 @@ impl Node {
             mask: None,
             trace: None,
             wrap: None,
+            graph: None,
             kind,
         }
     }

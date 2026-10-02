@@ -35,6 +35,7 @@ _Last updated: 2026-10-01._
   - **Shapes:** all shape tools (including Flare) and the line, arc, spiral and grid tools.
   - **Cutting:** Eraser, Scissors, Knife.
   - **Transform:** Rotate, Reflect, Scale, Shear, Reshape, Free Transform (distort/perspective).
+  - **Graphs:** Column, Stacked Column, Bar, Stacked Bar, Line, Area, Scatter, Pie and Radar graph tools with Graph Data and Graph Type.
   - **Other:** Eyedropper, Gradient annotator, Artboard, Measure, Type, Hand, Zoom, Rotate View.
 - **Drawing aids:** Smart Guides and snapping, and Draw Normal / Behind / Inside modes.
 - **Geometry and effects:**
@@ -66,7 +67,7 @@ _Last updated: 2026-10-01._
 | M9 | Live effects (+ 3D & Materials) | 🟡 2D effects done incl. Effect → Pathfinder; SVG Filters, Document Raster Effects Settings, 3D pending | 24–38 |
 | M10 | Brushes, symbols, patterns, Repeat | 🟡 pattern swatches (5 tile types, Pattern Options, editing mode, SVG `<pattern>`/PDF export) and live Repeat (radial/grid/mirror) done; brushes/symbols in progress | 8–15 |
 | M11 | Artboards & views (artboard panel/tool done, Trim View; print tiling, multiple windows, presentation polish) | 🟡 | 9–14 |
-| M12 | Advanced color & art (CMYK/ICC, separations, Gradient Mesh, Live Paint, Image Trace, Graphs) | 🟡 Gradient Mesh, Live Paint, Image Trace (12 presets, 18 ms/1k² image), Recolor Artwork, colour management (ICC, soft proofing, separations preview) done; Graphs pending | 12–20 |
+| M12 | Advanced color & art (CMYK/ICC, separations, Gradient Mesh, Live Paint, Image Trace, Graphs) | 🟡 Gradient Mesh, Live Paint, Image Trace (12 presets, 18 ms/1k² image), Recolor Artwork, colour management (ICC, soft proofing, separations preview), Graphs (all 9 tools, Graph Data/Type, regenerate in place) done; graph Design/Column/Marker designs pending | 8–14 |
 | M13 | Automation (Actions ✅ record/playback, persisted; variables, scripting, batch) | 🟡 | 8–12 |
 | M14 | 1.0 polish (preferences, shortcut editor, workspaces, accessibility, packaging for all OSes) | 🟡 Preferences, shortcut editor, workspaces done; accessibility, Windows/Linux packaging pending | 12–20 |
 | — | Interaction fidelity pass (every tool's modifiers, Properties panel per context, isolation, nuance) | ⬜ | 40–60 |

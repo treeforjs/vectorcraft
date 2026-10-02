@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 pub mod appearance;
+pub mod graph;
 pub mod hit;
 pub mod live;
 pub mod node;
@@ -30,6 +31,7 @@ pub(crate) mod skip {
 }
 
 pub use appearance::{Appearance, AppearanceItem, Arrowhead, Dash, Effect, FillLayer, LineCap, LineJoin, StrokeAlign, StrokeLayer, WidthProfile};
+pub use graph::{GraphKind, GraphSpec};
 pub use hit::{Hit, HitKind};
 pub use live::{BlendOrientation, BlendSpacing, BlendSpec, EnvelopeKind, GradientMesh, MeshPoint};
 pub use node::{ImageObject, LAYER_COLORS, LayerColor, LiveShape, Node, NodeId, NodeKind, OpacityMask};

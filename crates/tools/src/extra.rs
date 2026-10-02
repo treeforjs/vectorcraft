@@ -1,4 +1,4 @@
-//! Flare and Reshape tools.
+//! Flare, Reshape and Graph tools.
 //!
 //! Flare: drag sets the centre and its size (click without dragging opens the Flare Tool Options),
 //! then a click sets the end point of the rings. Reshape: drag a point of a selected path; the
@@ -14,6 +14,7 @@ pub fn create(id: &str) -> Option<Box<dyn Tool>> {
     Some(match id {
         "flare" => Box::new(FlareTool::default()),
         "reshape" => Box::new(ReshapeTool::default()),
+        id if vectorcraft_doc::GraphKind::parse(id).is_some() && id.ends_with("Graph") => Box::new(GraphTool::new(id)),
         _ => return None,
     })
 }
@@ -214,6 +215,86 @@ impl Tool for ReshapeTool {
     }
 }
 
+/// Graph tools: drag the plot rectangle (Shift = square, Alt = from the centre); a click opens the
+/// size dialog. A new graph opens the Graph Data dialog.
+pub struct GraphTool {
+    id: &'static str,
+    start: Option<Point>,
+    began: bool,
+}
+
+impl GraphTool {
+    fn new(id: &str) -> Self {
+        let id = crate::catalog::tool_info(id).map(|t| t.id).unwrap_or("columnGraph");
+        Self { id, start: None, began: false }
+    }
+    fn kind(&self) -> &'static str {
+        vectorcraft_doc::GraphKind::parse(self.id).unwrap_or_default().id()
+    }
+    fn params(&self, s: Point, p: Point, m: Mods) -> Value {
+        let mut d = p - s;
+        if m.shift {
+            let k = d.x.abs().max(d.y.abs());
+            d = Vec2::new(k * d.x.signum(), k * d.y.signum());
+        }
+        let r = if m.alt { vectorcraft_geom::Rect::from_points(s - d, s + d) } else { vectorcraft_geom::Rect::from_points(s, s + d) };
+        json!({ "type": self.kind(), "x": r.x0, "y": r.y0, "width": r.width().max(1.0), "height": r.height().max(1.0) })
+    }
+}
+
+impl Tool for GraphTool {
+    fn id(&self) -> &'static str {
+        self.id
+    }
+    fn busy(&self) -> bool {
+        self.start.is_some()
+    }
+    fn pointer(&mut self, cx: &ToolContext, ev: &PointerEvent) -> Vec<Action> {
+        match ev.kind {
+            PointerKind::Down => {
+                self.start = Some(ev.pos);
+                self.began = false;
+                vec![]
+            }
+            PointerKind::Drag => {
+                let Some(s) = self.start else { return vec![] };
+                let mut out = vec![];
+                if !self.began {
+                    if ev.pos.distance(s) < cx.tol(3.0) {
+                        return out;
+                    }
+                    self.began = true;
+                    out.push(Action::Begin("Graph".into()));
+                }
+                out.push(Action::Preview("graph.create".into(), self.params(s, ev.pos, ev.mods)));
+                out
+            }
+            PointerKind::Up => {
+                let Some(s) = self.start.take() else { return vec![] };
+                if std::mem::take(&mut self.began) {
+                    vec![
+                        Action::Preview("graph.create".into(), self.params(s, ev.pos, ev.mods)),
+                        Action::Commit,
+                        Action::Dialog("graphData".into(), json!({})),
+                    ]
+                } else {
+                    vec![Action::Dialog("graph".into(), json!({ "x": s.x, "y": s.y, "type": self.kind() }))]
+                }
+            }
+            _ => vec![],
+        }
+    }
+    fn key(&mut self, _cx: &ToolContext, key: ToolKey, _mods: Mods) -> Vec<Action> {
+        if key == ToolKey::Escape && self.start.take().is_some() && std::mem::take(&mut self.began) {
+            return vec![Action::Cancel];
+        }
+        vec![]
+    }
+    fn cursor(&self, _cx: &ToolContext, _p: Point, _mods: Mods) -> Cursor {
+        Cursor::Crosshair
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -223,5 +304,10 @@ mod tests {
         assert_eq!(create("flare").unwrap().id(), "flare");
         assert_eq!(create("reshape").unwrap().id(), "reshape");
         assert!(create("pen").is_none());
+        for g in
+            ["columnGraph", "stackedColumnGraph", "barGraph", "stackedBarGraph", "lineGraph", "areaGraph", "scatterGraph", "pieGraph", "radarGraph"]
+        {
+            assert_eq!(create(g).unwrap().id(), g);
+        }
     }
 }

@@ -17,6 +17,16 @@ pub fn open_tool_dialog(app: &mut VectorcraftApp, kind: &str, p: Value) {
         "polygon" => Dialog::new(kind, json!({"x": x, "y": y, "radius": "50 pt", "sides": 6})),
         "star" => Dialog::new(kind, json!({"x": x, "y": y, "radius1": "50 pt", "radius2": "25 pt", "points": 5})),
         "lineSegment" => Dialog::new(kind, json!({"x": x, "y": y, "length": "100 pt", "angle": 0})),
+        // Graph tool click: the graph's size.
+        "graph" => Dialog::new(
+            "command",
+            json!({"__command": "graph.create", "__label": "Graph", "type": p.get("type").cloned().unwrap_or(json!("column")), "x": x, "y": y, "width": 200, "height": 150}),
+        ),
+        // After drawing a graph: Graph Data (CSV: header row of series, then category, values…).
+        "graphData" => match app.session.execute("graph.setData", &json!({})) {
+            Ok(v) => Dialog::new("command", json!({"__command": "graph.setData", "__label": "Graph Data", "csv": v["csv"]})),
+            Err(_) => return,
+        },
         // Flare Tool Options (Center / Halo / Rays / Rings), applied through the generic command dialog.
         "flare" => Dialog::new(
             "command",
@@ -77,6 +87,13 @@ fn effect_fields(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
                 Value::Bool(mut b) => {
                     if ui.checkbox(&mut b, "").changed() {
                         d.fields.insert(k, json!(b));
+                        changed = true;
+                    }
+                }
+                Value::String(mut s) if s.contains('\n') => {
+                    // Multi-line values (Graph Data CSV) get a text area.
+                    if ui.add(egui::TextEdit::multiline(&mut s).desired_width(260.0).desired_rows(8).font(egui::TextStyle::Monospace)).changed() {
+                        d.fields.insert(k, json!(s));
                         changed = true;
                     }
                 }

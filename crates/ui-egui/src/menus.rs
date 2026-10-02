@@ -873,7 +873,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         c("Fit to Selected Art", "artboard.fitToSelection"),
                     ],
                 ),
-                sub("Graph", vec![todo("Type…"), todo("Data…"), todo("Design…"), todo("Column…"), todo("Marker…")]),
+                sub("Graph", vec![c("Type…", "graph.setType"), c("Data…", "graph.setData"), todo("Design…"), todo("Column…"), todo("Marker…")]),
             ],
         ),
         (
@@ -1274,6 +1274,17 @@ pub fn invoke(app: &mut VectorcraftApp, id: &str, p: Value) {
         match app.session.execute(id, &json!({})) {
             Ok(fields) => {
                 let _ = app.run("ui.paramDialog", json!({"command": id, "label": "Area Type Options", "params": fields}));
+            }
+            Err(e) => app.status(e.to_string()),
+        }
+        return;
+    }
+    // Object → Graph → Type… / Data…: dialogs with the selected graph's current values.
+    if matches!(id, "graph.setType" | "graph.setData") && p.as_object().is_none_or(|o| o.is_empty()) {
+        match app.session.execute(id, &json!({})) {
+            Ok(v) => {
+                let (label, fields) = if id == "graph.setData" { ("Graph Data", json!({"csv": v["csv"]})) } else { ("Graph Type", v) };
+                let _ = app.run("ui.paramDialog", json!({"command": id, "label": label, "params": fields}));
             }
             Err(e) => app.status(e.to_string()),
         }

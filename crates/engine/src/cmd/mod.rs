@@ -14,6 +14,7 @@ mod edit;
 mod effectcmd;
 mod file;
 mod fonts;
+pub(crate) mod graph;
 pub mod help;
 mod layer;
 mod live;
@@ -161,6 +162,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(help::specs());
         v.extend(threads::specs());
         v.extend(textwrap::specs());
+        v.extend(graph::specs());
         v.extend(docmenu::specs());
         v.extend(docinfo::specs());
         v.extend(panelcmds::specs());
