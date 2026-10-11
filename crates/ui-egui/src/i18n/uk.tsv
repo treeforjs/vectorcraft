@@ -3596,6 +3596,7 @@ axis	Both	Обидві
 @msg	the artboard to fit must be a positive size up to {_1} pt	монтажна область для вписування повинна мати позитивний розмір до {_1} пт
 @msg	the background worker stopped	фоновий процес зупинено
 @msg	the compressed file unpacks to more than {_1} MB	стислий файл розпаковується більш ніж {_1} МБ
+@msg	the document's {0} identifiers leave insufficient room for safe editing	ідентифікатори типу {0} у документі не залишають достатнього запасу для безпечного редагування
 @msg	the document has never been saved	документ ніколи не зберігався
 @msg	the document has no artboard	у документі немає монтажної області
 @msg	the document has no artboards	у документі немає монтажних областей

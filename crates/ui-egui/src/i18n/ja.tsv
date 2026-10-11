@@ -3540,6 +3540,7 @@ theme	Appearance	外観
 @msg	invalid image data for `{0}`	`{0}` の画像データが正しくありません
 @msg	not a VectorCraft file: {0}	VectorCraft ファイルではありません: {0}
 @msg	the compressed file unpacks to more than {_1} MB	圧縮ファイルを展開すると {_1} MB を超えます
+@msg	the document's {0} identifiers leave insufficient room for safe editing	ドキュメントの {0} 識別子には、安全に編集するための十分な余裕がありません
 @msg	version {0} files can't be compressed: only version {COMPRESSED_SINCE} and later open compressed files	バージョン {0} のファイルは圧縮できません: 圧縮ファイルを開けるのはバージョン {COMPRESSED_SINCE} 以降のみです
 @msg	a bitmap is empty	ビットマップが空です
 @msg	a bitmap is too large to read	ビットマップが大きすぎて読み込めません

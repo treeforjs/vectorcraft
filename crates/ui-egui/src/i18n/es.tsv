@@ -3613,6 +3613,7 @@ axis	Both	Ambos
 @msg	the artboard to fit must be a positive size up to {_1} pt	la mesa de trabajo a la que ajustar debe tener un tamaño positivo de hasta {_1} pt
 @msg	the background worker stopped	el proceso en segundo plano se detuvo
 @msg	the compressed file unpacks to more than {_1} MB	el archivo comprimido ocupa más de {_1} MB al descomprimirse
+@msg	the document's {0} identifiers leave insufficient room for safe editing	los identificadores de tipo {0} del documento no dejan suficiente margen para editar de forma segura
 @msg	the document has never been saved	el documento nunca se guardó
 @msg	the document has no artboard	el documento no tiene mesa de trabajo
 @msg	the document has no artboards	el documento no tiene mesas de trabajo

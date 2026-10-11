@@ -3609,6 +3609,7 @@ axis	Both	Оба
 @msg	the artboard to fit must be a positive size up to {_1} pt	монтажная область для вписывания должна иметь положительный размер до {_1} пт
 @msg	the background worker stopped	фоновый процесс остановлен
 @msg	the compressed file unpacks to more than {_1} MB	сжатый файл распаковывается более чем в {_1} МБ
+@msg	the document's {0} identifiers leave insufficient room for safe editing	идентификаторы типа {0} в документе не оставляют достаточного запаса для безопасного редактирования
 @msg	the document has never been saved	документ никогда не сохранялся
 @msg	the document has no artboard	в документе нет монтажной области
 @msg	the document has no artboards	в документе нет монтажных областей
