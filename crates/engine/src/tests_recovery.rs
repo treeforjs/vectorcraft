@@ -385,6 +385,36 @@ fn saving_reverting_or_closing_removes_the_copy() {
 }
 
 #[test]
+fn an_older_background_save_keeps_recovery_of_later_edits() {
+    let (mut s, store) = session();
+    let uid = s.doc().unwrap().uid;
+    let plan = cmd::fileio::save_plan(&s, cmd::fileio::SaveMode::Save, &json!({"path": "snapshot.vectorcraft"})).unwrap();
+    let job = cmd::fileio::save_job(&mut s, plan).unwrap();
+    let mut saved = Vec::new();
+    job.write(|_, bytes| {
+        saved = bytes.to_vec();
+        Ok(())
+    })
+    .unwrap();
+
+    // Editing and autosave can run before the background completion reaches the UI.
+    s.execute("shape.ellipse", &json!({"x": 100, "y": 10, "width": 20, "height": 20})).unwrap();
+    s.execute("file.recovery.save", &json!({})).unwrap();
+    let expected = s.doc().unwrap().doc.node_count();
+    assert_eq!(vectorcraft_format::load(&saved).unwrap().node_count() + 1, expected);
+
+    job.complete(&mut s, uid);
+    assert!(s.doc().unwrap().is_dirty());
+    assert!(s.doc().unwrap().recovery.is_some(), "the completed save does not contain the later edit");
+    assert_eq!(copies(store.as_ref()).len(), 1);
+
+    drop(s);
+    let mut reopened = relaunch(&store);
+    assert_eq!(restored(reopened.execute("file.recovery.restore", &json!({})).unwrap()), 1);
+    assert_eq!(reopened.doc().unwrap().doc.node_count(), expected, "a crash must retain the recovered edit");
+}
+
+#[test]
 fn undoing_back_to_the_saved_state_drops_the_copy() {
     let (mut s, store) = session();
     s.execute("file.recovery.save", &json!({})).unwrap();

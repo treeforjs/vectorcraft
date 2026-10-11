@@ -510,7 +510,7 @@ impl SaveJob {
     }
 
     /// [`SaveJob::finish`] for document `uid` of `s`, if it is still open; a file that became
-    /// its own also ends its Data Recovery copy.
+    /// its own ends its Data Recovery copy only when no later edits remain unsaved.
     pub fn complete(self, s: &mut Session, uid: u64) {
         let saved = self.plan.retargets() && self.plan.path.is_some();
         // The other open documents that place this one show the new version.
@@ -518,7 +518,7 @@ impl SaveJob {
         if let Some(st) = s.document_mut(uid) {
             self.finish(st);
         }
-        if saved {
+        if saved && s.documents().iter().any(|st| st.uid == uid && !st.is_dirty()) {
             crate::cmd::recovery::forget(s, uid);
         }
         if let Some(path) = written {

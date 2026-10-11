@@ -741,7 +741,8 @@ impl Document {
         }
         max = self.slices.iter().fold(max, |m, s| m.max(s.id.0));
         max = self.assets.iter().fold(max, |m, a| m.max(a.id));
-        // An id of u64::MAX (a damaged file) can't overflow: ids after it are reused at worst.
+        // Saturation keeps repairing a damaged file from overflowing; the native loader
+        // rejects counters with insufficient allocation headroom before the document is edited.
         self.next_id = self.next_id.max(max.saturating_add(1));
     }
 

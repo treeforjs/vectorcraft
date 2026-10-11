@@ -87,6 +87,8 @@ pub enum FormatError {
     CompressedTooOld(u32),
     #[error("the compressed file unpacks to more than {} MB", MAX_UNPACKED >> 20)]
     TooBig,
+    #[error("the document's {0} identifiers leave insufficient room for safe editing")]
+    IdentifierRange(&'static str),
     #[error("can't encode the document: {0}")]
     Encode(String),
 }
@@ -458,6 +460,19 @@ pub fn load_file(bytes: &[u8]) -> Result<NativeFile, FormatError> {
     // Saved before v3: the assigned profiles move out of `unknown`.
     doc.migrate_color_profiles();
     doc.fix_next_id();
+    // Imported counters and resource IDs are untrusted. Keep half of each allocator's
+    // number space available for future edits; accepting an almost-exhausted counter only
+    // postpones an overflow until the next command (which aborts the web app). Reject rather
+    // than wrapping or renumbering, since existing references must keep their meaning.
+    if doc.peek_next_id() > i64::MAX as u64 {
+        return Err(FormatError::IdentifierRange("object"));
+    }
+    if doc.artboards.iter().any(|a| a.id > i32::MAX as u32) {
+        return Err(FormatError::IdentifierRange("artboard"));
+    }
+    if doc.graphic_styles.iter().any(|g| g.id > i32::MAX as u32) {
+        return Err(FormatError::IdentifierRange("graphic style"));
+    }
     // Untrusted: capped, named and pointing at objects the file has.
     doc.tidy_saved_selections();
     let profiles = f.profiles.into_iter().filter_map(|(name, icc)| Some((name, icc.bytes(tail)?))).collect();

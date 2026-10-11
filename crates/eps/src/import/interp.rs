@@ -687,8 +687,14 @@ impl<'a> Interp<'a> {
             },
             Bitshift => {
                 let (s, v) = (self.pop_int()?, self.pop_int()?);
-                let r = if s >= 0 { v.checked_shl(s.min(63) as u32) } else { v.checked_shr((-s).min(63) as u32) };
-                self.push(Obj::Int(r.unwrap_or(0)))?;
+                // PostScript shifts insert zero bits. A count beyond the integer's width
+                // discards every bit, and must not negate i64::MIN to find its magnitude.
+                let r = match s {
+                    0..=63 => (v as u64) << s as u32,
+                    -63..=-1 => (v as u64) >> s.unsigned_abs() as u32,
+                    _ => 0,
+                };
+                self.push(Obj::Int(r as i64))?;
             }
             True => self.push(Obj::Bool(true))?,
             False => self.push(Obj::Bool(false))?,
@@ -1045,7 +1051,7 @@ impl<'a> Interp<'a> {
             Bind => {
                 let o = self.pop()?;
                 if let Obj::Array { items, .. } = &o {
-                    self.bind(items, 0);
+                    self.bind(items, 0)?;
                 }
                 self.push(o)?;
             }
@@ -1235,12 +1241,15 @@ impl<'a> Interp<'a> {
     }
 
     /// Replace the names in a procedure that stand for operators by the operators, down through
-    /// nested procedures.
-    fn bind(&mut self, items: &Shared<Obj>, depth: u32) {
+    /// nested procedures. Shared procedures can form an exponentially expanding graph, so
+    /// binding counts against the operation budget just as executing the procedure does.
+    fn bind(&mut self, items: &Shared<Obj>, depth: u32) -> Res {
+        self.tick()?;
         if depth > 64 {
-            return;
+            return Ok(());
         }
         for i in 0..items.len() {
+            self.tick()?;
             match items.get(i) {
                 Some(Obj::Exec(name)) => {
                     if let Some(o @ Obj::Op(_)) = self.lookup(&name) {
@@ -1248,10 +1257,11 @@ impl<'a> Interp<'a> {
                         items.write(i, &[o]);
                     }
                 }
-                Some(Obj::Array { items: inner, exec: true }) if !inner.shares(items) => self.bind(&inner, depth + 1),
+                Some(Obj::Array { items: inner, exec: true }) if !inner.shares(items) => self.bind(&inner, depth + 1)?,
                 _ => {}
             }
         }
+        Ok(())
     }
 
     /// Put `v` under `k` in `d` (`None`: remove it), within [`MAX_ALLOC`] entries; while a `save`

@@ -84,6 +84,52 @@ fn paths_fill_and_stroke_in_document_space() {
 }
 
 #[test]
+fn arc_angles_wrap_without_unbounded_loops() {
+    let path = |a1: &str, a2: &str, op: &str| {
+        // The line also leaves a visible path when the arc has a zero sweep.
+        let r = read(&format!("50 50 20 {a1} {a2} {op} 0 0 lineto stroke"));
+        assert!(r.warnings.is_empty(), "{a1} {a2} {op}: {:?}", r.warnings);
+        objects(&r.document)[0].path_data().unwrap().clone()
+    };
+    for (a1, a2, op, normal_a1, normal_a2) in [
+        ("350", "10", "arc", "350", "370"),
+        ("360", "0", "arc", "0", "0"),
+        ("10", "350", "arcn", "10", "-10"),
+        ("0", "360", "arcn", "0", "0"),
+        // 10^20 degrees ends at 280 degrees; its negative ends at 80 degrees. Previously
+        // these inputs either made no progress or needed more iterations than the op budget.
+        ("0", "-1e20", "arc", "0", "80"),
+        ("1e20", "0", "arc", "280", "360"),
+        ("0", "1e20", "arcn", "0", "-80"),
+        ("-1e20", "0", "arcn", "80", "0"),
+    ] {
+        assert_eq!(path(a1, a2, op), path(normal_a1, normal_a2, op), "{a1} {a2} {op}");
+    }
+    // Opposite finite extremes overflow when subtracted in degrees. Both directions still
+    // import bounded, finite art, including the forward case that keeps complete turns.
+    for (a1, a2) in [("1e308", "-1e308"), ("-1e308", "1e308")] {
+        for op in ["arc", "arcn"] {
+            let b = path(a1, a2, op).bounds().unwrap();
+            assert!(b.is_finite() && b.width() <= 70.01 && b.height() <= 70.01, "{a1} {a2} {op}: {b:?}");
+        }
+    }
+}
+
+#[test]
+fn arcs_keep_complete_turns_and_reject_nonfinite_angles() {
+    for (end, op) in [("360", "arc"), ("-360", "arcn")] {
+        let r = read(&format!("50 50 20 0 {end} {op} fill"));
+        assert!(r.warnings.is_empty(), "{:?}", r.warnings);
+        assert!(near(bounds(&objects(&r.document)[0]), Rect::new(30.0, 30.0, 70.0, 70.0)));
+    }
+    for op in ["arc", "arcn"] {
+        for (a1, a2) in [("1e999", "0"), ("0", "-1e999")] {
+            assert!(import(&eps(&format!("50 50 20 {a1} {a2} {op} fill"))).is_err());
+        }
+    }
+}
+
+#[test]
 fn colours_in_every_model() {
     let r = read(
         "0 0 10 10 rectfill 0.25 setgray 0 0 10 10 rectfill 0 1 0 0 setcmykcolor 0 0 10 10 rectfill 0 1 1 sethsbcolor 0 0 10 10 rectfill \
@@ -479,6 +525,34 @@ fn blue(body: &str) {
 /// Check that PostScript `cond` leaves `true`.
 pub(super) fn check(cond: &str) {
     blue(&format!("{cond} {{ 0 0 1 setrgbcolor }} {{ 1 0 0 setrgbcolor }} ifelse"));
+}
+
+#[test]
+fn bitshift_zero_fills_and_handles_extreme_counts() {
+    for cond in [
+        "1 3 bitshift 8 eq",
+        "8 -3 bitshift 1 eq",
+        "-1 0 bitshift -1 eq",
+        "-1 -1 bitshift 9223372036854775807 eq",
+        "1 63 bitshift -9223372036854775808 eq",
+        "-9223372036854775808 -63 bitshift 1 eq",
+        "-1 64 bitshift 0 eq",
+        "-1 -64 bitshift 0 eq",
+        "1 -9223372036854775808 bitshift 0 eq",
+        "1 9223372036854775807 bitshift 0 eq",
+    ] {
+        check(cond);
+    }
+}
+
+#[test]
+fn binding_shared_procedures_respects_the_operation_budget() {
+    check("/sum { add } bind def /add { pop pop 99 } def 1 2 sum 3 eq");
+    // Only forty small arrays are allocated, but each refers to the previous one twice:
+    // recursively binding without a budget would visit more than a trillion procedures.
+    let body = "/p {} def 40 { /p [ /p load /p load ] cvx def } repeat /p load bind";
+    let err = import(&eps(body)).err().unwrap_or_default();
+    assert!(err.contains("the program runs too long"), "{err}");
 }
 
 #[test]

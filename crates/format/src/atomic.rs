@@ -18,7 +18,17 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
 pub fn write_atomic_with(path: &Path, fill: impl FnOnce(&mut File) -> io::Result<()>) -> io::Result<()> {
     let target = resolve_link(path)?;
     let tmp = temp_path(&target)?;
-    let mut f = OpenOptions::new().write(true).create_new(true).open(&tmp)?;
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    // Keep draft contents private from creation, so another local user cannot retain an open
+    // descriptor before permissions are tightened. Existing permissions are restored only
+    // once the complete file is ready; newly created documents stay private on Unix.
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.mode(0o600);
+    }
+    let mut f = options.open(&tmp)?;
     let filled = fill(&mut f).and_then(|()| f.sync_all());
     drop(f);
     filled.and_then(|()| keep_permissions(&target, &tmp)).and_then(|()| std::fs::rename(&tmp, &target)).inspect_err(|_| {
@@ -90,8 +100,9 @@ fn temp_path(target: &Path) -> io::Result<PathBuf> {
 #[cfg(unix)]
 fn keep_permissions(target: &Path, tmp: &Path) -> io::Result<()> {
     match std::fs::metadata(target) {
-        Ok(m) => std::fs::set_permissions(tmp, m.permissions()),
-        // A new file: the default permissions.
+        Ok(m) if m.is_file() => std::fs::set_permissions(tmp, m.permissions()),
+        Ok(_) => Err(io::Error::new(io::ErrorKind::InvalidInput, "destination is not a regular file")),
+        // A new file: keep the temporary file's private permissions.
         Err(_) => Ok(()),
     }
 }
@@ -134,6 +145,53 @@ mod tests {
         assert!(leftovers(&d, "doc.vectorcraft").is_empty());
         // A folder that doesn't exist: an error, nothing written.
         assert!(write_atomic(&d.join("missing").join("x.vectorcraft"), b"x").is_err());
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn private_documents_stay_private_while_being_written() {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let d = dir("private");
+        let path = d.join("private.vectorcraft");
+        write_atomic(&path, b"new document").unwrap();
+        assert_eq!(std::fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600, "new documents start private");
+        for mode in [0o600, 0o640, 0o644] {
+            std::fs::write(&path, b"original").unwrap();
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode)).unwrap();
+            write_atomic_with(&path, |f| {
+                assert_eq!(f.metadata()?.permissions().mode() & 0o777, 0o600, "the staging file is private before its first write");
+                assert_eq!(std::fs::read(&path)?, b"original");
+                f.write_all(b"private changes")
+            })
+            .unwrap();
+            assert_eq!(std::fs::metadata(&path).unwrap().permissions().mode() & 0o777, mode, "existing permissions are preserved");
+            assert_eq!(std::fs::read(&path).unwrap(), b"private changes");
+        }
+        assert!(leftovers(&d, "private.vectorcraft").is_empty());
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn invalid_destinations_do_not_expose_staged_contents() {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let d = dir("non-file");
+        let target = d.join("folder");
+        std::fs::create_dir(&target).unwrap();
+        std::fs::set_permissions(&target, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let tmp = d.join("private.tmp");
+        std::fs::write(&tmp, b"private draft").unwrap();
+        std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(0o600)).unwrap();
+        assert_eq!(keep_permissions(&target, &tmp).unwrap_err().kind(), io::ErrorKind::InvalidInput);
+        assert_eq!(std::fs::metadata(&tmp).unwrap().permissions().mode() & 0o777, 0o600);
+        std::fs::remove_file(&tmp).unwrap();
+
+        assert!(write_atomic(&target, b"private draft").is_err());
+        assert!(target.is_dir());
+        assert!(leftovers(&d, "folder").is_empty(), "a failed save removes its private staging file");
         let _ = std::fs::remove_dir_all(&d);
     }
 

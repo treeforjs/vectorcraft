@@ -433,18 +433,23 @@ impl Interp<'_> {
 
     /// `arc` / `arcn`: from angle `a1` to `a2` (degrees, counter-clockwise or clockwise).
     fn arc(&mut self, c: Point, r: f64, a1: f64, a2: f64, ccw: bool) -> Res {
-        let (a1, mut a2) = (a1.to_radians(), a2.to_radians());
-        let tau = std::f64::consts::TAU;
-        if ccw {
-            while a2 < a1 {
-                a2 += tau;
-            }
-        } else {
-            while a2 > a1 {
-                a2 -= tau;
-            }
+        if !a1.is_finite() || !a2.is_finite() {
+            return ps_err("undefinedresult", "an arc angle");
         }
-        let sweep = (a2 - a1).clamp(-tau * 4.0, tau * 4.0);
+        // Adjust a backwards end angle in constant time. Adding a turn repeatedly can take
+        // arbitrarily long, or never advance at all for large floating-point angles. Reduce
+        // the operands separately so their difference cannot overflow; keep forward sweeps
+        // (including complete circles) and the existing four-turn limit.
+        let start = a1.rem_euclid(360.0);
+        let sweep = if ccw && a2 < a1 {
+            (a2.rem_euclid(360.0) - start).rem_euclid(360.0)
+        } else if !ccw && a2 > a1 {
+            -(start - a2.rem_euclid(360.0)).rem_euclid(360.0)
+        } else {
+            (a2 - a1).clamp(-1440.0, 1440.0)
+        };
+        // Keeping the start angle small also lets the arc iterator advance by small steps.
+        let (a1, sweep) = (start.to_radians(), sweep.to_radians());
         let start = c + Vec2::new(r * a1.cos(), r * a1.sin());
         self.append_user(std::iter::once(PathEl::MoveTo(start)))?;
         let arc = kurbo::Arc::new(c, Vec2::new(r, r), a1, sweep, 0.0);
