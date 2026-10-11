@@ -1,3 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-vectorcraft">
+    <comment>VectorCraft document</comment>
+    <glob pattern="*.vectorcraft"/>
+    <glob pattern="*.drawcraft"/>
+    <icon name="ai.storyteller.vectorcraft"/>
+  </mime-type>
 </mime-info>

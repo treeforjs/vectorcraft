@@ -143,6 +143,11 @@ The jobs run on `ubuntu-22.04`, the oldest GitHub-hosted image, so the binaries 
 glibc 2.35 or newer: Ubuntu 22.04+, Debian 12+, Fedora 36+ and RHEL 10. Moving the job to a newer
 image raises that floor, so do it deliberately. After packaging, the job prints the `.deb`'s
 metadata and contents, runs `ldd` on the binary and runs each AppImage with `--version`.
+Local `.deb` builds derive their minimum `libc6` version from both packaged ELF binaries, so
+building on a newer Ubuntu cannot silently advertise the release runner's older ABI floor.
+The [Ubuntu compatibility workflow](../.github/workflows/ubuntu.yml) also builds and installs
+packages on Ubuntu 24.04 and 26.04 x86_64, checks the native/legacy document MIME associations,
+and runs the desktop smoke script under Xvfb with software graphics.
 
 **AppImage updates.** Each AppImage embeds the update information
 `gh-releases-zsync|storytold|vectorcraft|latest|vectorcraft-*-linux-<arch>.AppImage.zsync`

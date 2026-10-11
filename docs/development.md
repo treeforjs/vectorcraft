@@ -1,5 +1,9 @@
 # Development
 
+For native builds on Ubuntu 24.04 / 26.04 LTS x86_64, see the [Ubuntu guide](ubuntu.md).
+For NVIDIA RTX PRO/GeForce and Intel graphics drivers on Windows 11 x64, see
+[Windows graphics setup](windows-gpu.md).
+
 ## Web build
 
 `apps/vectorcraft-web` runs the same `VectorcraftApp` in the browser through eframe's web runner. The renderer is wgpu: WebGPU where the browser has it, WebGL2 otherwise. It is Rust only; the only JavaScript is the glue wasm-bindgen generates.

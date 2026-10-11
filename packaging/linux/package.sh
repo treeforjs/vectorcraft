@@ -62,6 +62,9 @@ mkdir -p "$STAGE/usr/share/icons"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/usr/share/icons/"
 mkdir -p "$STAGE/usr/share/doc/vectorcraft"
 copy_docs "$STAGE/usr/share/doc/vectorcraft"
+# Packaging must work with a private build umask too: installed launchers, MIME data, icons
+# and licence files are public resources, and ordinary desktop users need to traverse them.
+chmod -R u=rwX,go=rX "$STAGE/usr/share"
 
 if command -v desktop-file-validate >/dev/null; then
   desktop-file-validate "$STAGE/usr/share/applications/$APP_ID.desktop"
@@ -83,6 +86,13 @@ fi
 # ---- .deb / .rpm --------------------------------------------------------------------------------
 if has deb || has rpm; then
   command -v nfpm >/dev/null || { echo "error: nfpm not found (https://nfpm.goreleaser.com/install/)" >&2; exit 1; }
+  # A local build on a newer Ubuntu must not advertise the release runner's older glibc.
+  # Inspect both staged binaries, including --skip-build inputs from another build host.
+  command -v readelf >/dev/null || { echo "error: readelf not found (install binutils)" >&2; exit 1; }
+  GLIBC_MIN_VERSION="$(readelf --version-info "$STAGE/usr/bin/vectorcraft" "$STAGE/usr/bin/vectorcraft-cli" \
+    | grep -oE 'GLIBC_[0-9]+(\.[0-9]+)+' | sort -Vu | tail -n 1 | sed 's/GLIBC_//')"
+  [ -n "$GLIBC_MIN_VERSION" ] || { echo "error: could not determine the binaries' glibc requirement" >&2; exit 1; }
+  export GLIBC_MIN_VERSION
   export VERSION
   export NFPM_ARCH="$DEB_ARCH"
   # nfpm expands env vars in fields like `version` and `arch`, but not in `contents[].src`.
@@ -98,8 +108,8 @@ if has appimage; then
   cp -R "$STAGE" "$APPDIR"
   mv "$APPDIR/usr/share/doc" "$WORK/doc-unused"
   ln -s usr/bin/vectorcraft "$APPDIR/AppRun"
-  cp "$HERE/$APP_ID.desktop" "$APPDIR/$APP_ID.desktop"
-  cp "$ROOT/assets/app-icon/hicolor/256x256/apps/$APP_ID.png" "$APPDIR/$APP_ID.png"
+  install -m644 "$HERE/$APP_ID.desktop" "$APPDIR/$APP_ID.desktop"
+  install -m644 "$ROOT/assets/app-icon/hicolor/256x256/apps/$APP_ID.png" "$APPDIR/$APP_ID.png"
   ln -s "$APP_ID.png" "$APPDIR/.DirIcon"
 
   TOOL="${APPIMAGETOOL:-$(command -v appimagetool || true)}"

@@ -11,4 +11,4 @@ StartupNotify=true
 StartupWMClass=ai.storyteller.vectorcraft
 Categories=Graphics;2DGraphics;VectorGraphics;
 Keywords=vector;illustration;svg;pdf;drawing;bezier;
-MimeType=image/svg+xml;application/pdf;
+MimeType=application/x-vectorcraft;image/svg+xml;image/svg+xml-compressed;application/pdf;

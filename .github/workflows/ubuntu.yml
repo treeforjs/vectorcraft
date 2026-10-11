@@ -1,0 +1,114 @@
+name: Ubuntu LTS
+
+on:
+  pull_request:
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - "**/Cargo.toml"
+      - apps/vectorcraft/**
+      - apps/vectorcraft-cli/**
+      - crates/**
+      - packaging/linux/**
+      - packaging/env.sh
+      - .github/workflows/ubuntu.yml
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ubuntu-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Ubuntu ${{ matrix.ubuntu }} x86_64
+    runs-on: ubuntu-24.04
+    container: ubuntu:${{ matrix.ubuntu }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu: ["24.04", "26.04"]
+    defaults:
+      run:
+        shell: bash
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CARGO_INCREMENTAL: "0"
+      CARGO_BUILD_JOBS: "2"
+      # Keep the compatibility build affordable; production releases retain their normal LTO.
+      CARGO_PROFILE_RELEASE_LTO: "false"
+      CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
+    steps:
+      - name: Install build, package and desktop test tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates curl git build-essential pkg-config cmake \
+            libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libx11-dev libxrandr-dev libxi-dev \
+            libgl-dev libegl-dev libegl1 libegl-mesa0 libgl1-mesa-dri libvulkan1 mesa-vulkan-drivers \
+            xdg-desktop-portal xdg-desktop-portal-gtk fonts-dejavu-core \
+            desktop-file-utils shared-mime-info xdg-utils jq xvfb xauth dbus-x11
+          curl -fsSL -o /tmp/nfpm.deb \
+            https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_amd64.deb
+          dpkg -i /tmp/nfpm.deb
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: ubuntu-${{ matrix.ubuntu }}
+      - name: Build and package
+        run: |
+          # Public package data must stay readable even when the builder's files are private.
+          umask 077
+          packaging/linux/package.sh --formats "deb tar"
+      - name: Install and validate desktop integration
+        run: |
+          # Minimal Ubuntu images exclude documentation; keep this app's packaged notices
+          # and README so the unprivileged readability check covers a normal desktop install.
+          printf 'path-include=/usr/share/doc/vectorcraft/*\n' >/etc/dpkg/dpkg.cfg.d/zz-vectorcraft-docs
+          apt-get install -y ./dist/release/vectorcraft-*-linux-x86_64.deb
+          desktop-file-validate /usr/share/applications/ai.storyteller.vectorcraft.desktop
+          mkdir -p /tmp/vectorcraft-mime
+          printf '{}\n' >/tmp/vectorcraft-mime/document.vectorcraft
+          printf '{}\n' >/tmp/vectorcraft-mime/legacy.drawcraft
+          for document in /tmp/vectorcraft-mime/*; do
+            test "$(xdg-mime query filetype "$document")" = application/x-vectorcraft
+          done
+          ldd /usr/bin/vectorcraft | tee /tmp/vectorcraft-ldd.log
+          ! grep -q 'not found' /tmp/vectorcraft-ldd.log
+      - name: Exercise a desktop window and headless conversion
+        env:
+          SMOKE_OUT: /tmp/vectorcraft-smoke
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          WGPU_BACKEND: gl
+        run: |
+          useradd --create-home vectorcraft-smoke
+          for resource in \
+            /usr/share/applications/ai.storyteller.vectorcraft.desktop \
+            /usr/share/mime/packages/ai.storyteller.vectorcraft.xml \
+            /usr/share/metainfo/ai.storyteller.vectorcraft.metainfo.xml \
+            /usr/share/icons/hicolor/256x256/apps/ai.storyteller.vectorcraft.png \
+            /usr/share/doc/vectorcraft/README.md \
+            /usr/share/doc/vectorcraft/NOTICE; do
+            runuser -u vectorcraft-smoke -- test -r "$resource"
+          done
+          export XDG_RUNTIME_DIR="$(mktemp -d)"
+          chown vectorcraft-smoke:vectorcraft-smoke "$XDG_RUNTIME_DIR"
+          runuser -u vectorcraft-smoke -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+            SMOKE_OUT="$SMOKE_OUT" LIBGL_ALWAYS_SOFTWARE=1 WGPU_BACKEND=gl \
+            xvfb-run -a -s '-screen 0 1440x1000x24' dbus-run-session -- packaging/linux/smoke.sh
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: vectorcraft-ubuntu-${{ matrix.ubuntu }}
+          path: |
+            dist/release/*.deb
+            dist/release/*.tar.gz
+            /tmp/vectorcraft-smoke/
+          if-no-files-found: warn
+          retention-days: 7

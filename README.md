@@ -143,6 +143,9 @@ exposes to agents, and exported by VectorCraft's own renderer. The source files 
 
 ## Quick start
 
+Ubuntu users: see the [Ubuntu 24.04 / 26.04 LTS guide](docs/ubuntu.md) for dependencies,
+building, installation and desktop troubleshooting.
+
 ```sh
 cargo run --release -p vectorcraft                          # desktop app
 cargo run --release -p vectorcraft -- examples/dusk-poster.vectorcraft
@@ -236,6 +239,9 @@ signed and published. Every bundled asset is listed with its licence in [`ASSETS
 
 ### Windows
 
+For RTX PRO Blackwell, GeForce RTX and Intel integrated graphics, see the
+[Windows GPU setup guide](docs/windows-gpu.md).
+
 | Build | Installer | Portable |
 |---|---|---|
 | x64 (64-bit Intel/AMD) | `vectorcraft-<ver>-windows-x64.msi` | `vectorcraft-<ver>-windows-x64-portable.zip` |
@@ -255,11 +261,16 @@ Installers and executables are code-signed.
 
 | Format | x86_64 | aarch64 (ARM64) | Notes |
 |---|---|---|---|
-| AppImage | `vectorcraft-<ver>-linux-x86_64.AppImage` | `vectorcraft-<ver>-linux-aarch64.AppImage` | Runs anywhere; updates itself with [AppImageUpdate](https://github.com/AppImageCommunity/AppImageUpdate) (`.zsync` files) |
+| AppImage | `vectorcraft-<ver>-linux-x86_64.AppImage` | `vectorcraft-<ver>-linux-aarch64.AppImage` | glibc 2.35+; updates itself with [AppImageUpdate](https://github.com/AppImageCommunity/AppImageUpdate) (`.zsync` files) |
 | Flatpak | `vectorcraft-<ver>-linux-x86_64.flatpak` | `vectorcraft-<ver>-linux-aarch64.flatpak` | Sandboxed; `flatpak install --user <file>` |
 | Debian/Ubuntu | `vectorcraft-<ver>-linux-x86_64.deb` | `vectorcraft-<ver>-linux-aarch64.deb` | |
 | Fedora/RHEL/openSUSE | `vectorcraft-<ver>-linux-x86_64.rpm` | `vectorcraft-<ver>-linux-aarch64.rpm` | |
 | Tarball | `vectorcraft-<ver>-linux-x86_64.tar.gz` | `vectorcraft-<ver>-linux-aarch64.tar.gz` | Unpack anywhere |
+
+On Ubuntu 24.04 or 26.04 LTS (Intel/AMD 64-bit), install the `.deb` with
+`sudo apt install ./vectorcraft-<ver>-linux-x86_64.deb`, then launch VectorCraft from the
+application menu or run `vectorcraft`. See [Ubuntu setup](docs/ubuntu.md) for source builds
+and Wayland notes.
 
 ### FreeBSD
 

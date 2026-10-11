@@ -1,6 +1,6 @@
 # .deb and .rpm packages (nfpm: https://nfpm.goreleaser.com). Run by package.sh, which stages
 # the file tree, substitutes its path for ${STAGE} (nfpm doesn't expand env vars in `src`) and
-# exports VERSION and NFPM_ARCH.
+# exports VERSION, NFPM_ARCH and GLIBC_MIN_VERSION (read from the staged ELF binaries).
 #
 #   nfpm package -f packaging/linux/nfpm.yaml -p deb -t dist/release/
 name: vectorcraft
@@ -28,10 +28,12 @@ description: |-
 overrides:
   deb:
     depends:
-      - libc6 (>= 2.35)
+      - libc6 (>= ${GLIBC_MIN_VERSION})
       - libgcc-s1
       - libxkbcommon0
-      - libvulkan1 | libegl1
+      - libxkbcommon-x11-0
+      - libvulkan1
+      - libegl1
     recommends:
       - libwayland-client0
       - libx11-6
@@ -40,11 +42,16 @@ overrides:
       - libxi6
       - libxrandr2
       - mesa-vulkan-drivers
+      - libegl-mesa0
+      - libgl1-mesa-dri
       - xdg-desktop-portal
+      - xdg-desktop-portal-gtk
+      - cups-client
   rpm:
     depends:
       - libxkbcommon
-      - (vulkan-loader or libglvnd-egl)
+      - vulkan-loader
+      - libglvnd-egl
     recommends:
       - libwayland-client
       - libX11
