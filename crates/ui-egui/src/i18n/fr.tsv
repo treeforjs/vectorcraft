@@ -3819,3 +3819,22 @@ axis	Both	Les deux
 @msg	`{text}`: step {i}'s result has no such value (write $$ for a literal $)	`{text}` : le résultat de l’étape {i} n’a pas cette valeur (écrivez $$ pour un $ littéral)
 @msg	`{text}`: there is no step {i} before this one (steps count from 0; write $$ for a literal $)	`{text}` : il n’y a pas d’étape {i} avant celle-ci (les étapes sont comptées à partir de 0 ; écrivez $$ pour un $ littéral)
 @msg	object ids are non-negative integers, not {v}	les identifiants d’objet sont des entiers positifs ou nuls, pas {v}
+
+# Effect Gallery
+	Effect Gallery	Galerie d’effets
+	Effect Gallery…	Galerie d’effets…
+	Effect Stack	Pile d’effets
+	Preview of the first selected object	Aperçu du premier objet sélectionné
+	Raster filters run from top to bottom	Les filtres pixellisés s’appliquent de haut en bas
+@msg	Close the current dialog or finish the current interaction first	Fermez la boîte de dialogue ou terminez d’abord l’interaction en cours
+@msg	Effect Gallery: open a document	Galerie d’effets : ouvrez un document
+@msg	Effect Gallery: select artwork	Galerie d’effets : sélectionnez une illustration
+@msg	`item` must be an appearance item index or null	`item` doit être un indice d’élément d’aspect ou null
+@msg	The selected object no longer exists	L’objet sélectionné n’existe plus
+@msg	The targeted appearance item is missing on selected artwork	L’élément d’aspect ciblé manque dans l’illustration sélectionnée
+@msg	Selected objects have different effect stacks. Edit them separately.	Les objets sélectionnés ont des piles d’effets différentes. Modifiez-les séparément.
+@msg	Effect Gallery supports at most 128 effects in one stack	La Galerie d’effets accepte au maximum 128 effets par pile
+@msg	This stack contains unavailable effects. Install their plug-ins before editing the stack.	Cette pile contient des effets indisponibles. Installez leurs modules externes avant de la modifier.
+@msg	Return to the document where Effect Gallery was opened	Revenez au document dans lequel la Galerie d’effets a été ouverte
+@msg	The effect stack must be an array with at most 128 effects.	La pile doit être un tableau contenant au maximum 128 effets.
+@msg	The effect stack contains an invalid entry.	La pile d’effets contient une entrée invalide.

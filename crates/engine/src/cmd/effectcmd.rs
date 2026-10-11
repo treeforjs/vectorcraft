@@ -37,6 +37,15 @@ pub fn specs() -> Vec<CommandSpec> {
             list
         ),
         cmd!(
+            "effect.setStack",
+            "Effect Gallery",
+            [],
+            None,
+            "{effects: [{id: effect id, params?: object, visible?: bool}] (at most 128, in stack order), item?: appearance item index|null, ids?: [..]} replace each target's effect list as one undo step; preserves fills, strokes and other lists; rejects unknown effects and malformed stacks before editing",
+            has_doc,
+            set_stack
+        ),
+        cmd!(
             "effect.remove",
             "Remove Effect",
             [],
@@ -191,6 +200,52 @@ fn list(s: &mut Session, p: &Value) -> Result<Value> {
         }
     }
     Ok(json!({ "catalog": catalog, "applied": applied, "activeItem": s.appearance_item() }))
+}
+
+/// Replace a complete effect list atomically. This also makes the gallery's transactional
+/// editing available to headless callers; all rows are checked before touching any document.
+fn set_stack(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "effect.setStack";
+    let rows = p.get("effects").and_then(Value::as_array).ok_or_else(|| bad(C, "`effects` must be an array"))?;
+    if rows.len() > 128 {
+        return Err(bad(C, "at most 128 effects per stack"));
+    }
+    let stack: Vec<Effect> = rows
+        .iter()
+        .map(|row| {
+            let id = row.get("id").and_then(Value::as_str).ok_or_else(|| bad(C, "each effect needs an `id`"))?;
+            let params = row.get("params").cloned().unwrap_or_else(|| json!({}));
+            if !params.is_object() {
+                return Err(bad(C, "effect `params` must be an object"));
+            }
+            let mut effect = effects::new_effect(id, &params).ok_or_else(|| bad(C, format!("unknown effect `{id}`")))?;
+            // Existing native stacks may omit defaults. Keep supplied records lossless;
+            // the renderer resolves defaults while evaluating them.
+            if row.get("params").is_some() {
+                effect.params = params;
+            }
+            if let Some(v) = row.get("visible") {
+                effect.visible = v.as_bool().ok_or_else(|| bad(C, "effect `visible` must be boolean"))?;
+            }
+            Ok(effect)
+        })
+        .collect::<Result<_>>()?;
+    let item = item_target(s, p, C)?;
+    let roots = appearance_targets(s, p)?;
+    let mut changed = false;
+    for id in &roots {
+        let node = s.doc()?.doc.node(*id).ok_or(EngineError::NoNode(*id))?;
+        let at = item.effects_item(&node.appearance, C)?;
+        changed |= node.appearance.effects_at(at) != Some(&stack);
+    }
+    if !roots.is_empty() && !changed {
+        return Ok(json!({"ids": ids_json(&roots), "count": stack.len()}));
+    }
+    let ids = edit_effects(s, p, item, C, "Effect Gallery", "Effect Gallery: select objects", |fx| {
+        fx.clone_from(&stack);
+        true
+    })?;
+    Ok(json!({"ids": ids_json(&ids), "count": stack.len()}))
 }
 
 fn remove(s: &mut Session, p: &Value) -> Result<Value> {

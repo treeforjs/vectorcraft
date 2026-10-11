@@ -153,7 +153,7 @@ fn body(app: &mut VectorcraftApp, ui: &mut egui::Ui, d: &mut Dialog) -> bool {
 }
 
 /// The parameters of the effect dialogs that pick one of some values, as (label, value).
-fn choices(effect: &str, key: &str) -> Option<form::Choices> {
+pub(super) fn choices(effect: &str, key: &str) -> Option<form::Choices> {
     match (effect, key) {
         ("blur.radial", "method") => Some(&[("Spin", "spin"), ("Zoom", "zoom")]),
         ("blur.radial", "quality") => Some(&[("Draft", "draft"), ("Good", "good"), ("Best", "best")]),

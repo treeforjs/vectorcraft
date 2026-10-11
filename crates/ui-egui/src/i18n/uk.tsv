@@ -3791,3 +3791,22 @@ axis	Both	Обидві
 @msg	`{text}`: step {i}'s result has no such value (write $$ for a literal $)	`{text}`: у результаті кроку {i} немає такого значення (щоб написати сам $, введіть $$)
 @msg	`{text}`: there is no step {i} before this one (steps count from 0; write $$ for a literal $)	`{text}`: перед цим кроком немає кроку {i} (кроки рахуються з 0; щоб написати сам $, введіть $$)
 @msg	object ids are non-negative integers, not {v}	ідентифікатори об’єктів — невід’ємні цілі числа, а не {v}
+
+# Effect Gallery
+	Effect Gallery	Галерея ефектів
+	Effect Gallery…	Галерея ефектів…
+	Effect Stack	Стек ефектів
+	Preview of the first selected object	Перегляд першого вибраного об’єкта
+	Raster filters run from top to bottom	Растрові фільтри застосовуються згори вниз
+@msg	Close the current dialog or finish the current interaction first	Спочатку закрийте діалог або завершіть поточну дію
+@msg	Effect Gallery: open a document	Галерея ефектів: відкрийте документ
+@msg	Effect Gallery: select artwork	Галерея ефектів: виберіть об’єкт
+@msg	`item` must be an appearance item index or null	`item` має бути індексом елемента оформлення або null
+@msg	The selected object no longer exists	Вибраний об’єкт більше не існує
+@msg	The targeted appearance item is missing on selected artwork	У вибраного об’єкта відсутній потрібний елемент оформлення
+@msg	Selected objects have different effect stacks. Edit them separately.	Вибрані об’єкти мають різні стеки ефектів. Редагуйте їх окремо.
+@msg	Effect Gallery supports at most 128 effects in one stack	Галерея ефектів підтримує щонайбільше 128 ефектів в одному стеку
+@msg	This stack contains unavailable effects. Install their plug-ins before editing the stack.	Стек містить недоступні ефекти. Перед редагуванням установіть їхні плагіни.
+@msg	Return to the document where Effect Gallery was opened	Поверніться до документа, у якому відкрито галерею ефектів
+@msg	The effect stack must be an array with at most 128 effects.	Стек має бути масивом щонайбільше зі 128 ефектів.
+@msg	The effect stack contains an invalid entry.	Стек ефектів містить недійсний запис.

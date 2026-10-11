@@ -194,7 +194,7 @@ For the experimental, unsupported 64-bit Windows 7 build, see [Windows 7 instruc
 VectorCraft is under active development. [**ROADMAP.md**](ROADMAP.md) covers what ships today, the
 milestones, and honest time-to-parity estimates.
 
-**Where we are (2026-10-09):** roughly 69–75% of Illustrator's features exist and work, and about 40–55% of
+**Where we are (2026-10-11):** roughly 69–75% of Illustrator's features exist and work, and about 40–55% of
 "a power user can't tell the difference". Everyday vector illustration is close to usable: drawing and path tools,
 Pathfinder and Shape Builder, paint, gradients, appearance and transparency, type with styles, threading and Hebrew/Arabic bidirectional layout, and
 files (SVG, PDF and PDF-compatible `.ai` with PDF/X, EPS, DXF, EMF/WMF, raster formats and PSD, Print, Package).
@@ -212,11 +212,11 @@ self-assessed, so the [honest assessment](ROADMAP.md#honest-assessment-2026-10-0
 
 **What's missing:**
 - 3D and Materials;
-- the Photoshop-style raster effects (Effect Gallery);
+- most Photoshop-style raster filters; the [initial Effect Gallery](docs/effect-gallery.md) edits the supported filters;
 - CJK composition for vertical type (vertical type itself has initial support, with a Japanese interface);
 - Variables and scripting;
 - an interaction-fidelity pass covering every tool's modifiers and small behaviours;
-- packaging for Windows and Linux.
+- broader Windows/Linux hardware and desktop validation.
 
 **Where we're going:** next is the interaction-fidelity pass alongside the raster-effects package, then 3D and
 advanced type, then hardening and packaging for 1.0. The prioritized list is in

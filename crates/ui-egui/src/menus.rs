@@ -290,6 +290,12 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "",
         "{effect: id, index?: int (edit that applied effect in place, prefilled; OK runs effect.setParams), item?: appearance item index|null (the fill/stroke whose effects, null the object's; default: the Appearance panel's active item)} open the effect's dialog with live preview; without `index`, an effect already in that list first opens `effectExists` (confirm edits it, discard adds another) → {pending: \"effectExists\"}",
     ),
+    (
+        "effect.gallery",
+        "Effect Gallery…",
+        "",
+        "{item?: appearance item index|null} edit a common effect stack on the selection in dialog `effectGallery`; fields `effects` ([{id,params,visible}]), `selected` (row index) and `preview` are controllable with ui.dialog.set; OK commits one undo step, Cancel restores the original. Different selected stacks must be edited separately. Catalog adds raster effects; existing vector effects remain editable and ordered.",
+    ),
     ("ui.paramDialog", "Command Dialog", "", "{command, label?, params} open a parameter dialog for any command"),
     (
         "ui.recolorDialog",
@@ -1164,6 +1170,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             None => Err("missing `tool`".into()),
         },
         "tool.setOption" => app.session.set_tool_option_cmd(p),
+        "effect.gallery" => crate::dialogs::effect_gallery::open(app, p),
         "effect.dialog" => crate::dialogs::open_effect_dialog(app, p),
         "ui.recolorDialog" => crate::dialogs::recolor::open(app, p),
         "ui.cropImage" if !selected_image(app, |_| true) => Err("select an image".into()),
@@ -1870,7 +1877,7 @@ pub fn enabled(app: &VectorcraftApp, id: &str) -> bool {
         id if id.starts_with("view.goto") => {
             id["view.goto".len()..].parse::<usize>().is_ok_and(|n| n >= 1 && app.session.active().is_some_and(|d| n <= d.doc.views.len()))
         }
-        "effect.dialog" | "ui.recolorDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
+        "effect.dialog" | "effect.gallery" | "ui.recolorDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "ui.cropImage" => selected_image(app, |_| true),
         "effect.applyLast" | "effect.last" => app.last_effect.is_some() && app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "file.export.pdf" | "ui.savePdfDialog" | "ui.fileInfoDialog" | "ui.rasterEffectsSettingsDialog" => app.session.active().is_some(),
@@ -3287,6 +3294,7 @@ fn effect_menu() -> Vec<Item> {
         c("Last Effect…", "effect.last"),
         Sep,
         c("Document Raster Effects Settings…", "document.rasterEffectsSettings"),
+        c("Effect Gallery…", "effect.gallery"),
         Sep,
         Item::Header("Vector Effects"),
     ];

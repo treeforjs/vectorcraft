@@ -3806,3 +3806,22 @@ axis	Both	Оба
 @msg	`{text}`: step {i}'s result has no such value (write $$ for a literal $)	`{text}`: в результате шага {i} нет такого значения (чтобы написать сам $, введите $$)
 @msg	`{text}`: there is no step {i} before this one (steps count from 0; write $$ for a literal $)	`{text}`: перед этим шагом нет шага {i} (шаги считаются с 0; чтобы написать сам $, введите $$)
 @msg	object ids are non-negative integers, not {v}	идентификаторы объектов — неотрицательные целые числа, а не {v}
+
+# Effect Gallery
+	Effect Gallery	Галерея эффектов
+	Effect Gallery…	Галерея эффектов…
+	Effect Stack	Стек эффектов
+	Preview of the first selected object	Предпросмотр первого выбранного объекта
+	Raster filters run from top to bottom	Растровые фильтры применяются сверху вниз
+@msg	Close the current dialog or finish the current interaction first	Сначала закройте диалог или завершите текущее действие
+@msg	Effect Gallery: open a document	Галерея эффектов: откройте документ
+@msg	Effect Gallery: select artwork	Галерея эффектов: выберите объект
+@msg	`item` must be an appearance item index or null	`item` должен быть индексом элемента оформления или null
+@msg	The selected object no longer exists	Выбранный объект больше не существует
+@msg	The targeted appearance item is missing on selected artwork	У выбранного объекта отсутствует нужный элемент оформления
+@msg	Selected objects have different effect stacks. Edit them separately.	У выбранных объектов разные стеки эффектов. Редактируйте их отдельно.
+@msg	Effect Gallery supports at most 128 effects in one stack	Галерея эффектов поддерживает не более 128 эффектов в одном стеке
+@msg	This stack contains unavailable effects. Install their plug-ins before editing the stack.	В стеке есть недоступные эффекты. Перед редактированием установите их плагины.
+@msg	Return to the document where Effect Gallery was opened	Вернитесь к документу, в котором открыта галерея эффектов
+@msg	The effect stack must be an array with at most 128 effects.	Стек должен быть массивом не более чем из 128 эффектов.
+@msg	The effect stack contains an invalid entry.	Стек эффектов содержит недопустимую запись.

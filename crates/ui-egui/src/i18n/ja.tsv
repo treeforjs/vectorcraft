@@ -3800,3 +3800,22 @@ theme	Appearance	外観
 @msg	`{text}`: step {i}'s result has no such value (write $$ for a literal $)	`{text}`: ステップ {i} の結果にその値はありません ($ そのものを書くには $$ と入力してください)
 @msg	`{text}`: there is no step {i} before this one (steps count from 0; write $$ for a literal $)	`{text}`: この前にステップ {i} はありません (ステップは 0 から数えます。$ そのものを書くには $$ と入力してください)
 @msg	object ids are non-negative integers, not {v}	オブジェクト ID は 0 以上の整数です ({v} は使えません)
+
+# Effect Gallery
+	Effect Gallery	効果ギャラリー
+	Effect Gallery…	効果ギャラリー…
+	Effect Stack	効果スタック
+	Preview of the first selected object	最初に選択したオブジェクトのプレビュー
+	Raster filters run from top to bottom	ラスターフィルターは上から順に適用されます
+@msg	Close the current dialog or finish the current interaction first	現在のダイアログを閉じるか操作を完了してください
+@msg	Effect Gallery: open a document	効果ギャラリー：ドキュメントを開いてください
+@msg	Effect Gallery: select artwork	効果ギャラリー：アートワークを選択してください
+@msg	`item` must be an appearance item index or null	`item` はアピアランス項目の番号または null で指定してください
+@msg	The selected object no longer exists	選択したオブジェクトは存在しません
+@msg	The targeted appearance item is missing on selected artwork	選択したアートワークに対象のアピアランス項目がありません
+@msg	Selected objects have different effect stacks. Edit them separately.	選択したオブジェクトの効果スタックが異なります。個別に編集してください。
+@msg	Effect Gallery supports at most 128 effects in one stack	効果ギャラリーでは1つのスタックに最大128個の効果を設定できます
+@msg	This stack contains unavailable effects. Install their plug-ins before editing the stack.	このスタックには利用できない効果があります。編集する前にプラグインをインストールしてください。
+@msg	Return to the document where Effect Gallery was opened	効果ギャラリーを開いたドキュメントに戻ってください
+@msg	The effect stack must be an array with at most 128 effects.	効果スタックは最大128個の効果を含む配列で指定してください。
+@msg	The effect stack contains an invalid entry.	効果スタックに無効な項目があります。

@@ -22,6 +22,7 @@ pub mod dxf_import;
 pub mod dxf_options;
 pub mod edit_selection;
 mod effect;
+pub mod effect_gallery;
 pub mod envelope;
 pub mod eps_options;
 pub mod expand;
@@ -247,6 +248,7 @@ registry! {
     ImportPdf: [import_pdf::KIND] => import_pdf::SPEC,
     SwatchConflict: [swatch_conflict::KIND] => swatch_conflict::SPEC,
     FileInfo: [file_info::KIND] => file_info::SPEC,
+    EffectGallery: [effect_gallery::KIND] => effect_gallery::SPEC,
     RasterEffectsSettings: [raster_effects::KIND] => raster_effects::SPEC,
     MissingLinks: [missing_links::KIND] => missing_links::SPEC,
     MissingFonts: [missing_fonts::KIND] => missing_fonts::SPEC,
@@ -316,7 +318,10 @@ fn run_and_close(app: &mut VectorcraftApp, id: &str, params: Value) -> DialogRes
 /// Close the open dialog as Cancel does, rolling back a live preview (`ui.dialog.cancel`).
 pub fn cancel(app: &mut VectorcraftApp) {
     missing_fonts::requeue_replaced(app);
-    if app.ui.dialog.take().is_some_and(|d| spec(&d.kind).preview) {
+    if app.ui.dialog.take().is_some_and(|d| {
+        spec(&d.kind).preview
+            && (d.kind != effect_gallery::KIND || app.session.active().map(|s| s.uid) == d.fields.get("__doc").and_then(Value::as_u64))
+    }) {
         let _ = app.session.cancel_interaction();
     }
     settle(app);

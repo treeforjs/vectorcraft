@@ -131,3 +131,66 @@ fn expand_appearance_makes_an_image() {
     s.execute("effect.expandAppearance", &json!({"ids": [g]})).unwrap();
     assert!(matches!(s.doc().unwrap().doc.node(NodeId(g)).unwrap().kind, NodeKind::Image(_)));
 }
+
+#[test]
+fn gallery_stack_is_atomic_bounded_and_does_not_dirty_unchanged_artwork() {
+    let (mut s, g) = striped();
+    let before = s.doc().unwrap().doc.clone();
+    let history = s.doc().unwrap().history.undo.len();
+    for effects in [
+        json!([{"id": "missing.effect"}]),
+        json!([{"id": "blur.gaussian", "params": null}]),
+        json!([{"id": "blur.gaussian", "visible": 1}]),
+        json!(vec![json!({"id": "blur.gaussian"}); 129]),
+    ] {
+        assert!(s.execute("effect.setStack", &json!({"ids": [g], "effects": effects})).is_err());
+        assert_eq!(s.doc().unwrap().doc, before);
+    }
+    let rows = json!([{"id": "blur.radial", "params": {"amount": 30}}, {"id": "sharpen.unsharpMask", "params": {"amount": 250}}]);
+    s.execute("effect.setStack", &json!({"ids": [g], "effects": rows})).unwrap();
+    assert_eq!(s.doc().unwrap().history.undo.len(), history + 1);
+    s.execute("effect.setStack", &json!({"ids": [g], "effects": rows})).unwrap();
+    assert_eq!(s.doc().unwrap().history.undo.len(), history + 1, "no-op does not add history");
+    s.execute("edit.undo", &json!({})).unwrap();
+    assert_eq!(s.doc().unwrap().doc, before);
+}
+
+#[test]
+fn gallery_stack_order_and_visibility_survive_native_svg_pdf_and_expand() {
+    let (mut s, g) = striped();
+    let mut rows = vec![
+        json!({"id": "blur.gaussian", "params": {"radius": 3}}),
+        json!({"id": "stylize.glowingEdges", "params": {"edgeWidth": 2, "edgeBrightness": 12, "smoothness": 3}}),
+    ];
+    s.execute("effect.setStack", &json!({"ids": [g], "effects": rows})).unwrap();
+    let first = render(&s);
+    rows.reverse();
+    s.execute("effect.setStack", &json!({"ids": [g], "effects": rows})).unwrap();
+    let second = render(&s);
+    assert!(mean_diff(&first, &second) > 0.001, "reordering noncommuting filters visibly changes output");
+    // Export both the complete noncommuting stack and a hidden-row variant. Testing only
+    // the latter would miss an exporter that accidentally reordered two active filters.
+    for visible in [true, false] {
+        rows[1]["visible"] = json!(visible);
+        s.execute("effect.setStack", &json!({"ids": [g], "effects": rows})).unwrap();
+        let expected = render(&s);
+        if !visible {
+            assert!(mean_diff(&expected, &second) > 0.001, "visibility affects the rendered result");
+        }
+        let doc = s.doc().unwrap().doc.clone();
+        let native = vectorcraft_format::load(&vectorcraft_format::save(&doc, false)).unwrap();
+        assert_eq!(native.node(NodeId(g)).unwrap().appearance.effects, doc.node(NodeId(g)).unwrap().appearance.effects);
+        let pdf = crate::cmd::rasterfx::export_pdf_with_report(&doc, &Default::default()).unwrap();
+        let pdf_back = vectorcraft_pdf::import(&pdf.bytes).unwrap();
+        let svg = s.execute("document.serialize", &json!({"format": "svg"})).unwrap()["text"].as_str().unwrap().to_string();
+        let svg_back = vectorcraft_svg::import(&svg).unwrap();
+        for back in [&native, &pdf_back, &svg_back] {
+            let actual = Renderer::new().render_region(back, Rect::new(0.0, 0.0, 200.0, 200.0), 1.0, true);
+            assert!(mean_diff(&expected, &actual) < 0.03, "roundtrip must preserve filtered appearance: {}", mean_diff(&expected, &actual));
+        }
+        s.execute("effect.expandAppearance", &json!({"ids": [g]})).unwrap();
+        assert!(mean_diff(&expected, &render(&s)) < 0.03);
+        s.execute("edit.undo", &json!({})).unwrap();
+        assert_eq!(s.doc().unwrap().doc, doc);
+    }
+}

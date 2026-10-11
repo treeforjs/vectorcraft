@@ -3459,3 +3459,10 @@ axis	Both	两者
 	Draft	草稿
 	Good	良好
 	Best	最佳
+
+# Effect Gallery
+	Effect Gallery	效果图库
+	Effect Gallery…	效果图库…
+	Effect Stack	效果堆叠
+	Preview of the first selected object	第一个所选对象的预览
+	Raster filters run from top to bottom	栅格滤镜从上到下应用

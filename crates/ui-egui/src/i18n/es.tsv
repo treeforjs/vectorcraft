@@ -3808,3 +3808,22 @@ axis	Both	Ambos
 @msg	`{text}`: step {i}'s result has no such value (write $$ for a literal $)	`{text}`: el resultado del paso {i} no tiene ese valor (escriba $$ para un $ literal)
 @msg	`{text}`: there is no step {i} before this one (steps count from 0; write $$ for a literal $)	`{text}`: no hay ningún paso {i} antes de este (los pasos se cuentan desde 0; escriba $$ para un $ literal)
 @msg	object ids are non-negative integers, not {v}	los identificadores de objeto son enteros no negativos, no {v}
+
+# Effect Gallery
+	Effect Gallery	Galería de efectos
+	Effect Gallery…	Galería de efectos…
+	Effect Stack	Pila de efectos
+	Preview of the first selected object	Vista previa del primer objeto seleccionado
+	Raster filters run from top to bottom	Los filtros ráster se aplican de arriba abajo
+@msg	Close the current dialog or finish the current interaction first	Cierre el diálogo actual o termine primero la interacción actual
+@msg	Effect Gallery: open a document	Galería de efectos: abra un documento
+@msg	Effect Gallery: select artwork	Galería de efectos: seleccione una ilustración
+@msg	`item` must be an appearance item index or null	`item` debe ser un índice de apariencia o null
+@msg	The selected object no longer exists	El objeto seleccionado ya no existe
+@msg	The targeted appearance item is missing on selected artwork	Falta el elemento de apariencia indicado en la ilustración seleccionada
+@msg	Selected objects have different effect stacks. Edit them separately.	Los objetos seleccionados tienen distintas pilas de efectos. Edítelos por separado.
+@msg	Effect Gallery supports at most 128 effects in one stack	La Galería de efectos admite hasta 128 efectos por pila
+@msg	This stack contains unavailable effects. Install their plug-ins before editing the stack.	Esta pila contiene efectos no disponibles. Instale sus complementos antes de editarla.
+@msg	Return to the document where Effect Gallery was opened	Vuelva al documento donde abrió la Galería de efectos
+@msg	The effect stack must be an array with at most 128 effects.	La pila debe ser una matriz con un máximo de 128 efectos.
+@msg	The effect stack contains an invalid entry.	La pila de efectos contiene una entrada no válida.

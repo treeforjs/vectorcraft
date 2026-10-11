@@ -409,3 +409,32 @@ fn clear_and_reduce_keep_a_groups_stack_empty() {
     // The members keep their own appearance.
     assert_eq!(node(&s, a).appearance, members);
 }
+
+#[test]
+fn gallery_missing_item_on_later_target_rolls_back_every_object() {
+    let mut s = session();
+    let a = rect(&mut s, 20.0);
+    let b = rect(&mut s, 160.0);
+    run(&mut s, "appearance.removeItem", json!({"ids": [b.0], "index": 1}));
+    let before = s.doc().unwrap().doc.clone();
+    let history = s.doc().unwrap().history.undo.len();
+    assert!(
+        s.execute(
+            "effect.setStack",
+            &json!({"ids": [a.0, b.0], "item": 1,
+        "effects": [{"id": "blur.gaussian"}]})
+        )
+        .is_err()
+    );
+    assert_eq!(s.doc().unwrap().doc, before);
+    assert_eq!(s.doc().unwrap().history.undo.len(), history);
+    assert!(
+        s.execute(
+            "effect.setStack",
+            &json!({"ids": [a.0], "item": u64::MAX,
+        "effects": [{"id": "blur.gaussian"}]})
+        )
+        .is_err()
+    );
+    assert_eq!(s.doc().unwrap().doc, before);
+}
