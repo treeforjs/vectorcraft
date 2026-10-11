@@ -94,6 +94,7 @@ grade by behaviour against `plan/illustrator/`, not by whether a menu item exist
 
 ## Shipped so far
 
+- **Project links (2026-10-11):** Removed community chat links from the header, About/Home, menus, commands, README and installation metadata; project website and GitHub links remain available.
 - **Audit hardening (2026-10-11):** EPS arcs normalize extreme angles without looping, bit shifts handle every integer count without overflow and zero-fill as specified, and procedure binding consumes the interpreter budget even for shared procedure graphs. Background save completion keeps recovery copies while later edits remain unsaved. Atomic saves create private Unix staging files before writing; existing file permissions are preserved, and new documents start private. Native files with exhausted or nearly exhausted object, artboard or graphic-style IDs are rejected before editing can overflow their allocators; ordinary sparse IDs and references stay intact. Synthetic regression tests cover each case.
 - **Architecture:** 19+ crates with enforced layering (`cargo xtask layers`). Every action is a command (~400 engine + ~50 UI). Undo is unlimited via structural sharing. `command.batch` runs several commands as one transaction.
 - **Automation:**

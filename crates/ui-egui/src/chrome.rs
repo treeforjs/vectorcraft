@@ -12,7 +12,7 @@ use crate::theme::{self, Tokens};
 use crate::widgets;
 use crate::{VectorcraftApp, icons, menus, titlebar};
 
-/// The application bar: brand mark, Home, menus, then Discord, search and the workspace switcher
+/// The application bar: brand mark, Home, menus, then search and the workspace switcher
 /// at the right. With [`VectorcraftApp::custom_titlebar`] it is also the window's title bar
 /// ([`titlebar`]): the caption buttons take the right end and the rest of the bar drags the window.
 pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -43,8 +43,7 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
                 menus::menu_bar(app, ui)
             };
             // The right-side group fills the space after the menus from the right; when it runs
-            // short, Discord goes first (it is also under Help), then the search box becomes an
-            // icon, then the workspace switcher narrows.
+            // short, the search box becomes an icon, then the workspace switcher narrows.
             let full = ui.max_rect();
             let right_edge = if custom { full.right() - titlebar::WIDTH - 10.0 } else { full.right() };
             let right = egui::Rect::from_min_max(egui::pos2(menus_end + 8.0, full.top()), egui::pos2(right_edge, full.bottom()));
@@ -57,7 +56,6 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
             let gap = ui.spacing().item_spacing.x;
             let with_search = ws_w + 8.0 + gap + 200.0;
             let search_full = room >= with_search;
-            let discord = room >= with_search + 10.0 + gap + crate::community::discord_width(ui, false);
             let ws_w = if search_full { ws_w } else { ws_w.min(room - 8.0 - gap - 24.0).max(64.0) };
             let mut rui = ui.new_child(egui::UiBuilder::new().max_rect(right).layout(egui::Layout::right_to_left(egui::Align::Center)));
             let ui = &mut rui;
@@ -94,10 +92,6 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
             if open_palette {
                 app.ui.palette_open = true;
                 app.ui.palette_query.clear();
-            }
-            if discord {
-                ui.add_space(10.0);
-                crate::community::discord_button(app, ui, false);
             }
         });
     });

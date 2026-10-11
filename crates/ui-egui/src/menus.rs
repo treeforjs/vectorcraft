@@ -1928,7 +1928,6 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
             "VectorCraft",
             vec![
                 c("About VectorCraft", "help.about"),
-                c("Join Our Discord", "help.discord"),
                 Sep,
                 c("Settings…", "edit.preferences"),
                 sub(
@@ -2555,7 +2554,6 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
         (
             "Help",
             vec![
-                c("Join Our Discord", "help.discord"),
                 c("ArtCraft Website", "help.website"),
                 c("VectorCraft on getartcraft.com", "help.appPage"),
                 c("VectorCraft on GitHub", "help.github"),
@@ -3090,7 +3088,7 @@ pub fn invoke(app: &mut VectorcraftApp, id: &str, p: Value) {
         return;
     }
     // Help links: the command returns the URL; a menu click opens it (agents just get the URL).
-    if matches!(id, "help.discord" | "help.website" | "help.appPage" | "help.github") {
+    if matches!(id, "help.website" | "help.appPage" | "help.github") {
         app.open_link(id);
         return;
     }
