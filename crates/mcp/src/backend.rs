@@ -56,9 +56,6 @@ impl Remote {
     }
 
     fn roundtrip(&mut self, line: &str) -> std::io::Result<String> {
-        if self.conn.is_none() {
-            self.reconnect()?;
-        }
         let Some((reader, writer)) = self.conn.as_mut() else {
             return Err(std::io::Error::new(std::io::ErrorKind::NotConnected, "not connected to the app"));
         };
@@ -75,21 +72,24 @@ impl Remote {
 
 impl Backend for Remote {
     fn call(&mut self, method: &str, params: Value) -> Result<Value, String> {
+        if self.conn.is_none() {
+            self.reconnect().map_err(|e| format!("VectorCraft app at {} is not reachable: {e}", self.addr))?;
+        }
         let id = self.next_id;
         self.next_id += 1;
         let line = json!({"id": id, "method": method, "params": params}).to_string();
-        // One retry with a fresh connection (the app may have restarted).
-        let reply = match self.roundtrip(&line) {
-            Ok(r) => r,
-            Err(_) => {
-                self.conn = None;
-                self.roundtrip(&line).map_err(|e| {
-                    self.conn = None;
-                    format!("VectorCraft app at {} is not reachable: {e}", self.addr)
-                })?
-            }
-        };
-        let v: Value = serde_json::from_str(reply.trim()).map_err(|e| format!("bad reply from app: {e}"))?;
+        // Once sending starts, the app may have applied an edit even if its reply is lost.
+        // Never replay it automatically; the next explicit call gets a fresh connection.
+        let reply = self.roundtrip(&line).map_err(|e| {
+            self.conn = None;
+            format!("VectorCraft command outcome is unknown: {e}. It was not retried; inspect the document before retrying an edit.")
+        })?;
+        let v: Value = serde_json::from_str(reply.trim()).map_err(|e| {
+            self.conn = None;
+            format!(
+                "Bad reply from VectorCraft: {e}. The command outcome is unknown; it was not retried. Inspect the document before retrying an edit."
+            )
+        })?;
         if v.get("ok").and_then(Value::as_bool) == Some(true) {
             Ok(v.get("result").cloned().unwrap_or(Value::Null))
         } else {
@@ -103,5 +103,60 @@ impl Backend for Remote {
 
     fn describe(&self) -> String {
         format!("remote {}", self.addr)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::unwrap_used)]
+
+    use super::*;
+    use std::net::TcpListener;
+
+    fn uncertain_reply_does_not_replay(first_reply: Option<&'static str>) {
+        let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let addr = listener.local_addr().unwrap().to_string();
+        let server = std::thread::spawn(move || {
+            let mut requests = Vec::new();
+            for attempt in 0..2 {
+                let (stream, _) = listener.accept().unwrap();
+                stream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+                let mut reader = BufReader::new(stream);
+                let mut line = String::new();
+                reader.read_line(&mut line).unwrap();
+                let request: Value = serde_json::from_str(&line).unwrap();
+                if attempt == 0 {
+                    // The edit was applied, but the client never receives a usable reply.
+                    if let Some(reply) = first_reply {
+                        writeln!(reader.get_mut(), "{reply}").unwrap();
+                    }
+                } else {
+                    writeln!(reader.get_mut(), "{}", json!({"id":request["id"], "ok":true, "result":{"objects":1}})).unwrap();
+                }
+                requests.push(request);
+            }
+            requests
+        });
+
+        let mut remote = Remote::connect(&addr).unwrap();
+        let error = remote.call("engine.execute", json!({"command":"shape.rectangle", "params":{"width":100,"height":50}})).unwrap_err();
+        assert!(error.contains("outcome is unknown") && error.contains("not retried"), "{error}");
+        assert!(remote.conn.is_none());
+        assert_eq!(remote.call("document.inspect", json!({})).unwrap(), json!({"objects":1}));
+        let requests = server.join().unwrap();
+        assert_eq!(requests.len(), 2);
+        assert_eq!(requests[0]["method"], "engine.execute");
+        assert_eq!(requests[1]["method"], "document.inspect", "the edit must not be replayed");
+        assert_ne!(requests[0]["id"], requests[1]["id"]);
+    }
+
+    #[test]
+    fn lost_reply_does_not_replay_an_edit_and_next_call_reconnects() {
+        uncertain_reply_does_not_replay(None);
+    }
+
+    #[test]
+    fn malformed_reply_drops_connection_without_replaying_an_edit() {
+        uncertain_reply_does_not_replay(Some("not a JSON reply"));
     }
 }

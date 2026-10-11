@@ -240,7 +240,9 @@ stroke instead of the whole object: `run_command effect.apply {"effect": "path.o
 `apply_effect` uses the active item. `effect.list` reports each object's item effects under `applied[].items`.
 
 Errors (unknown tool, bad arguments, a disabled or failing command) come back as a normal result with
-`isError: true` and a message. The model can read the message and retry.
+`isError: true` and a message. In remote mode, a lost or malformed reply leaves the command's outcome
+unknown: the app may already have applied the edit. The request is never replayed automatically,
+and the next explicit call reconnects. Inspect the document before deciding whether to retry an edit.
 
 Swatches go through `run_command`: `swatch.list` lists every swatch with its colour group, kind and colour;
 `swatch.edit {name, newName?, color?, mode?, global?, spot?}` edits one (fills, strokes and text linked to a
