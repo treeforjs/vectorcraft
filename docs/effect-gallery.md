@@ -6,9 +6,17 @@ filter. The preview shows the first selected object. **OK** keeps the whole sess
 step; **Cancel** restores the original. Turning Preview off temporarily restores the original
 artwork while keeping the proposed edits in the dialog. OK still applies those edits.
 
-The catalog offers the six filters already implemented: Gaussian Blur, Feather, Radial Blur,
-Smart Blur, Unsharp Mask and Glowing Edges. This milestone adds the editing workflow; it does not
-add filter algorithms or claim output equivalence with another application.
+The catalog offers Gaussian Blur, Feather, Radial Blur, Smart Blur, Unsharp Mask, Glowing Edges,
+Mosaic, Color Halftone, Crystallize, Pointillize, Fragment, Mezzotint and Facet. Smart Blur includes Normal, Edge Only and
+Overlay Edge modes. [Raster filter contracts](raster-filters.md) describe parameters, algorithms
+and remaining differences; these original implementations do not claim pixel equivalence with
+another application.
+
+The preview's **+** and **−** buttons zoom between the fitted view (100%) and 400%. Drag a zoomed
+preview to inspect another part of the artwork; **Fit** resets it. These are inspection controls
+and never modify the artwork or create undo entries. Rendering is capped at 1200 × 1200 pixels;
+panning reuses the cached preview. The zoom percentage is relative to the fitted preview, not a
+print-size or one-device-pixel display scale.
 
 ## Appearance targeting
 
@@ -40,6 +48,9 @@ with omitted defaults resolved at render time. Unchanged lists do not create an 
 Open the dialog with `engine.execute` command `effect.gallery`, params `{}` (or `{"item":0}`).
 `ui.dialog.set` accepts `field: "effects"` with the same effect array, `field: "selected"` with an
 index, and `field: "preview"` with a boolean. Use `ui.dialog.confirm` or `ui.dialog.cancel` to finish.
+`previewZoom` accepts 1 through 4; `previewPanX` and `previewPanY` specify the normalized centre
+of the viewed region (0.5 initially). Values are clamped to the available image; they never become
+effect parameters or native document data.
 The dialog pins the opening document, selected object IDs and appearance item. Changing selection
 from automation cannot redirect the edit. A document switch cancels its preview; return to the
 original document to continue editing. Cancel never rolls back another document's interaction.
@@ -52,7 +63,7 @@ document switches, native save/reopen, and raster appearance through SVG/PDF and
 No Adobe application, source code, bundled asset or generated test fixture is used. The workflow
 reference is [public effects documentation](https://helpx.adobe.com/illustrator/using/effects.html).
 
-The preview is fitted to one object and bounded to 300 pixels. Zoom/pan, comparison views, filter
-thumbnails, mixed-stack editing and the remaining filter library are future work. Large-document
+The preview shows one object. Comparison views, filter thumbnails, mixed-stack editing and the
+remaining filter library are future work. Large-document
 performance and physical GPU behavior require separate validation. Native files keep live stack
 records; SVG/PDF use the existing vector/filter/raster export representations as appropriate.

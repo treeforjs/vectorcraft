@@ -32,3 +32,14 @@ fn scale_effect_scales_distances_only() {
     scale_effect(&mut t, 2.0);
     assert_eq!(t.params["h"], json!(10));
 }
+
+#[test]
+fn pixelate_distances_scale_without_changing_screen_angles() {
+    for (id, length) in [("pixelate.mosaic", "cellSize"), ("pixelate.colorHalftone", "radius")] {
+        let mut effect = new_effect(id, &json!({"angle1": 123})).unwrap();
+        let before = effect.params[length].as_f64().unwrap();
+        scale_effect(&mut effect, 2.0);
+        assert_eq!(effect.params[length].as_f64(), Some(before * 2.0));
+        assert_eq!(effect.params["angle1"], json!(123));
+    }
+}

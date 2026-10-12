@@ -43,6 +43,7 @@ pub mod prefs_dialog;
 pub mod print;
 pub mod recovery;
 pub mod render_worker;
+pub mod rulers;
 mod scrub;
 pub mod shortcut_editor;
 pub mod shortcuts;
@@ -480,6 +481,7 @@ impl VectorcraftApp {
 
     pub fn view_info(&self) -> ViewInfo {
         ViewInfo {
+            ruler_origin: rulers::origin(self),
             zoom: self.view().map(|v| v.zoom).unwrap_or(1.0),
             outline: self.ui.view.outline,
             smart_guides: self.ui.view.smart_guides,

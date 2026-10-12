@@ -946,6 +946,13 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         "view.pixelPreview" => flag(&mut app.ui.view.pixel_preview),
         "view.trimView" => flag(&mut app.ui.view.trim_view),
         "view.cornerWidget" => flag(&mut app.ui.view.corner_widgets),
+        "view.rulers.global" | "view.rulers.origin" | "view.rulers.info" if p.get("artboard").is_none() => {
+            let mut params = if p.is_null() { json!({}) } else { p.clone() };
+            if let Some(map) = params.as_object_mut() {
+                map.insert("artboard".into(), json!(crate::rulers::active_artboard(app)));
+            }
+            app.session.execute(id, &params).map_err(|e| e.to_string())
+        }
         // New View: the engine stores the current zoom, centre and rotation under the given name.
         "view.saved.new" if p.get("zoom").is_none() => {
             let Some(v) = app.view().copied() else { return Some(Err("no document".into())) };
@@ -1435,6 +1442,7 @@ pub fn checked(app: &VectorcraftApp, id: &str, p: &Value) -> Option<bool> {
         "view.snapToGrid" => v.snap_to_grid,
         "view.snapToPoint" => v.snap_to_point,
         "view.rulers" => v.rulers,
+        "view.rulers.global" => app.session.active().is_some_and(|st| st.rulers.mode == vectorcraft_doc::rulers::RulerMode::Global),
         "window.control" => app.ui.control_bar,
         "window.toolbar" => app.ui.toolbar,
         "window.toolbarAdvanced" => app.ui.toolbar_advanced,
@@ -1507,6 +1515,12 @@ pub fn dynamic_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
         id if saved_selection_slot(id).is_some() => saved_selection_name(app, id).unwrap_or_else(|| "—".into()),
         "view.artboards" => if v.artboards { "Hide Artboards" } else { "Show Artboards" }.into(),
         "view.rulers" => if v.rulers { "Hide Rulers" } else { "Show Rulers" }.into(),
+        "view.rulers.global" => if app.session.active().is_some_and(|st| st.rulers.mode == vectorcraft_doc::rulers::RulerMode::Global) {
+            "Change to Artboard Rulers"
+        } else {
+            "Change to Global Rulers"
+        }
+        .into(),
         "view.boundingBox" => if v.bounding_box { "Hide Bounding Box" } else { "Show Bounding Box" }.into(),
         "view.transparencyGrid" => {
             if app.session.active().is_some_and(|d| d.transparency_grid) { "Hide Transparency Grid" } else { "Show Transparency Grid" }.into()
@@ -2437,7 +2451,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Hide Slices", "view.slices.hide"),
                 c("Lock Slices", "view.slices.lock"),
                 Sep,
-                sub("Rulers", vec![c("Show Rulers", "view.rulers"), todos("Change to Global Rulers", "Cmd+Alt+R"), todo("Show Video Rulers")]),
+                sub("Rulers", vec![c("Show Rulers", "view.rulers"), c("Change to Global Rulers", "view.rulers.global"), todo("Show Video Rulers")]),
                 c("Hide Bounding Box", "view.boundingBox"),
                 c("Show Transparency Grid", "view.transparencyGrid"),
                 c("Hide Text Threads", "view.textThreads"),
@@ -3284,7 +3298,8 @@ fn font_items() -> Vec<Item> {
 
 /// The raster effects' submenus of the Effect menu (the Photoshop-style effects, below the
 /// vector effects): (submenu, the catalogue's menu path of its effects).
-const RASTER_MENUS: [(&str, &[&str]); 2] = [("Blur", &["Effect", "Blur"]), ("Sharpen", &["Effect", "Sharpen"])];
+const RASTER_MENUS: [(&str, &[&str]); 3] =
+    [("Blur", &["Effect", "Blur"]), ("Pixelate", &["Effect", "Pixelate"]), ("Sharpen", &["Effect", "Sharpen"])];
 
 /// The Effect menu, built from the effects catalogue (vector effects), plus raster effects.
 fn effect_menu() -> Vec<Item> {
@@ -3405,6 +3420,8 @@ pub const DYNAMIC_LABELS: &[&str] = &[
     "Show Artboards",
     "Hide Rulers",
     "Show Rulers",
+    "Change to Artboard Rulers",
+    "Change to Global Rulers",
     "Hide Bounding Box",
     "Show Bounding Box",
     "Hide Transparency Grid",

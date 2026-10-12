@@ -212,7 +212,7 @@ self-assessed, so the [honest assessment](ROADMAP.md#honest-assessment-2026-10-0
 
 **What's missing:**
 - 3D and Materials;
-- most Photoshop-style raster filters; the [initial Effect Gallery](docs/effect-gallery.md) edits the supported filters;
+- most Photoshop-style raster filters; the [Effect Gallery](docs/effect-gallery.md) edits thirteen supported filters, with zoom/pan and Smart Blur modes ([filter contracts](docs/raster-filters.md));
 - CJK composition for vertical type (vertical type itself has initial support, with a Japanese interface);
 - Variables and scripting;
 - an interaction-fidelity pass covering every tool's modifiers and small behaviours;

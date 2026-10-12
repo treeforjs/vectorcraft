@@ -260,6 +260,8 @@ pub struct ToolContext<'a> {
     pub preview_bounds: bool,
     /// Units ▸ General: the unit measurement labels show lengths in.
     pub unit: Unit,
+    /// Origin used for absolute ruler position readouts and tick snapping.
+    pub ruler_origin: Point,
     /// Units ▸ Stroke: the unit measurement labels show stroke widths in.
     pub stroke_unit: Unit,
     /// Clipboard Handling → When pasting text: Keep Plain Text. Text pasted while typing takes
@@ -684,6 +686,7 @@ pub(crate) mod testutil {
             raster_sample: 1,
             preview_bounds: false,
             unit: Unit::Points,
+            ruler_origin: Point::ZERO,
             stroke_unit: Unit::Points,
             paste_plain_text: false,
             slices_hidden: false,

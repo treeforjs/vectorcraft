@@ -126,6 +126,10 @@ fn lengths_of(id: &str) -> Lengths {
         "stylize.dropShadow" => always(&["x", "y", "blur"]),
         "stylize.innerGlow" | "stylize.outerGlow" => always(&["blur"]),
         "stylize.glowingEdges" => always(&["edgeWidth", "smoothness"]),
+        "pixelate.mosaic" | "pixelate.crystallize" | "pixelate.pointillize" | "pixelate.facet" => always(&["cellSize"]),
+        "pixelate.colorHalftone" => always(&["radius"]),
+        "pixelate.fragment" => always(&["offset"]),
+        "pixelate.mezzotint" => always(&["grainSize"]),
         _ => Lengths::default(),
     }
 }
@@ -139,6 +143,7 @@ const STYLIZE: &[&str] = &["Effect", "Stylize"];
 const WARP: &[&str] = &["Effect", "Warp"];
 const BLUR: &[&str] = &["Effect", "Blur"];
 const SHARPEN: &[&str] = &["Effect", "Sharpen"];
+const PIXELATE: &[&str] = &["Effect", "Pixelate"];
 const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
@@ -281,8 +286,8 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             "blur.smart",
             "Smart Blur…",
             BLUR,
-            "{radius: pt 0.1..100 (3), threshold: levels 0.1..100 (25; only colours closer than this blur together, so edges stay sharp), quality: \"low\"|\"medium\"|\"high\" (\"medium\"; 5, 7 or 9 samples across)} (Normal mode)",
-            json!({"radius": 3.0, "threshold": 25.0, "quality": "medium"}),
+            "{radius: pt 0.1..100 (3), threshold: levels 0.1..100 (25; colour-transition threshold), quality: \"low\"|\"medium\"|\"high\" (\"medium\"; 5, 7 or 9 samples across), mode: \"normal\"|\"edgeOnly\"|\"overlayEdge\" (\"normal\")} normal smooths similar colours; edgeOnly shows white transitions on black, overlayEdge shows white transitions over the original",
+            json!({"radius": 3.0, "threshold": 25.0, "quality": "medium", "mode": "normal"}),
         ),
         r(
             "sharpen.unsharpMask",
@@ -297,6 +302,55 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             STYLIZE,
             "{edgeWidth: pt 1..14 (2), edgeBrightness: 0..20 (6), smoothness: pt 1..15 (5)} finds alpha-weighted Sobel edges and draws bright coloured outlines on black",
             json!({"edgeWidth": 2.0, "edgeBrightness": 6.0, "smoothness": 5.0}),
+        ),
+        r(
+            "pixelate.mosaic",
+            "Mosaic…",
+            PIXELATE,
+            "{cellSize: pt 2..200 (10)} square cells of alpha-weighted mean colour, preserving original coverage; grid follows the object's centre",
+            json!({"cellSize": 10.0}),
+        ),
+        r(
+            "pixelate.colorHalftone",
+            "Color Halftone…",
+            PIXELATE,
+            "{radius: pt 2..127 (8; maximum dot radius), angle1: deg (108; red channel), angle2: deg (162; green), angle3: deg (90; blue)} independent RGB dot screens, original coverage preserved; not CMYK separations",
+            json!({"radius": 8.0, "angle1": 108.0, "angle2": 162.0, "angle3": 90.0}),
+        ),
+        r(
+            "pixelate.crystallize",
+            "Crystallize…",
+            PIXELATE,
+            "{cellSize: pt 3..300 (10), seed: integer (0)} solid-colour jittered Voronoi polygons, alpha-weighted mean colour with original coverage",
+            json!({"cellSize": 10.0, "seed": 0}),
+        ),
+        r(
+            "pixelate.pointillize",
+            "Pointillize…",
+            PIXELATE,
+            "{cellSize: pt 3..300 (10), seed: integer (0), backgroundColor: \"#rrggbb\" (\"#ffffff\")} jittered coloured dots over the chosen background, clipped to original coverage",
+            json!({"cellSize": 10.0, "seed": 0, "backgroundColor": "#ffffff"}),
+        ),
+        r(
+            "pixelate.fragment",
+            "Fragment…",
+            PIXELATE,
+            "{offset: pt 0.1..100 (2)} averages four copies shifted diagonally by ±offset in document space, including transparent coverage",
+            json!({"offset": 2.0}),
+        ),
+        r(
+            "pixelate.mezzotint",
+            "Mezzotint…",
+            PIXELATE,
+            "{type: fineDots|mediumDots|grainyDots|coarseDots|shortStrokes|mediumStrokes|longStrokes|shortLines|mediumLines|longLines (fineDots), grainSize: pt 0.1..20 (1), seed: integer (0)} document-space binary RGB grain with original coverage",
+            json!({"type": "fineDots", "grainSize": 1.0, "seed": 0}),
+        ),
+        r(
+            "pixelate.facet",
+            "Facet…",
+            PIXELATE,
+            "{cellSize: pt 2..100 (3), levels: integer 2..64 (8; colour bins per RGB channel)} each small square block is split into similar-colour groups and each group takes its alpha-weighted mean; original coverage retained",
+            json!({"cellSize": 3.0, "levels": 8}),
         ),
     ];
     v.extend([

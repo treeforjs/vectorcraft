@@ -732,12 +732,13 @@ fn rect_from(p: &Value, default: Rect) -> Rect {
 }
 
 fn artboard_new(s: &mut Session, p: &Value) -> Result<Value> {
+    let reserved = s.doc()?.rulers.artboard_origins.keys().next_back().copied();
     let d0 = &s.doc()?.doc;
     let last = d0.artboards.last().map(|a| a.rect).unwrap_or(Rect::new(0.0, 0.0, 612.0, 792.0));
     let def = Rect::new(last.x1 + 20.0, last.y0, last.x1 + 20.0 + last.width(), last.y1);
     let r = rect_from(p, def);
     let idx = s.edit("New Artboard", |d, _| {
-        let id = d.next_artboard_id();
+        let id = super::rulers::next_artboard_id(d, reserved, "artboard.new")?;
         let name = str_param(p, "name").map(str::to_string).unwrap_or_else(|| format!("Artboard {}", d.artboards.len() + 1));
         d.artboards.push(Artboard { id, name, rect: r, show_center_mark: false, show_cross_hairs: false });
         Ok(d.artboards.len() - 1)

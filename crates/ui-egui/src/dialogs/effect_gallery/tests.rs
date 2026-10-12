@@ -198,6 +198,12 @@ fn gallery_buttons_add_reorder_hide_and_delete_using_pointer_events() {
         draw(app, vec![event(false)]);
         draw(app, vec![]);
     };
+    let revision = app.session.doc().unwrap().revision;
+    click(&mut app, "+");
+    assert_eq!(preview_view(app.ui.dialog.as_ref().unwrap()).0, 2.0);
+    click(&mut app, "Fit");
+    assert_eq!(preview_view(app.ui.dialog.as_ref().unwrap()), (1.0, egui::pos2(0.5, 0.5)));
+    assert_eq!(app.session.doc().unwrap().revision, revision, "preview navigation must not edit the document");
     click(&mut app, "Add Effect");
     assert_eq!(stack(&app)[0].id, "blur.gaussian");
     set(&mut app, "__catalog", json!("sharpen.unsharpMask"));
@@ -253,4 +259,54 @@ fn unchanged_invalid_gallery_parameters_do_not_create_a_repaint_loop() {
     frame(&mut app);
     assert_eq!(stack(&app).len(), 2);
     crate::dialogs::confirm(&mut app).unwrap();
+}
+
+#[test]
+fn gallery_exposes_pixelate_parameters_and_smart_modes_without_losing_history() {
+    let mut app = app();
+    let before = app.session.doc().unwrap().history.undo.len();
+    app.run("effect.gallery", json!({})).unwrap();
+    set(
+        &mut app,
+        "effects",
+        json!([
+            {"id": "pixelate.mosaic", "params": {"cellSize": 15}, "visible": true},
+            {"id": "pixelate.colorHalftone", "params": {"radius": 6, "angle1": 15, "angle2": 45, "angle3": 75}, "visible": true},
+            {"id": "blur.smart", "params": {"mode": "edgeOnly"}, "visible": true}
+        ]),
+    );
+    set(&mut app, "__catalog", json!("pixelate.mosaic"));
+    let text = frame(&mut app);
+    assert!(text.contains("Pixelate / Mosaic") && text.contains("Cell Size"), "{text}");
+    set(&mut app, "selected", json!(1));
+    assert!(frame(&mut app).contains("Angle1"));
+    set(&mut app, "selected", json!(2));
+    assert!(frame(&mut app).contains("Edge Only"));
+    let kept = stack(&app);
+    crate::dialogs::confirm(&mut app).unwrap();
+    assert_eq!(app.session.doc().unwrap().history.undo.len(), before + 1);
+    app.run("edit.undo", json!({})).unwrap();
+    assert!(stack(&app).is_empty());
+    app.run("edit.redo", json!({})).unwrap();
+    assert_eq!(stack(&app), kept);
+}
+
+#[test]
+fn gallery_preview_navigation_is_bounded_and_never_edits_the_document() {
+    let mut app = app();
+    app.run("effect.gallery", json!({})).unwrap();
+    let before = app.session.doc().unwrap().doc.clone();
+    let revision = app.session.doc().unwrap().revision;
+    let history = app.session.doc().unwrap().history.undo.len();
+    set(&mut app, "previewZoom", json!(1e308));
+    set(&mut app, "previewPanX", json!(-1e308));
+    set(&mut app, "previewPanY", json!(1e308));
+    let (zoom, center) = preview_view(app.ui.dialog.as_ref().unwrap());
+    assert_eq!(zoom, 4.0);
+    assert_eq!(center, egui::pos2(0.125, 0.875));
+    assert!(frame(&mut app).contains("400%"));
+    assert_eq!(app.session.doc().unwrap().doc, before);
+    assert_eq!(app.session.doc().unwrap().revision, revision);
+    crate::dialogs::confirm(&mut app).unwrap();
+    assert_eq!(app.session.doc().unwrap().history.undo.len(), history);
 }

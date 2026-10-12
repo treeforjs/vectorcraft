@@ -3244,3 +3244,36 @@ axis	Both	兩者
 	Effect Stack	效果堆疊
 	Preview of the first selected object	第一個所選物件的預覽
 	Raster filters run from top to bottom	點陣濾鏡由上而下套用
+
+# Pixelate filters and Smart Blur modes.
+	Pixelate	像素化
+	Mosaic	馬賽克
+	Mosaic…	馬賽克…
+	Color Halftone	彩色網屏
+	Color Halftone…	彩色網屏…
+	Edge Only	僅邊緣
+	Overlay Edge	疊加邊緣
+	Crystallize	結晶化
+	Crystallize…	結晶化…
+	Pointillize	點描化
+	Pointillize…	點描化…
+	Fit	符合
+	Fragment	碎片化
+	Fragment…	碎片化…
+	Mezzotint	美柔汀
+	Mezzotint…	美柔汀…
+	Facet	分面
+	Facet…	分面…
+	Fine Dots	細點
+	Medium Dots	中點
+	Grainy Dots	顆粒點
+	Coarse Dots	粗點
+	Short Strokes	短筆觸
+	Medium Strokes	中筆觸
+	Long Strokes	長筆觸
+	Short Lines	短線
+	Medium Lines	中線
+	Long Lines	長線
+	Change to Artboard Rulers	切換為工作區域尺標
+	Ruler Origin	尺標原點
+	Ruler Coordinates	尺標座標

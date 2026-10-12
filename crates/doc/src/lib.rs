@@ -33,6 +33,7 @@ pub mod range;
 pub mod rastersettings;
 mod reach;
 pub mod recolor;
+pub mod rulers;
 pub mod selection;
 pub mod setup;
 pub mod shaper;
@@ -612,6 +613,9 @@ pub struct Document {
     /// save time only, so changing the view never marks the document modified.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub last_view: Option<SavedView>,
+    /// Ruler coordinate settings, captured at save time without dirtying artwork.
+    #[serde(default, skip_serializing_if = "skip::is_default")]
+    pub rulers: rulers::RulerSettings,
     /// The layers, sublayers and groups open in the Layers panel when the document was saved; they
     /// reopen that way. `None`: the default, only the top-level layers open. Written at save time
     /// only, like [`Document::last_view`].
@@ -709,6 +713,7 @@ impl Document {
             metadata: DocMetadata::default(),
             raster_effects: RasterEffectsSettings::default(),
             last_view: None,
+            rulers: Default::default(),
             layers_open: None,
             color_profiles: ColorProfiles::default(),
             export_settings: Default::default(),

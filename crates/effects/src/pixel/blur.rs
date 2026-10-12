@@ -2,7 +2,7 @@
 
 use vectorcraft_geom::{Affine, Point, Vec2};
 
-use super::{PixelSpace, Px16, box_blur, to8, to16};
+use super::{PixelSpace, Px16, SmartMode, box_blur, to8, to16};
 
 /// Zoom's total spread, in log scale: `amount` 100 scales the content between 1/√2 and √2.
 pub(super) fn zoom_extent(amount: f64) -> f64 {
@@ -11,7 +11,7 @@ pub(super) fn zoom_extent(amount: f64) -> f64 {
 
 /// `buf` (`w` × `h`) sampled bilinearly at pixel index position (`x`, `y`) (pixel centres at
 /// whole coordinates); transparent outside.
-fn bilinear(buf: &[Px16], w: usize, h: usize, x: f64, y: f64) -> [f32; 4] {
+pub(super) fn bilinear(buf: &[Px16], w: usize, h: usize, x: f64, y: f64) -> [f32; 4] {
     if !(x > -1.0 && y > -1.0 && x < w as f64 && y < h as f64) {
         return [0.0; 4];
     }
@@ -75,11 +75,11 @@ const MAX_SMART: f64 = 4096.0;
 /// over the gaps between them so the blur stays smooth (a neighbour counts when both it and its
 /// blurred surroundings are within the threshold, so at most a fringe under the threshold crosses
 /// an edge).
-pub(super) fn smart(px: &mut [[u8; 4]], w: usize, h: usize, radius: f64, threshold: f64, samples: u32) {
-    if radius.is_nan() || radius < 0.5 {
+pub(super) fn smart(px: &mut [[u8; 4]], w: usize, h: usize, radius: f64, threshold: f64, samples: u32, mode: SmartMode) {
+    if radius.is_nan() || (radius < 0.5 && mode == SmartMode::Normal) {
         return;
     }
-    let r = radius.min(MAX_SMART);
+    let r = if mode == SmartMode::Normal { radius.min(MAX_SMART) } else { radius.clamp(1.0, MAX_SMART) };
     let n = samples.clamp(3, 15) as f64;
     let k = r.round();
     let (offsets, prefilter): (Vec<Vec2>, usize) = if 2.0 * k < n {
@@ -92,6 +92,10 @@ pub(super) fn smart(px: &mut [[u8; 4]], w: usize, h: usize, radius: f64, thresho
     };
     let offsets: Vec<(isize, isize)> =
         offsets.into_iter().filter(|o| o.hypot() <= r + 0.5 && *o != Vec2::ZERO).map(|o| (o.x as isize, o.y as isize)).collect();
+    if mode != SmartMode::Normal {
+        smart_edges(px, w, h, &offsets, threshold, mode);
+        return;
+    }
     let src = to16(px);
     let blurred;
     let near: &[Px16] = if prefilter > 0 {
@@ -124,6 +128,37 @@ pub(super) fn smart(px: &mut [[u8; 4]], w: usize, h: usize, radius: f64, thresho
                 }
             }
             *o = acc.map(|a| to8(((a + count / 2) / count).min(65535) as u16));
+        }
+    }
+}
+
+/// Original transition detector for the documented Edge Only/Overlay Edge behavior. Distances
+/// use the same bounded sampling disc as Normal. Compare straight colours of covered neighbours:
+/// transparency is not black paint and must not add spurious outlines to a flat-colour shape.
+fn smart_edges(px: &mut [[u8; 4]], w: usize, h: usize, offsets: &[(isize, isize)], threshold: f64, mode: SmartMode) {
+    let src = px.to_vec();
+    for (y, row) in px.chunks_exact_mut(w).enumerate().take(h) {
+        for (x, out) in row.iter_mut().enumerate() {
+            let Some(c) = src.get(y * w + x) else { continue };
+            if c[3] == 0 {
+                *out = [0; 4];
+                continue;
+            }
+            let transition = offsets.iter().any(|(dx, dy)| {
+                let (sx, sy) = (x as isize + dx, y as isize + dy);
+                if sx < 0 || sy < 0 || sx as usize >= w || sy as usize >= h {
+                    return false;
+                }
+                let Some(p) = src.get(sy as usize * w + sx as usize).filter(|p| p[3] > 0) else { return false };
+                (0..3).any(|channel| (f64::from(c[channel]) / f64::from(c[3]) - f64::from(p[channel]) / f64::from(p[3])).abs() * 255.0 > threshold)
+            });
+            *out = if transition {
+                [c[3]; 4]
+            } else if mode == SmartMode::EdgeOnly {
+                [0, 0, 0, c[3]]
+            } else {
+                *c
+            };
         }
     }
 }

@@ -27,6 +27,10 @@ fn size(app: &VectorcraftApp) -> (f64, f64) {
 
 /// Type `value` into the W field (the one showing "100 pt") of what `draw` shows, and press Enter.
 fn set_width(app: &mut VectorcraftApp, draw: Draw, value: &str) {
+    set_field(app, draw, "100 pt", value);
+}
+
+fn set_field(app: &mut VectorcraftApp, draw: Draw, displayed: &str, value: &str) {
     let ctx = egui::Context::default();
     crate::theme::install_fonts(&ctx);
     let mut time = 0.0;
@@ -35,7 +39,7 @@ fn set_width(app: &mut VectorcraftApp, draw: Draw, value: &str) {
         frame_raw(&ctx, app, egui::RawInput { events, time: Some(time), ..Default::default() }, draw)
     };
     let shown = frame(app, vec![]);
-    let at = shown.iter().find(|(s, _)| s == "100 pt").unwrap_or_else(|| panic!("no W field in {shown:?}")).1.center();
+    let at = shown.iter().find(|(s, _)| s == displayed).unwrap_or_else(|| panic!("no {displayed} field in {shown:?}")).1.center();
     let button = |pressed| Event::PointerButton { pos: at, button: PointerButton::Primary, pressed, modifiers: Modifiers::NONE };
     frame(app, vec![Event::PointerMoved(at), button(true), button(false)]);
     // Focus selected the whole field: typing replaces it.
@@ -71,4 +75,35 @@ fn the_link_is_a_preference_agents_can_read_and_set() {
     // What the fields send with the link on.
     run(&mut app, "object.setBounds", json!({"height": 100, "reference": 4, "proportional": true}));
     assert_eq!(size(&app), (200.0, 100.0));
+}
+
+#[test]
+fn ruler_position_fields_invert_custom_origins_in_each_surface_and_undo() {
+    let surfaces: [(&str, Draw); 3] =
+        [("Transform panel", transform::show), ("Properties", properties::transform_section), ("Control bar", crate::chrome::control_bar)];
+    for (name, draw) in surfaces {
+        for global in [true, false] {
+            let mut app = rect_app();
+            if !global {
+                run(&mut app, "artboard.new", json!({"x":200,"y":-100,"width":300,"height":300}));
+                app.view_mut().unwrap().artboard = 1;
+            }
+            // Use the UI dispatch so the active artboard is supplied just as it is
+            // for menu commands and origin drags; the engine API defaults to board 0.
+            app.run("view.rulers.global", json!({"on":global})).unwrap();
+            app.run("view.rulers.origin", json!({"point":[12,-12]})).unwrap();
+            // Selected rectangle center is (60,35), hence ruler coordinates (48,47).
+            set_field(&mut app, draw, "48 pt", "75");
+            set_field(&mut app, draw, "47 pt", "90");
+            let st = app.session.active().unwrap();
+            let b = st.doc.bounds_of(&st.selection.objects, false).unwrap();
+            assert_eq!(b.center(), vectorcraft_geom::Point::new(87.0, 78.0), "{name}, global={global}");
+            assert_eq!(size(&app), (100.0, 50.0), "position edits do not change size");
+            run(&mut app, "edit.undo", json!({}));
+            run(&mut app, "edit.undo", json!({}));
+            let st = app.session.active().unwrap();
+            assert_eq!(st.doc.bounds_of(&st.selection.objects, false).unwrap().center(), vectorcraft_geom::Point::new(60.0, 35.0));
+            assert_eq!(crate::rulers::origin(&app), vectorcraft_geom::Point::new(12.0, -12.0), "undo leaves ruler view settings intact");
+        }
+    }
 }

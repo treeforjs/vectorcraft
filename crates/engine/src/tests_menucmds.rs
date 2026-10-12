@@ -921,6 +921,17 @@ fn guides_dragged_out_of_a_ruler_snap_and_take_the_artboard_tool_s_artboard() {
         s.execute("guide.list", &json!({})).unwrap()[1],
         json!({"index": 1, "vertical": false, "pos": 50.0, "selected": false, "artboard": 1})
     );
+    // Deleting the active board leaves the tool's index stale. Match the visible ruler's
+    // effective board 0 instead of silently creating a document-wide guide.
+    s.execute("artboard.delete", &json!({"index": 1})).unwrap();
+    s.set_tool_option("active", &json!(1));
+    let n = undo_len(&s);
+    s.ruler_guide(false, &ev(PointerKind::Drag, 50.0, 50.0), true, v).unwrap();
+    s.ruler_guide(false, &ev(PointerKind::Up, 50.0, 50.0), true, v).unwrap();
+    assert_eq!(s.execute("guide.list", &json!({})).unwrap()[1]["artboard"], json!(0));
+    assert_eq!(undo_len(&s), n + 1);
+    s.execute("edit.undo", &json!({})).unwrap();
+    assert_eq!(guides(&s), [(true, 800.0)]);
 }
 
 /// #451: art moved with the Selection tool lands flush on the artboard's edges and centre (Smart

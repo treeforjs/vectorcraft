@@ -194,3 +194,96 @@ fn gallery_stack_order_and_visibility_survive_native_svg_pdf_and_expand() {
         assert_eq!(s.doc().unwrap().doc, doc);
     }
 }
+
+fn new_filter_cases() -> [(&'static str, Value); 9] {
+    [
+        ("blur.smart", json!({"radius": 3, "threshold": 20, "mode": "edgeOnly"})),
+        ("blur.smart", json!({"radius": 3, "threshold": 20, "mode": "overlayEdge"})),
+        ("pixelate.mosaic", json!({"cellSize": 27})),
+        ("pixelate.fragment", json!({"offset": 4})),
+        ("pixelate.facet", json!({"cellSize": 27, "levels": 2})),
+        ("pixelate.mezzotint", json!({"type": "shortStrokes", "grainSize": 1.5, "seed": 8})),
+        ("pixelate.crystallize", json!({"cellSize": 19, "seed": 5})),
+        ("pixelate.pointillize", json!({"cellSize": 12, "seed": 5, "backgroundColor": "#f0e0d0"})),
+        ("pixelate.colorHalftone", json!({"radius": 7, "angle1": 30, "angle2": 60, "angle3": 90})),
+    ]
+}
+
+#[test]
+fn pixelate_and_smart_edge_modes_survive_history_native_and_exports() {
+    for (id, params) in new_filter_cases() {
+        let (mut session, id_node) = striped();
+        let before = session.doc().unwrap().doc.clone();
+        let plain = render(&session);
+        let rows = json!([{"id": id, "params": params, "visible": true}]);
+        session.execute("effect.setStack", &json!({"ids": [id_node], "effects": rows})).unwrap();
+        let expected = render(&session);
+        assert!(mean_diff(&plain, &expected) > 0.0005, "{id} {params} did not change the artwork");
+        let doc = session.doc().unwrap().doc.clone();
+        session.execute("edit.undo", &json!({})).unwrap();
+        assert_eq!(session.doc().unwrap().doc, before);
+        session.execute("edit.redo", &json!({})).unwrap();
+        assert_eq!(session.doc().unwrap().doc, doc);
+        let native = vectorcraft_format::load(&vectorcraft_format::save(&doc, false)).unwrap();
+        assert_eq!(native.node(NodeId(id_node)).unwrap().appearance.effects, doc.node(NodeId(id_node)).unwrap().appearance.effects);
+        let pdf = crate::cmd::rasterfx::export_pdf_with_report(&doc, &Default::default()).unwrap();
+        assert!(pdf.warnings.is_empty(), "{id}: {:?}", pdf.warnings);
+        let pdf_back = vectorcraft_pdf::import(&pdf.bytes).unwrap();
+        let svg = session.execute("document.serialize", &json!({"format": "svg"})).unwrap()["text"].as_str().unwrap().to_string();
+        assert!(svg.contains("<image"), "{id} exports actual filtered pixels");
+        let svg_back = vectorcraft_svg::import(&svg).unwrap();
+        for back in [&native, &pdf_back, &svg_back] {
+            let actual = Renderer::new().render_region(back, Rect::new(0.0, 0.0, 200.0, 200.0), 1.0, true);
+            assert!(mean_diff(&expected, &actual) < 0.03, "{id} {params}: exported appearance differs by {}", mean_diff(&expected, &actual));
+        }
+        session.execute("effect.expandAppearance", &json!({"ids": [id_node]})).unwrap();
+        assert!(mean_diff(&expected, &render(&session)) < 0.03, "{id}: Expand changed appearance");
+        session.execute("edit.undo", &json!({})).unwrap();
+        assert_eq!(session.doc().unwrap().doc, doc);
+    }
+}
+
+#[test]
+fn pixelate_and_smart_modes_follow_rotated_views_and_large_cropped_viewports() {
+    use vectorcraft_geom::Affine;
+    use vectorcraft_render::RenderOptions;
+    let options = RenderOptions { background: None, artboards: false, ..Default::default() };
+    for (id, params) in new_filter_cases() {
+        let (mut session, group) = striped();
+        session.execute("effect.setStack", &json!({"ids": [group], "effects": [{"id": id, "params": params}]})).unwrap();
+        let doc = &session.doc().unwrap().doc;
+        let first = Renderer::new().render(doc, 200, 200, Affine::IDENTITY, &options);
+        let rotation = Affine::translate((200.0, 0.0)) * Affine::rotate(std::f64::consts::FRAC_PI_2);
+        let rotated = Renderer::new().render(doc, 200, 200, rotation, &options);
+        let mut total = 0u64;
+        for y in 0..200 {
+            for x in 0..200 {
+                total += first.pixel(x, y).iter().zip(rotated.pixel(199 - y, x)).map(|(a, b)| u64::from(a.abs_diff(b))).sum::<u64>();
+            }
+        }
+        let difference = total as f64 / (200.0 * 200.0 * 4.0 * 255.0);
+        assert!(difference < 0.005, "{id} {params}: camera rotation changed the filter: {difference}");
+
+        // A 25M-pixel object exceeds the renderer's 8.4M budget: these small views force the
+        // cropped path and exercise the source halo rather than the whole-object cache.
+        let mut large = Session::new();
+        large.execute("file.new", &json!({"width": 5000, "height": 5000})).unwrap();
+        let background = large.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 5000, "height": 5000})).unwrap()["id"].as_u64().unwrap();
+        large.execute("paint.setFill", &json!({"color": "#e03020"})).unwrap();
+        large.execute("paint.setStroke", &json!({"none": true})).unwrap();
+        let stripe = large.execute("shape.rectangle", &json!({"x": 2490, "y": 0, "width": 20, "height": 5000})).unwrap()["id"].as_u64().unwrap();
+        large.execute("paint.setFill", &json!({"color": "#b04848"})).unwrap();
+        large.execute("paint.setStroke", &json!({"none": true})).unwrap();
+        large.execute("select.set", &json!({"ids": [background, stripe]})).unwrap();
+        let group = large.execute("object.group", &json!({})).unwrap()["id"].as_u64().unwrap();
+        large.execute("effect.setStack", &json!({"ids": [group], "effects": [{"id": id, "params": params}]})).unwrap();
+        let doc = &large.doc().unwrap().doc;
+        let a = Renderer::new().render(doc, 200, 200, Affine::translate((-2400.0, -2400.0)), &options);
+        let b = Renderer::new().render(doc, 200, 200, Affine::translate((-2383.0, -2389.0)), &options);
+        for y in 0..189 {
+            for x in 0..183 {
+                assert_eq!(a.pixel(x, y), b.pixel(x + 17, y + 11), "{id} {params}: crop changed phase/halo at {x},{y}");
+            }
+        }
+    }
+}

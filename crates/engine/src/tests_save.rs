@@ -368,3 +368,39 @@ fn a_template_places_like_a_native_file() {
     let st = s.doc().unwrap();
     assert!(st.doc.node_count() > empty && !st.selection.is_empty(), "the template's art is placed and selected");
 }
+
+#[test]
+fn ruler_coordinate_settings_round_trip_in_native_files_without_art_edits() {
+    use vectorcraft_doc::rulers::{RulerMode, RulerSettings};
+    let d = dir("rulers");
+    let mut s = session();
+    s.execute("view.rulers.origin", &json!({"point":[35,-18]})).unwrap();
+    s.execute("view.rulers.global", &json!({"on":false})).unwrap();
+    s.execute("view.rulers.origin", &json!({"point":[72,96]})).unwrap();
+    let settings = s.doc().unwrap().rulers.clone();
+    assert!(!s.doc().unwrap().is_dirty());
+    s.execute("artboard.new", &json!({"x":200,"y":300})).unwrap();
+    let deleted_id = s.doc().unwrap().doc.artboards[1].id;
+    s.execute("view.rulers.origin", &json!({"artboard":1,"point":[212,313]})).unwrap();
+    s.execute("artboard.delete", &json!({"index":1})).unwrap();
+    let mut settings = settings;
+    settings.artboard_origins.insert(deleted_id, Point::new(12.0, 13.0));
+    let native = path(&d, "rulers.vectorcraft");
+    s.execute("document.save", &json!({"path":native})).unwrap();
+    assert_eq!(s.doc().unwrap().doc.rulers, RulerSettings::default());
+    s.execute("document.open", &json!({"path":native})).unwrap();
+    assert_eq!(s.doc().unwrap().rulers, settings);
+    assert!(!s.doc().unwrap().is_dirty());
+    assert_eq!(s.doc().unwrap().rulers.mode, RulerMode::Artboard);
+    s.execute("artboard.new", &json!({"x":400,"y":500})).unwrap();
+    assert_ne!(s.doc().unwrap().doc.artboards[1].id, deleted_id);
+    assert_eq!(s.execute("view.rulers.info", &json!({"artboard":1})).unwrap()["origin"], json!([400.0, 500.0]));
+    s.execute("view.rulers.global", &json!({"on":true})).unwrap();
+    assert_eq!(s.execute("view.rulers.info", &json!({})).unwrap()["origin"], json!([35.0, -18.0]));
+    s.execute("view.rulers.origin", &json!({"point":[55,-12]})).unwrap();
+    s.execute("file.revert", &json!({})).unwrap();
+    assert_eq!(s.execute("view.rulers.info", &json!({})).unwrap()["origin"], json!([55.0, -12.0]), "revert keeps the current view coordinates");
+    let doc = vectorcraft_format::load(&vectorcraft_format::save(&vectorcraft_doc::Document::new(5.0, 5.0), false)).unwrap();
+    assert_eq!(crate::DocState::new(doc, None).rulers, RulerSettings::default());
+    let _ = std::fs::remove_dir_all(d);
+}

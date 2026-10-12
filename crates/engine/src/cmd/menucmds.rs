@@ -794,6 +794,7 @@ fn convert_to_shape(s: &mut Session, _: &Value) -> Result<Value> {
 // ---------- Artboards ----------
 
 fn convert_to_artboards(s: &mut Session, _: &Value) -> Result<Value> {
+    let reserved = s.doc()?.rulers.artboard_origins.keys().next_back().copied();
     let roots = selected_roots(s)?;
     let n = s.edit("Convert to Artboards", |d, sel| {
         let mut n = 0;
@@ -802,7 +803,7 @@ fn convert_to_artboards(s: &mut Session, _: &Value) -> Result<Value> {
             if b.width() <= 0.0 || b.height() <= 0.0 {
                 continue;
             }
-            let aid = d.next_artboard_id();
+            let aid = super::rulers::next_artboard_id(d, reserved, "artboard.convertToArtboards")?;
             d.artboards.push(vectorcraft_doc::Artboard {
                 id: aid,
                 name: format!("Artboard {aid}"),

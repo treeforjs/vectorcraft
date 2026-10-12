@@ -63,6 +63,7 @@ pub fn open(app: &mut VectorcraftApp, p: &Value) -> Result<Value, String> {
         KIND,
         json!({
             "effects": stack, "selected": 0, "preview": true,
+            "previewZoom": 1.0, "previewPanX": 0.5, "previewPanY": 0.5,
             "__original": stack, "__ids": ids.iter().map(|id| id.0).collect::<Vec<_>>(),
             "__item": item, "__doc": st.uid, "__catalog": "blur.gaussian"
         }),
@@ -253,18 +254,46 @@ fn body(app: &mut VectorcraftApp, ui: &mut egui::Ui, d: &mut Dialog) -> bool {
     false
 }
 
-/// A bounded thumbnail cached by document revision, never a full-resolution render per frame.
-fn preview_image(app: &VectorcraftApp, ui: &mut egui::Ui, d: &Dialog) {
+/// The zoom is relative to the fitted preview. Pan coordinates are the normalised centre of the
+/// displayed part of that fit. Untrusted automation cannot request an unbounded preview image.
+fn preview_view(d: &Dialog) -> (f32, egui::Pos2) {
+    let finite = |key: &str, default: f64| d.fields.get(key).and_then(Value::as_f64).filter(|x| x.is_finite()).unwrap_or(default) as f32;
+    let zoom = finite("previewZoom", 1.0).clamp(1.0, 4.0);
+    let half = 0.5 / zoom;
+    let center = egui::pos2(finite("previewPanX", 0.5).clamp(half, 1.0 - half), finite("previewPanY", 0.5).clamp(half, 1.0 - half));
+    (zoom, center)
+}
+
+/// A bounded thumbnail (at most 1200²) cached by revision and zoom. Panning changes only its UVs,
+/// not the document, undo history, effect parameters, or renderer invocation count.
+fn preview_image(app: &VectorcraftApp, ui: &mut egui::Ui, d: &mut Dialog) {
     let Some(st) = app.session.active().filter(|s| Some(s.uid) == d.fields.get("__doc").and_then(Value::as_u64)) else { return };
     let Some(id) = d.fields.get("__ids").and_then(Value::as_array).and_then(|ids| ids.first()).and_then(Value::as_u64) else { return };
-    let key = (st.uid, st.revision, id);
+    let (mut zoom, _) = preview_view(d);
+    ui.horizontal(|ui| {
+        if ui.add_enabled(zoom > 1.0, egui::Button::new("−")).on_hover_text(tl!("Zoom Out")).clicked() {
+            zoom = (zoom / 2.0).max(1.0);
+        }
+        ui.label(format!("{:.0}%", zoom * 100.0));
+        if ui.add_enabled(zoom < 4.0, egui::Button::new("+")).on_hover_text(tl!("Zoom In")).clicked() {
+            zoom = (zoom * 2.0).min(4.0);
+        }
+        if ui.button(tl!("Fit")).clicked() {
+            zoom = 1.0;
+            d.fields.insert("previewPanX".into(), json!(0.5));
+            d.fields.insert("previewPanY".into(), json!(0.5));
+        }
+    });
+    d.fields.insert("previewZoom".into(), json!(zoom));
+    let size = (300.0 * zoom).round() as u32;
+    let key = (st.uid, st.revision, id, size);
     let cache_id = ui.id().with("gallery-preview");
-    let cached: Option<((u64, u64, u64), TextureHandle)> = ui.data(|m| m.get_temp(cache_id));
+    let cached: Option<((u64, u64, u64, u32), TextureHandle)> = ui.data(|m| m.get_temp(cache_id));
     let texture = match cached.filter(|(stamp, _)| *stamp == key) {
         Some((_, texture)) => Some(texture),
         None => {
             let mut renderer = vectorcraft_render::Renderer::new();
-            renderer.render_thumbnail(&st.doc, vectorcraft_doc::NodeId(id), 300).map(|image| {
+            renderer.render_thumbnail(&st.doc, vectorcraft_doc::NodeId(id), size).map(|image| {
                 let image = egui::ColorImage::from_rgba_premultiplied([image.width as usize, image.height as usize], &image.pixels);
                 let texture = ui.ctx().load_texture("effect-gallery", image, egui::TextureOptions::LINEAR);
                 ui.data_mut(|m| m.insert_temp(cache_id, (key, texture.clone())));
@@ -273,9 +302,21 @@ fn preview_image(app: &VectorcraftApp, ui: &mut egui::Ui, d: &Dialog) {
         }
     };
     if let Some(texture) = texture {
-        let (rect, _) = ui.allocate_exact_size(vec2(300.0_f32.min(ui.available_width()), 300.0_f32.min(ui.available_width())), egui::Sense::hover());
+        let (rect, response) =
+            ui.allocate_exact_size(vec2(300.0_f32.min(ui.available_width()), 300.0_f32.min(ui.available_width())), egui::Sense::drag());
+        let (_, center) = preview_view(d);
+        if zoom > 1.0 {
+            if response.dragged() {
+                let center = center - response.drag_delta() / (rect.width().max(1.0) * zoom);
+                d.fields.insert("previewPanX".into(), json!(center.x));
+                d.fields.insert("previewPanY".into(), json!(center.y));
+            }
+            response.on_hover_cursor(egui::CursorIcon::Grab);
+        }
+        let (_, center) = preview_view(d);
+        let uv = egui::Rect::from_center_size(center, vec2(1.0 / zoom, 1.0 / zoom));
         ui.painter().rect_filled(rect, 0.0, egui::Color32::from_gray(235));
-        ui.painter().image(texture.id(), rect, egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0)), egui::Color32::WHITE);
+        ui.painter().image(texture.id(), rect, uv, egui::Color32::WHITE);
     }
 }
 

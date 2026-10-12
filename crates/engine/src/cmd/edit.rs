@@ -380,9 +380,10 @@ fn paste_clip(s: &mut Session, p: &Value, mode: PasteMode, clip: &Clipboard, cho
         // In place, in front, in back: onto the active artboard when the UI names it.
         _ => vec![onto_artboard(&st.doc, p, clip)],
     };
+    let reserved = st.rulers.artboard_origins.keys().next_back().copied();
     let (ids, imported, artboard) = s.edit(mode.label(), |d, sel| {
         let imported = clip.import_into(d, choices, same_doc);
-        let artboard = board.map(|(a, dv)| super::panelcmds::push_artboard_copy(d, a, a.rect + dv));
+        let artboard = board.map(|(a, dv)| super::panelcmds::push_artboard_copy(d, a, a.rect + dv, reserved)).transpose()?;
         let mut layers: BTreeMap<&str, NodeId> = BTreeMap::new();
         // Objects pasted into each parent so far (keeps their order in front and back pastes).
         let mut placed: BTreeMap<Option<NodeId>, usize> = BTreeMap::new();

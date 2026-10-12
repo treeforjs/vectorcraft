@@ -3827,3 +3827,36 @@ axis	Both	Entrambi
 @msg	Return to the document where Effect Gallery was opened	Torna al documento in cui è stata aperta la Galleria effetti
 @msg	The effect stack must be an array with at most 128 effects.	La pila deve essere un array con al massimo 128 effetti.
 @msg	The effect stack contains an invalid entry.	La pila di effetti contiene una voce non valida.
+
+# Pixelate filters and Smart Blur modes.
+	Pixelate	Pixel
+	Mosaic	Mosaico
+	Mosaic…	Mosaico…
+	Color Halftone	Mezzetinte colore
+	Color Halftone…	Mezzetinte colore…
+	Edge Only	Solo bordi
+	Overlay Edge	Sovrapponi bordi
+	Crystallize	Cristallizza
+	Crystallize…	Cristallizza…
+	Pointillize	Puntinismo
+	Pointillize…	Puntinismo…
+	Fit	Adatta
+	Fragment	Frammenta
+	Fragment…	Frammenta…
+	Mezzotint	Mezzatinta
+	Mezzotint…	Mezzatinta…
+	Facet	Sfaccettatura
+	Facet…	Sfaccettatura…
+	Fine Dots	Punti fini
+	Medium Dots	Punti medi
+	Grainy Dots	Punti granulosi
+	Coarse Dots	Punti grossi
+	Short Strokes	Tratti corti
+	Medium Strokes	Tratti medi
+	Long Strokes	Tratti lunghi
+	Short Lines	Linee corte
+	Medium Lines	Linee medie
+	Long Lines	Linee lunghe
+	Change to Artboard Rulers	Passa ai righelli della tavola da disegno
+	Ruler Origin	Origine dei righelli
+	Ruler Coordinates	Coordinate dei righelli

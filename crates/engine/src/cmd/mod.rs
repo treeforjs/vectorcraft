@@ -62,6 +62,7 @@ pub mod printtiling;
 pub mod rasterfx;
 mod recolor;
 pub mod recovery;
+mod rulers;
 mod select;
 pub(crate) mod shaper;
 pub(crate) mod slices;
@@ -232,6 +233,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(graph::specs());
         v.extend(rasterfx::specs());
         v.extend(views::specs());
+        v.extend(rulers::specs());
         v.extend(maskedit::specs());
         v.extend(tabs::specs());
         v.extend(docmenu::specs());

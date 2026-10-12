@@ -10,6 +10,8 @@ use crate::{EngineError, Prefs, Result, Session};
 /// View state the tools need from the frontend.
 #[derive(Clone, Copy, Debug)]
 pub struct ViewInfo {
+    /// Effective ruler origin in document coordinates.
+    pub ruler_origin: Point,
     pub zoom: f64,
     pub outline: bool,
     pub smart_guides: bool,
@@ -30,6 +32,7 @@ pub struct ViewInfo {
 impl Default for ViewInfo {
     fn default() -> Self {
         Self {
+            ruler_origin: Point::ZERO,
             zoom: 1.0,
             outline: false,
             smart_guides: true,
@@ -181,6 +184,7 @@ impl Session {
             revision: (st.uid, st.revision),
             selection: &st.selection,
             zoom: view.zoom,
+            ruler_origin: view.ruler_origin,
             isolation: st.isolation,
             paint: &self.paint,
             outline: view.outline,
@@ -285,8 +289,8 @@ impl Session {
             Some(g) => Some(g),
             None => {
                 let boards = self.active().map_or(0, |d| d.doc.artboards.len());
-                let active = (self.tool.id() == "artboard").then(|| self.tool.options()["active"].as_u64()).flatten();
-                let artboard = active.and_then(|i| usize::try_from(i).ok()).filter(|i| *i < boards);
+                let artboard = (self.tool.id() == "artboard" && boards > 0)
+                    .then(|| self.tool.options()["active"].as_u64().and_then(|i| usize::try_from(i).ok()).filter(|i| *i < boards).unwrap_or(0));
                 self.with_tool_cx(view, |_, cx| Some(vectorcraft_tools::rulerguide::NewGuide::new(cx, vertical, artboard)))
             }
         };

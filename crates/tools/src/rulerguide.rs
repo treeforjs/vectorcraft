@@ -81,7 +81,8 @@ impl GuideSnap {
     fn snap(&mut self, cx: &ToolContext, vertical: bool, v: f64, shift: bool) -> f64 {
         self.snapped.clear();
         if shift {
-            return cx.unit.snap_to_ruler_tick(v, cx.zoom);
+            let origin = if vertical { cx.ruler_origin.x } else { cx.ruler_origin.y };
+            return origin + cx.unit.snap_to_ruler_tick(v - origin, cx.zoom);
         }
         if cx.snap_to_pixel {
             return v.round();
@@ -100,7 +101,10 @@ impl GuideSnap {
         let mut o = self.snapped.clone();
         if cx.measurement_labels {
             let axis = if vertical { "X" } else { "Y" };
-            o.push(Overlay::Measure { p: pointer, text: format!("{axis}: {}", cx.len(at)) });
+            o.push(Overlay::Measure {
+                p: pointer,
+                text: format!("{axis}: {}", cx.len(at - if vertical { cx.ruler_origin.x } else { cx.ruler_origin.y })),
+            });
         }
         o
     }
@@ -111,6 +115,8 @@ impl GuideSnap {
 /// over the canvas (`guide.add`, previewed as it goes); taken off the canvas, it goes again.
 pub struct NewGuide {
     vertical: bool,
+    /// Alt temporarily exchanges the orientation while a new guide is dragged.
+    active_vertical: bool,
     /// The artboard (index) it belongs to: an artboard guide.
     artboard: Option<usize>,
     snap: GuideSnap,
@@ -123,7 +129,7 @@ impl NewGuide {
     /// A vertical guide out of the left ruler, else a horizontal one out of the top ruler; an
     /// artboard guide of `artboard`, if any.
     pub fn new(cx: &ToolContext, vertical: bool, artboard: Option<usize>) -> Self {
-        Self { vertical, artboard, snap: GuideSnap::new(cx), at: None, pointer: Point::ZERO }
+        Self { vertical, active_vertical: vertical, artboard, snap: GuideSnap::new(cx), at: None, pointer: Point::ZERO }
     }
 
     /// The pointer at `ev`, over the canvas or not (`on_canvas`): the actions that show the guide
@@ -131,13 +137,16 @@ impl NewGuide {
     pub fn pointer(&mut self, cx: &ToolContext, ev: &PointerEvent, on_canvas: bool) -> Vec<Action> {
         let mut out = vec![];
         self.pointer = ev.pos;
+        let vertical = self.vertical ^ ev.mods.alt;
+        let orientation_changed = vertical != self.active_vertical;
+        self.active_vertical = vertical;
         if on_canvas {
-            let at = self.snap.snap(cx, self.vertical, if self.vertical { ev.pos.x } else { ev.pos.y }, ev.mods.shift);
+            let at = self.snap.snap(cx, vertical, if vertical { ev.pos.x } else { ev.pos.y }, ev.mods.shift);
             if self.at.is_none() {
                 out.push(Action::Begin("New Guide".into()));
             }
-            if self.at != Some(at) {
-                let mut p = json!({ "vertical": self.vertical, "pos": at });
+            if self.at != Some(at) || orientation_changed {
+                let mut p = json!({ "vertical": vertical, "pos": at });
                 if let Some(ab) = self.artboard {
                     p["artboard"] = json!(ab);
                 }
@@ -156,7 +165,7 @@ impl NewGuide {
 
     /// While the guide shows: the target it snapped to and its position by the pointer.
     pub fn overlays(&self, cx: &ToolContext) -> Vec<Overlay> {
-        self.at.map(|at| self.snap.overlays(cx, self.vertical, at, self.pointer)).unwrap_or_default()
+        self.at.map(|at| self.snap.overlays(cx, self.active_vertical, at, self.pointer)).unwrap_or_default()
     }
 }
 
@@ -397,6 +406,33 @@ mod tests {
         assert_eq!((at, ov.len()), (497.0, 1), "3 px off is beyond 2: only the readout {ov:?}");
         let (at, ov) = drag(&ToolContext { anchor_path_labels: false, measurement_labels: false, ..cx(&d, &s, &p) });
         assert_eq!((at, ov), (500.0, vec![]), "onto the artboard's edge, nothing said");
+    }
+
+    #[test]
+    fn alt_swaps_a_new_guides_orientation_even_at_the_same_numeric_position() {
+        let (d, _) = doc_with_rect();
+        let (s, p) = (Selection::default(), paint());
+        let c = ToolContext { smart_guides: false, snap_to_point: false, ..cx(&d, &s, &p) };
+        let mut g = NewGuide::new(&c, false, Some(0));
+        let default = Mods::default();
+        let expected = |vertical| Action::Preview("guide.add".into(), json!({"vertical":vertical,"pos":42.0,"artboard":0}));
+        assert_eq!(g.pointer(&c, &ev(PointerKind::Drag, 42.0, 42.0, default), true), vec![Action::Begin("New Guide".into()), expected(false)]);
+        assert_eq!(g.pointer(&c, &ev(PointerKind::Drag, 42.0, 42.0, Mods { alt: true, ..default }), true), vec![expected(true)]);
+        assert!(matches!(g.overlays(&c).last(),Some(Overlay::Measure{text,..}) if text=="X: 42.00 pt"));
+        assert_eq!(g.pointer(&c, &ev(PointerKind::Up, 42.0, 42.0, default), true), vec![expected(false), Action::Commit]);
+    }
+
+    #[test]
+    fn ruler_guide_ticks_and_labels_follow_the_custom_origin() {
+        let (d, _) = doc_with_rect();
+        let (s, p) = (Selection::default(), paint());
+        let c = ToolContext { ruler_origin: Point::new(2.0, -3.0), smart_guides: false, snap_to_point: false, ..cx(&d, &s, &p) };
+        let mut g = GuideSnap::new(&c);
+        assert_eq!(g.snap(&c, true, 223.0, true), 222.0);
+        assert_eq!(g.snap(&c, false, 21.0, true), 22.0);
+        assert!(matches!(g.overlays(&c,true,222.0,Point::ZERO).last(),Some(Overlay::Measure{text,..}) if text=="X: 220.00 pt"));
+        assert!(matches!(g.overlays(&c,false,22.0,Point::ZERO).last(),Some(Overlay::Measure{text,..}) if text=="Y: 25.00 pt"));
+        assert_eq!(g.snap(&c, true, 223.0, false), 223.0, "ordinary document coordinates do not move");
     }
 
     #[test]

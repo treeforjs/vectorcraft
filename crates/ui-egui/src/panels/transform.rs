@@ -52,8 +52,10 @@ fn artboard_fields(app: &mut VectorcraftApp, ui: &mut Ui, index: usize, r: Rect)
     let units = app.session.general_unit();
     let refi: usize = ui.data(|d| d.get_temp(egui::Id::new("refpt"))).unwrap_or(4);
     let link = app.session.prefs.constrain_proportions;
-    let rp = vectorcraft_geom::reference_point(r, refi);
-    let set = |app: &mut VectorcraftApp, x, y, w, h| {
+    let rp = crate::rulers::display(app, vectorcraft_geom::reference_point(r, refi));
+    let set = |app: &mut VectorcraftApp, x: Option<f64>, y: Option<f64>, w, h| {
+        let x = x.map(|v| crate::rulers::document_value(app, "x", v));
+        let y = y.map(|v| crate::rulers::document_value(app, "y", v));
         let n = artboard_rect(r, refi, x, y, w, h, link);
         let scale_art = crate::panels::artboards::scale_art(app);
         let p = json!({"index": index, "x": n.x0, "y": n.y0, "width": n.width(), "height": n.height(), "scaleArt": scale_art});
@@ -109,6 +111,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let link = app.session.prefs.constrain_proportions;
     let has = bounds.is_some();
     let rp = bx.map(|b| b.reference_point(refi));
+    let position = rp.map(|p| crate::rulers::display(app, p));
     ui.horizontal(|ui| {
         if let Some(i) = widgets::reference_point(ui, refi) {
             ui.data_mut(|d| d.insert_temp(egui::Id::new("refpt"), i));
@@ -117,8 +120,8 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         ui.add_enabled_ui(has, |ui| {
             egui::Grid::new("xfp-grid").num_columns(4).spacing([4.0, 6.0]).min_col_width(0.0).show(ui, |ui| {
                 widgets::dim_label(ui, "X:");
-                if let Some(v) = widgets::num_field(ui, "xfp-x", rp.map(|p| p.x), units, 80.0) {
-                    app.run("object.setBounds", json!({"x": v, "reference": refi})).ok();
+                if let Some(v) = widgets::num_field(ui, "xfp-x", position.map(|p| p.x), units, 80.0) {
+                    app.run("object.setBounds", json!({"x": crate::rulers::document_value(app, "x", v), "reference": refi})).ok();
                 }
                 widgets::dim_label(ui, "W:");
                 if let Some(v) = widgets::num_field(ui, "xfp-w", bounds.map(|b| b.width()), units, 80.0) {
@@ -126,8 +129,8 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
                 }
                 ui.end_row();
                 widgets::dim_label(ui, "Y:");
-                if let Some(v) = widgets::num_field(ui, "xfp-y", rp.map(|p| p.y), units, 80.0) {
-                    app.run("object.setBounds", json!({"y": v, "reference": refi})).ok();
+                if let Some(v) = widgets::num_field(ui, "xfp-y", position.map(|p| p.y), units, 80.0) {
+                    app.run("object.setBounds", json!({"y": crate::rulers::document_value(app, "y", v), "reference": refi})).ok();
                 }
                 widgets::dim_label(ui, "H:");
                 if let Some(v) = widgets::num_field(ui, "xfp-h", bounds.map(|b| b.height()), units, 80.0) {

@@ -45,10 +45,10 @@ fn params_take_defaults_and_stay_in_range() {
         PixelFx::RadialBlur { amount: 100.0, zoom: true, passes: 8 }
     );
     assert_eq!(fx("blur.radial", json!({"amount": -5, "quality": "nonsense"})), PixelFx::RadialBlur { amount: 1.0, zoom: false, passes: 6 });
-    assert_eq!(fx("blur.smart", json!({})), PixelFx::SmartBlur { radius: 3.0, threshold: 25.0, samples: 7 });
+    assert_eq!(fx("blur.smart", json!({})), PixelFx::SmartBlur { radius: 3.0, threshold: 25.0, samples: 7, mode: SmartMode::Normal });
     assert_eq!(
         fx("blur.smart", json!({"radius": "1e999", "threshold": -1, "quality": "low"})),
-        PixelFx::SmartBlur { radius: 3.0, threshold: 0.1, samples: 5 }
+        PixelFx::SmartBlur { radius: 3.0, threshold: 0.1, samples: 5, mode: SmartMode::Normal }
     );
     assert_eq!(fx("sharpen.unsharpMask", json!({})), PixelFx::UnsharpMask { amount: 0.5, radius: 1.0, threshold: 0.0 });
     assert_eq!(
@@ -56,6 +56,12 @@ fn params_take_defaults_and_stay_in_range() {
         PixelFx::UnsharpMask { amount: 5.0, radius: 0.1, threshold: 255.0 }
     );
     assert_eq!(fx("stylize.glowingEdges", json!({})), PixelFx::GlowingEdges { width: 2.0, brightness: 6.0, smoothness: 5.0 });
+    assert_eq!(fx("pixelate.mosaic", json!({"cellSize": 1e308})), PixelFx::Mosaic { cell_size: 200.0 });
+    assert_eq!(fx("pixelate.mosaic", json!({"cellSize": "1e999"})), PixelFx::Mosaic { cell_size: 10.0 });
+    assert_eq!(
+        fx("pixelate.colorHalftone", json!({"radius": -1e308, "angle1": -45, "angle2": 450, "angle3": null})),
+        PixelFx::ColorHalftone { radius: 2.0, angles: [315.0, 90.0, 90.0] }
+    );
     for id in PIXEL_EFFECTS {
         assert!(crate::is_raster(id) && crate::effect_info(id).is_some_and(|e| e.raster), "{id}");
     }
@@ -93,7 +99,10 @@ fn extreme_parameters_finish() {
     let tiny = PixelSpace { px: 1e-9, ..space(w, h) };
     let huge = PixelSpace { px: 1e9, center: Point::new(f64::MAX, -1e300), ..space(w, h) };
     for id in PIXEL_EFFECTS {
-        for p in [json!({"amount": 1e308, "radius": 1e308, "threshold": 1e308, "quality": "best"}), json!({"amount": 0, "radius": 0})] {
+        for p in [
+            json!({"amount": 1e308, "radius": 1e308, "threshold": 1e308, "cellSize": 1e308, "angle1": 1e308, "quality": "best"}),
+            json!({"amount": 0, "radius": 0, "cellSize": -1e308, "mode": "edgeOnly"}),
+        ] {
             for s in [tiny, huge, space(w, h)] {
                 let mut d = src.clone();
                 fx(id, p.clone()).apply(&mut d, w, h, &s);
@@ -197,6 +206,204 @@ fn smart_blur_smooths_noise_and_keeps_edges() {
 }
 
 #[test]
+fn smart_blur_modes_detect_transitions_without_outlining_transparency() {
+    let (w, h) = (24, 8);
+    let source = image(w, h, |x, _| {
+        if x < 2 {
+            [0; 4]
+        } else if x < 12 {
+            [40, 20, 0, 128]
+        } else {
+            [100, 100, 100, 128]
+        }
+    });
+    let mut edge = source.clone();
+    fx("blur.smart", json!({"radius": 2, "threshold": 30, "mode": "edgeOnly"})).apply(&mut edge, w, h, &space(w, h));
+    assert_eq!(at(&edge, w, 11, 4), [128; 4], "contrast produces a white edge at the original alpha");
+    assert_eq!(at(&edge, w, 7, 4), [0, 0, 0, 128], "flat colours become black");
+    assert_eq!(at(&edge, w, 2, 4), [0, 0, 0, 128], "transparency does not become a colour transition");
+    assert_eq!(at(&edge, w, 0, 4), [0; 4]);
+    let mut overlay = source.clone();
+    fx("blur.smart", json!({"radius": 2, "threshold": 30, "mode": "overlayEdge"})).apply(&mut overlay, w, h, &space(w, h));
+    assert_eq!(at(&overlay, w, 11, 4), [128; 4]);
+    assert_eq!(at(&overlay, w, 7, 4), at(&source, w, 7, 4), "overlay retains the original colour away from transitions");
+    let mut old = source.clone();
+    let mut explicit = source.clone();
+    fx("blur.smart", json!({})).apply(&mut old, w, h, &space(w, h));
+    fx("blur.smart", json!({"mode": "normal"})).apply(&mut explicit, w, h, &space(w, h));
+    assert_eq!(old, explicit, "old files without a mode keep Normal behavior");
+}
+
+#[test]
+fn mosaic_averages_covered_colours_and_preserves_alpha() {
+    let (w, h) = (8, 4);
+    let mut data = image(w, h, |x, _| match x {
+        2 => [100, 0, 0, 100],
+        4 => [0, 0, 200, 200],
+        _ => [0; 4],
+    });
+    fx("pixelate.mosaic", json!({"cellSize": 4})).apply(&mut data, w, h, &space(w, h));
+    assert_eq!(at(&data, w, 2, 2), [33, 0, 67, 100]);
+    assert_eq!(at(&data, w, 4, 2), [67, 0, 133, 200]);
+    assert_eq!(at(&data, w, 3, 2), [0; 4], "holes retain zero coverage");
+}
+
+#[test]
+fn pixelate_grid_is_unchanged_by_crop_translation_or_resolution() {
+    let (w, h) = (100, 100);
+    let source = image(w, h, |x, y| [((x * 17 + y * 7) % 256) as u8, ((x * 3 + y * 11) % 256) as u8, 60, 255]);
+    for id in [
+        "pixelate.mosaic",
+        "pixelate.colorHalftone",
+        "pixelate.crystallize",
+        "pixelate.pointillize",
+        "pixelate.fragment",
+        "pixelate.mezzotint",
+        "pixelate.facet",
+    ] {
+        let effect = fx(id, json!({"cellSize": 8, "radius": 6}));
+        let mut whole = source.clone();
+        effect.apply(&mut whole, w, h, &space(w, h));
+        let mut crop = image(80, 80, |x, y| at(&source, w, x + 10, y + 10));
+        let cropped_space = PixelSpace { to_doc: Affine::translate((10.0, 10.0)), ..space(w, h) };
+        effect.apply(&mut crop, 80, 80, &cropped_space);
+        for y in 40..60 {
+            for x in 40..60 {
+                assert_eq!(at(&whole, w, x, y), at(&crop, 80, x - 10, y - 10), "{id} resets phase or averages an incomplete cell");
+            }
+        }
+        let mut translated = source.clone();
+        let offset = vectorcraft_geom::Vec2::new(17.25, -13.75);
+        effect.apply(&mut translated, w, h, &PixelSpace { to_doc: Affine::translate(offset), center: space(w, h).center + offset, px: 1.0 });
+        assert_eq!(whole, translated, "{id} follows a translated object without changing its pattern");
+    }
+    let mut one = source.clone();
+    let mut two = image(w * 2, h * 2, |x, y| at(&source, w, x / 2, y / 2));
+    let effect = fx("pixelate.mosaic", json!({"cellSize": 8}));
+    effect.apply(&mut one, w, h, &space(w, h));
+    effect.apply(&mut two, w * 2, h * 2, &PixelSpace { to_doc: Affine::scale(0.5), px: 0.5, ..space(w, h) });
+    for y in 0..h {
+        for x in 0..w {
+            assert_eq!(at(&one, w, x, y), at(&two, w * 2, x * 2, y * 2), "Mosaic cell size must be in document units");
+        }
+    }
+}
+
+#[test]
+fn halftone_preserves_solid_channels_and_responds_to_screen_angles() {
+    let (w, h) = (128, 128);
+    for color in [[0, 0, 0, 255], [255; 4], [128, 0, 128, 128]] {
+        let mut data = image(w, h, |_, _| color);
+        fx("pixelate.colorHalftone", json!({})).apply(&mut data, w, h, &space(w, h));
+        assert!(data.as_chunks::<4>().0.iter().all(|p| *p == color), "solid channel/alpha changed: {color:?}");
+    }
+    let original = image(w, h, |_, _| grey(96));
+    let mut a = original.clone();
+    let mut b = original.clone();
+    fx("pixelate.colorHalftone", json!({"radius": 8.0 * std::f64::consts::SQRT_2, "angle1": 0, "angle2": 0, "angle3": 0})).apply(
+        &mut a,
+        w,
+        h,
+        &space(w, h),
+    );
+    fx("pixelate.colorHalftone", json!({"radius": 8.0 * std::f64::consts::SQRT_2, "angle1": 45, "angle2": 0, "angle3": 0})).apply(
+        &mut b,
+        w,
+        h,
+        &space(w, h),
+    );
+    assert!(a.as_chunks::<4>().0.iter().zip(b.as_chunks::<4>().0).any(|(a, b)| a[0] != b[0]));
+    assert!(a.as_chunks::<4>().0.iter().zip(b.as_chunks::<4>().0).all(|(a, b)| a[1..] == b[1..]), "one screen angle changes only its channel");
+    let mean = a.as_chunks::<4>().0.iter().map(|p| f64::from(p[0])).sum::<f64>() / (w * h) as f64;
+    assert!((mean - 96.0).abs() < 4.0, "dot coverage should preserve the cell's mean tone: {mean}");
+}
+
+#[test]
+fn crystal_seeds_and_pointillist_background_are_effective_and_repeatable() {
+    let (w, h) = (60, 60);
+    let source = image(w, h, |x, y| [((x * 4) % 128) as u8, ((y * 4) % 128) as u8, 0, 128]);
+    for id in ["pixelate.crystallize", "pixelate.pointillize"] {
+        let mut a = source.clone();
+        let mut b = source.clone();
+        fx(id, json!({"cellSize": 12, "seed": 1})).apply(&mut a, w, h, &space(w, h));
+        fx(id, json!({"cellSize": 12, "seed": 2})).apply(&mut b, w, h, &space(w, h));
+        assert_ne!(a, b, "{id} seed should choose different sites");
+        assert!(a.as_chunks::<4>().0.iter().all(|p| p[3] == 128));
+    }
+    let mut dots = image(w, h, |_, _| [128, 0, 0, 128]);
+    fx("pixelate.pointillize", json!({"cellSize": 12, "backgroundColor": "#0000ff"})).apply(&mut dots, w, h, &space(w, h));
+    assert!(dots.as_chunks::<4>().0.contains(&[128, 0, 0, 128]), "dot interiors retain source colour");
+    assert!(dots.as_chunks::<4>().0.contains(&[0, 0, 128, 128]), "spaces between dots take the selected background");
+    assert!(dots.as_chunks::<4>().0.iter().all(|p| p[0] <= p[3] && p[1] == 0 && p[2] <= p[3] && p[3] == 128));
+}
+
+#[test]
+fn fragment_places_four_copies_and_accounts_for_alpha_reach() {
+    let (w, h) = (21, 21);
+    let mut data = image(w, h, |x, y| if x == 10 && y == 10 { [200, 0, 0, 200] } else { [0; 4] });
+    let effect = fx("pixelate.fragment", json!({"offset": 3}));
+    effect.apply(&mut data, w, h, &space(w, h));
+    for (x, y) in [(7, 7), (13, 7), (7, 13), (13, 13)] {
+        assert_eq!(at(&data, w, x, y), [50, 0, 0, 50], "each translated copy has one quarter coverage");
+    }
+    assert_eq!(at(&data, w, 10, 10), [0; 4]);
+    assert_eq!(data.as_chunks::<4>().0.iter().map(|p| u32::from(p[3])).sum::<u32>(), 200);
+    assert_eq!(effect.outset(Rect::new(0.0, 0.0, 10.0, 10.0)), 3.0);
+    assert!(effect.reach().unwrap() >= 3.0 * std::f64::consts::SQRT_2);
+}
+
+#[test]
+fn mezzotint_types_and_seeds_produce_binary_neutral_or_saturated_colours() {
+    let (w, h) = (160, 160);
+    let source = image(w, h, |_, _| [80, 40, 80, 128]);
+    let mut previous = None;
+    for kind in [
+        "fineDots",
+        "mediumDots",
+        "grainyDots",
+        "coarseDots",
+        "shortStrokes",
+        "mediumStrokes",
+        "longStrokes",
+        "shortLines",
+        "mediumLines",
+        "longLines",
+    ] {
+        let mut data = source.clone();
+        fx("pixelate.mezzotint", json!({"type": kind, "seed": 12})).apply(&mut data, w, h, &space(w, h));
+        assert!(data.as_chunks::<4>().0.iter().all(|p| p[3] == 128 && p[..3].iter().all(|v| *v == 0 || *v == 128) && p[0] == p[2]));
+        if let Some(last) = previous {
+            assert_ne!(data, last, "{kind} changes the grain dimensions");
+        }
+        previous = Some(data);
+    }
+    let mut grey_image = image(w, h, |_, _| grey(100));
+    fx("pixelate.mezzotint", json!({})).apply(&mut grey_image, w, h, &space(w, h));
+    assert!(grey_image.as_chunks::<4>().0.iter().all(|p| p[0] == p[1] && p[1] == p[2]));
+    let mean = grey_image.as_chunks::<4>().0.iter().map(|p| f64::from(p[0])).sum::<f64>() / (w * h) as f64;
+    assert!((mean - 100.0).abs() < 5.0, "dither preserves expected tone: {mean}");
+}
+
+#[test]
+fn facet_groups_similar_colours_without_mixing_high_contrast_regions() {
+    let (w, h) = (8, 8);
+    let mut data = image(w, h, |x, _| {
+        grey(if x < 2 {
+            80
+        } else if x < 4 {
+            90
+        } else {
+            210
+        })
+    });
+    fx("pixelate.facet", json!({"cellSize": 8, "levels": 8})).apply(&mut data, w, h, &space(w, h));
+    for x in 0..4 {
+        assert_eq!(at(&data, w, x, 3), grey(85), "similar colours in the cell become one flat colour");
+    }
+    assert_eq!(at(&data, w, 5, 3), grey(210), "the high-contrast region stays separate");
+}
+
+#[test]
 fn unsharp_mask_overshoots_at_edges() {
     let (w, h) = (40, 10);
     let src = image(w, h, |x, _| grey(if x < 20 { 100 } else { 150 }));
@@ -246,14 +453,19 @@ fn gaussian_and_plane_blurs_keep_their_mass() {
     assert!((plane.iter().sum::<f32>() - 100.0).abs() < 0.5 && plane[15 * w + 13] > 0.0 && plane[13 * w + 15] > 0.0);
 }
 
-/// Timings on a 2000 × 2000 raster (`cargo test -p vectorcraft-effects --release -- --ignored
-/// --nocapture pixel_timings`).
+/// Timings on a 2000 × 2000 raster by default. VECTORCRAFT_PIXEL_SIDE (1..2900),
+/// VECTORCRAFT_PIXEL_PX (0.01..100) and VECTORCRAFT_PIXEL_FILTER select small/full-resolution
+/// or downsampled worst-case runs. Run this test executable under `/usr/bin/time -v` for peak RSS.
 #[test]
 #[ignore]
 fn pixel_timings() {
-    let (w, h) = (2000, 2000);
+    let size = std::env::var("VECTORCRAFT_PIXEL_SIDE").ok().and_then(|s| s.parse::<usize>().ok()).unwrap_or(2000).clamp(1, 2900);
+    let px =
+        std::env::var("VECTORCRAFT_PIXEL_PX").ok().and_then(|s| s.parse::<f64>().ok()).filter(|n| n.is_finite()).unwrap_or(1.0).clamp(0.01, 100.0);
+    let filter = std::env::var("VECTORCRAFT_PIXEL_FILTER").ok();
+    let (w, h) = (size, size);
     let src = image(w, h, |x, y| [(x % 256) as u8, (y % 256) as u8, ((x ^ y) % 256) as u8, 255]);
-    let s = PixelSpace { to_doc: Affine::IDENTITY, px: 1.0, center: Point::new(1000.0, 1000.0) };
+    let s = PixelSpace { to_doc: Affine::scale(px), px, center: Point::new(w as f64 * px / 2.0, h as f64 * px / 2.0) };
     let cases = [
         ("blur.radial", json!({"quality": "draft"})),
         ("blur.radial", json!({"quality": "good"})),
@@ -261,11 +473,21 @@ fn pixel_timings() {
         ("blur.smart", json!({"quality": "low"})),
         ("blur.smart", json!({"quality": "high", "radius": 30})),
         ("sharpen.unsharpMask", json!({"radius": 20})),
+        ("pixelate.mosaic", json!({"cellSize": 10})),
+        ("pixelate.colorHalftone", json!({"radius": 8})),
+        ("pixelate.crystallize", json!({"cellSize": 10})),
+        ("pixelate.pointillize", json!({"cellSize": 10})),
+        ("pixelate.fragment", json!({"offset": 2})),
+        ("pixelate.mezzotint", json!({"type": "fineDots"})),
+        ("pixelate.facet", json!({"cellSize": 3})),
     ];
     for (id, p) in cases {
+        if filter.as_ref().is_some_and(|wanted| wanted != id) {
+            continue;
+        }
         let mut d = src.clone();
         let t = std::time::Instant::now();
         fx(id, p.clone()).apply(&mut d, w, h, &s);
-        println!("{id} {p}: {:?}", t.elapsed());
+        println!("{id} {p} {w}x{h} {px}pt/px: {:?}", t.elapsed());
     }
 }

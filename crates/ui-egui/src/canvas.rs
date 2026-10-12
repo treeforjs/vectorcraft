@@ -426,7 +426,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     crate::place::paint_drop_highlight(app, ui.ctx(), &painter, rect);
 
     if app.ui.view.rulers && app.ui.screen_mode < 3 {
-        rulers(ui, full, &xf, app.hover_doc, app.session.general_unit(), &t);
+        rulers(ui, full, &xf, app.hover_doc, app.session.general_unit(), crate::rulers::origin(app), &t);
     }
     if app.ui.task_bar && !app.session.tool_busy() && app.ui.screen_mode < 3 {
         task_bar(app, ui, &xf);
@@ -1082,14 +1082,15 @@ fn ruler_guides(app: &mut VectorcraftApp, ui: &Ui, full: egui::Rect, canvas: egu
             app.status(e.to_string());
         }
     }
-    let corner = ui.interact(corner, egui::Id::new("ruler-corner"), Sense::click());
+    let corner = ui.interact(corner, egui::Id::new("ruler-corner"), Sense::click_and_drag());
+    crate::rulers::corner(app, ui, &corner, canvas, xf);
     corner.context_menu(|ui| crate::menus::ruler_menu_body(app, ui, &mut unit_clicked));
     if let Some((id, p)) = unit_clicked {
         crate::menus::invoke(app, &id, p);
     }
 }
 
-fn rulers(ui: &Ui, full: egui::Rect, xf: &Xf, hover: Option<Point>, unit: Unit, t: &Tokens) {
+fn rulers(ui: &Ui, full: egui::Rect, xf: &Xf, hover: Option<Point>, unit: Unit, origin: Point, t: &Tokens) {
     let p = ui.painter();
     let [top, left, corner] = ruler_rects(full);
     for r in [top, left, corner] {
@@ -1121,12 +1122,10 @@ fn rulers(ui: &Ui, full: egui::Rect, xf: &Xf, hover: Option<Point>, unit: Unit, 
     // (#826): at 0° the top one reads x and the left one y. `draw` gets each tick's distance
     // (screen points) from `from` along the ruler, and its value in `unit`.
     let ticks = |from: Pos2, to: Pos2, axis: vectorcraft_geom::Vec2, draw: &mut dyn FnMut(f32, f64)| {
-        let along = |s: Pos2| xf.to_doc(s).to_vec2().dot(axis);
+        let along = |s: Pos2| (xf.to_doc(s) - origin).dot(axis);
         let (a, b) = (along(from), along(to));
-        let mut v = (a / per / minor).floor() * minor;
-        while v * per <= b {
-            draw(((v * per - a) * xf.zoom) as f32, v);
-            v += minor;
+        for (offset, value) in crate::rulers::ticks(a, b, per, minor, xf.zoom) {
+            draw(offset, value);
         }
     };
     // The canvas's directions along the screen's x and y.
@@ -2085,7 +2084,7 @@ mod tests {
         let [top, left, _] = ruler_rects(full);
         for deg in [0.0_f64, 30.0, 90.0, 135.0, 200.0] {
             let xf = Xf { rect: full, zoom: 1.0, center: Point::new(300.0, 200.0), rot: deg.to_radians() };
-            let mut out = ctx.run_ui(Default::default(), |ui| rulers(ui, full, &xf, None, Unit::Points, &Tokens::get(ui.ctx())));
+            let mut out = ctx.run_ui(Default::default(), |ui| rulers(ui, full, &xf, None, Unit::Points, Point::ZERO, &Tokens::get(ui.ctx())));
             out.textures_delta.clear();
             // The ticks' positions along each ruler.
             let along = |ruler: egui::Rect, x: bool| -> Vec<f32> {
@@ -2248,6 +2247,50 @@ mod tests {
         // At the canvas's centre: the square.
         click(&mut app, rect.center());
         assert_eq!(selected(&app), vec![vectorcraft_doc::NodeId(id)]);
+    }
+
+    #[test]
+    fn ruler_origin_drag_reset_cancel_and_stale_document_are_view_only() {
+        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        app.run("file.new", json!({"width":400,"height":300})).unwrap();
+        app.ui.view.rulers = true;
+        app.select_tool("rectangle");
+        let ctx = egui::Context::default();
+        frame(&mut app, &ctx, vec![]);
+        let rect = app.canvas_rect.unwrap();
+        let xf = Xf::new(rect, app.view().unwrap());
+        let corner = rect.left_top() - vec2(RULER / 2.0, RULER / 2.0);
+        let target = rect.center() + vec2(35.0, 21.0);
+        let button = |pos, pressed| egui::Event::PointerButton { pos, button: egui::PointerButton::Primary, pressed, modifiers: Default::default() };
+        let begin = |app: &mut VectorcraftApp| {
+            frame(app, &ctx, vec![egui::Event::PointerMoved(corner)]);
+            frame(app, &ctx, vec![button(corner, true)]);
+            frame(app, &ctx, vec![egui::Event::PointerMoved(target)]);
+        };
+        let original = app.session.active().unwrap().doc.clone();
+        begin(&mut app);
+        assert_eq!(crate::rulers::origin(&app), Point::ZERO, "drag is a preview until release");
+        frame(&mut app, &ctx, vec![button(target, false)]);
+        assert_eq!(crate::rulers::origin(&app), xf.to_doc(target));
+        assert!(std::sync::Arc::ptr_eq(&original, &app.session.active().unwrap().doc));
+        assert!(!app.session.active().unwrap().is_dirty());
+        assert!(app.session.active().unwrap().doc.guides.is_empty());
+        // Double clicking the corner resets the selected coordinate system.
+        for _ in 0..2 {
+            frame(&mut app, &ctx, vec![egui::Event::PointerMoved(corner), button(corner, true)]);
+            frame(&mut app, &ctx, vec![button(corner, false)]);
+        }
+        assert_eq!(crate::rulers::origin(&app), Point::ZERO);
+        // A released drag outside the canvas is cancelled.
+        begin(&mut app);
+        frame(&mut app, &ctx, vec![egui::Event::PointerMoved(corner), button(corner, false)]);
+        assert_eq!(crate::rulers::origin(&app), Point::ZERO);
+        // A command can switch documents during a drag; its new document must be untouched.
+        begin(&mut app);
+        app.run("file.new", json!({})).unwrap();
+        frame(&mut app, &ctx, vec![button(target, false)]);
+        assert_eq!(crate::rulers::origin(&app), Point::ZERO);
+        assert!(!app.session.active().unwrap().is_dirty());
     }
 
     #[test]

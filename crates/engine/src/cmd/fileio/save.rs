@@ -265,11 +265,12 @@ fn doc_to_save(st: &DocState, f: &Format) -> Arc<Document> {
         return st.doc.clone();
     }
     let open = st.layers_open.saved(&st.doc);
-    if st.doc.last_view == st.view && st.doc.layers_open == open {
+    if st.doc.last_view == st.view && st.doc.layers_open == open && st.doc.rulers == st.rulers {
         return st.doc.clone();
     }
     let mut d = (*st.doc).clone();
     d.last_view = st.view.clone();
+    d.rulers = st.rulers.clone();
     d.layers_open = open;
     Arc::new(d)
 }

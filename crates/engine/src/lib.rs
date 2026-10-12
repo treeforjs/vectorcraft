@@ -148,6 +148,8 @@ pub struct DocState {
     /// The view saved into native files (`Document::last_view`); the UI keeps it current before a
     /// save and restores it when the document opens.
     pub view: Option<vectorcraft_doc::SavedView>,
+    /// Per-document ruler coordinates, saved with native view state, not undoable artwork.
+    pub rulers: vectorcraft_doc::rulers::RulerSettings,
     /// Restored by Data Recovery: the title says "[Recovered]" and Save asks where to save it
     /// (suggesting `path`, the file it was copied from) instead of overwriting that file.
     pub recovered: bool,
@@ -222,6 +224,7 @@ impl DocState {
         // The saved view and open Layers rows live here while the document is open (saves write
         // them back).
         let view = doc.last_view.take();
+        let rulers = std::mem::take(&mut doc.rulers);
         let saved_open = doc.layers_open.take();
         let layers_open = OpenRows::new(&doc, saved_open);
         let doc = Arc::new(doc);
@@ -246,6 +249,7 @@ impl DocState {
             save_options: Default::default(),
             converted: false,
             view,
+            rulers,
             recovered: false,
             recovery: None,
             print_tiling: false,
@@ -1043,6 +1047,7 @@ impl Session {
         st.imported_from = old.imported_from.clone();
         st.import_losses = old.import_losses.clone();
         st.view = old.view.clone();
+        st.rulers = old.rulers.clone();
         st.layers_open = old.layers_open.clone();
         let old = std::mem::replace(&mut self.docs[index], st);
         if let Some(stash) = &mut self.batch_stash {

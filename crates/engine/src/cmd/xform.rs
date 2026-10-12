@@ -369,6 +369,7 @@ fn sample_color(s: &mut Session, p: &Value) -> Result<Value> {
 // ---------- artboards ----------
 
 fn artboard_move(s: &mut Session, p: &Value) -> Result<Value> {
+    let reserved = s.doc()?.rulers.artboard_origins.keys().next_back().copied();
     let i = p.get("index").and_then(Value::as_u64).ok_or_else(|| bad("artboard.move", "missing index"))? as usize;
     let dv = Vec2::new(f64_or(p, "dx", 0.0), f64_or(p, "dy", 0.0));
     let art = super::panelcmds::artboard_art(s, i, bool_or(p, "moveArt", false))?;
@@ -377,7 +378,7 @@ fn artboard_move(s: &mut Session, p: &Value) -> Result<Value> {
     let (index, moved) = s.edit(if copy { "Duplicate Artboard" } else { "Move Artboard" }, |d, _| {
         // A copy keeps the artboard (and its art) where they are and moves duplicates instead.
         if copy {
-            return super::panelcmds::copy_artboard(d, i, dv, &art, scale_strokes);
+            return super::panelcmds::copy_artboard(d, i, dv, &art, scale_strokes, reserved);
         }
         let a = d.artboards.get_mut(i).ok_or_else(|| EngineError::Other("no such artboard".into()))?;
         a.rect = a.rect + dv;

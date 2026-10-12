@@ -3810,3 +3810,36 @@ axis	Both	Обидві
 @msg	Return to the document where Effect Gallery was opened	Поверніться до документа, у якому відкрито галерею ефектів
 @msg	The effect stack must be an array with at most 128 effects.	Стек має бути масивом щонайбільше зі 128 ефектів.
 @msg	The effect stack contains an invalid entry.	Стек ефектів містить недійсний запис.
+
+# Pixelate filters and Smart Blur modes.
+	Pixelate	Пікселізація
+	Mosaic	Мозаїка
+	Mosaic…	Мозаїка…
+	Color Halftone	Кольоровий півтон
+	Color Halftone…	Кольоровий півтон…
+	Edge Only	Лише краї
+	Overlay Edge	Накладання країв
+	Crystallize	Кристалізація
+	Crystallize…	Кристалізація…
+	Pointillize	Пуантилізм
+	Pointillize…	Пуантилізм…
+	Fit	Вмістити
+	Fragment	Фрагментація
+	Fragment…	Фрагментація…
+	Mezzotint	Мецо-тинто
+	Mezzotint…	Мецо-тинто…
+	Facet	Грані
+	Facet…	Грані…
+	Fine Dots	Дрібні точки
+	Medium Dots	Середні точки
+	Grainy Dots	Зернисті точки
+	Coarse Dots	Великі точки
+	Short Strokes	Короткі штрихи
+	Medium Strokes	Середні штрихи
+	Long Strokes	Довгі штрихи
+	Short Lines	Короткі лінії
+	Medium Lines	Середні лінії
+	Long Lines	Довгі лінії
+	Change to Artboard Rulers	Перейти до лінійок монтажної області
+	Ruler Origin	Початок лінійок
+	Ruler Coordinates	Координати лінійок

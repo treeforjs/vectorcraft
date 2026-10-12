@@ -2717,3 +2717,36 @@
 	Effect Stack	Pilha de efeitos
 	Preview of the first selected object	Prévia do primeiro objeto selecionado
 	Raster filters run from top to bottom	Os filtros raster são aplicados de cima para baixo
+
+# Pixelate filters and Smart Blur modes.
+	Pixelate	Pixelizar
+	Mosaic	Mosaico
+	Mosaic…	Mosaico…
+	Color Halftone	Meio-tom colorido
+	Color Halftone…	Meio-tom colorido…
+	Edge Only	Somente arestas
+	Overlay Edge	Sobrepor arestas
+	Crystallize	Cristalizar
+	Crystallize…	Cristalizar…
+	Pointillize	Pontilhismo
+	Pointillize…	Pontilhismo…
+	Fit	Ajustar
+	Fragment	Fragmentar
+	Fragment…	Fragmentar…
+	Mezzotint	Mezzotinta
+	Mezzotint…	Mezzotinta…
+	Facet	Facetas
+	Facet…	Facetas…
+	Fine Dots	Pontos finos
+	Medium Dots	Pontos médios
+	Grainy Dots	Pontos granulados
+	Coarse Dots	Pontos grossos
+	Short Strokes	Traços curtos
+	Medium Strokes	Traços médios
+	Long Strokes	Traços longos
+	Short Lines	Linhas curtas
+	Medium Lines	Linhas médias
+	Long Lines	Linhas longas
+	Change to Artboard Rulers	Alterar para réguas da prancheta
+	Ruler Origin	Origem das réguas
+	Ruler Coordinates	Coordenadas das réguas

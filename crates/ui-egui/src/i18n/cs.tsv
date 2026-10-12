@@ -658,3 +658,36 @@
 	Effect Stack	Zásobník efektů
 	Preview of the first selected object	Náhled prvního vybraného objektu
 	Raster filters run from top to bottom	Rastrové filtry se aplikují shora dolů
+
+# Pixelate filters and Smart Blur modes.
+	Pixelate	Pixelizace
+	Mosaic	Mozaika
+	Mosaic…	Mozaika…
+	Color Halftone	Barevný polotón
+	Color Halftone…	Barevný polotón…
+	Edge Only	Pouze hrany
+	Overlay Edge	Překrytí hran
+	Crystallize	Krystalizace
+	Crystallize…	Krystalizace…
+	Pointillize	Pointilismus
+	Pointillize…	Pointilismus…
+	Fit	Přizpůsobit
+	Fragment	Fragmentace
+	Fragment…	Fragmentace…
+	Mezzotint	Mezzotinta
+	Mezzotint…	Mezzotinta…
+	Facet	Fazety
+	Facet…	Fazety…
+	Fine Dots	Jemné body
+	Medium Dots	Střední body
+	Grainy Dots	Zrnité body
+	Coarse Dots	Hrubé body
+	Short Strokes	Krátké tahy
+	Medium Strokes	Střední tahy
+	Long Strokes	Dlouhé tahy
+	Short Lines	Krátké čáry
+	Medium Lines	Střední čáry
+	Long Lines	Dlouhé čáry
+	Change to Artboard Rulers	Přepnout na pravítka kreslicího plátna
+	Ruler Origin	Počátek pravítek
+	Ruler Coordinates	Souřadnice pravítek

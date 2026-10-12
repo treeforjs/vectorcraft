@@ -268,7 +268,7 @@ pub fn control_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
                 if let Some(b) = app.selection_box()
                     && ui.available_width() >= INLINE_TRANSFORM_WIDTH
                 {
-                    let c = b.center();
+                    let c = crate::rulers::display(app, b.center());
                     let link = app.session.prefs.constrain_proportions;
                     for (k, lbl, v) in [("x", "X:", c.x), ("y", "Y:", c.y), ("width", "W:", b.rect.width()), ("height", "H:", b.rect.height())] {
                         // The W/H link sits between W and H.
@@ -277,7 +277,8 @@ pub fn control_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
                         }
                         widgets::field_label(ui, egui::RichText::new(tl!(lbl)).size(12.0).color(t.text_dim));
                         if let Some(nv) = widgets::num_field(ui, ("cb", k), Some(v), units, 80.0) {
-                            app.run("object.setBounds", json!({k: nv, "reference": 4, "proportional": link})).ok();
+                            app.run("object.setBounds", json!({k: crate::rulers::document_value(app, k, nv), "reference": 4, "proportional": link}))
+                                .ok();
                         }
                     }
                 }

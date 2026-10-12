@@ -3466,3 +3466,36 @@ axis	Both	两者
 	Effect Stack	效果堆叠
 	Preview of the first selected object	第一个所选对象的预览
 	Raster filters run from top to bottom	栅格滤镜从上到下应用
+
+# Pixelate filters and Smart Blur modes.
+	Pixelate	像素化
+	Mosaic	马赛克
+	Mosaic…	马赛克…
+	Color Halftone	彩色半调
+	Color Halftone…	彩色半调…
+	Edge Only	仅边缘
+	Overlay Edge	叠加边缘
+	Crystallize	晶格化
+	Crystallize…	晶格化…
+	Pointillize	点彩化
+	Pointillize…	点彩化…
+	Fit	适合
+	Fragment	碎片化
+	Fragment…	碎片化…
+	Mezzotint	铜版雕刻
+	Mezzotint…	铜版雕刻…
+	Facet	分面
+	Facet…	分面…
+	Fine Dots	细点
+	Medium Dots	中点
+	Grainy Dots	颗粒点
+	Coarse Dots	粗点
+	Short Strokes	短描边
+	Medium Strokes	中描边
+	Long Strokes	长描边
+	Short Lines	短线
+	Medium Lines	中线
+	Long Lines	长线
+	Change to Artboard Rulers	切换为画板标尺
+	Ruler Origin	标尺原点
+	Ruler Coordinates	标尺坐标

@@ -3819,3 +3819,36 @@ theme	Appearance	外観
 @msg	Return to the document where Effect Gallery was opened	効果ギャラリーを開いたドキュメントに戻ってください
 @msg	The effect stack must be an array with at most 128 effects.	効果スタックは最大128個の効果を含む配列で指定してください。
 @msg	The effect stack contains an invalid entry.	効果スタックに無効な項目があります。
+
+# Pixelate filters and Smart Blur modes.
+	Pixelate	ピクセル化
+	Mosaic	モザイク
+	Mosaic…	モザイク…
+	Color Halftone	カラーハーフトーン
+	Color Halftone…	カラーハーフトーン…
+	Edge Only	エッジのみ
+	Overlay Edge	エッジを重ねる
+	Crystallize	結晶化
+	Crystallize…	結晶化…
+	Pointillize	点描
+	Pointillize…	点描…
+	Fit	全体表示
+	Fragment	断片化
+	Fragment…	断片化…
+	Mezzotint	メゾチント
+	Mezzotint…	メゾチント…
+	Facet	面分割
+	Facet…	面分割…
+	Fine Dots	細かい点
+	Medium Dots	中くらいの点
+	Grainy Dots	粒状の点
+	Coarse Dots	粗い点
+	Short Strokes	短いストローク
+	Medium Strokes	中くらいのストローク
+	Long Strokes	長いストローク
+	Short Lines	短い線
+	Medium Lines	中くらいの線
+	Long Lines	長い線
+	Change to Artboard Rulers	アートボード定規に切り替え
+	Ruler Origin	定規の原点
+	Ruler Coordinates	定規の座標

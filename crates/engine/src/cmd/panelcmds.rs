@@ -91,12 +91,13 @@ pub(crate) fn beside_artboards(d: &vectorcraft_doc::Document, rect: Rect) -> Vec
 }
 
 fn artboard_duplicate(s: &mut Session, p: &Value) -> Result<Value> {
+    let reserved = s.doc()?.rulers.artboard_origins.keys().next_back().copied();
     let (i, art) = board_and_art(s, p);
     let art = artboard_art(s, i, art)?;
     let scale_strokes = s.prefs.scale_strokes;
     let (index, ids) = s.edit("Duplicate Artboard", |d, _| {
         let dv = d.artboards.get(i).map(|a| beside_artboards(d, a.rect)).unwrap_or_default();
-        copy_artboard(d, i, dv, &art, scale_strokes)
+        copy_artboard(d, i, dv, &art, scale_strokes, reserved)
     })?;
     Ok(json!({"index": index, "ids": ids.iter().map(|i| i.0).collect::<Vec<_>>()}))
 }
@@ -145,9 +146,10 @@ pub(crate) fn copy_artboard(
     dv: Vec2,
     art: &[NodeId],
     scale_strokes: bool,
+    reserved: Option<u32>,
 ) -> Result<(usize, Vec<NodeId>)> {
     let src = d.artboards.get(i).cloned().ok_or_else(|| EngineError::Other("no such artboard".into()))?;
-    let index = push_artboard_copy(d, &src, src.rect + dv);
+    let index = push_artboard_copy(d, &src, src.rect + dv, reserved)?;
     // Its guides come along.
     if let Some(id) = d.artboards.get(index).map(|a| a.id) {
         d.copy_artboard_guides(src.id, id, dv);
@@ -164,9 +166,14 @@ pub(crate) fn copy_artboard(
 
 /// Add a copy of artboard `src` at `rect`, with an id of its own and its name, or `<name> copy`
 /// (`<name> copy 2`…) when that is taken → its index.
-pub(crate) fn push_artboard_copy(d: &mut vectorcraft_doc::Document, src: &vectorcraft_doc::Artboard, rect: Rect) -> usize {
+pub(crate) fn push_artboard_copy(
+    d: &mut vectorcraft_doc::Document,
+    src: &vectorcraft_doc::Artboard,
+    rect: Rect,
+    reserved: Option<u32>,
+) -> Result<usize> {
     let mut a = src.clone();
-    a.id = d.artboards.iter().map(|a| a.id).max().unwrap_or(0).saturating_add(1);
+    a.id = super::rulers::next_artboard_id(d, reserved, "artboard.copy")?;
     let taken = |name: &str| d.artboards.iter().any(|a| a.name == name);
     a.name = [src.name.clone(), format!("{} copy", src.name)]
         .into_iter()
@@ -175,7 +182,7 @@ pub(crate) fn push_artboard_copy(d: &mut vectorcraft_doc::Document, src: &vector
         .unwrap_or_default();
     a.rect = rect;
     d.artboards.push(a);
-    d.artboards.len() - 1
+    Ok(d.artboards.len() - 1)
 }
 
 // ---------- text ----------

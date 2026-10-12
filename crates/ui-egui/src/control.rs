@@ -86,6 +86,7 @@ pub fn inspect(app: &VectorcraftApp, ctx: &egui::Context) -> Value {
         },
         // The Free Transform tool's widget, where it shows.
         "freeTransformWidget": crate::free_transform::rect(ctx).map(|r| json!([r.left(), r.top(), r.width(), r.height()])),
+        "rulers": app.session.active().map(|s| json!({"settings": s.rulers, "origin": [crate::rulers::origin(app).x, crate::rulers::origin(app).y], "artboard": crate::rulers::active_artboard(app)})),
         "view": app.view().map(|v| serde_json::to_value(v).unwrap_or_default()),
         "canvasRect": app.canvas_rect.map(|c| json!([c.left(), c.top(), c.width(), c.height()])),
         "window": [r.width(), r.height()],
