@@ -1628,10 +1628,12 @@ impl Writer<'_> {
         let resolved = doc.inline_resolved(t);
         let t = &*resolved;
         let inline = t.runs.iter().any(|r| r.inline.is_some());
+        let leaders = t.runs.iter().any(|r| r.text.contains('\t'))
+            && std::iter::once(&t.para).chain(&t.paras).any(|p| p.tabs.iter().any(|s| !s.leader.is_empty()));
         let outlined = self.opts.outline_text || t.vertical || (inline && matches!(t.kind, TextKind::OnPath { .. }));
         let chars = |w: &mut Self, n: &Node| if outlined { w.text_outlines(n, t) } else { w.text(n, t) };
         let painted = n.appearance.items.iter().any(|i| i.visible() && !i.paint().is_none());
-        if !painted && !inline {
+        if !painted && !inline && !leaders {
             return chars(self, n);
         }
         let id = self.id_attr(n);
@@ -1721,6 +1723,10 @@ impl Writer<'_> {
             return self.text_outlines(n, t);
         }
         if let TextKind::OnPath { path, start, end } = &t.kind {
+            if !lay.tab_leaders.is_empty() {
+                self.warn("tab leaders on a path are outlined to preserve their placement");
+                return self.text_outlines(n, t);
+            }
             // `<textPath>` has a start offset only: an end bracket, Align to Path and Spacing
             // keep their look as outlines.
             if end.is_some() || t.path_align != vectorcraft_doc::PathAlign::Baseline || t.path_spacing != 0.0 {
@@ -1784,6 +1790,18 @@ impl Writer<'_> {
         }
         s.push_str("</text>");
         self.line(&s);
+        // Ordinary text stays editable/searchable. Leaders are additional vector paint with
+        // the tab character's appearance, inside the same object-transparency group.
+        let saved = self.xf;
+        self.xf = saved * t.xf;
+        for leader in &lay.tab_leaders {
+            let Some(run) = t.runs.get(leader.run) else { continue };
+            let pd = PathData::from_bezpath(&leader.outline);
+            let glyphs = Node::path(NodeId(u64::MAX), pd.clone(), run.style.appearance());
+            let d = self.path_d(&pd, self.xf);
+            self.shape(&glyphs, &d, &[&pd], FillRule::NonZero, Some(lay.bounds));
+        }
+        self.xf = saved;
     }
 
     /// One line of laid-out text starting at `start`. Default: a positioned `<tspan>` per segment

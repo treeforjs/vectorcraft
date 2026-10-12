@@ -15,7 +15,9 @@ use crate::hyphen::hyphen_points;
 use crate::shape::{
     Punct, SGlyph, Tcy, cap_x_heights, hyphen_glyph, is_cjk, no_line_end, no_line_start, punct, shape_range, soft_line_start, style_metrics,
 };
-use crate::{Composer, FirstBaseline, InlineGlyph, LayoutOptions, LineInfo, OtFeatures, PositionedGlyph, TextLayout, VerticalAlign};
+use crate::{Composer, FirstBaseline, InlineGlyph, LayoutOptions, LineInfo, OtFeatures, PositionedGlyph, TabLeader, TextLayout, VerticalAlign};
+
+mod leaders;
 
 const EPS: f64 = 1e-6;
 
@@ -146,12 +148,13 @@ pub fn layout(db: &FontDb, t: &TextObject) -> TextLayout {
     layout_with(db, t, &opts)
 }
 
-/// The underline and strikethrough bars of `t` laid out as `layout` (#847): per run and line, a
+/// Tab leaders and the underline and strikethrough bars of `t` laid out as `layout` (#847): per run and line, a
 /// bar from the stretch's first glyph to its last one's advance, placed and sized by the font's
 /// own underline and strikeout metrics through the glyph's transform (so the size, baseline shift
-/// and scaling follow) → (run, bar in text space). Type on a path and vertical type have none yet.
+/// and scaling follow) → (run, paint in text space). Underline/strike bars on a path and in
+/// vertical type remain unsupported; tab leaders follow both kinds of layout.
 pub fn decorations(layout: &TextLayout, db: &FontDb, t: &TextObject) -> Vec<(usize, BezPath)> {
-    let mut out = vec![];
+    let mut out: Vec<_> = layout.tab_leaders.iter().map(|leader| (leader.run, leader.outline.clone())).collect();
     if layout.on_path || layout.vertical {
         return out;
     }
@@ -339,10 +342,14 @@ fn layout_once(db: &FontDb, t: &TextObject, opts: &LayoutOptions) -> TextLayout 
             i.xf = line_xf * i.xf;
             i.bounds = line_xf.transform_rect_bbox(i.bounds);
         }
+        for leader in &mut cx.out.tab_leaders {
+            leader.outline.apply_affine(line_xf);
+        }
         cx.out.vertical = true;
         cx.out.line_xf = line_xf;
     }
     finish_bounds(&mut cx.out);
+    cx.out.overflow |= cx.out.leader_limit;
     cx.out
 }
 
@@ -561,6 +568,11 @@ fn finish_bounds(out: &mut TextLayout) {
     for i in &out.inlines {
         add(i.bounds);
     }
+    for leader in &out.tab_leaders {
+        if !leader.outline.elements().is_empty() {
+            add(leader.outline.bounding_box());
+        }
+    }
     if !out.on_path {
         for l in &out.lines {
             add(xf.transform_rect_bbox(Rect::new(l.x0.min(l.x1), l.baseline - l.ascent, l.x0.max(l.x1), l.baseline + l.descent)));
@@ -650,6 +662,10 @@ fn align_vertically(cx: &mut Ctx<'_>, paras: &[Range<usize>], t: &TextObject, re
                 i.bounds = m.transform_rect_bbox(i.bounds);
             }
         }
+        for leader in &mut cx.out.tab_leaders {
+            let d = offs.get(leader.line).copied().unwrap_or(0.0);
+            leader.outline.apply_affine(Affine::translate((0.0, d)));
+        }
         return;
     }
     let laid_out = |out: &TextLayout| out.lines.last().map_or(0, |l| l.end);
@@ -684,12 +700,25 @@ fn align_vertically(cx: &mut Ctx<'_>, paras: &[Range<usize>], t: &TextObject, re
             std::mem::take(&mut cx.out.lines),
             std::mem::take(&mut cx.out.inlines),
             std::mem::replace(&mut cx.out.overflow, false),
+            std::mem::take(&mut cx.out.tab_leaders),
+            std::mem::take(&mut cx.out.leader_glyphs),
+            std::mem::take(&mut cx.out.leader_elements),
+            std::mem::take(&mut cx.out.leader_limit),
         );
         flow(cx, paras, t, Some(regions));
         if laid_out(&cx.out) < before {
             // Text no longer fits (lines got narrower, or flow around a wrap object): undo the
             // pass and try a smaller step.
-            (cx.out.glyphs, cx.out.lines, cx.out.inlines, cx.out.overflow) = prev;
+            (
+                cx.out.glyphs,
+                cx.out.lines,
+                cx.out.inlines,
+                cx.out.overflow,
+                cx.out.tab_leaders,
+                cx.out.leader_glyphs,
+                cx.out.leader_elements,
+                cx.out.leader_limit,
+            ) = prev;
             for (r, (shift, gap)) in regions.iter_mut().zip(saved) {
                 r.shift = shift;
                 r.gap = gap;
@@ -1017,7 +1046,7 @@ impl Pen<'_> {
 /// Advance of a tab at pen position `x`: up to the next stop after it (explicit stops first, then
 /// every ½ inch). Right, centre and decimal stops align the text that follows (`rest`, up to the
 /// next tab) on the stop.
-fn tab_advance(tabs: &[vectorcraft_doc::TabStop], origin: f64, x: f64, rest: &[SGlyph]) -> f64 {
+fn tab_advance<'a>(tabs: &'a [vectorcraft_doc::TabStop], origin: f64, x: f64, rest: &[SGlyph]) -> (f64, Option<&'a str>) {
     use vectorcraft_doc::TabAlign;
     let rel = x - origin;
     let seg: Vec<&SGlyph> = rest.iter().take_while(|g| g.ch != '\t').collect();
@@ -1030,14 +1059,14 @@ fn tab_advance(tabs: &[vectorcraft_doc::TabStop], origin: f64, x: f64, rest: &[S
     };
     let explicit = tabs.iter().find_map(|t| {
         let at = target(t.position, t.align, t.align_on);
-        (at > rel + 1e-6).then_some(at)
+        (at > rel + 1e-6).then_some((at, t.leader.as_str()))
     });
-    let at = explicit.unwrap_or_else(|| {
+    let at = explicit.map(|(at, _)| at).unwrap_or_else(|| {
         let last = tabs.iter().map(|t| t.position).fold(0.0, f64::max).max(0.0);
         let base = rel.max(last);
         ((base / vectorcraft_doc::text::DEFAULT_TAB_INTERVAL).floor() + 1.0) * vectorcraft_doc::text::DEFAULT_TAB_INTERVAL
     });
-    (at - rel).max(0.0)
+    ((at - rel).max(0.0), explicit.map(|(_, leader)| leader))
 }
 
 /// Greedy break: returns (end glyph index, hyphenated) for a line starting at `i` of `width`.
@@ -1603,11 +1632,12 @@ fn flow(cx: &mut Ctx<'_>, paras: &[Range<usize>], t: &TextObject, regions: Optio
                 let j = i + offset;
                 let Some(g) = sg.get(j) else { continue };
                 let mut adv = g.adv;
+                let mut leader = None;
                 if j + 1 == trimmed {
                     adv -= end_trim;
                 }
                 if g.ch == '\t' {
-                    adv = tab_advance(&para.tabs, tab_origin, x, &sg[j + 1..trimmed.max(j + 1)]);
+                    (adv, leader) = tab_advance(&para.tabs, tab_origin, x, &sg[j + 1..trimmed.max(j + 1)]);
                 } else if j < body {
                     if g.is_space() {
                         adv += per_space;
@@ -1621,6 +1651,12 @@ fn flow(cx: &mut Ctx<'_>, paras: &[Range<usize>], t: &TextObject, regions: Optio
                     }
                 }
                 let y = baseline - align_shift(g, cx.style_at(g.byte).char_align, line_em, cx.vertical);
+                if let Some(pattern) = leader {
+                    cx.emit_leader(pattern, g, adv, li, |offset, _| {
+                        let origin = Point::new(x + offset, y);
+                        (Affine::translate(origin.to_vec2()), origin, 0.0)
+                    });
+                }
                 cx.emit(g, Affine::translate((x, y)), Point::new(x, y), 0.0, adv, li);
                 x += adv;
                 if j < trimmed {
@@ -1683,6 +1719,43 @@ fn path_steps(ap: &ArcPath, glyphs: &[SGlyph], from: f64, spacing: f64) -> Vec<f
         .collect()
 }
 
+/// Place an ordinary glyph or a leader glyph using the same path effect and baseline.
+fn path_position(ap: &ArcPath, effect: PathEffect, centre: Point, rise: f64, s: f64, advance: f64, step: f64) -> (Affine, Point, f64) {
+    let (p, dir) = ap.at(s + step * 0.5);
+    let angle = dir.y.atan2(dir.x);
+    let half = Affine::translate((-advance * 0.5, rise));
+    // Glyph space: x along the advance, y down from the baseline; `pre` maps it onto the path.
+    let pre = match effect {
+        PathEffect::Rainbow => Affine::translate(p.to_vec2()) * Affine::rotate(angle) * half,
+        // x axis along the tangent, y axis stays vertical.
+        PathEffect::Skew => Affine::translate(p.to_vec2()) * Affine::new([dir.x, dir.y, 0.0, 1.0, 0.0, 0.0]) * half,
+        // x axis stays horizontal (facing the path's direction), y axis perpendicular to the path.
+        PathEffect::Ribbon3d => {
+            let sx = if dir.x < 0.0 { -1.0 } else { 1.0 };
+            Affine::translate(p.to_vec2()) * Affine::new([sx, 0.0, -dir.y * sx, dir.x * sx, 0.0, 0.0]) * half
+        }
+        PathEffect::StairStep => Affine::translate(ap.at(s).0.to_vec2()) * Affine::translate((0.0, rise)),
+        // x axis along the tangent; vertical edges point at the path's centre (kept on the glyph's
+        // up side, and never closer than ~17° to the baseline so glyphs stay legible).
+        PathEffect::Gravity => {
+            let n = Vec2::new(dir.y, -dir.x);
+            let mut up = p - centre;
+            up = if up.hypot() < 1e-9 { n } else { up / up.hypot() };
+            if up.dot(n) < 0.0 {
+                up = -up;
+            }
+            if up.dot(n) < 0.3 {
+                let along = up - n * up.dot(n);
+                up = n * 0.3 + along / along.hypot().max(1e-9) * (1.0 - 0.09f64).sqrt();
+            }
+            Affine::translate(p.to_vec2()) * Affine::new([dir.x, dir.y, -up.x, -up.y, 0.0, 0.0]) * half
+        }
+    };
+    // The caret's baseline moves with the type.
+    let origin = p - dir * (advance * 0.5) + Vec2::new(-dir.y, dir.x) * rise;
+    (pre, origin, angle)
+}
+
 /// Lay type on a path out along `path` (text space), between its brackets.
 fn on_path(cx: &mut Ctx<'_>, paras: &[Range<usize>], t: &TextObject, path: &PathData) {
     cx.out.on_path = true;
@@ -1703,6 +1776,22 @@ fn on_path(cx: &mut Ctx<'_>, paras: &[Range<usize>], t: &TextObject, path: &Path
         }
     }
     let rtl = rtl.unwrap_or(false);
+    // Tabs consume their actual stop width on a path too; retain the chosen pattern without
+    // inserting repeated characters into the logical source or caret map.
+    let mut leaders = vec![None; sg.len()];
+    let mut distance = 0.0;
+    for index in 0..sg.len() {
+        if sg.get(index).is_some_and(|g| g.ch == '\t') {
+            let (advance, leader) = tab_advance(&para.tabs, 0.0, distance, sg.get(index + 1..).unwrap_or_default());
+            if let Some(g) = sg.get_mut(index) {
+                g.adv = advance;
+            }
+            if let Some(slot) = leaders.get_mut(index) {
+                *slot = leader;
+            }
+        }
+        distance += sg.get(index).map_or(0.0, |g| g.adv);
+    }
     let ap = ArcPath::new(path);
     let m = Metrics::max(&sg).map(|m| (m.asc, m.desc)).unwrap_or_else(|| {
         let s = style_metrics(cx.db, cx.style_at(0));
@@ -1753,44 +1842,19 @@ fn on_path(cx: &mut Ctx<'_>, paras: &[Range<usize>], t: &TextObject, path: &Path
         PathAlign::Center => (m.0 - m.1) * 0.5,
     };
     let mut x = 0.0;
-    for (g, &step) in sg.iter().zip(&steps) {
+    for (index, (g, &step)) in sg.iter().zip(&steps).enumerate() {
         let s = s0 + x;
         if s + step - s_start > avail + 1e-6 {
             cx.out.overflow = true;
             break;
         }
-        let (p, dir) = ap.at(s + step * 0.5);
-        let angle = dir.y.atan2(dir.x);
-        let half = Affine::translate((-g.adv * 0.5, rise));
-        // Glyph space: x along the advance, y down from the baseline; `pre` maps it onto the path.
-        let pre = match t.path_effect {
-            PathEffect::Rainbow => Affine::translate(p.to_vec2()) * Affine::rotate(angle) * half,
-            // x axis along the tangent, y axis stays vertical.
-            PathEffect::Skew => Affine::translate(p.to_vec2()) * Affine::new([dir.x, dir.y, 0.0, 1.0, 0.0, 0.0]) * half,
-            // x axis stays horizontal (facing the path's direction), y axis perpendicular to the path.
-            PathEffect::Ribbon3d => {
-                let sx = if dir.x < 0.0 { -1.0 } else { 1.0 };
-                Affine::translate(p.to_vec2()) * Affine::new([sx, 0.0, -dir.y * sx, dir.x * sx, 0.0, 0.0]) * half
-            }
-            PathEffect::StairStep => Affine::translate(ap.at(s).0.to_vec2()) * Affine::translate((0.0, rise)),
-            // x axis along the tangent; vertical edges point at the path's centre (kept on the glyph's
-            // up side, and never closer than ~17° to the baseline so glyphs stay legible).
-            PathEffect::Gravity => {
-                let n = Vec2::new(dir.y, -dir.x);
-                let mut up = p - centre;
-                up = if up.hypot() < 1e-9 { n } else { up / up.hypot() };
-                if up.dot(n) < 0.0 {
-                    up = -up;
-                }
-                if up.dot(n) < 0.3 {
-                    let along = up - n * up.dot(n);
-                    up = n * 0.3 + along / along.hypot().max(1e-9) * (1.0 - 0.09f64).sqrt();
-                }
-                Affine::translate(p.to_vec2()) * Affine::new([dir.x, dir.y, -up.x, -up.y, 0.0, 0.0]) * half
-            }
-        };
-        // The caret's baseline moves with the type.
-        let origin = p - dir * (g.adv * 0.5) + Vec2::new(-dir.y, dir.x) * rise;
+        let (pre, origin, angle) = path_position(&ap, t.path_effect, centre, rise, s, g.adv, step);
+        if let Some(pattern) = leaders.get(index).copied().flatten() {
+            cx.emit_leader(pattern, g, g.adv, 0, |offset, width| {
+                let scale = if g.adv > EPS { step / g.adv } else { 1.0 };
+                path_position(&ap, t.path_effect, centre, rise, s + offset * scale, width, width * scale)
+            });
+        }
         cx.emit(g, pre, origin, angle, g.adv, 0);
         x += step;
     }

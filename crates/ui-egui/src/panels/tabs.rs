@@ -104,6 +104,17 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     if sel >= stops.len() {
         sel = stops.len().saturating_sub(1);
     }
+    let authority = app.session.active().map(|st| {
+        (
+            st.uid,
+            st.revision,
+            node.id,
+            st.selection.objects.clone(),
+            super::character::text_editing(app),
+            sel,
+            stops.get(sel).map(|s| s.position.to_bits()),
+        )
+    });
     let mut align_idx: usize = pstate(ui.ctx(), "tabs-align");
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 3.0;
@@ -141,19 +152,22 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         }
         ui.end_row();
         ui.label(egui::RichText::new(tl!("Leader:")).color(t.text));
-        let mut leader = stops.get(sel).map(|s| s.leader.clone()).unwrap_or_default();
-        if ui.add_enabled(stops.get(sel).is_some(), egui::TextEdit::singleline(&mut leader).desired_width(90.0)).lost_focus()
+        let leader = stops.get(sel).map(|s| s.leader.as_str()).unwrap_or_default();
+        let changed =
+            ui.add_enabled_ui(stops.get(sel).is_some(), |ui| widgets::literal_text_field(ui, ("tabs-leader", &authority), leader, 90.0)).inner;
+        if let Some(leader) = changed
             && let Some(s) = stops.get_mut(sel)
             && s.leader != leader
         {
-            s.leader = leader.chars().take(8).collect();
+            s.leader = leader.chars().take(8).filter(|c| !c.is_control()).collect();
             apply(app, &stops);
         }
         ui.end_row();
         ui.label(egui::RichText::new(tl!("Align On:")).color(t.text));
         let decimal = stops.get(sel).is_some_and(|s| s.align == TabAlign::Decimal);
-        let mut on = stops.get(sel).map(|s| s.align_on.to_string()).unwrap_or_else(|| ".".into());
-        if ui.add_enabled(decimal, egui::TextEdit::singleline(&mut on).desired_width(30.0)).lost_focus()
+        let on = stops.get(sel).map(|s| s.align_on.to_string()).unwrap_or_else(|| ".".into());
+        let changed = ui.add_enabled_ui(decimal, |ui| widgets::literal_text_field(ui, ("tabs-align-on", &authority), &on, 40.0)).inner;
+        if let Some(on) = changed
             && let (Some(s), Some(c)) = (stops.get_mut(sel), on.chars().next())
             && s.align_on != c
         {
@@ -277,7 +291,124 @@ pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use egui::{Event, Key, Modifiers, PointerButton, Pos2, Rect};
     use vectorcraft_engine::Session;
+
+    struct Panel {
+        app: VectorcraftApp,
+        ctx: egui::Context,
+        time: f64,
+    }
+
+    impl Panel {
+        fn new() -> Self {
+            let mut app = VectorcraftApp::new(Session::new(), Default::default());
+            app.run("file.new", json!({})).unwrap();
+            app.run("text.create", json!({"text": "Item\t12.5"})).unwrap();
+            app.run("text.tabs.set", json!({"stops": [{"position": 180, "align": "decimal", "leader": "old"}]})).unwrap();
+            let ctx = egui::Context::default();
+            crate::theme::install_fonts(&ctx);
+            let mut panel = Self { app, ctx, time: 0.0 };
+            for _ in 0..3 {
+                panel.frame(vec![]);
+            }
+            panel
+        }
+
+        fn frame(&mut self, events: Vec<Event>) {
+            self.time += 0.1;
+            let input = egui::RawInput {
+                events,
+                time: Some(self.time),
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(420.0, 330.0))),
+                ..Default::default()
+            };
+            self.ctx.run_ui(input, |ui| show(&mut self.app, ui)).textures_delta.clear();
+        }
+
+        fn focus(&mut self, value: &str) {
+            let widgets: Vec<_> = self.ctx.viewport(|vp| {
+                vp.prev_pass.widgets.layers().flat_map(|(_, widgets)| widgets.iter()).map(|widget| (widget.id, widget.rect)).collect()
+            });
+            let (id, rect) = widgets
+                .into_iter()
+                .find(|&(id, _)| {
+                    self.ctx.data(|data| data.get_temp::<String>(id)).as_deref() == Some(value) && egui::TextEdit::load_state(&self.ctx, id).is_some()
+                })
+                .unwrap_or_else(|| panic!("no Tabs field showing {value:?}"));
+            let press = |pressed| Event::PointerButton { pos: rect.center(), button: PointerButton::Primary, pressed, modifiers: Modifiers::NONE };
+            self.frame(vec![Event::PointerMoved(rect.center()), press(true)]);
+            self.frame(vec![press(false)]);
+            self.frame(vec![]);
+            assert!(self.ctx.memory(|memory| memory.has_focus(id)));
+        }
+
+        fn key(&mut self, key: Key) {
+            self.frame(vec![Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers: Modifiers::NONE }]);
+        }
+
+        fn leader(&self) -> String {
+            current(&self.app).unwrap().1[0].leader.clone()
+        }
+
+        fn undo_len(&self) -> usize {
+            self.app.session.active().unwrap().history.undo.len()
+        }
+    }
+
+    #[test]
+    fn leader_field_keeps_a_multiframe_draft_and_commits_spaces_in_one_undo_step() {
+        let mut panel = Panel::new();
+        let undo = panel.undo_len();
+        panel.focus("old");
+        panel.frame(vec![Event::Text(".".into())]);
+        panel.frame(vec![]);
+        panel.frame(vec![Event::Text(" ".into())]);
+        assert_eq!(panel.leader(), "old", "typing is a draft until committed");
+        assert_eq!(panel.undo_len(), undo);
+        panel.key(Key::Enter);
+        assert_eq!(panel.leader(), ". ", "a trailing space is part of the pattern");
+        assert_eq!(panel.undo_len(), undo + 1);
+        panel.app.run("edit.undo", json!({})).unwrap();
+        assert_eq!(panel.leader(), "old");
+        panel.app.run("edit.redo", json!({})).unwrap();
+        assert_eq!(panel.leader(), ". ");
+        panel.frame(vec![]);
+        panel.focus(". ");
+        panel.frame(vec![Event::Text("discard".into())]);
+        panel.key(Key::Escape);
+        panel.frame(vec![]);
+        assert_eq!(panel.leader(), ". ", "Escape cancels the draft");
+        assert_eq!(panel.undo_len(), undo + 1);
+    }
+
+    #[test]
+    fn tab_fields_commit_on_focus_loss_and_discard_drafts_after_document_changes() {
+        let mut panel = Panel::new();
+        panel.focus("old");
+        panel.frame(vec![Event::Text("- ".into())]);
+        panel.key(Key::Tab);
+        panel.frame(vec![]);
+        assert_eq!(panel.leader(), "- ");
+        panel.focus(".");
+        panel.frame(vec![Event::Text(",".into())]);
+        panel.frame(vec![]);
+        panel.key(Key::Enter);
+        assert_eq!(current(&panel.app).unwrap().1[0].align_on, ',');
+
+        panel.focus("- ");
+        panel.frame(vec![Event::Text("stale".into())]);
+        let old_uid = panel.app.session.active().unwrap().uid;
+        panel.app.run("file.new", json!({})).unwrap();
+        panel.app.run("text.create", json!({"text": "New\t8"})).unwrap();
+        panel.app.run("text.tabs.set", json!({"stops": [{"position": 180, "leader": "new"}]})).unwrap();
+        assert_ne!(panel.app.session.active().unwrap().uid, old_uid);
+        let undo = panel.undo_len();
+        panel.frame(vec![]);
+        panel.key(Key::Enter);
+        assert_eq!(panel.leader(), "new", "a draft belongs to its original document and revision");
+        assert_eq!(panel.undo_len(), undo);
+    }
 
     fn frame(app: &mut VectorcraftApp) {
         let ctx = egui::Context::default();

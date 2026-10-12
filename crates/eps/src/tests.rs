@@ -464,3 +464,29 @@ fn a_rich_document_is_well_formed_at_both_levels() {
         }
     }
 }
+
+#[test]
+fn tab_leaders_are_paths_with_the_tab_runs_paint_at_both_levels() {
+    use vectorcraft_doc::{CharStyle, TabAlign, TabStop, TextObject, TextRun};
+
+    let d = doc_with(|d| {
+        let mut t = TextObject::point(Point::new(10.0, 60.0), "", CharStyle::default());
+        let black = CharStyle { size: 20.0, ..CharStyle::default() };
+        let red = CharStyle { fill: Paint::solid(Color::rgb(1.0, 0.0, 0.0)), ..black.clone() };
+        t.runs = vec![TextRun::new("A", black.clone()), TextRun::new("\t", red), TextRun::new("8", black)];
+        t.para.tabs = vec![TabStop { position: 150.0, align: TabAlign::Left, leader: ". ".into(), align_on: '.' }];
+        vec![Node::new(d.alloc_id(), NodeKind::Text(Box::new(t)))]
+    });
+    for level in Level::ALL {
+        let page = page_of(&d, &EpsOptions { level, ..opts(&d) });
+        // The only red run contains a tab, which has no glyph outline. Its red path therefore
+        // proves the leader is included; the many subpaths lie between the two source glyphs.
+        let red = page.split("1 0 0 rg\n").nth(1).expect("tab leader's red fill").split("\nf\n").next().unwrap();
+        let moves: Vec<_> = red.lines().filter_map(|line| line.strip_suffix(" m")).collect();
+        assert!(moves.len() > 8, "repeated dot outlines: {red}");
+        for pos in moves {
+            let x: f64 = pos.split_whitespace().next().unwrap().parse().unwrap();
+            assert!((8.0..150.0).contains(&x), "a leader point is in the tab gap: {x}");
+        }
+    }
+}

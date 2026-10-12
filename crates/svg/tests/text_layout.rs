@@ -234,3 +234,32 @@ fn paragraphs_aligned_differently_keep_their_alignment() {
         assert_similar(&render_artboard(&d), &render_artboard(&back), 40.0, 0.01);
     }
 }
+
+#[test]
+fn a_viewer_draws_tab_leaders_without_repeated_characters_in_live_text() {
+    use vectorcraft_doc::{TabAlign, TabStop};
+
+    for align in [TabAlign::Left, TabAlign::Center, TabAlign::Right, TabAlign::Decimal] {
+        let mut d = area_doc(vec![run("Item\t12.5", style(20.0))], 260.0, Justify::Left);
+        let id = d.layers[0].children().unwrap()[0].id;
+        let NodeKind::Text(t) = &mut d.node_mut(id).unwrap().kind else { panic!("not text") };
+        t.para.tabs = vec![TabStop { position: 220.0, align, leader: ". - ".into(), align_on: '.' }];
+        for fewer_tspans in [false, true] {
+            let svg = export(&d, &ExportOptions { fewer_tspans, ..Default::default() });
+            assert!(svg.contains("<text") && svg.contains("<path"), "live text plus leader paths: {svg}");
+            assert!(!svg.contains(". - "), "leader paint is not duplicated in logical text");
+            let mut viewer = Document::new(300.0, 200.0);
+            let layer = viewer.layers[0].id;
+            for path in viewer_outlines(&svg) {
+                let ap = vectorcraft_doc::Appearance::basic(Paint::solid(Color::BLACK), Paint::None, 0.0);
+                let node = Node::path(viewer.alloc_id(), PathData::from_bezpath(&path), ap);
+                viewer.insert(Some(layer), usize::MAX, node).unwrap();
+            }
+            let gap = Rect::new(80.0, 20.0, 190.0, 50.0);
+            let canvas = vectorcraft_testkit::raster::render_region(&d, gap, 3.0);
+            assert!(canvas.ink() > 100);
+            assert_similar(&canvas, &vectorcraft_testkit::raster::render_region(&viewer, gap, 3.0), 25.0, 0.001);
+            assert_similar(&render_artboard(&d), &render_artboard(&viewer), 40.0, 0.005);
+        }
+    }
+}

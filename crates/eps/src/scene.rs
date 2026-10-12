@@ -554,11 +554,16 @@ impl<'a> Scene<'a> {
         if !invertible(t.xf) {
             return;
         }
-        let layout = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
+        let db = vectorcraft_text::FontDb::global();
+        let layout = vectorcraft_text::layout(db, t);
+        let decorations = vectorcraft_text::decorations(&layout, db, t);
         let tb = t.xf.transform_rect_bbox(layout.bounds);
         let (below, above) = n.appearance.split_contents();
         let all = (!n.appearance.items.is_empty()).then(|| {
             let mut all = layout.to_bezpath();
+            for (_, path) in &decorations {
+                all.extend(path.iter());
+            }
             all.apply_affine(t.xf);
             all
         });
@@ -571,6 +576,9 @@ impl<'a> Scene<'a> {
             let mut bp = BezPath::new();
             for g in layout.glyphs.iter().filter(|g| g.run == i) {
                 bp.extend(g.outline.iter());
+            }
+            for (_, path) in decorations.iter().filter(|(run, _)| *run == i) {
+                bp.extend(path.iter());
             }
             if bp.elements().is_empty() {
                 continue;

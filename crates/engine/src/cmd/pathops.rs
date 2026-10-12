@@ -232,8 +232,13 @@ pub(crate) fn node_path(n: &Node) -> Option<(PathData, FillRule)> {
 
 /// Glyph outlines of a text object in document coordinates.
 pub(crate) fn text_outline(t: &TextObject) -> PathData {
-    let lay = vectorcraft_text::layout(vectorcraft_text::FontDb::global(), t);
-    PathData::from_bezpath(&lay.to_bezpath()).transformed(t.xf)
+    let db = vectorcraft_text::FontDb::global();
+    let lay = vectorcraft_text::layout(db, t);
+    let mut outline = lay.to_bezpath();
+    for (_, paint) in vectorcraft_text::decorations(&lay, db, t) {
+        outline.extend(paint.iter());
+    }
+    PathData::from_bezpath(&outline).transformed(t.xf)
 }
 
 fn style_of(n: &Node) -> Style {

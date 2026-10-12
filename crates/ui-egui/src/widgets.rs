@@ -386,6 +386,19 @@ pub fn text_field(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, value
     (resp.lost_focus() && buf.trim() != shown).then(|| buf.trim().to_string())
 }
 
+/// A single-line field whose spaces are content (for example a tab leader pattern). The caller
+/// includes its document/selection identity in `id` so an old draft cannot target new content.
+pub fn literal_text_field(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, value: &str, width: f32) -> Option<String> {
+    let id = ui.id().with(id);
+    let (buf, resp, _) = recessed_text(ui, id, value, width, 1);
+    select_all_on_focus(ui, &resp, &buf);
+    if resp.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+        ui.data_mut(|d| d.remove::<String>(id));
+        return None;
+    }
+    (resp.lost_focus() && buf != value).then_some(buf)
+}
+
 /// A form row: `label` in a column `label_width` wide, then what `add` draws.
 pub fn label_row(ui: &mut Ui, label: &str, label_width: f32, add: impl FnOnce(&mut Ui)) {
     ui.horizontal(|ui| {

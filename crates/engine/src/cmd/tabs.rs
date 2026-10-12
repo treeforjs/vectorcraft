@@ -51,7 +51,16 @@ fn parse_stops(p: &Value) -> Result<Vec<TabStop>> {
             "decimal" => TabAlign::Decimal,
             other => return Err(bad(C, format!("unknown align `{other}`"))),
         };
-        let leader = s.get("leader").and_then(Value::as_str).unwrap_or("").chars().take(8).collect();
+        let leader = match s.get("leader") {
+            None => String::new(),
+            Some(value) => {
+                let value = value.as_str().ok_or_else(|| bad(C, "leader must be text"))?;
+                if value.chars().count() > 8 || value.chars().any(char::is_control) {
+                    return Err(bad(C, "leader must contain at most eight printable characters"));
+                }
+                value.to_owned()
+            }
+        };
         let align_on = s.get("alignOn").and_then(Value::as_str).and_then(|a| a.chars().next()).unwrap_or('.');
         stops.push(TabStop { position, align, leader, align_on });
     }
@@ -112,5 +121,25 @@ mod tests {
         assert!(s.execute("text.tabs.set", &json!({"stops": [{"position": 10, "align": "diagonal"}]})).is_err());
         s.execute("text.tabs.clear", &json!({})).unwrap();
         assert_eq!(s.execute("text.tabs.get", &json!({})).unwrap()["stops"], json!([]));
+    }
+
+    #[test]
+    fn invalid_leader_patterns_reject_atomically_and_spaces_are_preserved() {
+        let mut s = Session::new();
+        s.execute("file.new", &json!({})).unwrap();
+        s.execute("text.create", &json!({"text":"Item\t9.99"})).unwrap();
+        s.execute("text.tabs.set", &json!({"stops":[{"position":150,"leader":". "}]})).unwrap();
+        let before = s.doc().unwrap().doc.clone();
+        let history = s.doc().unwrap().history.undo.len();
+        assert_eq!(s.execute("text.tabs.get", &json!({})).unwrap()["stops"][0]["leader"], json!(". "));
+        for leader in [json!("123456789"), json!("\t"), json!("x\ny"), json!(8), json!([])] {
+            assert!(s.execute("text.tabs.set", &json!({"stops":[{"position":200,"leader":leader}]})).is_err());
+            assert!(std::sync::Arc::ptr_eq(&before, &s.doc().unwrap().doc));
+            assert_eq!(s.doc().unwrap().history.undo.len(), history);
+        }
+        s.execute("edit.undo", &json!({})).unwrap();
+        assert_eq!(s.execute("text.tabs.get", &json!({})).unwrap()["stops"], json!([]));
+        s.execute("edit.redo", &json!({})).unwrap();
+        assert_eq!(s.execute("text.tabs.get", &json!({})).unwrap()["stops"][0]["leader"], json!(". "));
     }
 }

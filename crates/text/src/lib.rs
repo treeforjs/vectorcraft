@@ -155,6 +155,14 @@ pub struct InlineGlyph {
     pub bounds: Rect,
 }
 
+/// A tab's repeated glyph outlines. These are paint, not extra source characters or carets.
+#[derive(Clone, Debug)]
+pub struct TabLeader {
+    pub run: usize,
+    pub line: usize,
+    pub outline: BezPath,
+}
+
 #[derive(Clone, Debug)]
 pub struct TextLayout {
     /// Lines retain inline/block coordinates; glyph geometry is in physical text space.
@@ -166,8 +174,8 @@ pub struct TextLayout {
     pub lines: Vec<LineInfo>,
     /// Ink/advance bounds in text space.
     pub bounds: Rect,
-    /// True if area text did not fit its frame (the red overflow "+" marker), or on-path text ran
-    /// past the end of the path.
+    /// True if area text did not fit its frame (the red overflow "+" marker), on-path text ran
+    /// past the end of the path, or tab-leader paint exceeded its bounded layout budget.
     pub overflow: bool,
     /// True for type on a path (glyphs have individual `angle`s).
     pub on_path: bool,
@@ -178,6 +186,11 @@ pub struct TextLayout {
     pub fit_scale: f64,
     /// Inline graphics, in text order.
     pub inlines: Vec<InlineGlyph>,
+    /// Tab leaders share the tab character's formatting and leave the logical text intact.
+    pub tab_leaders: Vec<TabLeader>,
+    pub(crate) leader_glyphs: usize,
+    pub(crate) leader_elements: usize,
+    pub(crate) leader_limit: bool,
 }
 
 impl Default for TextLayout {
@@ -193,6 +206,10 @@ impl Default for TextLayout {
             frames: Vec::new(),
             fit_scale: 1.0,
             inlines: Vec::new(),
+            tab_leaders: Vec::new(),
+            leader_glyphs: 0,
+            leader_elements: 0,
+            leader_limit: false,
         }
     }
 }
@@ -512,6 +529,8 @@ mod tests_embed;
 mod tests_fit;
 #[cfg(test)]
 mod tests_inline;
+#[cfg(test)]
+mod tests_leaders;
 #[cfg(test)]
 mod tests_scripts;
 #[cfg(test)]
