@@ -18,17 +18,22 @@ only protocol messages.
 
 ```sh
 cargo build --release -p vectorcraft-cli
-claude mcp add vectorcraft -- "$PWD/target/release/vectorcraft-cli" mcp
-# or pin a mode:
-claude mcp add vectorcraft-headless -- "$PWD/target/release/vectorcraft-cli" mcp --headless
-claude mcp add vectorcraft-app -- "$PWD/target/release/vectorcraft-cli" mcp --connect 127.0.0.1:7979
 ```
 
-Other clients use the same command in their JSON config:
+Then add the server to your MCP client's configuration. Most clients take a JSON block like this
+(the key name and file location depend on the client; the server command is the same everywhere):
 
 ```json
-{"mcpServers": {"vectorcraft": {"command": "/abs/path/target/release/vectorcraft-cli", "args": ["mcp"]}}}
+{
+  "mcpServers": {
+    "vectorcraft": {"command": "/abs/path/target/release/vectorcraft-cli", "args": ["mcp"]},
+    "vectorcraft-headless": {"command": "/abs/path/target/release/vectorcraft-cli", "args": ["mcp", "--headless"]},
+    "vectorcraft-app": {"command": "/abs/path/target/release/vectorcraft-cli", "args": ["mcp", "--connect", "127.0.0.1:7979"]}
+  }
+}
 ```
+
+One entry is enough: `vectorcraft` picks the mode itself; the other two pin it.
 
 For a live session, start the app first: `cargo run --release -p vectorcraft -- --control 7979`.
 
@@ -160,7 +165,7 @@ the transport — a design change rather than a feature, so it is not in this cr
 
 ### Common command tools
 
-These names match the conventions in [FilmCraft #28](https://github.com/storytold/filmcraft/pull/28).
+These names follow the common-command-tool convention shared by the sibling Craft apps.
 The older names below remain listed because existing workflows use them.
 
 | Tool | Arguments and result |

@@ -2,7 +2,7 @@
 
 **Creature:** a regal engraved dragon, VectorCraft's mascot.
 
-**Style:** an engraving-style portrait in the Crafting Apps owl template (the FilmCraft owl): a tight
+**Style:** an engraving-style portrait in the owl template shared with the sibling Craft apps (the FilmCraft owl): a tight
 head-and-shoulders portrait on a full-bleed field, no frame or roundel, with the body running off the tile.
 
 **Palette** (exactly three colours):

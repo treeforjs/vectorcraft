@@ -31,8 +31,8 @@
 
     <Icon Id="VectorcraftIcon.ico" SourceFile="$(var.IconPath)" />
     <Property Id="ARPPRODUCTICON" Value="VectorcraftIcon.ico" />
-    <Property Id="ARPURLINFOABOUT" Value="https://getartcraft.com/apps/vectorcraft" />
-    <Property Id="ARPURLUPDATEINFO" Value="https://getartcraft.com/apps/vectorcraft" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/treeforjs/vectorcraft" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://github.com/treeforjs/vectorcraft/releases" />
 
     <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="VectorCraft" />

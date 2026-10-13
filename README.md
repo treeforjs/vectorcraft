@@ -1,13 +1,3 @@
-<p align="center">
-  <a href="https://getartcraft.com/">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/artcraft-logo-white.svg">
-      <img alt="ArtCraft" src="docs/brand/artcraft-logo.svg" width="200">
-    </picture>
-  </a>
-</p>
-
-
 <h1 align="center">VectorCraft</h1>
 
 <p align="center">
@@ -16,7 +6,7 @@
 
 <p align="center">
   A fast, open-source, clean-room take on the Adobe Illustrator workflow. It runs natively on
-  macOS, Windows, Linux and FreeBSD, and in the browser via WebAssembly. Built by the ArtCraft team.
+  macOS, Windows, Linux and FreeBSD, and in the browser via WebAssembly.
 </p>
 
 <p align="center">
@@ -27,12 +17,6 @@
   <img alt="License: MIT OR Apache-2.0" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-555555">
 </p>
 
-<p align="center">
-  <a href="https://getartcraft.com/apps/vectorcraft"><b>VectorCraft on getartcraft.com</b></a> ·
-  <a href="https://getartcraft.com/">ArtCraft</a> ·
-  <a href="https://getartcraft.com/apps">All Crafting Apps</a>
-</p>
-
 <br>
 
 <p align="center">
@@ -40,18 +24,15 @@
   <br><sub><b>Neon Drive</b>: a Pathfinder-cut sun, live Outer Glow on the type and grid, and clipping masks · <code>examples/neon-drive.vectorcraft</code></sub>
 </p>
 
-> [!NOTE]
-> **ArtCraft is a community of artists from all walks of life.** Digital, generative, music,
-> games &mdash; if you make things, you're one of us.
-
 <p align="center">
   <a href="#a-look-around">A look around</a> ·
   <a href="#made-in-vectorcraft">Made in VectorCraft</a> ·
   <a href="#why-vectorcraft">Why VectorCraft</a> ·
   <a href="#quick-start">Quick start</a> ·
+  <a href="#built-for-agents">Built for agents</a> ·
   <a href="#status">Status</a> ·
   <a href="#downloads">Downloads</a> ·
-  <a href="#the-crafting-apps">The Crafting Apps</a> ·
+  <a href="#contributing">Contributing</a> ·
   <a href="#license-and-credits">License</a>
 </p>
 
@@ -137,8 +118,8 @@ exposes to agents, and exported by VectorCraft's own renderer. The source files 
   PDF-compatible `.ai`) import and export, PNG/JPEG/WebP export, Export for Screens, and SVGZ,
   templates, GIF, TIFF and BMP on open.
 - **Agent-native.** Every menu item, tool gesture, panel and dialog can be driven over a JSON
-  control channel and an **MCP server**, so Claude and other agents can draw, edit and export the
-  way a person does.
+  control channel and an **MCP server**, so AI agents can draw, edit and export the way a person
+  does.
 - **Everywhere.** One codebase for the desktop apps and the same UI in the browser.
 
 ## Quick start
@@ -158,7 +139,7 @@ cd apps/vectorcraft-web && trunk build --release            # web build → dist
 cargo xtask ci                                            # fmt, clippy, tests, layering, wasm, vendor names
 ```
 
-Japanese fonts come from [storytold/craft-fonts](https://github.com/storytold/craft-fonts), an optional
+Japanese fonts come from [craft-fonts](https://github.com/storytold/craft-fonts), an optional
 build input (releases always use it): `CRAFT_FONTS_DIR="$PWD/../craft-fonts" cargo run --release -p vectorcraft` (an absolute path).
 Without it, Japanese text uses the installed system fonts. See [`docs/development.md`](docs/development.md#fonts-craft-fonts-optional-build-input).
 
@@ -177,17 +158,41 @@ On Linux under KDE Plasma 6.3 or later with Wayland, a drawing tablet's pen move
 respond to it yet (#491). Start the app under XWayland instead: `WAYLAND_DISPLAY= vectorcraft` (see
 [`docs/development.md`](docs/development.md#linux-wayland-and-x11)).
 
-### Use it from Claude Code and other agents
+For the experimental, unsupported 64-bit Windows 7 build, see [Windows 7 instructions](docs/windows7.md).
 
-Register the MCP server with Claude Code:
+## Built for agents
+
+VectorCraft exposes everything a person can do to AI agents and scripts, through three doors:
+
+- **MCP server.** `vectorcraft-cli mcp` runs a [Model Context Protocol](https://modelcontextprotocol.io)
+  server on stdio: tools to run any command, inspect the document, render previews and take
+  screenshots, plus resources and ready-made prompts. It drives a running app live
+  (`--connect 127.0.0.1:7979`) or an in-process headless engine (`--headless`).
+- **Control channel.** `vectorcraft --control 7979` accepts newline-delimited JSON-RPC on
+  localhost: execute commands, inspect UI state, take screenshots.
+- **CLI.** `vectorcraft-cli run` converts and batch-edits files headlessly; `bench` times one
+  file and `perf` checks the performance budgets.
+
+To register the MCP server with an MCP client, build the CLI and add the server command to your
+agent's MCP configuration (the JSON shape most clients use):
 
 ```sh
-claude mcp add vectorcraft -- /path/to/vectorcraft-cli mcp
+cargo build --release -p vectorcraft-cli
 ```
 
-The details are in [`docs/mcp.md`](docs/mcp.md) and [`docs/control-protocol.md`](docs/control-protocol.md).
+```json
+{
+  "mcpServers": {
+    "vectorcraft": {
+      "command": "/abs/path/to/target/release/vectorcraft-cli",
+      "args": ["mcp"]
+    }
+  }
+}
+```
 
-For the experimental, unsupported 64-bit Windows 7 build, see [Windows 7 instructions](docs/windows7.md).
+Add `"--headless"` or `"--connect", "127.0.0.1:7979"` to `args` to pin a mode. The details are in
+[`docs/mcp.md`](docs/mcp.md) and [`docs/control-protocol.md`](docs/control-protocol.md).
 
 ## Status
 
@@ -226,16 +231,13 @@ advanced type, then hardening and packaging for 1.0. The prioritized list is in
 and `apps/{vectorcraft, vectorcraft-cli, vectorcraft-web}`. The egui frontend is its own crate, so
 the UI can be swapped without touching the engine.
 
-Agent and contributor rules (clean-room, the asset policy, no panics in shipped code, quality gates) are in
-[`AGENTS.md`](AGENTS.md); [`docs/development.md`](docs/development.md#robustness-vectorcraft-never-crashes)
-explains how VectorCraft avoids crashing, and [`docs/releasing.md`](docs/releasing.md) how releases are built,
-signed and published. Every bundled asset is listed with its licence in [`ASSETS.md`](ASSETS.md).
-
 ## Downloads
 
-**New to VectorCraft?** Download it from the [VectorCraft page on getartcraft.com](https://getartcraft.com/apps/vectorcraft). That's the easiest way to install it.
-
-**Want a specific build or format?** On GitHub, the [latest release](https://github.com/storytold/vectorcraft/releases/latest) has every build listed below, and [all releases](https://github.com/storytold/vectorcraft/releases) has earlier versions and their notes. `<ver>` in the file names is the version number, and `SHA256SUMS.txt` lists a checksum for every file.
+Builds are published on the [releases page](https://github.com/treeforjs/vectorcraft/releases)
+of this repository. If no release is listed there yet, build from source with the
+[Quick start](#quick-start) above; the release workflow
+([`docs/releasing.md`](docs/releasing.md)) produces the files below when a release is cut.
+`<ver>` in the file names is the version number, and `SHA256SUMS.txt` lists a checksum for every file.
 
 ### Windows
 
@@ -248,14 +250,16 @@ For RTX PRO Blackwell, GeForce RTX and Intel integrated graphics, see the
 | arm64 (Snapdragon and other ARM PCs) | `vectorcraft-<ver>-windows-arm64.msi` | `vectorcraft-<ver>-windows-arm64-portable.zip` |
 | x86 (32-bit) | `vectorcraft-<ver>-windows-x86.msi` | `vectorcraft-<ver>-windows-x86-portable.zip` |
 
-Installers and executables are code-signed.
-
 ### macOS
 
-| Build | File | Notes |
-|---|---|---|
-| App, universal (Apple silicon + Intel) | `vectorcraft-<ver>-macos-universal.dmg` | Signed and notarized |
-| Command-line tool, universal | `vectorcraft-cli-<ver>-macos-universal.zip` | Signed and notarized |
+| Build | File |
+|---|---|
+| App, universal (Apple silicon + Intel) | `vectorcraft-<ver>-macos-universal.dmg` |
+| Command-line tool, universal | `vectorcraft-cli-<ver>-macos-universal.zip` |
+
+Whether a Windows or macOS build is code-signed (and a macOS build notarized) depends on the
+signing credentials available to the workflow run that produced it; see
+[`docs/releasing.md`](docs/releasing.md).
 
 ### Linux
 
@@ -284,66 +288,27 @@ and Wayland notes.
 |---|---|---|
 | Static site | `vectorcraft-web-<ver>.zip` | Runs in a modern browser; host it on any static server |
 
-## The Crafting Apps
+## Contributing
 
-VectorCraft is one of the **Crafting Apps**: free, open-source creative tools from the
-[ArtCraft](https://getartcraft.com/) team, each written from scratch in Rust and each able to
-stand on its own.
-
-| | App | What it's for | Code | Learn more |
-|:-:|---|---|---|---|
-| <img src="https://raw.githubusercontent.com/storytold/photocraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.photocraft.png" alt="" width="32" height="32"> | **PhotoCraft** | Image editing: layers, masks, type and real PSD files | [GitHub](https://github.com/storytold/photocraft) | [Website](https://getartcraft.com/apps/photocraft) |
-| <img src="https://raw.githubusercontent.com/storytold/vectorcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.vectorcraft.png" alt="" width="32" height="32"> | **VectorCraft** | **Vector illustration · you are here** | [GitHub](https://github.com/storytold/vectorcraft) | [Website](https://getartcraft.com/apps/vectorcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/filmcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.filmcraft.png" alt="" width="32" height="32"> | **FilmCraft** | Video editing, color and sound | [GitHub](https://github.com/storytold/filmcraft) | [Website](https://getartcraft.com/apps/filmcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/lightcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.lightcraft.png" alt="" width="32" height="32"> | **LightCraft** | Photo library and raw development | [GitHub](https://github.com/storytold/lightcraft) | [Website](https://getartcraft.com/apps/lightcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/pdfcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.pdfcraft.png" alt="" width="32" height="32"> | **PdfCraft** | Reading, organizing and protecting PDFs | [GitHub](https://github.com/storytold/pdfcraft) | [Website](https://getartcraft.com/apps/pdfcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/effectcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.effectcraft.png" alt="" width="32" height="32"> | **EffectCraft** | Motion graphics and visual effects | [GitHub](https://github.com/storytold/effectcraft) | [Website](https://getartcraft.com/apps/effectcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/designcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.designcraft.png" alt="" width="32" height="32"> | **DesignCraft** | Page layout and publishing | [GitHub](https://github.com/storytold/designcraft) | [Website](https://getartcraft.com/apps/designcraft) |
-
-And [**ArtCraft**](https://getartcraft.com/) itself, our AI image and video studio for artists who want real control.
-
-<br>
-
-<h3 align="center">Come make things with us</h3>
-
-<p align="center">
-  ArtCraft brings together artists of every kind: people who paint, shoot, draw, cut film,
-  set type, and people still figuring out what they like to make. Share what you're working on,
-  ask for help, tell us what's broken, or tell us what you wish these tools could do.
-  Whatever your medium and however long you've been at it, you're welcome here.
-</p>
-
-<p align="center">
-  <a href="https://getartcraft.com/">getartcraft.com</a> ·
-  <a href="https://getartcraft.com/apps">The Crafting Apps</a> ·
-  <a href="https://getartcraft.com/apps/vectorcraft">VectorCraft</a>
-</p>
-
-## Star history
-
-[![Star History Chart](https://api.star-history.com/svg?repos=storytold/vectorcraft&type=Date&legend=top-left)](https://www.star-history.com/?repos=storytold%2Fvectorcraft&type=date&legend=top-left)
+Rules for agents and contributors (clean-room, the asset policy, no panics in shipped code, quality
+gates, how to run and look at the app) are in [`AGENTS.md`](AGENTS.md).
+[`docs/development.md`](docs/development.md#robustness-vectorcraft-never-crashes) explains how
+VectorCraft avoids crashing, and [`docs/releasing.md`](docs/releasing.md) how releases are built,
+signed and published. Every bundled asset is listed with its licence in [`ASSETS.md`](ASSETS.md).
+Before opening a pull request, run `cargo xtask ci` and go through the checklist in the PR template.
 
 ## License and credits
 
 VectorCraft is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
-Copyright (c) 2026 ArtCraft Team and the VectorCraft contributors. Required notices are in [NOTICE](NOTICE).
+The copyright holders are named in [LICENSE-MIT](LICENSE-MIT) and [NOTICE](NOTICE), which also
+carries the required third-party notices.
 
 Bundled fonts, icons, images and other assets keep their own open licenses; each one is listed
 with its author, source and license in [ASSETS.md](ASSETS.md). Release builds also embed the
 fonts of [craft-fonts](https://github.com/storytold/craft-fonts/blob/main/ATTRIBUTION.md) (Japanese,
 Simplified Chinese and Arabic faces; SIL Open Font License 1.1).
 
-The app icon (an engraved dragon on VectorCraft red, `#e8573f`) is the owner's original artwork; its
-palette and files are in [`assets/app-icon/`](assets/app-icon/README.md).
-
-The ArtCraft name, wordmark and logos in [`docs/brand/`](docs/brand/) are trademarks of the
-ArtCraft Team and are not covered by this license. They may be used only unmodified, and only as
-part of this repository and VectorCraft, under [`docs/brand/LICENSE-brand.txt`](docs/brand/LICENSE-brand.txt).
-Forks and modified versions must remove them.
+The app icon (an engraved dragon on VectorCraft red, `#e8573f`) is original artwork by the project
+owner; its palette and files are in [`assets/app-icon/`](assets/app-icon/README.md).
 
 <sub>Adobe, Photoshop, Illustrator, Premiere Pro, Lightroom, Acrobat, After Effects and InDesign are trademarks or registered trademarks of Adobe Inc. in the United States and/or other countries. VectorCraft is an independent, open-source project and is not affiliated with, sponsored by or endorsed by Adobe Inc.; these names are used only to describe the workflows it is compatible with.</sub>
-
-<p align="center">
-  <a href="https://getartcraft.com/"><img alt="ArtCraft" src="docs/brand/artcraft-mark.svg" width="28"></a><br>
-  <sub>Made by the <a href="https://getartcraft.com/">ArtCraft</a> team and community.</sub>
-</p>

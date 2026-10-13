@@ -118,7 +118,7 @@ The discovered real-file set does not establish faithful support for all of them
 
 Acquire these as original contributor documents with explicit redistribution
 rights, or add independently published originals with complete provenance.
-Fonts belong in [storytold/craft-fonts](https://github.com/storytold/craft-fonts),
+Fonts belong in [craft-fonts](https://github.com/storytold/craft-fonts),
 not this repository; a fixture's font names do not grant redistribution rights
 to font binaries. Synthetic containers remain useful for parser limits and
 precise regression tests, but cannot establish real Affinity saves or rendering
