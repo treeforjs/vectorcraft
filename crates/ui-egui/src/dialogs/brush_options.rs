@@ -15,13 +15,14 @@
 //! (`fixed` | `random`), `…Min`, `…Max`; `rotationRelativeTo` (`page` | `path`). Art: `width` (%),
 //! `direction` (`leftToRight`…), `scale` (`proportional` | `stretch` | `betweenGuides`),
 //! `guideStart`, `guideEnd` (% of the art's length), `flipAlong`, `flipAcross`. Pattern: `scale`,
-//! `spacing` (%), `fit` (`stretch` | `addSpace` | `approximate`), `flipAlong`, `flipAcross`.
+//! `spacing` (%), `fit` (`stretch` | `addSpace` | `approximate`), `autoCorner` (`none` | `centered`
+//! | `between` | `sliced` | `overlap`, for corners without a corner tile), `flipAlong`, `flipAcross`.
 //! Scatter, Art and Pattern: `colorization` (`none` | `tints` | `tintsAndShades` | `hueShift`) and
 //! `keyColor` (`#rrggbb`); `__def` holds the brush's definition for the preview.
 
 use egui::{Color32, Sense, Stroke, pos2, vec2};
 use serde_json::{Map, Value, json};
-use vectorcraft_brush::{ArtScale, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternFit, Variation};
+use vectorcraft_brush::{ArtScale, AutoCorner, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternFit, Variation};
 use vectorcraft_doc::color::Color;
 
 use super::swatch_options::{grid, label};
@@ -86,6 +87,8 @@ const ART_SCALES: [(&str, &str); 3] =
     [("proportional", "Scale Proportionately"), ("stretch", "Stretch to Fit Stroke Length"), ("betweenGuides", "Stretch Between Guides")];
 
 const FITS: [(&str, &str); 3] = [("stretch", "Stretch to Fit"), ("addSpace", "Add Space to Fit"), ("approximate", "Approximate Path")];
+const AUTO_CORNERS: [(&str, &str); 5] =
+    [("none", "None"), ("centered", "Centered"), ("between", "Between"), ("sliced", "Sliced"), ("overlap", "Overlap")];
 
 /// Width of the bristle dialog's label column.
 const LABEL_W: f32 = 112.0;
@@ -168,6 +171,7 @@ pub fn open(app: &mut VectorcraftApp, name: Option<&str>) -> Result<Value, Strin
             f.insert("scale".into(), json!(p.scale));
             f.insert("spacing".into(), json!(p.spacing));
             f.insert("fit".into(), serde_json::to_value(p.fit).unwrap_or_default());
+            f.insert("autoCorner".into(), serde_json::to_value(p.auto_corner).unwrap_or_default());
             f.insert("flipAlong".into(), json!(p.flip_along));
             f.insert("flipAcross".into(), json!(p.flip_across));
             colorization_fields(&mut f, &p.colorization);
@@ -269,10 +273,12 @@ fn params(d: &Dialog) -> Value {
         }
         "pattern" => {
             let fit: PatternFit = serde_json::from_value(json!(d.str("fit"))).unwrap_or_default();
+            let auto_corner: AutoCorner = serde_json::from_value(json!(d.str("autoCorner"))).unwrap_or_default();
             json!({
                 "scale": clamped(d, "scale", (1.0, 10000.0)),
                 "spacing": clamped(d, "spacing", (0.0, 10000.0)),
                 "fit": serde_json::to_value(fit).unwrap_or_default(),
+                "auto_corner": serde_json::to_value(auto_corner).unwrap_or_default(),
                 "flip_along": d.bool("flipAlong"),
                 "flip_across": d.bool("flipAcross"),
                 "colorization": serde_json::to_value(colorization(d)).unwrap_or_default(),
@@ -372,6 +378,7 @@ fn pattern_body(ui: &mut egui::Ui, d: &mut Dialog) {
         });
     }
     form::choice(ui, d, "fit", tl!("Fit:"), (LABEL_W, 160.0), &FITS);
+    form::choice(ui, d, "autoCorner", tl!("Auto Corners:"), (LABEL_W, 160.0), &AUTO_CORNERS);
     flips(ui, d);
     colorization_body(ui, d);
     ui.add_space(8.0);
@@ -621,15 +628,15 @@ mod tests {
 
         app.run("ui.brushOptions", json!({"name": "Chain"})).unwrap();
         let text = shown(&mut app);
-        for label in ["Pattern Brush Options", "Scale:", "Spacing:", "Fit:", "Stretch to Fit"] {
+        for label in ["Pattern Brush Options", "Scale:", "Spacing:", "Fit:", "Stretch to Fit", "Auto Corners:"] {
             assert!(text.contains(label), "{label} in {text}");
         }
-        set(&mut app, json!({"scale": 50, "spacing": -5, "fit": "addSpace", "flipAlong": true}));
+        set(&mut app, json!({"scale": 50, "spacing": -5, "fit": "addSpace", "autoCorner": "sliced", "flipAlong": true}));
         super::super::confirm(&mut app).unwrap();
         let def = app.run("brush.get", json!({"name": "Chain"})).unwrap();
         assert_eq!(
-            (def["scale"].clone(), def["spacing"].clone(), def["fit"].clone(), def["flip_along"].clone()),
-            (json!(50.0), json!(0.0), json!("addSpace"), json!(true))
+            (def["scale"].clone(), def["spacing"].clone(), def["fit"].clone(), def["flip_along"].clone(), def["auto_corner"].clone()),
+            (json!(50.0), json!(0.0), json!("addSpace"), json!(true), json!("sliced"))
         );
         // The tiles stay (the definition keeps its art).
         assert!(def.get("side").is_some_and(|s| !s.is_null()));

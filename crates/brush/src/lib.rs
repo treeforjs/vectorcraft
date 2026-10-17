@@ -263,6 +263,23 @@ pub enum PatternFit {
     Approximate,
 }
 
+/// What a pattern brush draws at a corner that has no corner tile of its own.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AutoCorner {
+    /// No corner art: the side tiles run into the corner.
+    #[default]
+    None,
+    /// A side tile centred on the corner and turned to the bisector.
+    Centered,
+    /// Two side tiles, one ending and one starting at the corner, mitred together.
+    Between,
+    /// One side tile centred on the corner, sliced and mitred like a picture frame.
+    Sliced,
+    /// Two straight side tiles crossing at the corner, one along each leg.
+    Overlap,
+}
+
 /// Pattern brush: tiles repeated along the path, with corner and end tiles.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -281,6 +298,8 @@ pub struct PatternBrush {
     /// Space between tiles in percent of the tile width.
     pub spacing: f64,
     pub fit: PatternFit,
+    /// Corner art generated from the side tile where a corner tile is missing.
+    pub auto_corner: AutoCorner,
     pub flip_along: bool,
     pub flip_across: bool,
     pub colorization: Colorization,
@@ -297,6 +316,7 @@ impl Default for PatternBrush {
             scale: 100.0,
             spacing: 0.0,
             fit: PatternFit::Stretch,
+            auto_corner: AutoCorner::None,
             flip_along: false,
             flip_across: false,
             colorization: Colorization::Tints,

@@ -254,6 +254,66 @@ fn pattern_places_corner_tiles() {
     assert_eq!(out.len() - corners, 36);
 }
 
+fn auto_corner_pieces(mode: AutoCorner, corners: bool) -> (Vec<Node>, Vec<Node>) {
+    let mut bp = line(0.0, 0.0, 100.0, 0.0);
+    bp.line_to((100.0, 100.0));
+    let mut brush = pattern_brush(PatternFit::Stretch, corners);
+    if let BrushKind::Pattern(pb) = &mut brush.kind {
+        pb.auto_corner = mode;
+    }
+    let out = stroke_pieces(&brush, &bp, &stroke(1.0));
+    // With corner art the run tiles stop short of the corner, and only the corner art covers it.
+    let probe = Point::new(100.5, -0.5);
+    out.into_iter().partition(|n| n.geometric_bounds().is_some_and(|b| b.contains(probe)))
+}
+
+#[test]
+fn pattern_auto_corners_fill_corners_without_tiles() {
+    // Without corner art the side tiles run into the corner and one bends round it.
+    let (corner, runs) = auto_corner_pieces(AutoCorner::None, false);
+    assert_eq!((corner.len(), runs.len()), (1, 19));
+    for (mode, pieces) in [(AutoCorner::Centered, 1), (AutoCorner::Between, 2), (AutoCorner::Sliced, 1), (AutoCorner::Overlap, 2)] {
+        let (corner, runs) = auto_corner_pieces(mode, false);
+        assert_eq!(corner.len(), pieces, "{mode:?}");
+        assert!(!runs.is_empty(), "{mode:?} keeps the side tiles");
+    }
+}
+
+#[test]
+fn pattern_auto_sliced_corner_is_mitred() {
+    let (corner, _) = auto_corner_pieces(AutoCorner::Sliced, false);
+    let b = bounds(&corner);
+    // A 10×4 tile mitred round a right-angle corner at (100, 0): the outer edge meets at (102, -2)
+    // and the inner edge is shortened by the tile's half height on each leg.
+    assert!(near(b.x1, 102.0, 0.05) && near(b.y0, -2.0, 0.05), "{b:?}");
+    assert!(near(b.x0, 93.0, 0.05) && near(b.y1, 7.0, 0.05), "{b:?}");
+}
+
+#[test]
+fn pattern_auto_overlap_runs_tiles_straight_past_the_corner() {
+    let (corner, _) = auto_corner_pieces(AutoCorner::Overlap, false);
+    let b = bounds(&corner);
+    assert!(near(b.x1, 105.0, 0.05) && near(b.y0, -5.0, 0.05), "{b:?}");
+}
+
+#[test]
+fn pattern_corner_tiles_win_over_auto_corners() {
+    let (with_auto, _) = auto_corner_pieces(AutoCorner::Overlap, true);
+    let (plain, _) = auto_corner_pieces(AutoCorner::None, true);
+    assert_eq!(with_auto.len(), plain.len());
+    assert_eq!(plain.len(), 1);
+}
+
+#[test]
+fn pattern_auto_corner_defaults_to_none_and_round_trips() {
+    let pb: PatternBrush = serde_json::from_str(r#"{"scale":50.0}"#).unwrap();
+    assert_eq!(pb.auto_corner, AutoCorner::None);
+    let pb = PatternBrush { auto_corner: AutoCorner::Sliced, ..Default::default() };
+    let json = serde_json::to_string(&pb).unwrap();
+    assert!(json.contains(r#""auto_corner":"sliced""#), "{json}");
+    assert_eq!(serde_json::from_str::<PatternBrush>(&json).unwrap(), pb);
+}
+
 #[test]
 fn bristle_makes_translucent_strands() {
     let b = Brush { name: "b".into(), kind: BrushKind::Bristle(Bristle::default()) };
