@@ -3553,11 +3553,11 @@ title = "Effect › Video › De-Interlace"
 area = "H"
 tier = "P3"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::de_interlace_rebuilds_one_field_from_the_other"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-video-ntsc-colors"
@@ -3565,11 +3565,11 @@ title = "Effect › Video › NTSC Colors"
 area = "H"
 tier = "P3"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::ntsc_colors_desaturate_only_illegal_colours"]
+notes = ""
 
 [[feature]]
 id = "fx.color-adjustments"

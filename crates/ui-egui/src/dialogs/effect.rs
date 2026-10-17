@@ -171,6 +171,8 @@ pub(super) fn choices(effect: &str, key: &str) -> Option<form::Choices> {
             ("Medium Strokes", "mediumStrokes"),
             ("Long Strokes", "longStrokes"),
         ]),
+        ("video.deInterlace", "eliminate") => Some(&[("Odd Lines", "odd"), ("Even Lines", "even")]),
+        ("video.deInterlace", "create") => Some(&[("Duplication", "duplication"), ("Interpolation", "interpolation")]),
         ("path.offsetPath", "joins") => Some(&[("Miter", "miter"), ("Round", "round"), ("Bevel", "bevel")]),
         ("distort.roughen" | "distort.zigZag", "points") => Some(&[("Smooth", "smooth"), ("Corner", "corner")]),
         _ => None,

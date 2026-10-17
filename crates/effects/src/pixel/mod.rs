@@ -1,7 +1,7 @@
 //! Photoshop-style raster effects (Effect › Blur › Radial Blur and Smart Blur, Distort › Diffuse
 //! Glow, Glass and Ocean Ripple, Pixelate › Color
-//! Halftone, Crystallize, Mezzotint and Pointillize, Sharpen › Unsharp Mask, and Stylize › Glowing
-//! Edges): filters over premultiplied RGBA8 pixels.
+//! Halftone, Crystallize, Mezzotint and Pointillize, Sharpen › Unsharp Mask, Stylize › Glowing
+//! Edges, and Video › De-Interlace and NTSC Colors): filters over premultiplied RGBA8 pixels.
 //!
 //! - Every distance is in document units (points) and becomes pixels through the raster's
 //!   [`PixelSpace::px`], so an effect looks the same at any zoom and at any Document Raster Effects
@@ -16,6 +16,7 @@ mod edges;
 mod noise;
 mod pixelate;
 mod sharpen;
+mod video;
 
 pub use distort::{Glass, GlassTexture};
 pub use pixelate::Mezzotint;
@@ -26,7 +27,7 @@ use vectorcraft_geom::{Affine, Point, Rect};
 use crate::util::{num, text};
 
 /// The Photoshop-style effect ids (all raster effects, see [`crate::is_raster`]).
-pub const PIXEL_EFFECTS: [&str; 11] = [
+pub const PIXEL_EFFECTS: [&str; 13] = [
     "blur.radial",
     "blur.smart",
     "distort.diffuseGlow",
@@ -38,6 +39,8 @@ pub const PIXEL_EFFECTS: [&str; 11] = [
     "pixelate.pointillize",
     "sharpen.unsharpMask",
     "stylize.glowingEdges",
+    "video.deInterlace",
+    "video.ntscColors",
 ];
 
 /// A Photoshop-style raster effect with its parameters read and clamped to their ranges. Lengths
@@ -71,6 +74,11 @@ pub enum PixelFx {
     Glass(Glass),
     /// Distort › Ocean Ripple: the content wobbled under ripples of `size`, by `magnitude`.
     OceanRipple { size: f64, magnitude: f64 },
+    /// Video › De-Interlace: the `odd` (else even) scan lines rebuilt from their neighbours, by
+    /// `interpolate`-ing the lines either side or duplicating the one above.
+    DeInterlace { odd: bool, interpolate: bool },
+    /// Video › NTSC Colors: colours desaturated into the broadcast-safe range.
+    NtscColors,
 }
 
 /// Where a raster's pixels lie in the document.
@@ -148,6 +156,11 @@ pub(crate) fn parse(id: &str, p: &Value) -> Option<PixelFx> {
         "distort.oceanRipple" => {
             PixelFx::OceanRipple { size: num(p, "rippleSize", 9.0).clamp(1.0, 15.0), magnitude: num(p, "rippleMagnitude", 9.0).clamp(0.0, 20.0) }
         }
+        "video.deInterlace" => PixelFx::DeInterlace {
+            odd: !text(p, "eliminate", "odd").eq_ignore_ascii_case("even"),
+            interpolate: !text(p, "create", "interpolation").eq_ignore_ascii_case("duplication"),
+        },
+        "video.ntscColors" => PixelFx::NtscColors,
         _ => return None,
     })
 }
@@ -168,6 +181,7 @@ impl PixelFx {
             // Cells and dots straddling the edge reach out by up to a cell.
             PixelFx::Crystallize { size } | PixelFx::Pointillize { size } => size,
             PixelFx::ColorHalftone { .. } | PixelFx::Mezzotint { .. } | PixelFx::DiffuseGlow { .. } => 0.0,
+            PixelFx::DeInterlace { .. } | PixelFx::NtscColors => 0.0,
             // Displacements pull content out by up to their reach.
             PixelFx::Glass(g) => g.distortion * 0.5,
             PixelFx::OceanRipple { magnitude, .. } => magnitude * 0.5,
@@ -191,6 +205,8 @@ impl PixelFx {
             // The steepest slope is found over the whole raster.
             PixelFx::Glass(_) => None,
             PixelFx::OceanRipple { magnitude, .. } => Some(magnitude * 0.5 + 1.0),
+            PixelFx::DeInterlace { .. } => Some(2.0),
+            PixelFx::NtscColors => Some(0.0),
         }
     }
 
@@ -211,6 +227,8 @@ impl PixelFx {
             PixelFx::DiffuseGlow { grain, glow, clear } => distort::diffuse_glow(px, w, h, space, grain, glow, clear),
             PixelFx::Glass(g) => distort::glass(px, w, h, space, g),
             PixelFx::OceanRipple { size, magnitude } => distort::ocean_ripple(px, w, h, space, size, magnitude),
+            PixelFx::DeInterlace { odd, interpolate } => video::de_interlace(px, w, h, space, odd, interpolate),
+            PixelFx::NtscColors => video::ntsc_colors(px),
         }
     }
 }

@@ -13,6 +13,15 @@
 # tested). Left in English on purpose (`MENU_KEEP_AS_IS` in the tests): the product name, language
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
 # Photoshop-style raster effects (Effect menu, their dialogs).
+	Video	Vidéo
+	De-Interlace…	Désentrelacer…
+	De-Interlace	Désentrelacer
+	NTSC Colors	Couleurs NTSC
+	Eliminate	Supprimer
+	Odd Lines	Lignes impaires
+	Even Lines	Lignes paires
+	Duplication	Duplication
+	Interpolation	Interpolation
 	Glowing Edges…	Bords lumineux…
 	Distort	Déformation
 	Diffuse Glow…	Diffusion lumineuse…

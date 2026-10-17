@@ -17,6 +17,15 @@
 # commands is kept. Full-width punctuation (，。：) inside sentences; half-width parentheses and
 # the " · " separators as in the English. Terms shared with PhotoCraft use the same words as its
 # zh-hant catalog (圖層, 選取, 偏好設定, 混合模式 ...), so the two apps read alike.
+	Video	視訊
+	De-Interlace…	逐行…
+	De-Interlace	逐行
+	NTSC Colors	NTSC 色彩
+	Eliminate	消除
+	Odd Lines	奇數行
+	Even Lines	偶數行
+	Duplication	複製
+	Interpolation	內插
 	Glowing Edges…	發光邊緣…
 	Distort	扭曲
 	Diffuse Glow…	擴散光暈…
