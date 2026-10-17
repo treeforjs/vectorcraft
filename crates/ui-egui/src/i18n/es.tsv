@@ -3515,7 +3515,7 @@ axis	Both	Ambos
 @msg	bad trailer	trailer no válido
 @msg	balance must be between 0 and 100	el equilibrio debe estar entre 0 y 100
 @msg	batch step {_1} (`{id}`) failed: {e}	falló el paso {_1} del lote (`{id}`): {e}
-@msg	brightness must be system|light|dark|highContrast	el brillo debe ser system|light|dark|highContrast
+@msg	brightness must be system|light|cream|dim|dark|highContrast	el brillo debe ser system|light|cream|dim|dark|highContrast
 @msg	can't encode the document: {0}	no se puede codificar el documento: {0}
 @msg	can't parse shortcut `{c}`	no se puede interpretar el atajo `{c}`
 @msg	can't parse shortcut `{s}` for `{k}`	no se puede interpretar el atajo `{s}` de `{k}`
@@ -4040,3 +4040,5 @@ axis	Both	Ambos
 	Wide Sharp	Ancho nítido
 	Wide Blurry	Ancho borroso
 	Sparkle	Destellos
+	Cream	Crema
+	Dim	Atenuado
