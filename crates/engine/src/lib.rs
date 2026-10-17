@@ -715,7 +715,7 @@ impl Default for Prefs {
             plugins_folder: String::new(),
             scratch_primary: s("Startup"),
             scratch_secondary: s("None"),
-            ui_brightness: s("mediumDark"),
+            ui_brightness: s("system"),
             canvas_color: s("matchUi"),
             auto_collapse_icon_panels: false,
             tool_group_labels: true,

@@ -80,6 +80,8 @@ pub fn restore(app: &mut VectorcraftApp) {
 #[derive(Clone, Copy, PartialEq)]
 struct Applied {
     brightness: Brightness,
+    /// The desktop's light or dark setting, which System follows while the app runs.
+    system: Option<egui::Theme>,
     /// User Interface › Canvas Color, unless it matches the interface brightness.
     canvas: Option<egui::Color32>,
     threads: i32,
@@ -110,6 +112,7 @@ pub fn apply_runtime(app: &mut VectorcraftApp, ctx: &egui::Context) {
     }
     let want = Applied {
         brightness: app.ui.brightness,
+        system: ctx.system_theme(),
         canvas: canvas_color(&p.canvas_color),
         threads: p.render_threads,
         tool_tips: p.show_tool_tips,
@@ -379,7 +382,7 @@ mod tests {
     use vectorcraft_engine::Session;
 
     /// User Interface › Canvas Color (#663): White and the three greys paint the canvas around the
-    /// artboards; Match User Interface Brightness keeps the theme's.
+    /// artboards; Match Appearance keeps the theme's.
     #[test]
     fn canvas_color_choices_paint_the_pasteboard() {
         let mut app = VectorcraftApp::new(Session::new(), Services::default());

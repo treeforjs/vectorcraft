@@ -63,10 +63,8 @@ fn about_tab(app: &mut VectorcraftApp, ui: &mut egui::Ui) {
     crate::community::links(app, ui);
     ui.add_space(12.0);
     ui.label(
-        egui::RichText::new(tl!(
-            "MIT OR Apache-2.0. Fonts: Source Sans 3, Inter, JetBrains Mono (OFL). Icons: Lucide (ISC) + VectorCraft."
-        ))
-        .size(11.0),
+        egui::RichText::new(tl!("MIT OR Apache-2.0. Fonts: Source Sans 3, Inter, JetBrains Mono (OFL). Icons: Lucide (ISC) + VectorCraft."))
+            .size(11.0),
     );
     // The GPU the window renders with, for bug reports (Preferences › Performance picks it).
     if let Some(adapter) = &app.graphics_adapter {

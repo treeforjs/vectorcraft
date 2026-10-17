@@ -268,7 +268,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "",
         "{collapsed?: bool} collapse the dock's Properties | Layers | Libraries group to icons (true), expand it (false) or toggle (omitted), as the double arrow at the top of the dock does; returns the new state",
     ),
-    ("window.brightness", "UI Brightness", "", "{brightness: dark|mediumDark|mediumLight|light}"),
+    ("window.brightness", "Appearance", "", "{brightness: system|light|dark|highContrast}"),
     ("window.workspace", "Workspace", "", "{name} switch workspace (Essentials, Essentials Classic, Painting, …)"),
     ("window.workspace.reset", "Reset Essentials", "", "{} reset the current workspace"),
     ("window.workspace.new", "New Workspace…", "", "{name?} save the current layout"),
@@ -1158,7 +1158,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
                 app.canvas.key = None;
                 Ok(json!(b.id()))
             }
-            None => Err("brightness must be dark|mediumDark|mediumLight|light".into()),
+            None => Err("brightness must be system|light|dark|highContrast".into()),
         },
         "window.newWindow" => Err("multiple windows land with M11.5".into()),
         "tool.select" => match s("tool") {
@@ -1945,7 +1945,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                         .collect(),
                 ),
                 Sep,
-                sub("UI Brightness", Brightness::ALL.iter().map(|b| cp(b.label(), "window.brightness", json!({"brightness": b.id()}))).collect()),
+                sub("Appearance", Brightness::ALL.iter().map(|b| cp(b.label(), "window.brightness", json!({"brightness": b.id()}))).collect()),
                 Sep,
                 c("Quit VectorCraft", "app.quit"),
             ],
