@@ -221,7 +221,7 @@ pub(crate) fn is_cjk(c: char) -> bool {
 /// Vertical metrics (points) of a style's resolved face: (ascent, descent, leading).
 pub(crate) fn style_metrics(db: &FontDb, st: &CharStyle) -> (f64, f64, f64) {
     let vs = st.v_scale / 100.0;
-    let Some(face) = db.face_version(&st.font_family, &st.font_style, st.font_version.as_deref()) else {
+    let Some(face) = db.style_face(st) else {
         return (st.size * 0.8 * vs, st.size * 0.2 * vs, st.effective_leading());
     };
     let k = st.size / face.upem;
@@ -231,7 +231,7 @@ pub(crate) fn style_metrics(db: &FontDb, st: &CharStyle) -> (f64, f64, f64) {
 /// Cap height and x height (points) of a style's resolved face.
 pub(crate) fn cap_x_heights(db: &FontDb, st: &CharStyle) -> (f64, f64) {
     let vs = st.v_scale / 100.0;
-    let Some(face) = db.face_version(&st.font_family, &st.font_style, st.font_version.as_deref()) else {
+    let Some(face) = db.style_face(st) else {
         return (st.size * 0.7 * vs, st.size * 0.5 * vs);
     };
     let k = st.size / face.upem * vs;
@@ -295,12 +295,12 @@ pub(crate) fn shape_range(
         let a = bytes.start;
         let b = bytes.end;
         if let Some(art) = art {
-            if let Some(face) = db.face_version(&st.font_family, &st.font_style, st.font_version.as_deref()).or_else(|| db.face_covering('a')) {
+            if let Some(face) = db.style_face(st).or_else(|| db.face_covering('a')) {
                 out.push(inline_glyph(&face, st, art, source_runs.start, a..b, text, level_at(a)));
             }
             continue;
         }
-        let Some(primary) = db.face_version(&st.font_family, &st.font_style, st.font_version.as_deref()) else { continue };
+        let Some(primary) = db.style_face(st) else { continue };
         let pmap = primary.skrifa().map(|f| f.charmap());
         // Synthesized Small Caps shape lowercase letters separately (as smaller capitals).
         let small_caps = st.small_caps.is_some() && !st.all_caps;

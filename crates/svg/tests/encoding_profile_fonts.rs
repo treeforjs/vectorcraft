@@ -241,6 +241,33 @@ fn variable_font_instances_embed_as_themselves() {
     assert!(advances[1] > advances[0], "{advances:?}");
 }
 
+/// Axes set freely write `font-variation-settings` (a browser's variable font draws them) and the
+/// weight; embedded, they are a static font of those settings at that weight.
+#[test]
+fn free_variable_font_axes_write_their_settings_and_embed_as_themselves() {
+    use vectorcraft_text::test_fonts::{VARIABLE_FAMILY, variable_font};
+    let db = vectorcraft_text::FontDb::global();
+    db.add_font(variable_font().unwrap());
+    let mut d = Document::new(300.0, 200.0);
+    let mut at = style(VARIABLE_FAMILY, "Regular");
+    at.font_variations.insert("wght".into(), 625.0);
+    add(&mut d, text(Point::new(20.0, 60.0), &[("ll", style(VARIABLE_FAMILY, "Regular")), ("ll", at.clone())]));
+    let plain_svg = export_full(&d, &ExportOptions::default(), None).svg;
+    assert!(
+        plain_svg.contains("font-variation-settings:&quot;wght&quot; 625") || plain_svg.contains("font-variation-settings:\"wght\" 625"),
+        "{plain_svg}"
+    );
+    assert!(plain_svg.contains("font-weight=\"625\""), "{plain_svg}");
+    let o = export_full(&d, &ExportOptions { embed_fonts: true, ..Default::default() }, None);
+    let fonts = embedded(&o.svg);
+    assert_eq!(fonts.iter().map(|f| f.1).collect::<Vec<_>>(), [400, 625], "{:?}", o.warnings);
+    let f = skrifa::FontRef::new(&fonts[1].2).unwrap();
+    assert!(f.fvar().is_err(), "a static font");
+    let gid = f.cmap().unwrap().map_codepoint('l').unwrap();
+    let face = db.at_axes(&db.face(VARIABLE_FAMILY, "Regular").unwrap(), &at.font_variations);
+    assert_eq!(f64::from(f.hmtx().unwrap().advance(gid).unwrap()), face.advance(face.glyph_for('l')).round());
+}
+
 /// The bundled Source Sans 3 Regular renamed `family` (13 characters, as long as the original
 /// name) with OS/2 `fsType` set to `fs_type`.
 fn licensed_font(family: &str, fs_type: u16) -> Vec<u8> {

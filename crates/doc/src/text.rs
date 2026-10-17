@@ -66,6 +66,10 @@ pub struct CharStyle {
     /// a feature on, `"-liga"` off.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub features: Vec<String>,
+    /// Variable font axis settings (user units, by axis tag: `wght` 650) that differ from the
+    /// face's own; axes the face doesn't have are ignored.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub font_variations: std::collections::BTreeMap<String, f64>,
     /// Character style (Character Styles panel) these attributes come from; None = Normal.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub style_name: Option<String>,
@@ -196,6 +200,7 @@ impl Default for CharStyle {
             strikethrough: false,
             all_caps: false,
             features: vec![],
+            font_variations: std::collections::BTreeMap::new(),
             style_name: None,
             overprint_fill: false,
             overprint_stroke: false,

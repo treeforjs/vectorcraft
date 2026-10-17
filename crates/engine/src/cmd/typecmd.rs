@@ -75,7 +75,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Character",
             [],
             None,
-            "{ids?|id?, font?, style?, size?: pt, leading?: pt|\"auto\", tracking?: 1/1000 em, justify?: \"auto\" (the start of each paragraph's direction)|\"left\"|\"center\"|\"right\"|\"justifyAll\", fill?: colour, features?: [\"dlig\", \"-liga\", …] OpenType, start?: byte, end?: byte} (with a range: the character attributes style that range and justify the paragraphs it touches; without: all the text)",
+            "{ids?|id?, font?, style?, size?: pt, leading?: pt|\"auto\", tracking?: 1/1000 em, justify?: \"auto\" (the start of each paragraph's direction)|\"left\"|\"center\"|\"right\"|\"justifyAll\", fill?: colour, features?: [\"dlig\", \"-liga\", …] OpenType, fontVariations?: {\"wght\": 650, …} (variable font axes in user units; null returns an axis to the style's own), start?: byte, end?: byte} (with a range: the character attributes style that range and justify the paragraphs it touches; without: all the text)",
             has_doc,
             set_style
         ),
@@ -398,6 +398,7 @@ fn set_style(s: &mut Session, p: &Value) -> Result<Value> {
         Some(v) => Some(vectorcraft_color::Paint::solid(color_value(v).ok_or_else(|| bad(C, "bad fill colour"))?)),
     };
     let features = super::textedit::features_param(p, C)?;
+    let variations = super::textedit::font_variations_param(p, C)?;
     if font.is_none()
         && style.is_none()
         && size.is_none()
@@ -406,6 +407,7 @@ fn set_style(s: &mut Session, p: &Value) -> Result<Value> {
         && justify.is_none()
         && fill.is_none()
         && features.is_none()
+        && variations.is_none()
     {
         return Err(bad(C, "nothing to change"));
     }
@@ -427,6 +429,7 @@ fn set_style(s: &mut Session, p: &Value) -> Result<Value> {
                 if font.is_some() || style.is_some() {
                     st.font_version = None;
                 }
+                super::textedit::apply_font_variations(st, variations.as_ref(), font.is_some() || style.is_some());
                 if let Some(v) = size {
                     st.size = v.clamp(0.1, 1296.0);
                 }

@@ -73,7 +73,14 @@ pub(crate) fn transparency(n: &Node) -> Props {
 /// rules and the characters using them say, so each face is told apart (Semibold from Bold).
 pub(crate) fn font_descriptor(st: &CharStyle) -> (u16, bool) {
     let fs = st.font_style.to_ascii_lowercase();
-    (vectorcraft_text::style_weight(&st.font_style).round().clamp(1.0, 1000.0) as u16, fs.contains("italic") || fs.contains("oblique"))
+    // A variable font's weight axis set freely is the weight.
+    let weight = st
+        .font_variations
+        .get("wght")
+        .copied()
+        .filter(|w| w.is_finite())
+        .unwrap_or_else(|| f64::from(vectorcraft_text::style_weight(&st.font_style)));
+    (weight.round().clamp(1.0, 1000.0) as u16, fs.contains("italic") || fs.contains("oblique"))
 }
 
 /// The font of character style `st`: family, size (the vertical scale; writers stretch the
@@ -119,6 +126,15 @@ pub(crate) fn type_props(st: &CharStyle, len: &dyn Fn(f64) -> String) -> Props {
             })
             .collect();
         p.push(("font-feature-settings", v.join(", ")));
+    }
+    let axes: Vec<String> = st
+        .font_variations
+        .iter()
+        .filter(|(t, v)| v.is_finite() && t.len() == 4 && t.chars().all(|c| c.is_ascii_alphanumeric()))
+        .map(|(t, v)| format!("\"{t}\" {}", (v * 1000.0).round() / 1000.0))
+        .collect();
+    if !axes.is_empty() {
+        p.push(("font-variation-settings", axes.join(", ")));
     }
     match (st.underline, st.strikethrough) {
         (true, true) => p.push(("text-decoration", "underline line-through".into())),

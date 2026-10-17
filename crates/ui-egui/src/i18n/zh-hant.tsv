@@ -3511,3 +3511,5 @@ axis	Both	兩者
 	Between	之間
 	Sliced	切片
 	Overlap	重疊
+	Variable Font	可變字體
+	Return the axes to the font style's own settings	將軸恢復為字體樣式本身的設定

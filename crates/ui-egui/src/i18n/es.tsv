@@ -4094,3 +4094,5 @@ axis	Both	Ambos
 	Between	Entre
 	Sliced	Cortada
 	Overlap	Superpuesta
+	Variable Font	Fuente variable
+	Return the axes to the font style's own settings	Devolver los ejes a los valores propios del estilo de fuente

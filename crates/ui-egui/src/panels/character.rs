@@ -1,5 +1,6 @@
-//! Character panel: font family / style, size, leading, kerning, tracking, vertical and horizontal
-//! scale, baseline shift, character rotation and the caps / underline / strikethrough toggles.
+//! Character panel: font family / style, a variable font's axes, size, leading, kerning, tracking,
+//! vertical and horizontal scale, baseline shift, character rotation and the caps / underline /
+//! strikethrough toggles.
 
 use std::sync::{Mutex, OnceLock};
 
@@ -474,6 +475,60 @@ pub(crate) fn font_pickers(app: &mut VectorcraftApp, ui: &mut Ui, s: &CharStyle,
     }
 }
 
+/// A variable font's axes (those it doesn't hide) for style `s`, `w` wide: a slider and a field
+/// per axis, set through `text.setStyle`'s `fontVariations` when a drag ends or a value is typed;
+/// Reset returns every axis to the font style's own setting. Nothing for a static font.
+fn variable_axes(app: &mut VectorcraftApp, ui: &mut Ui, s: &CharStyle, w: f32) {
+    let Some(face) = vectorcraft_text::FontDb::global().face_version(&s.font_family, &s.font_style, s.font_version.as_deref()) else { return };
+    let axes: Vec<_> = face.axes().into_iter().filter(|a| !a.hidden && a.max > a.min).collect();
+    if axes.is_empty() {
+        return;
+    }
+    let t = Tokens::get(ui.ctx());
+    ui.add_space(4.0);
+    ui.horizontal(|ui| {
+        ui.label(egui::RichText::new(tl!("Variable Font")).size(11.5).strong().color(t.text_dim));
+        if !s.font_variations.is_empty() {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.small_button(tl!("Reset")).on_hover_text(tl!("Return the axes to the font style's own settings")).clicked() {
+                    let reset: serde_json::Map<String, Value> = s.font_variations.keys().map(|k| (k.clone(), Value::Null)).collect();
+                    style(app, json!({ "fontVariations": reset }));
+                }
+            });
+        }
+    });
+    let (label_w, field_w) = (72.0, 52.0);
+    let slider_w = (w - label_w - field_w - 16.0).max(40.0);
+    for a in &axes {
+        let value = s.font_variations.get(&a.tag).copied().unwrap_or_else(|| face.axis_value(&a.tag).unwrap_or(a.default));
+        let decimals = if a.max - a.min >= 20.0 { 0 } else { 1 };
+        ui.horizontal(|ui| {
+            let l = ui.add_sized(vec2(label_w, 20.0), egui::Label::new(egui::RichText::new(&a.name).size(12.0).color(t.text)).truncate());
+            l.on_hover_text(format!("{} ({}–{})", a.tag, a.min, a.max));
+            // The drag's value stays local until it ends: one undo step per change.
+            let id = ui.id().with(("ch-axis", &a.tag));
+            let mut v = ui.data(|d| d.get_temp::<f64>(id)).unwrap_or(value);
+            ui.visuals_mut().widgets.inactive.bg_fill = t.input_border;
+            ui.visuals_mut().selection.bg_fill = t.accent;
+            let r = ui.add_sized(vec2(slider_w, 20.0), egui::Slider::new(&mut v, a.min..=a.max).show_value(false).trailing_fill(true));
+            if r.dragged() {
+                ui.data_mut(|d| d.insert_temp(id, v));
+            }
+            let mut pick = (r.drag_stopped() || (r.changed() && !r.dragged())).then_some(v);
+            if pick.is_some() {
+                ui.data_mut(|d| d.remove::<f64>(id));
+            }
+            if let Some(x) = widgets::range_field(ui, ("ch-axis-field", &a.tag), value, a.min..=a.max, "", decimals, field_w) {
+                pick = Some(x);
+            }
+            if let Some(v) = pick {
+                let v = widgets::round_to(v, decimals as i32);
+                style(app, json!({ "fontVariations": { a.tag.clone(): v } }));
+            }
+        });
+    }
+}
+
 /// The Control bar's type controls while type is selected or edited: the Character link (the
 /// Character panel in a popover), the font family and style menus and the Font Size combo.
 pub(crate) fn control_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -498,6 +553,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     };
     let w = ui.available_width();
     font_pickers(app, ui, &s, ("ch-font", "ch-style"), (w - 4.0, w - 4.0));
+    variable_axes(app, ui, &s, w);
     ui.add_space(2.0);
     let hidden = pstate::<bool>(ui.ctx(), "ch-hide-options");
     metrics_grid(app, ui, "ch-grid", &s, w, !hidden);
@@ -685,5 +741,25 @@ mod tests {
         assert!(!shown(&mut app));
         app.session.prefs.show_east_asian_options = true;
         assert!(shown(&mut app));
+    }
+
+    /// A variable font shows its axes with the values the type is set at; a static one doesn't.
+    #[test]
+    fn variable_fonts_show_their_axes() {
+        use vectorcraft_text::test_fonts::{VARIABLE_FAMILY, variable_font};
+        vectorcraft_text::FontDb::global().add_font(variable_font().unwrap());
+        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        app.run("file.new", json!({"width": 300, "height": 200})).unwrap();
+        let id = app.session.execute("text.create", &json!({"x": 20, "y": 50, "text": "lIn"})).unwrap()["id"].clone();
+        app.session.execute("select.set", &json!({"ids": [id]})).unwrap();
+        let painted = |app: &mut VectorcraftApp| crate::tests_labels::painted_text(app, show);
+        assert!(!painted(&mut app).contains("Variable Font"), "a static font");
+        app.session.execute("text.setStyle", &json!({"font": VARIABLE_FAMILY, "style": "SemiBold"})).unwrap();
+        let text = painted(&mut app);
+        assert!(text.contains("Variable Font") && text.contains("Weight") && text.contains("550"), "{text}");
+        assert!(!text.contains("Reset"), "nothing to reset yet");
+        app.session.execute("text.setStyle", &json!({"fontVariations": {"wght": 612}})).unwrap();
+        let text = painted(&mut app);
+        assert!(text.contains("612") && text.contains("Reset"), "{text}");
     }
 }

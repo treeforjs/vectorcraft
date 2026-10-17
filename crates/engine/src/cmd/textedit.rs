@@ -27,7 +27,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Character",
             [],
             None,
-            "{id? (default: the one selected type object), start?: byte, end?: byte (default: all text), font?, style?, size?: pt, leading?: pt|\"auto\", tracking?, kerning?: 1/1000 em|\"auto\", baselineShift?: pt, hScale?: %, vScale?: %, rotation?: deg, fill?: colour|\"none\", stroke?: colour|\"none\", strokeWidth?: pt, strokeOptions?: {weight?, cap?, join?, miterLimit?, dash?, dashOffset?, alignDashes?} (as stroke.set: the character stroke), underline?, strikethrough?, allCaps?: bool, smallCaps?: bool, position?: \"normal\"|\"superscript\"|\"subscript\" (sizes from Document Setup), features?: [\"dlig\", \"-liga\", …], charAlign?: \"romanBaseline\"|\"emBoxTop\"|\"emBoxCenter\"|\"emBoxBottom\"|\"icfTop\"|\"icfBottom\"} style a character range (runs are split at the range ends) → {id, runs}",
+            "{id? (default: the one selected type object), start?: byte, end?: byte (default: all text), font?, style?, size?: pt, leading?: pt|\"auto\", tracking?, kerning?: 1/1000 em|\"auto\", baselineShift?: pt, hScale?: %, vScale?: %, rotation?: deg, fill?: colour|\"none\", stroke?: colour|\"none\", strokeWidth?: pt, strokeOptions?: {weight?, cap?, join?, miterLimit?, dash?, dashOffset?, alignDashes?} (as stroke.set: the character stroke), underline?, strikethrough?, allCaps?: bool, smallCaps?: bool, position?: \"normal\"|\"superscript\"|\"subscript\" (sizes from Document Setup), features?: [\"dlig\", \"-liga\", …], fontVariations?: {\"wght\": 650, …} (variable font axes in user units; null returns an axis to the style's own setting; another font or style returns to its own), charAlign?: \"romanBaseline\"|\"emBoxTop\"|\"emBoxCenter\"|\"emBoxBottom\"|\"icfTop\"|\"icfBottom\"} style a character range (runs are split at the range ends) → {id, runs}",
             has_doc,
             set_range_style
         ),
@@ -183,9 +183,49 @@ pub(crate) struct CharChange {
     strikethrough: Option<bool>,
     all_caps: Option<bool>,
     features: Option<Vec<String>>,
+    font_variations: Option<VariationChange>,
     position: Option<vectorcraft_doc::CharPosition>,
     small_caps: Option<Option<f64>>,
     char_align: Option<vectorcraft_doc::CharAlign>,
+}
+
+/// Variable font axis settings to change: a value sets an axis (user units), `None` returns it
+/// to the face's own setting.
+pub(crate) type VariationChange = std::collections::BTreeMap<String, Option<f64>>;
+
+/// `fontVariations: {"wght": 650, "wdth": null, …}` → the axis settings to change.
+pub(crate) fn font_variations_param(p: &Value, cmd: &str) -> Result<Option<VariationChange>> {
+    let Some(v) = p.get("fontVariations").filter(|v| !v.is_null()) else { return Ok(None) };
+    let o = v.as_object().ok_or_else(|| bad(cmd, "fontVariations must be an object of axis tags to numbers (or null)"))?;
+    if o.len() > 64 {
+        return Err(bad(cmd, "fontVariations sets at most 64 axes"));
+    }
+    let mut out = VariationChange::new();
+    for (tag, value) in o {
+        if tag.len() != 4 || !tag.bytes().all(|b| (0x20..0x7f).contains(&b)) {
+            return Err(bad(cmd, format!("`{tag}` is not an axis tag (four characters such as wght, wdth, opsz)")));
+        }
+        let value = match value {
+            Value::Null => None,
+            v => Some(v.as_f64().filter(|x| x.is_finite()).ok_or_else(|| bad(cmd, format!("axis `{tag}` must be a number or null")))?),
+        };
+        out.insert(tag.clone(), value);
+    }
+    Ok(Some(out))
+}
+
+/// Applies `change` to `st`'s axis settings. Another font or style without a change of its own
+/// returns to the face's own settings.
+pub(crate) fn apply_font_variations(st: &mut CharStyle, change: Option<&VariationChange>, font_changed: bool) {
+    if font_changed {
+        st.font_variations.clear();
+    }
+    for (tag, v) in change.into_iter().flatten() {
+        match v {
+            Some(v) => st.font_variations.insert(tag.clone(), *v),
+            None => st.font_variations.remove(tag),
+        };
+    }
 }
 
 /// `features: ["dlig", "-liga", …]` → the canonical tag list (differences from the defaults).
@@ -266,6 +306,7 @@ impl CharChange {
             strikethrough: flag("strikethrough"),
             all_caps: flag("allCaps"),
             features: features_param(p, cmd)?,
+            font_variations: font_variations_param(p, cmd)?,
             position,
             small_caps,
             char_align: char_align_param(p, cmd)?,
@@ -294,6 +335,7 @@ impl CharChange {
             && self.strikethrough.is_none()
             && self.all_caps.is_none()
             && self.features.is_none()
+            && self.font_variations.is_none()
             && self.position.is_none()
             && self.small_caps.is_none()
             && self.char_align.is_none()
@@ -320,6 +362,7 @@ impl CharChange {
         if self.font.is_some() || self.style.is_some() {
             st.font_version = None;
         }
+        apply_font_variations(st, self.font_variations.as_ref(), self.font.is_some() || self.style.is_some());
         if let Some(v) = self.size {
             st.size = v.clamp(0.1, 1296.0);
         }
