@@ -365,8 +365,16 @@ fn layout_cache_follows_fonts_added_later() {
     // The web build adds fonts after startup: a caret layout cached before one arrived is stale.
     let (d, id, tool) = editing("abc");
     let NodeKind::Text(t) = &d.node(id).unwrap().kind else { panic!("not text") };
-    let before = tool.layout(t);
-    assert!(Arc::ptr_eq(&before, &tool.layout(t)), "cached while the fonts don't change");
+    // Other tests add fonts to the same process-wide database at any moment: check the caching
+    // over two layouts no font arrived between.
+    let (before, again) = (0..100)
+        .find_map(|_| {
+            let fonts = FontDb::global().generation();
+            let pair = (tool.layout(t), tool.layout(t));
+            (FontDb::global().generation() == fonts).then_some(pair)
+        })
+        .expect("a quiet moment between font additions");
+    assert!(Arc::ptr_eq(&before, &again), "cached while the fonts don't change");
     let font = vectorcraft_text::test_fonts::variable_font().unwrap();
     assert!(FontDb::global().add_font(font) > 0, "the test font is new to this process");
     assert!(!Arc::ptr_eq(&before, &tool.layout(t)), "a font added after the layout must refresh it");
