@@ -1,18 +1,28 @@
 //! Brush Options (double-click a brush in the Brushes panel, or the panel menu's Brush Options…).
 //! Calligraphic Brush Options: Name, then Angle, Roundness and Size, each Fixed, Random or
 //! Pressure with its Variation, over live previews of the nib and of a stroke (light, heavy, light
-//! pressure). Bristle Brush Options: Name, Shape and the bristle sliders. OK runs `brush.options`
-//! (strokes painted with the brush update); a name another brush has keeps the dialog open.
+//! pressure). Bristle Brush Options: Name, Shape and the bristle sliders. Scatter, Art and Pattern
+//! Brush Options: their values, flips and fit, and Colorization, over a live stroke preview. OK
+//! runs `brush.options` (strokes painted with the brush update); a name another brush has keeps
+//! the dialog open.
 //!
-//! Fields: `__brush` (the brush's name), `__type` (`calligraphic` | `bristle`), `name`.
-//! Calligraphic: `angle` (−180..180°), `roundness` (0..100 %), `size` (0..1296 pt), and per value
-//! `angleMode`, `roundnessMode`, `sizeMode` (`fixed` | `random` | `pressure`) and
-//! `angleVariation`, `roundnessVariation`, `sizeVariation`. Bristle: `shape` (`roundPoint`…),
-//! `size` (pt), `length` (25..300 %), `density`, `thickness`, `opacity`, `stiffness` (1..100 %).
+//! Fields: `__brush` (the brush's name), `__type` (`calligraphic` | `bristle` | `scatter` | `art`
+//! | `pattern`), `name`. Calligraphic: `angle` (−180..180°), `roundness` (0..100 %), `size`
+//! (0..1296 pt), and per value `angleMode`, `roundnessMode`, `sizeMode` (`fixed` | `random` |
+//! `pressure`) and `angleVariation`, `roundnessVariation`, `sizeVariation`. Bristle: `shape`
+//! (`roundPoint`…), `size` (pt), `length` (25..300 %), `density`, `thickness`, `opacity`,
+//! `stiffness` (1..100 %). Scatter: per value (`size`, `spacing`, `scatter`, `rotation`) `…Mode`
+//! (`fixed` | `random`), `…Min`, `…Max`; `rotationRelativeTo` (`page` | `path`). Art: `width` (%),
+//! `direction` (`leftToRight`…), `scale` (`proportional` | `stretch` | `betweenGuides`),
+//! `guideStart`, `guideEnd` (% of the art's length), `flipAlong`, `flipAcross`. Pattern: `scale`,
+//! `spacing` (%), `fit` (`stretch` | `addSpace` | `approximate`), `flipAlong`, `flipAcross`.
+//! Scatter, Art and Pattern: `colorization` (`none` | `tints` | `tintsAndShades` | `hueShift`) and
+//! `keyColor` (`#rrggbb`); `__def` holds the brush's definition for the preview.
 
 use egui::{Color32, Sense, Stroke, pos2, vec2};
 use serde_json::{Map, Value, json};
-use vectorcraft_brush::{Brush, BrushKind, Calligraphic, Variation};
+use vectorcraft_brush::{ArtScale, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternFit, Variation};
+use vectorcraft_doc::color::Color;
 
 use super::swatch_options::{grid, label};
 use super::{DialogSpec, form};
@@ -26,7 +36,7 @@ pub const KIND: &str = "brushOptions";
 pub(super) const SPEC: DialogSpec = DialogSpec { heading, body, confirm, min_width: 440.0, ..DialogSpec::FORM };
 
 /// The brush types that have an options dialog.
-pub const TYPES: [&str; 2] = ["calligraphic", "bristle"];
+pub const TYPES: [&str; 5] = ["calligraphic", "bristle", "scatter", "art", "pattern"];
 
 /// Calligraphic values: (field, label, suffix, decimals), in [`Calligraphic::RANGES`] order.
 const CALLI: [(&str, &str, &str, usize); 3] = [("angle", "Angle:", "°", 0), ("roundness", "Roundness:", "%", 0), ("size", "Size:", " pt", 1)];
@@ -54,6 +64,29 @@ const SHAPES: [(&str, &str); 10] = [
     ("flatFan", "Flat Fan"),
 ];
 
+/// Scatter values: (field, label, range, suffix).
+const SCATTER: [(&str, &str, (f64, f64), &str); 4] = [
+    ("size", "Size:", (1.0, 1000.0), "%"),
+    ("spacing", "Spacing:", (1.0, 10000.0), "%"),
+    ("scatter", "Scatter:", (-1000.0, 1000.0), "%"),
+    ("rotation", "Rotation:", (-360.0, 360.0), "°"),
+];
+
+/// Scatter value modes: (value, label).
+const SCATTER_MODES: [(&str, &str); 2] = [("fixed", "Fixed"), ("random", "Random")];
+
+const ROTATION_RELATIVE: [(&str, &str); 2] = [("page", "Page"), ("path", "Path")];
+
+const COLORIZATION: [(&str, &str); 4] = [("none", "None"), ("tints", "Tints"), ("tintsAndShades", "Tints and Shades"), ("hueShift", "Hue Shift")];
+
+const DIRECTIONS: [(&str, &str); 4] =
+    [("leftToRight", "Left to Right"), ("rightToLeft", "Right to Left"), ("topToBottom", "Top to Bottom"), ("bottomToTop", "Bottom to Top")];
+
+const ART_SCALES: [(&str, &str); 3] =
+    [("proportional", "Scale Proportionately"), ("stretch", "Stretch to Fit Stroke Length"), ("betweenGuides", "Stretch Between Guides")];
+
+const FITS: [(&str, &str); 3] = [("stretch", "Stretch to Fit"), ("addSpace", "Add Space to Fit"), ("approximate", "Approximate Path")];
+
 /// Width of the bristle dialog's label column.
 const LABEL_W: f32 = 112.0;
 
@@ -64,6 +97,9 @@ const STROKE_W: f32 = 400.0;
 fn heading(d: &Dialog) -> String {
     match d.str("__type").as_str() {
         "bristle" => tl!("Bristle Brush Options").into(),
+        "scatter" => tl!("Scatter Brush Options").into(),
+        "art" => tl!("Art Brush Options").into(),
+        "pattern" => tl!("Pattern Brush Options").into(),
         _ => tl!("Calligraphic Brush Options").into(),
     }
 }
@@ -104,7 +140,41 @@ pub fn open(app: &mut VectorcraftApp, name: Option<&str>) -> Result<Value, Strin
                 f.insert(key.into(), v.get(key).cloned().unwrap_or(Value::Null));
             }
         }
-        _ => return Err("this kind of brush has no options dialog yet".into()),
+        BrushKind::Scatter(s) => {
+            for ((key, ..), (lo, hi)) in SCATTER.iter().zip([s.size, s.spacing, s.scatter, s.rotation]) {
+                f.insert(format!("{key}Min"), json!(lo.min(hi)));
+                f.insert(format!("{key}Max"), json!(lo.max(hi)));
+                f.insert(mode_key(key), json!(if lo == hi { "fixed" } else { "random" }));
+            }
+            f.insert("rotationRelativeTo".into(), json!(if s.rotation_relative_to_path { "path" } else { "page" }));
+            colorization_fields(&mut f, &s.colorization);
+        }
+        BrushKind::Art(a) => {
+            f.insert("width".into(), json!(a.width));
+            f.insert("direction".into(), serde_json::to_value(a.direction).unwrap_or_default());
+            let (scale, start, end) = match a.scale {
+                ArtScale::Proportional => ("proportional", 0.25, 0.75),
+                ArtScale::Stretch => ("stretch", 0.25, 0.75),
+                ArtScale::BetweenGuides { start, end } => ("betweenGuides", start, end),
+            };
+            f.insert("scale".into(), json!(scale));
+            f.insert("guideStart".into(), json!(start * 100.0));
+            f.insert("guideEnd".into(), json!(end * 100.0));
+            f.insert("flipAlong".into(), json!(a.flip_along));
+            f.insert("flipAcross".into(), json!(a.flip_across));
+            colorization_fields(&mut f, &a.colorization);
+        }
+        BrushKind::Pattern(p) => {
+            f.insert("scale".into(), json!(p.scale));
+            f.insert("spacing".into(), json!(p.spacing));
+            f.insert("fit".into(), serde_json::to_value(p.fit).unwrap_or_default());
+            f.insert("flipAlong".into(), json!(p.flip_along));
+            f.insert("flipAcross".into(), json!(p.flip_across));
+            colorization_fields(&mut f, &p.colorization);
+        }
+    }
+    if matches!(b.kind, BrushKind::Scatter(_) | BrushKind::Art(_) | BrushKind::Pattern(_)) {
+        f.insert("__def".into(), serde_json::to_value(&b).map_err(|e| e.to_string())?);
     }
     app.ui.dialog = Some(Dialog { kind: KIND.into(), fields: f });
     Ok(Value::Null)
@@ -114,6 +184,27 @@ pub fn open(app: &mut VectorcraftApp, name: Option<&str>) -> Result<Value, Strin
 pub fn available(app: &VectorcraftApp) -> bool {
     let Some(st) = app.session.active() else { return false };
     target(app).and_then(|n| vectorcraft_brush::find(&st.doc, &n)).is_some_and(|b| TYPES.contains(&b.kind.type_id()))
+}
+
+/// The Colorization fields of `c`: its method and key colour.
+fn colorization_fields(f: &mut Map<String, Value>, c: &Colorization) {
+    let method = serde_json::to_value(c).ok().and_then(|v| v.get("method").and_then(Value::as_str).map(str::to_owned));
+    f.insert("colorization".into(), json!(method.unwrap_or_else(|| "none".into())));
+    let key = match c {
+        Colorization::HueShift { key } => *key,
+        _ => Color::BLACK,
+    };
+    f.insert("keyColor".into(), json!(key.to_hex()));
+}
+
+/// The Colorization the fields describe.
+fn colorization(d: &Dialog) -> Colorization {
+    match d.str("colorization").as_str() {
+        "tints" => Colorization::Tints,
+        "tintsAndShades" => Colorization::TintsAndShades,
+        "hueShift" => Colorization::HueShift { key: Color::from_hex(&d.str("keyColor")).unwrap_or(Color::BLACK) },
+        _ => Colorization::None,
+    }
 }
 
 /// The brush Brush Options opens on without a name: the selected path's brush, else the current one.
@@ -147,8 +238,59 @@ fn params(d: &Dialog) -> Value {
             }
             p
         }
+        "scatter" => {
+            let mut p = json!({ "rotation_relative_to_path": d.str("rotationRelativeTo") == "path" });
+            for (key, _, range, _) in SCATTER {
+                let lo = clamped(d, &format!("{key}Min"), range);
+                let hi = if d.str(&mode_key(key)) == "random" { clamped(d, &format!("{key}Max"), range) } else { lo };
+                p[key] = json!([lo.min(hi), lo.max(hi)]);
+            }
+            p["colorization"] = serde_json::to_value(colorization(d)).unwrap_or_default();
+            p
+        }
+        "art" => {
+            let scale = match d.str("scale").as_str() {
+                "proportional" => ArtScale::Proportional,
+                "betweenGuides" => {
+                    let (a, b) = (clamped(d, "guideStart", (0.0, 100.0)), clamped(d, "guideEnd", (0.0, 100.0)));
+                    ArtScale::BetweenGuides { start: a.min(b) / 100.0, end: a.max(b) / 100.0 }
+                }
+                _ => ArtScale::Stretch,
+            };
+            let direction: Direction = serde_json::from_value(json!(d.str("direction"))).unwrap_or_default();
+            json!({
+                "width": clamped(d, "width", (1.0, 1000.0)),
+                "direction": serde_json::to_value(direction).unwrap_or_default(),
+                "scale": serde_json::to_value(scale).unwrap_or_default(),
+                "flip_along": d.bool("flipAlong"),
+                "flip_across": d.bool("flipAcross"),
+                "colorization": serde_json::to_value(colorization(d)).unwrap_or_default(),
+            })
+        }
+        "pattern" => {
+            let fit: PatternFit = serde_json::from_value(json!(d.str("fit"))).unwrap_or_default();
+            json!({
+                "scale": clamped(d, "scale", (1.0, 10000.0)),
+                "spacing": clamped(d, "spacing", (0.0, 10000.0)),
+                "fit": serde_json::to_value(fit).unwrap_or_default(),
+                "flip_along": d.bool("flipAlong"),
+                "flip_across": d.bool("flipAcross"),
+                "colorization": serde_json::to_value(colorization(d)).unwrap_or_default(),
+            })
+        }
         _ => serde_json::to_value(calligraphic(d)).unwrap_or_default(),
     }
+}
+
+/// The brush's definition with the fields' values, for the preview.
+fn preview_def(d: &Dialog) -> Value {
+    let mut def = d.fields.get("__def").cloned().unwrap_or_else(|| json!({}));
+    if let (Some(o), Some(p)) = (def.as_object_mut(), params(d).as_object()) {
+        for (k, v) in p {
+            o.insert(k.clone(), v.clone());
+        }
+    }
+    def
 }
 
 fn body(app: &mut VectorcraftApp, ui: &mut egui::Ui, d: &mut Dialog) -> bool {
@@ -160,9 +302,100 @@ fn body(app: &mut VectorcraftApp, ui: &mut egui::Ui, d: &mut Dialog) -> bool {
     ui.add_space(10.0);
     match d.str("__type").as_str() {
         "bristle" => bristle_body(app, ui, d),
+        "scatter" => scatter_body(ui, d),
+        "art" => art_body(ui, d),
+        "pattern" => pattern_body(ui, d),
         _ => calligraphic_body(ui, d),
     }
     false
+}
+
+fn scatter_body(ui: &mut egui::Ui, d: &mut Dialog) {
+    egui::Grid::new("brush-options-scatter").num_columns(4).spacing([8.0, 8.0]).show(ui, |ui| {
+        for (key, text, (lo, hi), suffix) in SCATTER {
+            label(ui, tl!(text));
+            let (min, max) = (format!("{key}Min"), format!("{key}Max"));
+            if let Some(v) = widgets::range_field(ui, ("brush-min", key), clamped(d, &min, (lo, hi)), lo..=hi, suffix, 0, 64.0) {
+                d.fields.insert(min, json!(v));
+            }
+            let mode = d.str(&mode_key(key));
+            let random = mode == "random";
+            let shown = SCATTER_MODES.iter().find(|(v, _)| *v == mode).map_or("Fixed", |(_, l)| l);
+            let labels = SCATTER_MODES.map(|(_, l)| l);
+            if let Some((v, _)) = widgets::dropdown(ui, ("brush-mode", key), shown, &labels, 96.0).and_then(|i| SCATTER_MODES.get(i)) {
+                d.fields.insert(mode_key(key), json!(v));
+            }
+            ui.add_enabled_ui(random, |ui| {
+                if let Some(v) = widgets::range_field(ui, ("brush-max", key), clamped(d, &max, (lo, hi)), lo..=hi, suffix, 0, 64.0) {
+                    d.fields.insert(max, json!(v));
+                }
+            });
+            ui.end_row();
+        }
+    });
+    ui.add_space(6.0);
+    form::choice(ui, d, "rotationRelativeTo", tl!("Rotation relative to:"), (LABEL_W + 40.0, 100.0), &ROTATION_RELATIVE);
+    colorization_body(ui, d);
+    ui.add_space(8.0);
+    stroke_preview(ui, "scatter", preview_def(d), vec2(STROKE_W, 64.0));
+}
+
+fn art_body(ui: &mut egui::Ui, d: &mut Dialog) {
+    widgets::label_row(ui, tl!("Width:"), LABEL_W, |ui| {
+        if let Some(v) = widgets::range_field(ui, "brush-art-width", clamped(d, "width", (1.0, 1000.0)), 1.0..=1000.0, "%", 0, 64.0) {
+            d.fields.insert("width".into(), json!(v));
+        }
+    });
+    form::choice(ui, d, "scale", tl!("Brush Scale:"), (LABEL_W, 220.0), &ART_SCALES);
+    if d.str("scale") == "betweenGuides" {
+        widgets::label_row(ui, tl!("Guides:"), LABEL_W, |ui| {
+            for key in ["guideStart", "guideEnd"] {
+                if let Some(v) = widgets::range_field(ui, ("brush-guide", key), clamped(d, key, (0.0, 100.0)), 0.0..=100.0, "%", 0, 56.0) {
+                    d.fields.insert(key.into(), json!(v));
+                }
+            }
+        });
+    }
+    form::choice(ui, d, "direction", tl!("Direction:"), (LABEL_W, 160.0), &DIRECTIONS);
+    flips(ui, d);
+    colorization_body(ui, d);
+    ui.add_space(8.0);
+    stroke_preview(ui, "art", preview_def(d), vec2(STROKE_W, 64.0));
+}
+
+fn pattern_body(ui: &mut egui::Ui, d: &mut Dialog) {
+    for (key, text, range) in [("scale", "Scale:", (1.0, 10000.0)), ("spacing", "Spacing:", (0.0, 10000.0))] {
+        widgets::label_row(ui, tl!(text), LABEL_W, |ui| {
+            if let Some(v) = widgets::range_field(ui, ("brush-pattern", key), clamped(d, key, range), range.0..=range.1, "%", 0, 64.0) {
+                d.fields.insert(key.into(), json!(v));
+            }
+        });
+    }
+    form::choice(ui, d, "fit", tl!("Fit:"), (LABEL_W, 160.0), &FITS);
+    flips(ui, d);
+    colorization_body(ui, d);
+    ui.add_space(8.0);
+    stroke_preview(ui, "pattern", preview_def(d), vec2(STROKE_W, 64.0));
+}
+
+fn flips(ui: &mut egui::Ui, d: &mut Dialog) {
+    widgets::label_row(ui, tl!("Flip:"), LABEL_W, |ui| {
+        form::check(ui, d, "flipAlong", "Flip Along");
+        form::check(ui, d, "flipAcross", "Flip Across");
+    });
+}
+
+/// Colorization: the method and, for Hue Shift, the key colour.
+fn colorization_body(ui: &mut egui::Ui, d: &mut Dialog) {
+    form::choice(ui, d, "colorization", tl!("Colorization:"), (LABEL_W, 160.0), &COLORIZATION);
+    if d.str("colorization") == "hueShift" {
+        widgets::label_row(ui, tl!("Key Color:"), LABEL_W, |ui| {
+            form::text(ui, d, "keyColor", 90.0);
+            let [r, g, b, _] = Color::from_hex(&d.str("keyColor")).unwrap_or(Color::BLACK).to_rgba8(1.0);
+            let (rect, _) = ui.allocate_exact_size(vec2(18.0, 18.0), Sense::hover());
+            ui.painter().rect_filled(rect, 2.0, Color32::from_rgb(r, g, b));
+        });
+    }
 }
 
 fn calligraphic_body(ui: &mut egui::Ui, d: &mut Dialog) {
@@ -336,9 +569,69 @@ mod tests {
         super::super::confirm(&mut app).unwrap();
         let def = app.run("brush.get", json!({"name": "Bristle Round"})).unwrap();
         assert_eq!((def["shape"].clone(), def["density"].clone(), def["length"].clone()), (json!("flatFan"), json!(1.0), json!(120.0)));
-        // Art, scatter and pattern brushes have no dialog yet: an error, nothing opens.
-        assert!(app.run("ui.brushOptions", json!({"name": "Arrow"})).is_err());
-        assert!(app.ui.dialog.is_none());
         assert!(app.run("ui.brushOptions", json!({"name": "Nope"})).is_err());
+        assert!(app.ui.dialog.is_none());
+    }
+
+    #[test]
+    fn scatter_options_show_ranges_and_ok_applies_them() {
+        let mut app = app();
+        app.run("ui.brushOptions", json!({"name": "Confetti"})).unwrap();
+        let text = shown(&mut app);
+        for label in ["Scatter Brush Options", "Size:", "Spacing:", "Scatter:", "Rotation:", "Rotation relative to:", "Colorization:"] {
+            assert!(text.contains(label), "{label} in {text}");
+        }
+        set(
+            &mut app,
+            json!({"sizeMode": "random", "sizeMin": 150, "sizeMax": 50, "spacingMode": "fixed", "spacingMin": 300, "rotationMode": "random", "rotationMin": -9999, "rotationMax": 45, "rotationRelativeTo": "path", "colorization": "hueShift", "keyColor": "#00ff00"}),
+        );
+        assert!(shown(&mut app).contains("Key Color:"));
+        super::super::confirm(&mut app).unwrap();
+        let def = app.run("brush.get", json!({"name": "Confetti"})).unwrap();
+        assert_eq!(
+            (def["size"].clone(), def["spacing"].clone(), def["rotation"].clone()),
+            (json!([50.0, 150.0]), json!([300.0, 300.0]), json!([-360.0, 45.0]))
+        );
+        assert_eq!(def["rotation_relative_to_path"], json!(true));
+        assert_eq!(def["colorization"]["method"], json!("hueShift"));
+        // Opened again, it shows what was set.
+        app.run("ui.brushOptions", json!({"name": "Confetti"})).unwrap();
+        let d = app.ui.dialog.as_ref().unwrap();
+        assert_eq!((d.str("sizeMode"), d.str("spacingMode"), d.str("keyColor")), ("random".into(), "fixed".into(), "#00ff00".into()));
+    }
+
+    #[test]
+    fn art_and_pattern_options_apply_and_strokes_keep_drawing() {
+        let mut app = app();
+        app.run("ui.brushOptions", json!({"name": "Arrow"})).unwrap();
+        let text = shown(&mut app);
+        for label in ["Art Brush Options", "Width:", "Brush Scale:", "Direction:", "Flip Along", "Flip Across", "Colorization:"] {
+            assert!(text.contains(label), "{label} in {text}");
+        }
+        set(
+            &mut app,
+            json!({"width": 5000, "scale": "betweenGuides", "guideStart": 80, "guideEnd": 20, "direction": "bottomToTop", "flipAcross": true, "colorization": "tints"}),
+        );
+        assert!(shown(&mut app).contains("Guides:"));
+        super::super::confirm(&mut app).unwrap();
+        let def = app.run("brush.get", json!({"name": "Arrow"})).unwrap();
+        assert_eq!((def["width"].clone(), def["direction"].clone(), def["flip_across"].clone()), (json!(1000.0), json!("bottomToTop"), json!(true)));
+        assert_eq!(def["scale"], json!({"mode": "betweenGuides", "start": 0.2, "end": 0.8}));
+        assert_eq!(def["colorization"], json!({"method": "tints"}));
+
+        app.run("ui.brushOptions", json!({"name": "Chain"})).unwrap();
+        let text = shown(&mut app);
+        for label in ["Pattern Brush Options", "Scale:", "Spacing:", "Fit:", "Stretch to Fit"] {
+            assert!(text.contains(label), "{label} in {text}");
+        }
+        set(&mut app, json!({"scale": 50, "spacing": -5, "fit": "addSpace", "flipAlong": true}));
+        super::super::confirm(&mut app).unwrap();
+        let def = app.run("brush.get", json!({"name": "Chain"})).unwrap();
+        assert_eq!(
+            (def["scale"].clone(), def["spacing"].clone(), def["fit"].clone(), def["flip_along"].clone()),
+            (json!(50.0), json!(0.0), json!("addSpace"), json!(true))
+        );
+        // The tiles stay (the definition keeps its art).
+        assert!(def.get("side").is_some_and(|s| !s.is_null()));
     }
 }
