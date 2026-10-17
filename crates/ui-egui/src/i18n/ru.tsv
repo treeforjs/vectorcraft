@@ -10,6 +10,43 @@
 # tested). Left in English on purpose (`MENU_KEEP_AS_IS` in the tests): the product name, language
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
 # Photoshop-style raster effects (Effect menu, their dialogs).
+	Craquelure…	Кракелюры…
+	Craquelure	Кракелюры
+	Grain…	Зерно…
+	Grain	Зерно
+	Mosaic Tiles…	Мозаичные плитки…
+	Mosaic Tiles	Мозаичные плитки
+	Patchwork…	Лоскутное шитьё…
+	Patchwork	Лоскутное шитьё
+	Stained Glass…	Витраж…
+	Stained Glass	Витраж
+	Texturizer…	Текстуризатор…
+	Texturizer	Текстуризатор
+	Crack Spacing	Шаг трещин
+	Crack Depth	Глубина трещин
+	Crack Brightness	Яркость трещин
+	Intensity	Интенсивность
+	Grain Type	Тип зерна
+	Tile Size	Размер плитки
+	Grout Width	Ширина швов
+	Lighten Grout	Осветлить швы
+	Square Size	Размер квадрата
+	Relief	Рельеф
+	Border Thickness	Толщина границы
+	Light Intensity	Интенсивность света
+	Sprinkles	Брызги
+	Clumped	Комки
+	Contrasty	Контрастное
+	Enlarged	Увеличенное
+	Stippled	Пунктир
+	Speckle	Крапинки
+	Brick	Кирпич
+	Burlap	Мешковина
+	Sandstone	Песчаник
+	Bottom Left	Внизу слева
+	Top Left	Вверху слева
+	Top Right	Вверху справа
+	Bottom Right	Внизу справа
 	Video	Видео
 	De-Interlace…	Устранение чересстрочности…
 	De-Interlace	Устранение чересстрочности

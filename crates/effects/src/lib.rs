@@ -6,7 +6,7 @@
 //! - **Geometry effects** (Distort & Transform, Path, Convert to Shape, Round Corners, Scribble,
 //!   Warp) rewrite a path: [`apply_geometry`] evaluates them in stack order.
 //! - **Raster effects** (Drop Shadow, Inner/Outer Glow, Feather, Gaussian Blur, and the
-//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Distort, Pixelate, Unsharp Mask, Glowing Edges and Video) are described by
+//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Distort, Pixelate, Unsharp Mask, Glowing Edges, Texture and Video) are described by
 //!   [`raster_effects`] and painted by the renderer; [`outset`] says how far they reach beyond
 //!   the geometry.
 //! - **Stroke geometry** ([`stroke`]): arrowheads, dash patterns and width profiles, shared by the
@@ -129,7 +129,9 @@ fn lengths_of(id: &str) -> Lengths {
         "pixelate.colorHalftone" => always(&["maxRadius"]),
         "distort.glass" => always(&["distortion", "smoothness"]),
         "distort.oceanRipple" => always(&["rippleSize", "rippleMagnitude"]),
-        "pixelate.crystallize" | "pixelate.pointillize" => always(&["cellSize"]),
+        "pixelate.crystallize" | "pixelate.pointillize" | "texture.stainedGlass" => always(&["cellSize"]),
+        "texture.craquelure" => always(&["crackSpacing"]),
+        "texture.mosaicTiles" => always(&["tileSize"]),
         _ => Lengths::default(),
     }
 }
@@ -146,6 +148,7 @@ const SHARPEN: &[&str] = &["Effect", "Sharpen"];
 const PIXELATE: &[&str] = &["Effect", "Pixelate"];
 const DISTORT: &[&str] = &["Effect", "Distort"];
 const VIDEO: &[&str] = &["Effect", "Video"];
+const TEXTURE: &[&str] = &["Effect", "Texture"];
 const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
@@ -353,6 +356,48 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             DISTORT,
             "{rippleSize: 1..15 (9; ripples about twice this in points), rippleMagnitude: 0..20 (9; the content moves up to half this in points)} wobbles the content as if under water",
             json!({"rippleSize": 9.0, "rippleMagnitude": 9.0}),
+        ),
+        r(
+            "texture.craquelure",
+            "Craquelure…",
+            TEXTURE,
+            "{crackSpacing: pt 2..100 (15), crackDepth: 0..10 (6), crackBrightness: 0..10 (9)} paints the art on plaster cracked into raised plates",
+            json!({"crackSpacing": 15.0, "crackDepth": 6.0, "crackBrightness": 9.0}),
+        ),
+        r(
+            "texture.grain",
+            "Grain…",
+            TEXTURE,
+            "{intensity: 0..100 (40), contrast: 0..100 (50; 50 keeps it), grainType: \"regular\"|\"soft\"|\"sprinkles\"|\"clumped\"|\"contrasty\"|\"enlarged\"|\"stippled\"|\"horizontal\"|\"vertical\"|\"speckle\" (\"regular\")} adds film grain, specks or streaks",
+            json!({"intensity": 40.0, "contrast": 50.0, "grainType": "regular"}),
+        ),
+        r(
+            "texture.mosaicTiles",
+            "Mosaic Tiles…",
+            TEXTURE,
+            "{tileSize: pt 2..100 (12), groutWidth: 1..15 (3; the grout is 0.3 pt per step), lightenGrout: 0..10 (9)} cuts the art into raised square tiles set in grout",
+            json!({"tileSize": 12.0, "groutWidth": 3.0, "lightenGrout": 9.0}),
+        ),
+        r(
+            "texture.patchwork",
+            "Patchwork…",
+            TEXTURE,
+            "{squareSize: 0..10 (4; squares 2 pt + this across), relief: 0..25 (8)} turns the art into raised squares, each its average colour",
+            json!({"squareSize": 4.0, "relief": 8.0}),
+        ),
+        r(
+            "texture.stainedGlass",
+            "Stained Glass…",
+            TEXTURE,
+            "{cellSize: pt 2..50 (10), borderThickness: 1..20 (4; the lead is 0.3 pt per step), lightIntensity: 0..10 (3)} remakes the art as leaded panes of glass, each its average colour, lit from the middle",
+            json!({"cellSize": 10.0, "borderThickness": 4.0, "lightIntensity": 3.0}),
+        ),
+        r(
+            "texture.texturizer",
+            "Texturizer…",
+            TEXTURE,
+            "{texture: \"brick\"|\"burlap\"|\"canvas\"|\"sandstone\" (\"canvas\"), scaling: % 50..200 (100), relief: 0..50 (4), light: \"bottom\"|\"bottomLeft\"|\"left\"|\"topLeft\"|\"top\"|\"topRight\"|\"right\"|\"bottomRight\" (\"top\"), invert: bool (false)} prints the art on a surface lit from one side",
+            json!({"texture": "canvas", "scaling": 100.0, "relief": 4.0, "light": "top", "invert": false}),
         ),
         r(
             "video.deInterlace",

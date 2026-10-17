@@ -4,6 +4,43 @@
 # Clean-room: menu and feature names follow the names Japanese users of vector illustration
 # software know, written from the meaning of VectorCraft's English labels; no other application's
 # Japanese localisation was copied. Toggles read as their action (「…を表示」「…を隠す」).
+	Craquelure…	クラッキング…
+	Craquelure	クラッキング
+	Grain…	粒状…
+	Grain	粒状
+	Mosaic Tiles…	モザイクタイル…
+	Mosaic Tiles	モザイクタイル
+	Patchwork…	パッチワーク…
+	Patchwork	パッチワーク
+	Stained Glass…	ステンドグラス…
+	Stained Glass	ステンドグラス
+	Texturizer…	テクスチャライザー…
+	Texturizer	テクスチャライザー
+	Crack Spacing	ひびの間隔
+	Crack Depth	ひびの深さ
+	Crack Brightness	ひびの明るさ
+	Intensity	強さ
+	Grain Type	粒子の種類
+	Tile Size	タイルのサイズ
+	Grout Width	目地の幅
+	Lighten Grout	目地を明るく
+	Square Size	正方形のサイズ
+	Relief	レリーフ
+	Border Thickness	境界線の太さ
+	Light Intensity	光の強さ
+	Sprinkles	振りかけ
+	Clumped	かたまり
+	Contrasty	コントラスト強
+	Enlarged	拡大
+	Stippled	点描
+	Speckle	斑点
+	Brick	れんが
+	Burlap	黄麻布
+	Sandstone	砂岩
+	Bottom Left	左下
+	Top Left	左上
+	Top Right	右上
+	Bottom Right	右下
 	Video	ビデオ
 	De-Interlace…	インターレース解除…
 	De-Interlace	インターレース解除

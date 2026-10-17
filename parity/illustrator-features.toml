@@ -3481,11 +3481,11 @@ title = "Effect › Texture › Craquelure"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::craquelure_cracks_the_art_into_plates"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-texture-grain"
@@ -3493,11 +3493,11 @@ title = "Effect › Texture › Grain"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::grain_adds_noise_of_each_kind"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-texture-mosaic-tiles"
@@ -3505,11 +3505,11 @@ title = "Effect › Texture › Mosaic Tiles"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::mosaic_tiles_set_the_art_in_light_grout"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-texture-patchwork"
@@ -3517,11 +3517,11 @@ title = "Effect › Texture › Patchwork"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::patchwork_makes_squares_of_their_average_colour"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-texture-stained-glass"
@@ -3529,11 +3529,11 @@ title = "Effect › Texture › Stained Glass"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::stained_glass_leads_flat_panes"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-texture-texturizer"
@@ -3541,11 +3541,11 @@ title = "Effect › Texture › Texturizer"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::texturizer_shades_the_art_by_its_surface"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-video-de-interlace"

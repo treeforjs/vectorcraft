@@ -1,7 +1,8 @@
 //! Photoshop-style raster effects (Effect › Blur › Radial Blur and Smart Blur, Distort › Diffuse
 //! Glow, Glass and Ocean Ripple, Pixelate › Color
 //! Halftone, Crystallize, Mezzotint and Pointillize, Sharpen › Unsharp Mask, Stylize › Glowing
-//! Edges, and Video › De-Interlace and NTSC Colors): filters over premultiplied RGBA8 pixels.
+//! Edges, Texture › Craquelure, Grain, Mosaic Tiles, Patchwork, Stained Glass and Texturizer, and
+//! Video › De-Interlace and NTSC Colors): filters over premultiplied RGBA8 pixels.
 //!
 //! - Every distance is in document units (points) and becomes pixels through the raster's
 //!   [`PixelSpace::px`], so an effect looks the same at any zoom and at any Document Raster Effects
@@ -16,10 +17,12 @@ mod edges;
 mod noise;
 mod pixelate;
 mod sharpen;
+mod texture;
 mod video;
 
 pub use distort::{Glass, GlassTexture};
 pub use pixelate::Mezzotint;
+pub use texture::{Grain, Light, Surface, Texturizer};
 
 use serde_json::Value;
 use vectorcraft_geom::{Affine, Point, Rect};
@@ -27,7 +30,7 @@ use vectorcraft_geom::{Affine, Point, Rect};
 use crate::util::{num, text};
 
 /// The Photoshop-style effect ids (all raster effects, see [`crate::is_raster`]).
-pub const PIXEL_EFFECTS: [&str; 13] = [
+pub const PIXEL_EFFECTS: [&str; 19] = [
     "blur.radial",
     "blur.smart",
     "distort.diffuseGlow",
@@ -39,6 +42,12 @@ pub const PIXEL_EFFECTS: [&str; 13] = [
     "pixelate.pointillize",
     "sharpen.unsharpMask",
     "stylize.glowingEdges",
+    "texture.craquelure",
+    "texture.grain",
+    "texture.mosaicTiles",
+    "texture.patchwork",
+    "texture.stainedGlass",
+    "texture.texturizer",
     "video.deInterlace",
     "video.ntscColors",
 ];
@@ -79,6 +88,18 @@ pub enum PixelFx {
     DeInterlace { odd: bool, interpolate: bool },
     /// Video › NTSC Colors: colours desaturated into the broadcast-safe range.
     NtscColors,
+    /// Texture › Craquelure: cracked plaster with plates about `spacing` across.
+    Craquelure { spacing: f64, depth: f64, brightness: f64 },
+    /// Texture › Grain: noise of `kind` after a contrast change.
+    Grain { intensity: f64, contrast: f64, kind: Grain },
+    /// Texture › Mosaic Tiles: raised square tiles `tile` across in lightened grout.
+    MosaicTiles { tile: f64, grout: f64, lighten: f64 },
+    /// Texture › Patchwork: raised squares `square` across, each its average colour.
+    Patchwork { square: f64, relief: f64 },
+    /// Texture › Stained Glass: leaded panes about `size` across, each its average colour.
+    StainedGlass { size: f64, border: f64, light: f64 },
+    /// Texture › Texturizer: the art on a lit surface.
+    Texturizer(Texturizer),
 }
 
 /// Where a raster's pixels lie in the document.
@@ -161,6 +182,46 @@ pub(crate) fn parse(id: &str, p: &Value) -> Option<PixelFx> {
             interpolate: !text(p, "create", "interpolation").eq_ignore_ascii_case("duplication"),
         },
         "video.ntscColors" => PixelFx::NtscColors,
+        "texture.craquelure" => PixelFx::Craquelure {
+            spacing: num(p, "crackSpacing", 15.0).clamp(2.0, 100.0),
+            depth: num(p, "crackDepth", 6.0).clamp(0.0, 10.0),
+            brightness: num(p, "crackBrightness", 9.0).clamp(0.0, 10.0),
+        },
+        "texture.grain" => {
+            let kind = text(p, "grainType", "regular");
+            let kind = Grain::KINDS.iter().find(|(id, label, _)| id.eq_ignore_ascii_case(kind) || label.eq_ignore_ascii_case(kind));
+            PixelFx::Grain {
+                intensity: num(p, "intensity", 40.0).clamp(0.0, 100.0),
+                contrast: num(p, "contrast", 50.0).clamp(0.0, 100.0),
+                kind: kind.map_or(Grain::Regular, |k| k.2),
+            }
+        }
+        "texture.mosaicTiles" => PixelFx::MosaicTiles {
+            tile: num(p, "tileSize", 12.0).clamp(2.0, 100.0),
+            grout: num(p, "groutWidth", 3.0).clamp(1.0, 15.0),
+            lighten: num(p, "lightenGrout", 9.0).clamp(0.0, 10.0),
+        },
+        "texture.patchwork" => {
+            PixelFx::Patchwork { square: num(p, "squareSize", 4.0).clamp(0.0, 10.0) + 2.0, relief: num(p, "relief", 8.0).clamp(0.0, 25.0) }
+        }
+        "texture.stainedGlass" => PixelFx::StainedGlass {
+            size: num(p, "cellSize", 10.0).clamp(2.0, 50.0),
+            border: num(p, "borderThickness", 4.0).clamp(1.0, 20.0),
+            light: num(p, "lightIntensity", 3.0).clamp(0.0, 10.0),
+        },
+        "texture.texturizer" => {
+            let surface = text(p, "texture", "canvas");
+            let surface = Surface::KINDS.iter().find(|(id, label, _)| id.eq_ignore_ascii_case(surface) || label.eq_ignore_ascii_case(surface));
+            let light = text(p, "light", "top");
+            let light = Light::KINDS.iter().find(|(id, label, _)| id.eq_ignore_ascii_case(light) || label.eq_ignore_ascii_case(light));
+            PixelFx::Texturizer(Texturizer {
+                surface: surface.map_or(Surface::Canvas, |t| t.2),
+                scaling: num(p, "scaling", 100.0).clamp(50.0, 200.0) / 100.0,
+                relief: num(p, "relief", 4.0).clamp(0.0, 50.0),
+                light: light.map_or(Light::Top, |l| l.2),
+                invert: crate::util::flag(p, "invert", false),
+            })
+        }
         _ => return None,
     })
 }
@@ -182,6 +243,12 @@ impl PixelFx {
             PixelFx::Crystallize { size } | PixelFx::Pointillize { size } => size,
             PixelFx::ColorHalftone { .. } | PixelFx::Mezzotint { .. } | PixelFx::DiffuseGlow { .. } => 0.0,
             PixelFx::DeInterlace { .. } | PixelFx::NtscColors => 0.0,
+            PixelFx::Craquelure { .. }
+            | PixelFx::Grain { .. }
+            | PixelFx::MosaicTiles { .. }
+            | PixelFx::Patchwork { .. }
+            | PixelFx::StainedGlass { .. }
+            | PixelFx::Texturizer(_) => 0.0,
             // Displacements pull content out by up to their reach.
             PixelFx::Glass(g) => g.distortion * 0.5,
             PixelFx::OceanRipple { magnitude, .. } => magnitude * 0.5,
@@ -206,7 +273,11 @@ impl PixelFx {
             PixelFx::Glass(_) => None,
             PixelFx::OceanRipple { magnitude, .. } => Some(magnitude * 0.5 + 1.0),
             PixelFx::DeInterlace { .. } => Some(2.0),
-            PixelFx::NtscColors => Some(0.0),
+            PixelFx::NtscColors | PixelFx::Grain { .. } => Some(0.0),
+            // Reliefs shade by the slopes between neighbouring pixels.
+            PixelFx::Craquelure { .. } | PixelFx::MosaicTiles { .. } | PixelFx::Texturizer(_) => Some(1.0),
+            PixelFx::Patchwork { square, .. } => Some(square),
+            PixelFx::StainedGlass { size, .. } => Some(3.0 * size),
         }
     }
 
@@ -229,6 +300,12 @@ impl PixelFx {
             PixelFx::OceanRipple { size, magnitude } => distort::ocean_ripple(px, w, h, space, size, magnitude),
             PixelFx::DeInterlace { odd, interpolate } => video::de_interlace(px, w, h, space, odd, interpolate),
             PixelFx::NtscColors => video::ntsc_colors(px),
+            PixelFx::Craquelure { spacing, depth, brightness } => texture::craquelure(px, w, h, space, spacing, depth, brightness),
+            PixelFx::Grain { intensity, contrast, kind } => texture::grain(px, w, h, space, intensity, contrast, kind),
+            PixelFx::MosaicTiles { tile, grout, lighten } => texture::mosaic_tiles(px, w, h, space, tile, grout, lighten),
+            PixelFx::Patchwork { square, relief } => texture::patchwork(px, w, h, space, square, relief),
+            PixelFx::StainedGlass { size, border, light } => texture::stained_glass(px, w, h, space, size, border, light),
+            PixelFx::Texturizer(t) => texture::texturize(px, w, h, space, t),
         }
     }
 }
