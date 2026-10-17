@@ -97,7 +97,8 @@ jobs:
             /usr/share/doc/vectorcraft/NOTICE; do
             runuser -u vectorcraft-smoke -- test -r "$resource"
           done
-          export XDG_RUNTIME_DIR="$(mktemp -d)"
+          XDG_RUNTIME_DIR="$(mktemp -d)"
+          export XDG_RUNTIME_DIR
           chown vectorcraft-smoke:vectorcraft-smoke "$XDG_RUNTIME_DIR"
           runuser -u vectorcraft-smoke -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
             SMOKE_OUT="$SMOKE_OUT" LIBGL_ALWAYS_SOFTWARE=1 WGPU_BACKEND=gl \

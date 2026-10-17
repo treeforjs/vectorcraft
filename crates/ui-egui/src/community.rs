@@ -35,9 +35,7 @@ mod tests {
         let o = opened.clone();
         let services = crate::Services { open_url: Some(Box::new(move |u: &str| o.lock().unwrap().push(u.to_string()))), ..Default::default() };
         let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), services);
-        for id in ["help.github"] {
-            crate::menus::invoke(&mut app, id, serde_json::json!({}));
-        }
+        crate::menus::invoke(&mut app, "help.github", serde_json::json!({}));
         assert_eq!(*opened.lock().unwrap(), ["https://github.com/treeforjs/vectorcraft"]);
         // The control channel / MCP path returns the URL without opening a browser.
         let v = app.run("help.github", serde_json::json!({})).unwrap();

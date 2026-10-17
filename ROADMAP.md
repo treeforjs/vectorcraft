@@ -227,6 +227,15 @@ grade by behaviour against `plan/illustrator/`, not by whether a menu item exist
 | — | Hardening at scale (big-file corpus, fuzzing, cross-platform + browser QA) | 🟡 EPS resource limits, native identifier validation, background-save recovery and Unix save privacy hardened (2026-10-11) | 50–80 |
 | | **Total to full parity** (one agent; re-derived from the [Parity estimate](#parity-estimate) table) | | **~320–500** |
 
+## Parity checklist
+
+[`parity/illustrator-features.toml`](parity/illustrator-features.toml) lists Illustrator's features one row each
+(415 rows in 16 areas, tiered P0–P3), with the commands and tools that reach each one, the tests that prove it and a
+note on what is missing. `cargo xtask parity` validates it against the command registry, the tool catalogue and the
+tests (CI runs it) and reports progress; `--planned` and `--partial` list the gaps. On 2026-10-17 it reads 286
+shipped and 36 partial of 407 counted rows, **75% weighted** (P0 98%, P1 91%, P2 53%, P3 50%); Appearance and
+effects (23%: 3D, SVG Filters and the Photoshop-style filters) is the weakest area. Every feature PR updates its row.
+
 ## Parity estimate
 
 _Method (2026-10-02; M3 rows re-derived 2026-10-04, file, export, print, links and UI-chrome rows after M4 on 2026-10-05):_ Illustrator's feature surface is split into 22 areas, weighted by how much of the app (and of
@@ -292,4 +301,4 @@ command, gesture and dialog drivable by agents (MCP, CLI, control channel).
 - **Automation:** every command, gesture, dialog and widget is drivable by agents (JSON channel + MCP), with headless batch mode.
 
 ## How to update this file
-After each milestone task lands, update the status column and remaining estimates, and move items into "Shipped so far". Keep estimates honest: re-derive them from what remains, never from wishful velocity.
+After each milestone task lands, update its row in `parity/illustrator-features.toml` (status, evidence, notes), update the status column and remaining estimates, and move items into "Shipped so far". Keep estimates honest: re-derive them from what remains, never from wishful velocity.

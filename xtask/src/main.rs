@@ -9,6 +9,7 @@ mod brands;
 mod bundle;
 mod ico;
 mod layers;
+mod parity;
 mod sha256;
 mod stats;
 mod version;
@@ -25,7 +26,10 @@ commands:
   brands          check that user-visible text (labels, params docs, MCP, docs, packaging) names no other vendor's products
   layers          enforce the crate dependency layering (plan/architecture.md §3)
   wasm            cargo check --target wasm32-unknown-unknown for the wasm-safe crates
-  ci              fmt --check, clippy -D warnings, test, assets, brands, layers, wasm (stops at first failure)
+  ci              fmt --check, clippy -D warnings, test, assets, brands, layers, wasm, parity (stops at first failure)
+  parity [--json] [--partial] [--planned]
+                  validate the parity checklist in parity/ against the command registry, tool catalogue
+                  and tests; report progress towards the reference app
   corpus [--download] [--affinity]
                   show where test corpora live; --download fetches PngSuite into corpus/pngsuite,
                   --affinity the pinned public Affinity documents into corpus/affinity
@@ -46,6 +50,7 @@ fn main() -> ExitCode {
         Some("layers") => cmd_layers(),
         Some("wasm") => cmd_wasm(),
         Some("ci") => cmd_ci(),
+        Some("parity") => parity::run(&rest),
         Some("corpus") if rest.contains(&"--affinity") => affinity_corpus::fetch(),
         Some("corpus") => cmd_corpus(rest.contains(&"--download")),
         Some("bundle") => bundle::run(&root()),
@@ -203,6 +208,7 @@ fn cmd_ci() -> Result<(), String> {
         ("brands", Box::new(|| brands::run(&root()))),
         ("layers", Box::new(cmd_layers)),
         ("wasm", Box::new(cmd_wasm)),
+        ("parity", Box::new(|| parity::run(&[]))),
     ];
     let mut done = Vec::new();
     for (name, f) in &steps {
