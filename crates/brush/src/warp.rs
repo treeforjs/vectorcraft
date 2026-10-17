@@ -6,11 +6,11 @@
 
 use std::sync::Arc;
 
-use vectorcraft_doc::{Node, NodeKind};
+use vectorcraft_doc::{Node, NodeKind, PressureProfile, StrokeLayer};
 use vectorcraft_geom::{Affine, BezPath, PathData, PathEl, Point, Rect, SubPath, Vec2};
 
 use crate::track::{Rng, Track, normal, seed_of, tracks};
-use crate::{ArtBrush, ArtScale, AutoCorner, Direction, PatternBrush, PatternFit, Scatter, tolerance};
+use crate::{ArtBrush, ArtScale, AutoCorner, Direction, PatternBrush, PatternFit, Scatter, Variation, tolerance};
 
 /// Longest mapped segment (points in document space).
 const MAX_SEG: f64 = 1.5;
@@ -146,17 +146,38 @@ impl AlongMap {
 
 /// Bend `art` (already oriented, bounds `b`) along `t` using `along` and cross scale `cross`.
 fn bend(t: &Track, art: &Node, b: Rect, along: AlongMap, cross: f64) -> Option<Node> {
+    bend_varying(t, art, b, along, &|_| 1.0, cross)
+}
+
+/// [`bend`] with the cross scale `cross * across(s)` varying along the track (`across` in 0..=1).
+fn bend_varying(t: &Track, art: &Node, b: Rect, along: AlongMap, across: &dyn Fn(f64) -> f64, cross: f64) -> Option<Node> {
     let cy = b.center().y;
     let x0 = b.x0;
-    let f = move |p: Point| t.map(along.at(p.x - x0), (p.y - cy) * cross);
+    let f = move |p: Point| {
+        let s = along.at(p.x - x0);
+        t.map(s, (p.y - cy) * cross * across(s))
+    };
     let scale = along.max_scale().max(cross.abs()).max(1e-6);
     let flat_tol = tolerance(b.height().max(b.width()) * scale) / scale;
     warp_node(art, &f, flat_tol, MAX_SEG / along.max_scale(), cross.abs())
 }
 
-pub(crate) fn art(a: &ArtBrush, bp: &BezPath, weight: f64) -> Vec<Node> {
+/// The pen pressure `s` along a track of length `l` (mid pressure without a recording).
+fn pressure_at(stroke: &StrokeLayer, s: f64, l: f64) -> f64 {
+    stroke.pressure.as_ref().map_or(PressureProfile::MID, |p| p.at(if l > 1e-9 { (s / l).clamp(0.0, 1.0) } else { 0.0 }))
+}
+
+pub(crate) fn art(a: &ArtBrush, bp: &BezPath, weight: f64, stroke: &StrokeLayer, name: &str) -> Vec<Node> {
     let Some((art, b)) = oriented(&a.art, a.direction, a.flip_along, a.flip_across) else { return vec![] };
-    let cross = weight * a.width / 100.0;
+    let mut rng = Rng::new(seed_of(bp, name));
+    let range = ArtBrush::WIDTH_RANGE;
+    // Random: one width per stroke. Pressure: the widest the pen gives, scaled down along the way.
+    let width = match a.width_mode {
+        Variation::Pressure => a.width + a.width_variation.abs(),
+        mode => mode.apply(a.width, a.width_variation, rng.unit(), PressureProfile::MID, range),
+    };
+    let width = width.clamp(range.0, range.1);
+    let cross = weight * width / 100.0;
     let mut out = vec![];
     for t in tracks(bp, 0.05) {
         let l = t.len();
@@ -181,17 +202,25 @@ pub(crate) fn art(a: &ArtBrush, bp: &BezPath, weight: f64) -> Vec<Node> {
                 }
             }
         };
-        if let Some(n) = bend(&t, &art, b, along, cross) {
+        let across = |s: f64| {
+            if a.width_mode == Variation::Pressure {
+                Variation::Pressure.apply(a.width, a.width_variation, 0.5, pressure_at(stroke, s, l), range) / width
+            } else {
+                1.0
+            }
+        };
+        if let Some(n) = bend_varying(&t, &art, b, along, &across, cross) {
             out.push(n);
         }
     }
     out
 }
 
-pub(crate) fn scatter(sc: &Scatter, bp: &BezPath, weight: f64, name: &str) -> Vec<Node> {
+pub(crate) fn scatter(sc: &Scatter, bp: &BezPath, weight: f64, stroke: &StrokeLayer, name: &str) -> Vec<Node> {
     let Some(b) = sc.art.geometric_bounds() else { return vec![] };
     let (aw, ah) = (b.width().max(1e-3), b.height().max(1e-3));
     let mut rng = Rng::new(seed_of(bp, name));
+    let [m_size, m_spacing, m_scatter, m_rotation] = sc.modes();
     let mut out = vec![];
     for t in tracks(bp, 0.05) {
         let l = t.len();
@@ -202,8 +231,19 @@ pub(crate) fn scatter(sc: &Scatter, bp: &BezPath, weight: f64, name: &str) -> Ve
             if guard > 20000 {
                 break;
             }
-            let size = rng.range(sc.size.0, sc.size.1).max(1.0) / 100.0 * weight;
-            let spacing = rng.range(sc.spacing.0, sc.spacing.1).max(1.0) / 100.0;
+            // Each copy takes the pressure where the previous one sat (the start for the first).
+            let p = pressure_at(stroke, s.unwrap_or(0.0), l);
+            let mut pick = |mode: Variation, (lo, hi): (f64, f64)| {
+                // Draw for every mode so changing one value's mode keeps the others' sequence.
+                let r = rng.range(lo, hi);
+                match mode {
+                    Variation::Fixed => lo,
+                    Variation::Random => r,
+                    Variation::Pressure => lo + (hi - lo) * p,
+                }
+            };
+            let size = pick(m_size, sc.size).max(1.0) / 100.0 * weight;
+            let spacing = pick(m_spacing, sc.spacing).max(1.0) / 100.0;
             let step = aw * size * spacing;
             let pos = match s {
                 None => step / 2.0,
@@ -213,8 +253,8 @@ pub(crate) fn scatter(sc: &Scatter, bp: &BezPath, weight: f64, name: &str) -> Ve
                 break;
             }
             s = Some(pos);
-            let off = rng.range(sc.scatter.0, sc.scatter.1) / 100.0 * ah * size;
-            let rot = rng.range(sc.rotation.0, sc.rotation.1).to_radians();
+            let off = pick(m_scatter, sc.scatter) / 100.0 * ah * size;
+            let rot = pick(m_rotation, sc.rotation).to_radians();
             let (p, tg) = t.frame(pos);
             let place = p + crate::track::normal(tg) * off;
             // Page rotation is counter-clockwise on screen (y-down), like the calligraphic angle.

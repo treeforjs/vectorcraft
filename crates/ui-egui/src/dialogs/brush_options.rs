@@ -12,7 +12,9 @@
 //! `pressure`) and `angleVariation`, `roundnessVariation`, `sizeVariation`. Bristle: `shape`
 //! (`roundPoint`…), `size` (pt), `length` (25..300 %), `density`, `thickness`, `opacity`,
 //! `stiffness` (1..100 %). Scatter: per value (`size`, `spacing`, `scatter`, `rotation`) `…Mode`
-//! (`fixed` | `random`), `…Min`, `…Max`; `rotationRelativeTo` (`page` | `path`). Art: `width` (%),
+//! (`fixed` | `random` | `pressure`, which runs from Min at the lightest pressure to Max at the
+//! heaviest), `…Min`, `…Max`; `rotationRelativeTo` (`page` | `path`). Art: `width` (%) with
+//! `widthMode` (`fixed` | `random` | `pressure`) and `widthVariation` (%),
 //! `direction` (`leftToRight`…), `scale` (`proportional` | `stretch` | `betweenGuides`),
 //! `guideStart`, `guideEnd` (% of the art's length), `flipAlong`, `flipAcross`. Pattern: `scale`,
 //! `spacing` (%), `fit` (`stretch` | `addSpace` | `approximate`), `autoCorner` (`none` | `centered`
@@ -22,7 +24,7 @@
 
 use egui::{Color32, Sense, Stroke, pos2, vec2};
 use serde_json::{Map, Value, json};
-use vectorcraft_brush::{ArtScale, AutoCorner, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternFit, Variation};
+use vectorcraft_brush::{ArtBrush, ArtScale, AutoCorner, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternFit, Variation};
 use vectorcraft_doc::color::Color;
 
 use super::swatch_options::{grid, label};
@@ -74,7 +76,7 @@ const SCATTER: [(&str, &str, (f64, f64), &str); 4] = [
 ];
 
 /// Scatter value modes: (value, label).
-const SCATTER_MODES: [(&str, &str); 2] = [("fixed", "Fixed"), ("random", "Random")];
+const SCATTER_MODES: [(&str, &str); 3] = [("fixed", "Fixed"), ("random", "Random"), ("pressure", "Pressure")];
 
 const ROTATION_RELATIVE: [(&str, &str); 2] = [("page", "Page"), ("path", "Path")];
 
@@ -144,16 +146,20 @@ pub fn open(app: &mut VectorcraftApp, name: Option<&str>) -> Result<Value, Strin
             }
         }
         BrushKind::Scatter(s) => {
-            for ((key, ..), (lo, hi)) in SCATTER.iter().zip([s.size, s.spacing, s.scatter, s.rotation]) {
-                f.insert(format!("{key}Min"), json!(lo.min(hi)));
-                f.insert(format!("{key}Max"), json!(lo.max(hi)));
-                f.insert(mode_key(key), json!(if lo == hi { "fixed" } else { "random" }));
+            for (((key, ..), (lo, hi)), mode) in SCATTER.iter().zip([s.size, s.spacing, s.scatter, s.rotation]).zip(s.modes()) {
+                // Pressure runs from the first value to the second, so keep their order.
+                let (lo, hi) = if mode == Variation::Pressure { (lo, hi) } else { (lo.min(hi), lo.max(hi)) };
+                f.insert(format!("{key}Min"), json!(lo));
+                f.insert(format!("{key}Max"), json!(hi));
+                f.insert(mode_key(key), json!(mode.id()));
             }
             f.insert("rotationRelativeTo".into(), json!(if s.rotation_relative_to_path { "path" } else { "page" }));
             colorization_fields(&mut f, &s.colorization);
         }
         BrushKind::Art(a) => {
             f.insert("width".into(), json!(a.width));
+            f.insert(mode_key("width"), json!(a.width_mode.id()));
+            f.insert(variation_key("width"), json!(a.width_variation));
             f.insert("direction".into(), serde_json::to_value(a.direction).unwrap_or_default());
             let (scale, start, end) = match a.scale {
                 ArtScale::Proportional => ("proportional", 0.25, 0.75),
@@ -244,11 +250,15 @@ fn params(d: &Dialog) -> Value {
         }
         "scatter" => {
             let mut p = json!({ "rotation_relative_to_path": d.str("rotationRelativeTo") == "path" });
+            let mut modes = vec![];
             for (key, _, range, _) in SCATTER {
+                let mode = Variation::parse(&d.str(&mode_key(key))).unwrap_or_default();
                 let lo = clamped(d, &format!("{key}Min"), range);
-                let hi = if d.str(&mode_key(key)) == "random" { clamped(d, &format!("{key}Max"), range) } else { lo };
-                p[key] = json!([lo.min(hi), lo.max(hi)]);
+                let hi = if mode == Variation::Fixed { lo } else { clamped(d, &format!("{key}Max"), range) };
+                p[key] = if mode == Variation::Pressure { json!([lo, hi]) } else { json!([lo.min(hi), lo.max(hi)]) };
+                modes.push(mode.id());
             }
+            p["modes"] = json!(modes);
             p["colorization"] = serde_json::to_value(colorization(d)).unwrap_or_default();
             p
         }
@@ -263,7 +273,9 @@ fn params(d: &Dialog) -> Value {
             };
             let direction: Direction = serde_json::from_value(json!(d.str("direction"))).unwrap_or_default();
             json!({
-                "width": clamped(d, "width", (1.0, 1000.0)),
+                "width": clamped(d, "width", ArtBrush::WIDTH_RANGE),
+                "width_mode": Variation::parse(&d.str(&mode_key("width"))).unwrap_or_default().id(),
+                "width_variation": clamped(d, &variation_key("width"), (0.0, ArtBrush::WIDTH_RANGE.1)),
                 "direction": serde_json::to_value(direction).unwrap_or_default(),
                 "scale": serde_json::to_value(scale).unwrap_or_default(),
                 "flip_along": d.bool("flipAlong"),
@@ -325,7 +337,7 @@ fn scatter_body(ui: &mut egui::Ui, d: &mut Dialog) {
                 d.fields.insert(min, json!(v));
             }
             let mode = d.str(&mode_key(key));
-            let random = mode == "random";
+            let random = mode == "random" || mode == "pressure";
             let shown = SCATTER_MODES.iter().find(|(v, _)| *v == mode).map_or("Fixed", |(_, l)| l);
             let labels = SCATTER_MODES.map(|(_, l)| l);
             if let Some((v, _)) = widgets::dropdown(ui, ("brush-mode", key), shown, &labels, 96.0).and_then(|i| SCATTER_MODES.get(i)) {
@@ -347,10 +359,23 @@ fn scatter_body(ui: &mut egui::Ui, d: &mut Dialog) {
 }
 
 fn art_body(ui: &mut egui::Ui, d: &mut Dialog) {
+    let (lo, hi) = ArtBrush::WIDTH_RANGE;
     widgets::label_row(ui, tl!("Width:"), LABEL_W, |ui| {
-        if let Some(v) = widgets::range_field(ui, "brush-art-width", clamped(d, "width", (1.0, 1000.0)), 1.0..=1000.0, "%", 0, 64.0) {
+        if let Some(v) = widgets::range_field(ui, "brush-art-width", clamped(d, "width", (lo, hi)), lo..=hi, "%", 0, 64.0) {
             d.fields.insert("width".into(), json!(v));
         }
+        let mode = Variation::parse(&d.str(&mode_key("width"))).unwrap_or_default();
+        let labels = Variation::ALL.map(Variation::label);
+        if let Some(m) = widgets::dropdown(ui, ("brush-mode", "width"), mode.label(), &labels, 104.0).and_then(|i| Variation::ALL.get(i)) {
+            d.fields.insert(mode_key("width"), json!(m.id()));
+        }
+        label(ui, tl!("Variation:"));
+        let vkey = variation_key("width");
+        ui.add_enabled_ui(mode != Variation::Fixed, |ui| {
+            if let Some(v) = widgets::range_field(ui, "brush-art-width-variation", clamped(d, &vkey, (0.0, hi)), 0.0..=hi, "%", 0, 64.0) {
+                d.fields.insert(vkey.clone(), json!(v));
+            }
+        });
     });
     form::choice(ui, d, "scale", tl!("Brush Scale:"), (LABEL_W, 220.0), &ART_SCALES);
     if d.str("scale") == "betweenGuides" {
@@ -590,7 +615,7 @@ mod tests {
         }
         set(
             &mut app,
-            json!({"sizeMode": "random", "sizeMin": 150, "sizeMax": 50, "spacingMode": "fixed", "spacingMin": 300, "rotationMode": "random", "rotationMin": -9999, "rotationMax": 45, "rotationRelativeTo": "path", "colorization": "hueShift", "keyColor": "#00ff00"}),
+            json!({"sizeMode": "random", "sizeMin": 150, "sizeMax": 50, "spacingMode": "fixed", "spacingMin": 300, "scatterMode": "pressure", "scatterMin": 20, "scatterMax": -10, "rotationMode": "random", "rotationMin": -9999, "rotationMax": 45, "rotationRelativeTo": "path", "colorization": "hueShift", "keyColor": "#00ff00"}),
         );
         assert!(shown(&mut app).contains("Key Color:"));
         super::super::confirm(&mut app).unwrap();
@@ -600,11 +625,14 @@ mod tests {
             (json!([50.0, 150.0]), json!([300.0, 300.0]), json!([-360.0, 45.0]))
         );
         assert_eq!(def["rotation_relative_to_path"], json!(true));
+        // Pressure keeps its order: from Min at the lightest pressure to Max at the heaviest.
+        assert_eq!((def["scatter"].clone(), def["modes"].clone()), (json!([20.0, -10.0]), json!(["random", "fixed", "pressure", "random"])));
         assert_eq!(def["colorization"]["method"], json!("hueShift"));
         // Opened again, it shows what was set.
         app.run("ui.brushOptions", json!({"name": "Confetti"})).unwrap();
         let d = app.ui.dialog.as_ref().unwrap();
         assert_eq!((d.str("sizeMode"), d.str("spacingMode"), d.str("keyColor")), ("random".into(), "fixed".into(), "#00ff00".into()));
+        assert_eq!((d.str("scatterMode"), d.f64("scatterMin", 0.0), d.f64("scatterMax", 0.0)), ("pressure".into(), 20.0, -10.0));
     }
 
     #[test]
@@ -617,12 +645,13 @@ mod tests {
         }
         set(
             &mut app,
-            json!({"width": 5000, "scale": "betweenGuides", "guideStart": 80, "guideEnd": 20, "direction": "bottomToTop", "flipAcross": true, "colorization": "tints"}),
+            json!({"width": 5000, "widthMode": "pressure", "widthVariation": 30, "scale": "betweenGuides", "guideStart": 80, "guideEnd": 20, "direction": "bottomToTop", "flipAcross": true, "colorization": "tints"}),
         );
         assert!(shown(&mut app).contains("Guides:"));
         super::super::confirm(&mut app).unwrap();
         let def = app.run("brush.get", json!({"name": "Arrow"})).unwrap();
         assert_eq!((def["width"].clone(), def["direction"].clone(), def["flip_across"].clone()), (json!(1000.0), json!("bottomToTop"), json!(true)));
+        assert_eq!((def["width_mode"].clone(), def["width_variation"].clone()), (json!("pressure"), json!(30.0)));
         assert_eq!(def["scale"], json!({"mode": "betweenGuides", "start": 0.2, "end": 0.8}));
         assert_eq!(def["colorization"], json!({"method": "tints"}));
 
