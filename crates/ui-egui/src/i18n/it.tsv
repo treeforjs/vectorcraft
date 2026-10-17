@@ -12,6 +12,36 @@
 # tested). Left in English on purpose (`MENU_KEEP_AS_IS` in the tests): the product name, language
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
 # Photoshop-style raster effects (Effect menu, their dialogs).
+	Accented Edges…	Bordi accentuati…
+	Accented Edges	Bordi accentuati
+	Angled Strokes…	Tratti angolati…
+	Angled Strokes	Tratti angolati
+	Crosshatch…	Tratteggio incrociato…
+	Crosshatch	Tratteggio incrociato
+	Dark Strokes…	Tratti scuri…
+	Dark Strokes	Tratti scuri
+	Ink Outlines…	Contorni a inchiostro…
+	Ink Outlines	Contorni a inchiostro
+	Spatter…	Schizzi…
+	Spatter	Schizzi
+	Sprayed Strokes…	Tratti spruzzati…
+	Sprayed Strokes	Tratti spruzzati
+	Sumi-e…	Sumi-e…
+	Sumi-e	Sumi-e
+	Direction Balance	Bilanciamento direzione
+	Stroke Length	Lunghezza tratto
+	Sharpness	Nitidezza
+	Strength	Forza
+	Balance	Bilanciamento
+	Black Intensity	Intensità nero
+	White Intensity	Intensità bianco
+	Dark Intensity	Intensità scura
+	Spray Radius	Raggio spruzzo
+	Stroke Direction	Direzione tratto
+	Stroke Width	Larghezza tratto
+	Stroke Pressure	Pressione tratto
+	Right Diagonal	Diagonale destra
+	Left Diagonal	Diagonale sinistra
 	Craquelure…	Craquelure…
 	Craquelure	Craquelure
 	Grain…	Grana…

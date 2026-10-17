@@ -9,6 +9,36 @@
 # proprietary localisation resource, string table or product UI may be copied. Product and
 # technology names stay in Latin letters. Full-width punctuation (，。：“”) in sentences, half-width
 # parentheses.
+	Accented Edges…	强化的边缘…
+	Accented Edges	强化的边缘
+	Angled Strokes…	成角的线条…
+	Angled Strokes	成角的线条
+	Crosshatch…	阴影线…
+	Crosshatch	阴影线
+	Dark Strokes…	深色线条…
+	Dark Strokes	深色线条
+	Ink Outlines…	墨水轮廓…
+	Ink Outlines	墨水轮廓
+	Spatter…	喷溅…
+	Spatter	喷溅
+	Sprayed Strokes…	喷色描边…
+	Sprayed Strokes	喷色描边
+	Sumi-e…	烟灰墨…
+	Sumi-e	烟灰墨
+	Direction Balance	方向平衡
+	Stroke Length	描边长度
+	Sharpness	锐化程度
+	Strength	强度级别
+	Balance	平衡
+	Black Intensity	黑色强度
+	White Intensity	白色强度
+	Dark Intensity	深色强度
+	Spray Radius	喷色半径
+	Stroke Direction	描边方向
+	Stroke Width	描边宽度
+	Stroke Pressure	描边压力
+	Right Diagonal	右对角线
+	Left Diagonal	左对角线
 	Craquelure…	龟裂缝…
 	Craquelure	龟裂缝
 	Grain…	颗粒…

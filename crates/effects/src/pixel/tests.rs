@@ -588,6 +588,107 @@ fn texturizer_shades_the_art_by_its_surface() {
     }
 }
 
+#[test]
+fn brush_stroke_params_take_defaults_and_stay_in_range() {
+    let b = |id: &str, p: serde_json::Value| match fx(id, p) {
+        PixelFx::Brush(b) => b,
+        other => panic!("{id}: {other:?}"),
+    };
+    assert_eq!(b("brushStrokes.accentedEdges", json!({})), BrushStroke::AccentedEdges { width: 2.0, brightness: 38.0, smoothness: 5.0 });
+    assert_eq!(
+        b("brushStrokes.crosshatch", json!({"strength": 9, "strokeLength": 1})),
+        BrushStroke::Crosshatch { length: 3.0, sharpness: 6.0, strength: 3 }
+    );
+    assert_eq!(
+        b("brushStrokes.sprayedStrokes", json!({"strokeDirection": "Vertical", "sprayRadius": -1})),
+        BrushStroke::SprayedStrokes { length: 12.0, radius: 0.0, direction: Direction::Vertical }
+    );
+    assert_eq!(b("brushStrokes.sumiE", json!({"contrast": 1e9})), BrushStroke::SumiE { width: 10.0, pressure: 2.0, contrast: 40.0 });
+    assert_eq!(fx("brushStrokes.spatter", json!({"sprayRadius": 8})).outset(Rect::ZERO), 4.0);
+    assert_eq!(fx("brushStrokes.angledStrokes", json!({"strokeLength": 20})).reach(), Some(20.0));
+    assert_eq!(fx("brushStrokes.accentedEdges", json!({})).outset(Rect::ZERO), 0.0);
+}
+
+/// Stripes to stroke: alternating red and blue bands 6 px wide.
+fn bands(w: usize, h: usize) -> Vec<u8> {
+    image(w, h, |x, _| if (x / 6) % 2 == 0 { [220, 40, 40, 255] } else { [30, 40, 200, 255] })
+}
+
+/// Accented Edges lightens or darkens the edges, by its brightness, and leaves flat areas alone.
+#[test]
+fn accented_edges_light_or_darken_the_edges() {
+    let (w, h) = (48, 24);
+    let src = bands(w, h);
+    let run = |brightness: f64| {
+        let mut d = src.clone();
+        fx("brushStrokes.accentedEdges", json!({"edgeBrightness": brightness, "edgeWidth": 1, "smoothness": 1})).apply(&mut d, w, h, &space(w, h));
+        d
+    };
+    let sum = |p: [u8; 4]| u32::from(p[0]) + u32::from(p[1]) + u32::from(p[2]);
+    let (light, dark) = (run(50.0), run(0.0));
+    assert!(sum(at(&light, w, 12, 12)) > sum(at(&src, w, 12, 12)) + 60, "{:?}", at(&light, w, 12, 12));
+    assert!(sum(at(&dark, w, 12, 12)) + 60 < sum(at(&src, w, 12, 12)), "{:?}", at(&dark, w, 12, 12));
+    let flat = (at(&light, w, 9, 12), at(&src, w, 9, 12));
+    assert!(flat.0.iter().zip(flat.1).all(|(a, b)| a.abs_diff(b) <= 2), "flat areas stay: {flat:?}");
+    assert_eq!(run(25.0), src, "25 leaves the edges as they are");
+}
+
+/// The stroke filters smear colour along their strokes, keep a flat colour flat and leave
+/// nothing transparent inside the art.
+#[test]
+fn stroke_filters_smear_along_their_strokes() {
+    let (w, h) = (48, 48);
+    let src = bands(w, h);
+    for id in [
+        "brushStrokes.angledStrokes",
+        "brushStrokes.crosshatch",
+        "brushStrokes.inkOutlines",
+        "brushStrokes.sprayedStrokes",
+        "brushStrokes.sumiE",
+        "brushStrokes.darkStrokes",
+        "brushStrokes.spatter",
+    ] {
+        let mut d = src.clone();
+        fx(id, json!({})).apply(&mut d, w, h, &space(w, h));
+        assert!(differing(&d, &src) > w * h / 4, "{id} strokes the bands");
+        let mid: Vec<[u8; 4]> = (18..30).flat_map(|y| (18..30).map(move |x| (x, y))).map(|(x, y)| at(&d, w, x, y)).collect();
+        assert!(mid.iter().all(|p| p[3] == 255), "{id}: the middle stays opaque");
+        // Colours in between the bands' appear where strokes cross them.
+        assert!(mid.iter().any(|p| p[0] > 60 && p[0] < 190), "{id} mixes the bands");
+    }
+    let flat = image(w, h, |_, _| [90, 150, 60, 255]);
+    for id in ["brushStrokes.angledStrokes", "brushStrokes.sprayedStrokes", "brushStrokes.spatter"] {
+        let mut d = flat.clone();
+        fx(id, json!({"sharpness": 0})).apply(&mut d, w, h, &space(w, h));
+        assert_eq!(at(&d, w, 24, 24), [90, 150, 60, 255], "{id} keeps a flat colour");
+    }
+}
+
+/// Dark Strokes darkens the dark tones and lightens the light ones.
+#[test]
+fn dark_strokes_push_the_tones_apart() {
+    let (w, h) = (48, 24);
+    let src = image(w, h, |x, _| if x < 24 { grey(60) } else { grey(200) });
+    let mut d = src.clone();
+    fx("brushStrokes.darkStrokes", json!({"blackIntensity": 10, "whiteIntensity": 10})).apply(&mut d, w, h, &space(w, h));
+    assert!(at(&d, w, 6, 12)[0] < 40, "{:?}", at(&d, w, 6, 12));
+    assert!(at(&d, w, 40, 12)[0] > 220, "{:?}", at(&d, w, 40, 12));
+}
+
+/// Spatter scatters further with a larger radius and not at all at 0.
+#[test]
+fn spatter_scatters_by_its_radius() {
+    let (w, h) = (48, 48);
+    let src = bands(w, h);
+    let changed = |r: f64| {
+        let mut d = src.clone();
+        fx("brushStrokes.spatter", json!({"sprayRadius": r})).apply(&mut d, w, h, &space(w, h));
+        differing(&d, &src)
+    };
+    assert_eq!(changed(0.0), 0);
+    assert!(changed(25.0) > changed(4.0), "{} then {}", changed(4.0), changed(25.0));
+}
+
 /// Timings on a 2000 × 2000 raster (`cargo test -p vectorcraft-effects --release -- --ignored
 /// --nocapture pixel_timings`).
 #[test]
@@ -599,6 +700,14 @@ fn pixel_timings() {
     let cases = [
         ("blur.radial", json!({"quality": "draft"})),
         ("video.deInterlace", json!({})),
+        ("brushStrokes.accentedEdges", json!({})),
+        ("brushStrokes.angledStrokes", json!({})),
+        ("brushStrokes.crosshatch", json!({"strength": 3})),
+        ("brushStrokes.darkStrokes", json!({})),
+        ("brushStrokes.inkOutlines", json!({})),
+        ("brushStrokes.spatter", json!({})),
+        ("brushStrokes.sprayedStrokes", json!({})),
+        ("brushStrokes.sumiE", json!({})),
         ("texture.craquelure", json!({})),
         ("texture.grain", json!({})),
         ("texture.mosaicTiles", json!({})),

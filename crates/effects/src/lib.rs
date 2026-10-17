@@ -6,7 +6,7 @@
 //! - **Geometry effects** (Distort & Transform, Path, Convert to Shape, Round Corners, Scribble,
 //!   Warp) rewrite a path: [`apply_geometry`] evaluates them in stack order.
 //! - **Raster effects** (Drop Shadow, Inner/Outer Glow, Feather, Gaussian Blur, and the
-//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Distort, Pixelate, Unsharp Mask, Glowing Edges, Texture and Video) are described by
+//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Brush Strokes, Distort, Pixelate, Unsharp Mask, Glowing Edges, Texture and Video) are described by
 //!   [`raster_effects`] and painted by the renderer; [`outset`] says how far they reach beyond
 //!   the geometry.
 //! - **Stroke geometry** ([`stroke`]): arrowheads, dash patterns and width profiles, shared by the
@@ -131,6 +131,9 @@ fn lengths_of(id: &str) -> Lengths {
         "distort.oceanRipple" => always(&["rippleSize", "rippleMagnitude"]),
         "pixelate.crystallize" | "pixelate.pointillize" | "texture.stainedGlass" => always(&["cellSize"]),
         "texture.craquelure" => always(&["crackSpacing"]),
+        "brushStrokes.angledStrokes" | "brushStrokes.crosshatch" | "brushStrokes.inkOutlines" | "brushStrokes.sprayedStrokes" => {
+            always(&["strokeLength"])
+        }
         "texture.mosaicTiles" => always(&["tileSize"]),
         _ => Lengths::default(),
     }
@@ -149,6 +152,7 @@ const PIXELATE: &[&str] = &["Effect", "Pixelate"];
 const DISTORT: &[&str] = &["Effect", "Distort"];
 const VIDEO: &[&str] = &["Effect", "Video"];
 const TEXTURE: &[&str] = &["Effect", "Texture"];
+const BRUSH_STROKES: &[&str] = &["Effect", "Brush Strokes"];
 const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
@@ -356,6 +360,62 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             DISTORT,
             "{rippleSize: 1..15 (9; ripples about twice this in points), rippleMagnitude: 0..20 (9; the content moves up to half this in points)} wobbles the content as if under water",
             json!({"rippleSize": 9.0, "rippleMagnitude": 9.0}),
+        ),
+        r(
+            "brushStrokes.accentedEdges",
+            "Accented Edges…",
+            BRUSH_STROKES,
+            "{edgeWidth: 1..14 (2; edges about half this in points), edgeBrightness: 0..50 (38; above 25 lightens the edges, below darkens them), smoothness: 1..15 (5)} accents the art's edges like chalk or ink",
+            json!({"edgeWidth": 2.0, "edgeBrightness": 38.0, "smoothness": 5.0}),
+        ),
+        r(
+            "brushStrokes.angledStrokes",
+            "Angled Strokes…",
+            BRUSH_STROKES,
+            "{directionBalance: 0..100 (50; the tone splitting the two diagonals), strokeLength: pt 3..50 (15), sharpness: 0..10 (3)} repaints the light tones in strokes along one diagonal and the dark tones along the other",
+            json!({"directionBalance": 50.0, "strokeLength": 15.0, "sharpness": 3.0}),
+        ),
+        r(
+            "brushStrokes.crosshatch",
+            "Crosshatch…",
+            BRUSH_STROKES,
+            "{strokeLength: pt 3..50 (9), sharpness: 0..20 (6), strength: 1..3 (1; passes)} repaints the art in crossing diagonal pencil hatching",
+            json!({"strokeLength": 9.0, "sharpness": 6.0, "strength": 1.0}),
+        ),
+        r(
+            "brushStrokes.darkStrokes",
+            "Dark Strokes…",
+            BRUSH_STROKES,
+            "{balance: 0..10 (5; the tone splitting dark from light), blackIntensity: 0..10 (6), whiteIntensity: 0..10 (2)} paints the dark tones in short dark strokes and the light tones in long light ones",
+            json!({"balance": 5.0, "blackIntensity": 6.0, "whiteIntensity": 2.0}),
+        ),
+        r(
+            "brushStrokes.inkOutlines",
+            "Ink Outlines…",
+            BRUSH_STROKES,
+            "{strokeLength: pt 1..50 (4), darkIntensity: 0..50 (20), lightIntensity: 0..50 (10)} redraws the art in fine strokes with inked outlines",
+            json!({"strokeLength": 4.0, "darkIntensity": 20.0, "lightIntensity": 10.0}),
+        ),
+        r(
+            "brushStrokes.spatter",
+            "Spatter…",
+            BRUSH_STROKES,
+            "{sprayRadius: 0..25 (10; the art scatters by up to half this in points), smoothness: 1..15 (5)} sprays the art as if through an airbrush",
+            json!({"sprayRadius": 10.0, "smoothness": 5.0}),
+        ),
+        r(
+            "brushStrokes.sprayedStrokes",
+            "Sprayed Strokes…",
+            BRUSH_STROKES,
+            "{strokeLength: pt 0..20 (12), sprayRadius: 0..25 (7), strokeDirection: \"rightDiagonal\"|\"horizontal\"|\"leftDiagonal\"|\"vertical\" (\"rightDiagonal\")} repaints the art in sprayed, angled strokes",
+            json!({"strokeLength": 12.0, "sprayRadius": 7.0, "strokeDirection": "rightDiagonal"}),
+        ),
+        r(
+            "brushStrokes.sumiE",
+            "Sumi-e…",
+            BRUSH_STROKES,
+            "{strokeWidth: 3..15 (10; strokes half this in points wide), strokePressure: 0..15 (2), contrast: 0..40 (16)} repaints the art in wide black-ink strokes on rice paper",
+            json!({"strokeWidth": 10.0, "strokePressure": 2.0, "contrast": 16.0}),
         ),
         r(
             "texture.craquelure",

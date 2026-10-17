@@ -3133,11 +3133,11 @@ title = "Effect › Brush Strokes › Accented Edges"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::accented_edges_light_or_darken_the_edges"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-brush-strokes-angled-strokes"
@@ -3145,11 +3145,11 @@ title = "Effect › Brush Strokes › Angled Strokes"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::stroke_filters_smear_along_their_strokes"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-brush-strokes-crosshatch"
@@ -3157,11 +3157,11 @@ title = "Effect › Brush Strokes › Crosshatch"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::stroke_filters_smear_along_their_strokes"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-brush-strokes-dark-strokes"
@@ -3169,11 +3169,11 @@ title = "Effect › Brush Strokes › Dark Strokes"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::dark_strokes_push_the_tones_apart"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-brush-strokes-ink-outlines"
@@ -3181,11 +3181,11 @@ title = "Effect › Brush Strokes › Ink Outlines"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::stroke_filters_smear_along_their_strokes"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-brush-strokes-spatter"
@@ -3193,11 +3193,11 @@ title = "Effect › Brush Strokes › Spatter"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::spatter_scatters_by_its_radius"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-brush-strokes-sprayed-strokes"
@@ -3205,11 +3205,11 @@ title = "Effect › Brush Strokes › Sprayed Strokes"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::stroke_filters_smear_along_their_strokes"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-brush-strokes-sumi-e"
@@ -3217,11 +3217,11 @@ title = "Effect › Brush Strokes › Sumi-e"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::stroke_filters_smear_along_their_strokes"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-distort-diffuse-glow"
