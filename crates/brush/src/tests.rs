@@ -584,3 +584,39 @@ fn variation_modes_default_from_saved_brushes() {
     let s = Scatter { modes: Some([Variation::Pressure; 4]), ..Default::default() };
     assert_eq!(serde_json::from_str::<Scatter>(&serde_json::to_string(&s).unwrap()).unwrap(), s);
 }
+
+fn varied_pattern(mode: Variation, variation: f64, name: &str) -> Brush {
+    let mut b = pattern_brush(PatternFit::Stretch, false);
+    b.name = name.into();
+    if let BrushKind::Pattern(p) = &mut b.kind {
+        p.scale_mode = mode;
+        p.scale_variation = variation;
+    }
+    b
+}
+
+#[test]
+fn pattern_tiles_follow_pen_pressure_across_the_stroke() {
+    // 100 % ± 50 %: each tile takes the pressure at its middle; tiles keep their length.
+    let out = stroke_pieces(&varied_pattern(Variation::Pressure, 50.0, "p"), &line(0.0, 0.0, 100.0, 0.0), &pressed(vec![(0.0, 0.0), (1.0, 1.0)]));
+    assert_eq!(out.len(), 10);
+    let (first, last) = (half_height_near(&out, 5.0), half_height_near(&out, 95.0));
+    assert!(near(first, 1.1, 0.05) && near(last, 2.9, 0.05), "{first} {last}");
+    // Without a recording: the brush's own scale.
+    let out = stroke_pieces(&varied_pattern(Variation::Pressure, 50.0, "p"), &line(0.0, 0.0, 100.0, 0.0), &stroke(1.0));
+    assert!(near(bounds(&out).height(), 4.0, 1e-6));
+}
+
+#[test]
+fn pattern_random_scale_is_one_scale_per_stroke() {
+    let p = line(0.0, 0.0, 100.0, 0.0);
+    let heights: Vec<f64> = ["a", "b", "c", "d", "e"]
+        .iter()
+        .map(|n| bounds(&stroke_pieces(&varied_pattern(Variation::Random, 50.0, n), &p, &stroke(1.0))).height())
+        .collect();
+    assert!(heights.iter().all(|h| (2.0..=6.0).contains(h)), "{heights:?}");
+    assert!(heights.iter().any(|h| (h - heights[0]).abs() > 0.1), "{heights:?}");
+    assert_eq!(bounds(&stroke_pieces(&varied_pattern(Variation::Random, 50.0, "a"), &p, &stroke(1.0))).height(), heights[0]);
+    let saved: PatternBrush = serde_json::from_str(r#"{"scale":80.0}"#).unwrap();
+    assert_eq!((saved.scale_mode, saved.scale_variation), (Variation::Fixed, 0.0));
+}

@@ -328,10 +328,25 @@ fn auto_corner(mode: AutoCorner, side: &(Node, Rect), v: Point, a: Vec2, b: Vec2
     }
 }
 
-pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node> {
+pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64, stroke: &StrokeLayer, name: &str) -> Vec<Node> {
     let orient = |n: &Node| oriented(n, Direction::LeftToRight, pb.flip_along, pb.flip_across);
     let Some(side) = orient(&pb.side) else { return vec![] };
-    let k = weight * pb.scale.max(1.0) / 100.0;
+    let range = PatternBrush::SCALE_RANGE;
+    let base = pb.scale.clamp(range.0, range.1);
+    // Random: one scale for the stroke. Pressure: tiles keep the brush's scale along the path and
+    // take the pen's across it.
+    let scale = match pb.scale_mode {
+        Variation::Random => Variation::Random.apply(base, pb.scale_variation, Rng::new(seed_of(bp, name)).unit(), PressureProfile::MID, range),
+        _ => base,
+    };
+    let k = weight * scale / 100.0;
+    let across = |s: f64, l: f64| {
+        if pb.scale_mode == Variation::Pressure {
+            k * Variation::Pressure.apply(base, pb.scale_variation, 0.5, pressure_at(stroke, s, l), range) / base
+        } else {
+            k
+        }
+    };
     let outer = pb.outer_corner.as_ref().and_then(orient);
     let inner = pb.inner_corner.as_ref().and_then(orient);
     let start = pb.start.as_ref().and_then(orient);
@@ -418,7 +433,7 @@ pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node>
                     let (w, g) = (tw * f, gap * f);
                     for i in 0..n.min(20000) {
                         let s0 = a + i as f64 * (w + g);
-                        out.extend(tile_on(&t, &side, s0, s0 + w, k));
+                        out.extend(tile_on(&t, &side, s0, s0 + w, across(s0 + w / 2.0, l)));
                     }
                 }
                 PatternFit::AddSpace => {
@@ -427,7 +442,7 @@ pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node>
                     let lead = if n == 1 { (avail - tw) / 2.0 } else { 0.0 };
                     for i in 0..n.min(20000) {
                         let s0 = a + lead + i as f64 * (tw + g.max(0.0));
-                        out.extend(tile_on(&t, &side, s0, s0 + tw, k));
+                        out.extend(tile_on(&t, &side, s0, s0 + tw, across(s0 + tw / 2.0, l)));
                     }
                 }
                 PatternFit::Approximate => {
@@ -436,7 +451,7 @@ pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node>
                     let lead = (avail - used) / 2.0;
                     for i in 0..n.min(20000) {
                         let s0 = a + lead + i as f64 * unit;
-                        out.extend(tile_on(&t, &side, s0, s0 + tw, k));
+                        out.extend(tile_on(&t, &side, s0, s0 + tw, across(s0 + tw / 2.0, l)));
                     }
                 }
             }
