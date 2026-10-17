@@ -2785,11 +2785,11 @@ title = "Effect › Rasterize"
 area = "H"
 tier = "P1"
 milestone = "M9"
-status = "partial"
-commands = ["object.rasterize"]
+status = "shipped"
+commands = ["object.rasterize", "effect.apply"]
 tools = []
-evidence = ["crates/ui-egui/src/dialogs/raster_effects.rs::raster_effects_settings_draw_and_ok_is_one_undo_step"]
-notes = "Object › Rasterize done; Effect › Rasterize as a live effect pending"
+evidence = ["crates/ui-egui/src/dialogs/raster_effects.rs::raster_effects_settings_draw_and_ok_is_one_undo_step", "crates/effects/src/pixel/tests.rs::rasterize_resamples_and_fills_the_background"]
+notes = "Object › Rasterize and Effect › Rasterize as a live effect"
 
 [[feature]]
 id = "fx.stylize-drop-shadow"

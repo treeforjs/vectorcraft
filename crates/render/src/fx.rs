@@ -595,7 +595,7 @@ impl Renderer {
         off.flush();
         let mut pm = vello_cpu::Pixmap::new(wu, hu);
         off.render(&mut pm, &mut self.resources);
-        let space = effects::PixelSpace { to_doc, px, center: content.reach.center() };
+        let space = effects::PixelSpace { to_doc, px, center: content.reach.center(), bounds: content.reach };
         let (wz, hz) = (wu as usize, hu as usize);
         for fx in chain {
             match fx {
