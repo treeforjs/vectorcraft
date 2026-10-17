@@ -2953,11 +2953,11 @@ title = "Effect › Artistic › Colored Pencil"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-cutout"
@@ -2965,11 +2965,11 @@ title = "Effect › Artistic › Cutout"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-dry-brush"
@@ -2977,11 +2977,11 @@ title = "Effect › Artistic › Dry Brush"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-film-grain"
@@ -2989,11 +2989,11 @@ title = "Effect › Artistic › Film Grain"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-fresco"
@@ -3001,11 +3001,11 @@ title = "Effect › Artistic › Fresco"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-neon-glow"
@@ -3013,11 +3013,11 @@ title = "Effect › Artistic › Neon Glow"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-paint-daubs"
@@ -3025,11 +3025,11 @@ title = "Effect › Artistic › Paint Daubs"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-palette-knife"
@@ -3037,11 +3037,11 @@ title = "Effect › Artistic › Palette Knife"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-plastic-wrap"
@@ -3049,11 +3049,11 @@ title = "Effect › Artistic › Plastic Wrap"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-poster-edges"
@@ -3061,11 +3061,11 @@ title = "Effect › Artistic › Poster Edges"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-rough-pastels"
@@ -3073,11 +3073,11 @@ title = "Effect › Artistic › Rough Pastels"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-smudge-stick"
@@ -3085,11 +3085,11 @@ title = "Effect › Artistic › Smudge Stick"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-sponge"
@@ -3097,11 +3097,11 @@ title = "Effect › Artistic › Sponge"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-underpainting"
@@ -3109,11 +3109,11 @@ title = "Effect › Artistic › Underpainting"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-artistic-watercolor"
@@ -3121,11 +3121,11 @@ title = "Effect › Artistic › Watercolor"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::artistic_filters_keep_the_coverage"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-brush-strokes-accented-edges"

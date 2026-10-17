@@ -138,7 +138,7 @@ pub(super) fn each(px: &mut [[u8; 4]], w: usize, h: usize, space: &PixelSpace, f
 
 /// How strongly each pixel lies on an edge, in [0, 1]: the Sobel gradient of the luma after a
 /// blur of `sigma` pixels.
-fn edges(px: &[[u8; 4]], w: usize, h: usize, sigma: f64) -> Vec<f32> {
+pub(super) fn edges(px: &[[u8; 4]], w: usize, h: usize, sigma: f64) -> Vec<f32> {
     let mut l: Vec<f32> = px.iter().map(|p| (0.299 * f32::from(p[0]) + 0.587 * f32::from(p[1]) + 0.114 * f32::from(p[2])) / 255.0).collect();
     blur_plane(&mut l, w, h, sigma);
     let at = |x: usize, y: usize| l.get(y * w + x).copied().unwrap_or(0.0);

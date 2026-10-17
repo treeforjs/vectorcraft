@@ -1,4 +1,6 @@
-//! Photoshop-style raster effects (Effect › Blur › Radial Blur and Smart Blur, Brush Strokes ›
+//! Photoshop-style raster effects (Effect › Artistic › Colored Pencil, Cutout, Dry Brush, Film
+//! Grain, Fresco, Neon Glow, Paint Daubs, Palette Knife, Plastic Wrap, Poster Edges, Rough Pastels,
+//! Smudge Stick, Sponge, Underpainting and Watercolor, Blur › Radial Blur and Smart Blur, Brush Strokes ›
 //! Accented Edges, Angled Strokes, Crosshatch, Dark Strokes, Ink Outlines, Spatter, Sprayed Strokes
 //! and Sumi-e, Distort › Diffuse
 //! Glow, Glass and Ocean Ripple, Pixelate › Color
@@ -15,6 +17,7 @@
 //!   cost doesn't grow with the radius, and sample counts come from the effect's quality.
 //! - Beyond the raster's edges is transparency.
 
+mod artistic;
 mod blur;
 mod brush;
 mod distort;
@@ -26,6 +29,7 @@ mod sketch;
 mod texture;
 mod video;
 
+pub use artistic::{Artistic, Daub};
 pub use brush::{BrushStroke, Direction};
 pub use distort::{Glass, GlassTexture};
 pub use pixelate::Mezzotint;
@@ -38,7 +42,22 @@ use vectorcraft_geom::{Affine, Point, Rect};
 use crate::util::{num, text};
 
 /// The Photoshop-style effect ids (all raster effects, see [`crate::is_raster`]).
-pub const PIXEL_EFFECTS: [&str; 41] = [
+pub const PIXEL_EFFECTS: [&str; 56] = [
+    "artistic.coloredPencil",
+    "artistic.cutout",
+    "artistic.dryBrush",
+    "artistic.filmGrain",
+    "artistic.fresco",
+    "artistic.neonGlow",
+    "artistic.paintDaubs",
+    "artistic.paletteKnife",
+    "artistic.plasticWrap",
+    "artistic.posterEdges",
+    "artistic.roughPastels",
+    "artistic.smudgeStick",
+    "artistic.sponge",
+    "artistic.underpainting",
+    "artistic.watercolor",
     "blur.radial",
     "blur.smart",
     "brushStrokes.accentedEdges",
@@ -132,6 +151,8 @@ pub enum PixelFx {
     Texturizer(Texturizer),
     /// Brush Strokes › any of its filters.
     Brush(BrushStroke),
+    /// Artistic › any of its filters.
+    Artistic(Artistic),
     /// Sketch › any of its filters.
     Sketch(Sketch),
 }
@@ -151,6 +172,17 @@ pub struct PixelSpace {
 /// The kind in `kinds` (id, label, kind) named `name` by id or label, else `default`.
 fn pick<T: Copy, const N: usize>(kinds: &[(&str, &str, T); N], name: &str, default: T) -> T {
     kinds.iter().find(|(id, label, _)| id.eq_ignore_ascii_case(name) || label.eq_ignore_ascii_case(name)).map_or(default, |k| k.2)
+}
+
+/// A Texturizer surface read from `p` (`texture`, `scaling`, `relief`, `light`, `invert`).
+fn texturizer(p: &Value, relief: f64, light: Light) -> Texturizer {
+    Texturizer {
+        surface: pick(&Surface::KINDS, text(p, "texture", "canvas"), Surface::Canvas),
+        scaling: num(p, "scaling", 100.0).clamp(50.0, 200.0) / 100.0,
+        relief: num(p, "relief", relief).clamp(0.0, 50.0),
+        light: pick(&Light::KINDS, text(p, "light", ""), light),
+        invert: crate::util::flag(p, "invert", false),
+    }
 }
 
 /// Effect `id`'s parameters `p` (defaults merged in) as a [`PixelFx`]; `None` for other effects.
@@ -263,6 +295,81 @@ pub(crate) fn parse(id: &str, p: &Value) -> Option<PixelFx> {
             width: num(p, "strokeWidth", 10.0).clamp(3.0, 15.0),
             pressure: num(p, "strokePressure", 2.0).clamp(0.0, 15.0),
             contrast: num(p, "contrast", 16.0).clamp(0.0, 40.0),
+        }),
+        "artistic.coloredPencil" => PixelFx::Artistic(Artistic::ColoredPencil {
+            width: num(p, "pencilWidth", 4.0).clamp(1.0, 24.0),
+            pressure: num(p, "strokePressure", 8.0).clamp(0.0, 15.0),
+            paper: num(p, "paperBrightness", 25.0).clamp(0.0, 50.0),
+        }),
+        "artistic.cutout" => PixelFx::Artistic(Artistic::Cutout {
+            levels: num(p, "numberOfLevels", 4.0).clamp(2.0, 8.0),
+            simplicity: num(p, "edgeSimplicity", 4.0).clamp(0.0, 10.0),
+            fidelity: num(p, "edgeFidelity", 2.0).clamp(1.0, 3.0),
+        }),
+        "artistic.dryBrush" => PixelFx::Artistic(Artistic::DryBrush {
+            size: num(p, "brushSize", 2.0).clamp(0.0, 10.0),
+            detail: num(p, "brushDetail", 8.0).clamp(0.0, 10.0),
+            texture: num(p, "texture", 1.0).clamp(1.0, 3.0),
+        }),
+        "artistic.filmGrain" => PixelFx::Artistic(Artistic::FilmGrain {
+            grain: num(p, "grain", 4.0).clamp(0.0, 20.0),
+            highlight: num(p, "highlightArea", 0.0).clamp(0.0, 20.0),
+            intensity: num(p, "intensity", 10.0).clamp(0.0, 10.0),
+        }),
+        "artistic.fresco" => PixelFx::Artistic(Artistic::Fresco {
+            size: num(p, "brushSize", 2.0).clamp(0.0, 10.0),
+            detail: num(p, "brushDetail", 8.0).clamp(0.0, 10.0),
+            texture: num(p, "texture", 1.0).clamp(1.0, 3.0),
+        }),
+        "artistic.neonGlow" => PixelFx::Artistic(Artistic::NeonGlow {
+            size: num(p, "glowSize", 5.0).clamp(-24.0, 24.0),
+            brightness: num(p, "glowBrightness", 15.0).clamp(0.0, 50.0),
+            color: crate::raster::color_param(p, vectorcraft_doc::color::Color::rgb(0.25, 0.5, 1.0)).to_rgb(),
+        }),
+        "artistic.paintDaubs" => PixelFx::Artistic(Artistic::PaintDaubs {
+            size: num(p, "brushSize", 8.0).clamp(1.0, 50.0),
+            sharpness: num(p, "sharpness", 7.0).clamp(0.0, 40.0),
+            brush: pick(&Daub::KINDS, text(p, "brushType", "simple"), Daub::Simple),
+        }),
+        "artistic.paletteKnife" => PixelFx::Artistic(Artistic::PaletteKnife {
+            size: num(p, "strokeSize", 25.0).clamp(1.0, 50.0),
+            detail: num(p, "strokeDetail", 3.0).clamp(1.0, 3.0),
+            softness: num(p, "softness", 0.0).clamp(0.0, 10.0),
+        }),
+        "artistic.plasticWrap" => PixelFx::Artistic(Artistic::PlasticWrap {
+            strength: num(p, "highlightStrength", 15.0).clamp(0.0, 20.0),
+            detail: num(p, "detail", 9.0).clamp(1.0, 15.0),
+            smoothness: num(p, "smoothness", 7.0).clamp(1.0, 15.0),
+        }),
+        "artistic.posterEdges" => PixelFx::Artistic(Artistic::PosterEdges {
+            thickness: num(p, "edgeThickness", 2.0).clamp(0.0, 10.0),
+            intensity: num(p, "edgeIntensity", 1.0).clamp(0.0, 10.0),
+            posterization: num(p, "posterization", 2.0).clamp(0.0, 6.0),
+        }),
+        "artistic.roughPastels" => PixelFx::Artistic(Artistic::RoughPastels {
+            length: num(p, "strokeLength", 6.0).clamp(0.0, 40.0),
+            detail: num(p, "strokeDetail", 4.0).clamp(1.0, 20.0),
+            paper: texturizer(p, 20.0, Light::Bottom),
+        }),
+        "artistic.smudgeStick" => PixelFx::Artistic(Artistic::SmudgeStick {
+            length: num(p, "strokeLength", 2.0).clamp(0.0, 10.0),
+            highlight: num(p, "highlightArea", 0.0).clamp(0.0, 20.0),
+            intensity: num(p, "intensity", 10.0).clamp(0.0, 10.0),
+        }),
+        "artistic.sponge" => PixelFx::Artistic(Artistic::Sponge {
+            size: num(p, "brushSize", 2.0).clamp(0.0, 10.0),
+            definition: num(p, "definition", 12.0).clamp(0.0, 25.0),
+            smoothness: num(p, "smoothness", 5.0).clamp(1.0, 15.0),
+        }),
+        "artistic.underpainting" => PixelFx::Artistic(Artistic::Underpainting {
+            size: num(p, "brushSize", 6.0).clamp(0.0, 40.0),
+            coverage: num(p, "textureCoverage", 16.0).clamp(0.0, 40.0),
+            paper: texturizer(p, 4.0, Light::Top),
+        }),
+        "artistic.watercolor" => PixelFx::Artistic(Artistic::Watercolor {
+            detail: num(p, "brushDetail", 9.0).clamp(1.0, 14.0),
+            shadow: num(p, "shadowIntensity", 1.0).clamp(0.0, 10.0),
+            texture: num(p, "texture", 1.0).clamp(1.0, 3.0),
         }),
         "sketch.basRelief" => PixelFx::Sketch(Sketch::BasRelief {
             detail: num(p, "detail", 13.0).clamp(1.0, 15.0),
@@ -403,8 +510,8 @@ impl PixelFx {
             | PixelFx::StainedGlass { .. }
             | PixelFx::Texturizer(_) => 0.0,
             PixelFx::Brush(b) => b.outset(),
-            // Sketches repaint the art's own coverage.
-            PixelFx::Sketch(_) => 0.0,
+            // Sketches and artistic media repaint the art's own coverage.
+            PixelFx::Sketch(_) | PixelFx::Artistic(_) => 0.0,
             // Displacements pull content out by up to their reach.
             PixelFx::Glass(g) => g.distortion * 0.5,
             PixelFx::OceanRipple { magnitude, .. } => magnitude * 0.5,
@@ -436,6 +543,7 @@ impl PixelFx {
             PixelFx::StainedGlass { size, .. } => Some(3.0 * size),
             PixelFx::Brush(b) => Some(b.reach()),
             PixelFx::Sketch(k) => Some(k.reach()),
+            PixelFx::Artistic(a) => Some(a.reach()),
         }
     }
 
@@ -466,6 +574,7 @@ impl PixelFx {
             PixelFx::Texturizer(t) => texture::texturize(px, w, h, space, t),
             PixelFx::Brush(b) => b.apply(px, w, h, space),
             PixelFx::Sketch(k) => k.apply(px, w, h, space),
+            PixelFx::Artistic(a) => a.apply(px, w, h, space),
         }
     }
 }
