@@ -11,6 +11,30 @@
 # Product, language, built-in workspace and perspective preset names follow MENU_KEEP_AS_IS.
 # Keep placeholders, ellipses and leading/trailing spaces of fragments when editing.
 	Glowing Edges…	Сяйливі краї…
+	Pixelate	Пікселізація
+	Color Halftone…	Кольорові півтони…
+	Color Halftone	Кольорові півтони
+	Crystallize…	Кристалізація…
+	Crystallize	Кристалізація
+	Mezzotint…	Меццо-тинто…
+	Mezzotint	Меццо-тинто
+	Pointillize…	Пуантилізм…
+	Pointillize	Пуантилізм
+	Max Radius	Макс. радіус
+	Cell Size	Розмір комірки
+	Channel 1	Канал 1
+	Channel 2	Канал 2
+	Channel 3	Канал 3
+	Fine Dots	Дрібні точки
+	Medium Dots	Середні точки
+	Grainy Dots	Зернисті точки
+	Coarse Dots	Великі точки
+	Short Lines	Короткі лінії
+	Medium Lines	Середні лінії
+	Long Lines	Довгі лінії
+	Short Strokes	Короткі штрихи
+	Medium Strokes	Середні штрихи
+	Long Strokes	Довгі штрихи
 	Glowing Edges	Сяйливі краї
 	Edge Width	Ширина краю
 	Edge Brightness	Яскравість краю

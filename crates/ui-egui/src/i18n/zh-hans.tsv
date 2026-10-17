@@ -10,6 +10,30 @@
 # technology names stay in Latin letters. Full-width punctuation (，。：“”) in sentences, half-width
 # parentheses.
 	Glowing Edges…	发光边缘…
+	Pixelate	像素化
+	Color Halftone…	彩色半调…
+	Color Halftone	彩色半调
+	Crystallize…	晶格化…
+	Crystallize	晶格化
+	Mezzotint…	铜版雕刻…
+	Mezzotint	铜版雕刻
+	Pointillize…	点状化…
+	Pointillize	点状化
+	Max Radius	最大半径
+	Cell Size	单元格大小
+	Channel 1	通道 1
+	Channel 2	通道 2
+	Channel 3	通道 3
+	Fine Dots	精细点
+	Medium Dots	中等点
+	Grainy Dots	粒状点
+	Coarse Dots	粗网点
+	Short Lines	短直线
+	Medium Lines	中长直线
+	Long Lines	长直线
+	Short Strokes	短描边
+	Medium Strokes	中长描边
+	Long Strokes	长描边
 	Glowing Edges	发光边缘
 	Edge Width	边缘宽度
 	Edge Brightness	边缘亮度

@@ -11,6 +11,30 @@
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
 # Photoshop-style raster effects (Effect menu, their dialogs).
 	Glowing Edges…	Светящиеся края…
+	Pixelate	Пикселизация
+	Color Halftone…	Цветные полутона…
+	Color Halftone	Цветные полутона
+	Crystallize…	Кристаллизация…
+	Crystallize	Кристаллизация
+	Mezzotint…	Меццо-тинто…
+	Mezzotint	Меццо-тинто
+	Pointillize…	Пуантилизм…
+	Pointillize	Пуантилизм
+	Max Radius	Макс. радиус
+	Cell Size	Размер ячейки
+	Channel 1	Канал 1
+	Channel 2	Канал 2
+	Channel 3	Канал 3
+	Fine Dots	Мелкие точки
+	Medium Dots	Средние точки
+	Grainy Dots	Зернистые точки
+	Coarse Dots	Крупные точки
+	Short Lines	Короткие линии
+	Medium Lines	Средние линии
+	Long Lines	Длинные линии
+	Short Strokes	Короткие штрихи
+	Medium Strokes	Средние штрихи
+	Long Strokes	Длинные штрихи
 	Glowing Edges	Светящиеся края
 	Edge Width	Ширина края
 	Edge Brightness	Яркость края
