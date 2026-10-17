@@ -52,7 +52,8 @@ jobs:
             libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libx11-dev libxrandr-dev libxi-dev \
             libgl-dev libegl-dev libegl1 libegl-mesa0 libgl1-mesa-dri libvulkan1 mesa-vulkan-drivers \
             xdg-desktop-portal xdg-desktop-portal-gtk fonts-dejavu-core \
-            desktop-file-utils shared-mime-info xdg-utils jq xvfb xauth dbus-x11
+            desktop-file-utils shared-mime-info xdg-utils jq xvfb xauth dbus-x11 \
+            libfile-mimeinfo-perl
           curl -fsSL -o /tmp/nfpm.deb \
             https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_amd64.deb
           dpkg -i /tmp/nfpm.deb
@@ -76,8 +77,11 @@ jobs:
           mkdir -p /tmp/vectorcraft-mime
           printf '{}\n' >/tmp/vectorcraft-mime/document.vectorcraft
           printf '{}\n' >/tmp/vectorcraft-mime/legacy.drawcraft
+          # Outside a desktop session xdg-mime asks `mimetype` (libfile-mimeinfo-perl), which
+          # reads the shared-mime-info globs; without it, it falls back to content sniffing.
           for document in /tmp/vectorcraft-mime/*; do
-            test "$(xdg-mime query filetype "$document")" = application/x-vectorcraft
+            type="$(xdg-mime query filetype "$document")"
+            test "$type" = application/x-vectorcraft || { echo "::error::$document is $type"; exit 1; }
           done
           ldd /usr/bin/vectorcraft | tee /tmp/vectorcraft-ldd.log
           ! grep -q 'not found' /tmp/vectorcraft-ldd.log
