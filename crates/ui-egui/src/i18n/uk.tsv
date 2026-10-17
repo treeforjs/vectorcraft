@@ -4031,3 +4031,18 @@ axis	Both	Обидві
 	Add Around Object	Додати навколо об'єкта
 	Use Document Raster Effects Resolution	Використовувати роздільну здатність растрових ефектів документа
 	Outline Object	Перетворити об'єкт на контури
+	Depth	Глибина
+	Rotate X	Поворот по X
+	Rotate Y	Поворот по Y
+	Rotate Z	Поворот по Z
+	Surface	Поверхня
+	Ambient Light	Розсіяне світло
+	Highlight Intensity	Інтенсивність відблиску
+	Highlight Size	Розмір відблиску
+	From	Від
+	Wireframe	Каркас
+	No Shading	Без затінення
+	Diffuse Shading	Розсіяне затінення
+	Plastic Shading	Пластикове затінення
+	Left Edge	Лівий край
+	Right Edge	Правий край

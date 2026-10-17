@@ -42,6 +42,7 @@ mod raster;
 mod reshape;
 pub mod stroke;
 mod stylize;
+mod three_d;
 mod util;
 mod warp;
 
@@ -66,6 +67,7 @@ pub use marks::{CROP_MARKS, crop_marks_art, has_crop_marks};
 pub use pixel::{PIXEL_EFFECTS, PixelFx, PixelSpace};
 pub use raster::{RasterFx, outset, raster_effects};
 pub use reshape::{expand_outlined, needs_outline, outline_art, outline_text, reshape};
+pub use three_d::{EXTRUDE, REVOLVE, ROTATE, has_three_d, is_three_d, three_d_art};
 pub use warp::{WarpStyle, warp_point};
 
 /// Catalogue entry for one effect.
@@ -120,6 +122,8 @@ fn lengths_of(id: &str) -> Lengths {
         "distort.tweak" => Lengths { always: &[], absolute: &["h", "v"] },
         "distort.transform" => always(&["moveH", "moveV"]),
         "path.offsetPath" => always(&["offset"]),
+        EXTRUDE => always(&["depth"]),
+        REVOLVE => always(&["offset"]),
         "path.outlineStroke" => always(&["width"]),
         "stylize.roundCorners" | "stylize.feather" | "blur.gaussian" | "blur.smart" | "sharpen.unsharpMask" => always(&["radius"]),
         "stylize.scribble" => always(&["overlap", "strokeWidth", "spacing", "variation"]),
@@ -159,6 +163,7 @@ const ARTISTIC: &[&str] = &["Effect", "Artistic"];
 const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
+const THREE_D: &[&str] = &["Effect", "3D and Materials"];
 
 /// The warp styles in Illustrator's Style menu order: (id suffix, label).
 pub const WARP_STYLES: [(&str, &str); 15] = [
@@ -761,6 +766,39 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
     for (id, label, _) in PATHFINDER_EFFECTS {
         v.push(g(id, label, PATHFINDER, "{} (groups and layers: live Pathfinder over the members)", json!({})));
     }
+    let view = |mut o: Value| {
+        if let Some(m) = o.as_object_mut() {
+            for (k, v) in [
+                ("rotateX", json!(-18.0)),
+                ("rotateY", json!(-26.0)),
+                ("rotateZ", json!(8.0)),
+                ("perspective", json!(0.0)),
+                ("surface", json!("plastic")),
+                ("lightIntensity", json!(100.0)),
+                ("ambientLight", json!(50.0)),
+                ("highlightIntensity", json!(60.0)),
+                ("highlightSize", json!(90.0)),
+            ] {
+                m.insert(k.into(), v);
+            }
+        }
+        o
+    };
+    v.push(g(
+        EXTRUDE,
+        "Extrude & Bevel…",
+        THREE_D,
+        "{depth: pt (0..2000, 50), cap: bool (true), rotateX, rotateY, rotateZ: deg (-180..180; -18, -26, 8), perspective: deg (0..160, 0), surface: \"wireframe\"|\"noShading\"|\"diffuse\"|\"plastic\", lightIntensity: % (100), ambientLight: % (50), highlightIntensity: % (60), highlightSize: % (90)} the art pushed back into a shaded solid",
+        view(json!({"depth": 50.0, "cap": true})),
+    ));
+    v.push(g(
+        REVOLVE,
+        "Revolve…",
+        THREE_D,
+        "{angle: deg (1..360, 360), offset: pt (0), from: \"leftEdge\"|\"rightEdge\", cap: bool (true), rotateX, rotateY, rotateZ: deg (-180..180; -18, -26, 8), perspective: deg (0..160, 0), surface: \"wireframe\"|\"noShading\"|\"diffuse\"|\"plastic\", lightIntensity: % (100), ambientLight: % (50), highlightIntensity: % (60), highlightSize: % (90)} the art swept around a vertical axis at its edge",
+        view(json!({"angle": 360.0, "offset": 0.0, "from": "leftEdge", "cap": true})),
+    ));
+    v.push(g(ROTATE, "Rotate…", THREE_D, "{rotateX, rotateY, rotateZ: deg (-180..180; -18, -26, 8), perspective: deg (0..160, 0), surface: \"wireframe\"|\"noShading\"|\"diffuse\"|\"plastic\", lightIntensity: % (100), ambientLight: % (50), highlightIntensity: % (60), highlightSize: % (90)} the flat art turned in space", view(json!({}))));
     v.push(g(
         CROP_MARKS,
         "Crop Marks",
@@ -859,7 +897,8 @@ pub fn is_raster(id: &str) -> bool {
         || PIXEL_EFFECTS.contains(&id)
 }
 
-/// Does `id` change geometry? (Crop Marks adds art of its own instead, [`crop_marks_art`]; colour
+/// Does `id` change geometry? (Crop Marks and the 3D effects draw art of their own instead,
+/// [`crop_marks_art`], [`three_d_art`]; colour
 /// adjustments recolour, [`adjust`].) Plug-in effects do, installed or not (a missing plug-in
 /// leaves the geometry as it is).
 pub fn is_geometry(id: &str) -> bool {
@@ -867,7 +906,25 @@ pub fn is_geometry(id: &str) -> bool {
         && !is_pathfinder(id)
         && !is_adjustment(id)
         && id != CROP_MARKS
+        && !is_three_d(id)
         && (catalog_index().contains_key(id) || vectorcraft_plugins::effect::plugin_id(id).is_some())
+}
+
+/// Does `n` draw as art of its own effects' making ([`object_art`])?
+pub fn has_object_art(n: &Node) -> bool {
+    has_crop_marks(n) || has_three_d(n)
+}
+
+/// The art an object with Crop Marks or a 3D effect draws as ([`crop_marks_art`],
+/// [`three_d_art`]; with both, the crop marks go around the solid).
+pub fn object_art(n: &Node) -> Option<Node> {
+    if has_crop_marks(n) && has_three_d(n) {
+        let mut solid = three_d_art(n)?;
+        solid.appearance.effects = n.appearance.effects.clone();
+        solid.appearance.effects.retain(|e| e.id == CROP_MARKS || is_raster(&e.id));
+        return crop_marks_art(&solid);
+    }
+    crop_marks_art(n).or_else(|| three_d_art(n))
 }
 
 /// Any visible geometry effect in the list?

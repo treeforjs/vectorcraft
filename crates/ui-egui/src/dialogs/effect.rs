@@ -219,6 +219,10 @@ pub(super) fn choices(effect: &str, key: &str) -> Option<form::Choices> {
             ("Other", "other"),
         ]),
         ("rasterize", "colorModel") => Some(&[("Document", "document"), ("Grayscale", "grayscale"), ("Bitmap", "bitmap")]),
+        ("threeD.extrude" | "threeD.revolve" | "threeD.rotate", "surface") => {
+            Some(&[("Wireframe", "wireframe"), ("No Shading", "noShading"), ("Diffuse Shading", "diffuse"), ("Plastic Shading", "plastic")])
+        }
+        ("threeD.revolve", "from") => Some(&[("Left Edge", "leftEdge"), ("Right Edge", "rightEdge")]),
         ("rasterize", "background") => Some(&[("White", "white"), ("Transparent", "transparent")]),
         ("video.deInterlace", "eliminate") => Some(&[("Odd Lines", "odd"), ("Even Lines", "even")]),
         ("video.deInterlace", "create") => Some(&[("Duplication", "duplication"), ("Interpolation", "interpolation")]),

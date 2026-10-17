@@ -19,8 +19,8 @@ use vectorcraft_geom::{FillRule, PathData};
 
 use crate::group::{has_own_paint, paints};
 use crate::{
-    GeomContext, adjust_in_document, apply_geometry_with, crop_marks_art, evaluate_container, has_adjustment, has_crop_marks, has_geometry,
-    has_pathfinder, is_geometry, needs_outline, reshape,
+    GeomContext, adjust_in_document, apply_geometry_with, evaluate_container, has_adjustment, has_geometry, has_object_art, has_pathfinder,
+    is_geometry, needs_outline, object_art, reshape,
 };
 
 fn item_effects(item: &AppearanceItem) -> &[vectorcraft_doc::Effect] {
@@ -40,7 +40,7 @@ fn clear_item_effects(item: &mut AppearanceItem) {
 /// Does anything in `n`'s subtree need baking?
 pub fn needs_bake(n: &Node) -> bool {
     has_adjustment(n)
-        || has_crop_marks(n)
+        || has_object_art(n)
         || has_pathfinder(n)
         || has_own_paint(n)
         || has_geometry(&n.appearance.effects)
@@ -88,8 +88,8 @@ fn bake_node(d: &mut Document, n: &Node) -> Option<Node> {
     {
         return Some(bake_node(d, &m).unwrap_or(m));
     }
-    // Crop marks: the object and its marks.
-    if let Some(m) = crop_marks_art(n) {
+    // Crop marks (the object and its marks) and 3D solids.
+    if let Some(m) = object_art(n) {
         return Some(bake_pieces(d, m));
     }
     // Type, images, symbol instances and live objects: reshaped through their outlines.

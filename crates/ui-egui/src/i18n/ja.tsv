@@ -4040,3 +4040,18 @@ theme	Appearance	外観
 	Add Around Object	オブジェクトの周囲に追加
 	Use Document Raster Effects Resolution	ドキュメントのラスタライズ効果解像度を使用
 	Outline Object	オブジェクトのアウトライン
+	Depth	奥行き
+	Rotate X	X 軸回転
+	Rotate Y	Y 軸回転
+	Rotate Z	Z 軸回転
+	Surface	表面
+	Ambient Light	環境光
+	Highlight Intensity	ハイライトの強さ
+	Highlight Size	ハイライトのサイズ
+	From	基準
+	Wireframe	ワイヤーフレーム
+	No Shading	シェーディングなし
+	Diffuse Shading	拡散シェーディング
+	Plastic Shading	プラスチック効果シェーディング
+	Left Edge	左端
+	Right Edge	右端
