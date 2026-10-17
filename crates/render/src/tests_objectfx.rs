@@ -139,6 +139,29 @@ fn geometry_effects_reshape_type_through_its_outlines() {
     assert!(text == 0 && black > 0, "{art:?}");
 }
 
+/// Outline Object draws type as its glyph outlines: the same picture, made of plain paths that
+/// Expand Appearance keeps.
+#[test]
+fn outline_object_draws_type_as_its_outlines() {
+    let d = text_doc(vec![fx("path.outlineObject", json!({}))]);
+    let (outlined, plain) = (render(&d), render(&text_doc(vec![])));
+    let worst = outlined.pixels.iter().zip(&plain.pixels).map(|(a, b)| a.abs_diff(*b)).max().unwrap();
+    assert!(worst <= 8, "max channel difference {worst}");
+    let n = &d.layers[0].children().unwrap()[0];
+    for art in [vectorcraft_effects::reshape(n, None).unwrap(), vectorcraft_effects::expand_outlined(n, None).unwrap()] {
+        let (mut text, mut paths) = (0, 0);
+        art.walk(&mut |m| {
+            text += usize::from(matches!(m.kind, NodeKind::Text(_)));
+            paths += usize::from(matches!(m.kind, NodeKind::Path { .. }));
+        });
+        assert!(text == 0 && paths > 0, "{art:?}");
+    }
+    // On a path it changes nothing.
+    let sq = shapes::rectangle(Rect::new(0.0, 0.0, 10.0, 10.0));
+    let out = vectorcraft_effects::apply_geometry(&[fx("path.outlineObject", json!({}))], &sq, Rect::new(0.0, 0.0, 10.0, 10.0));
+    assert_eq!(out, sq);
+}
+
 #[test]
 fn a_strokes_own_glow_paints_around_that_stroke_only() {
     let mut d = Document::new(100.0, 100.0);
