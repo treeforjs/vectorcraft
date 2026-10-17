@@ -4055,3 +4055,29 @@ theme	Appearance	外観
 	Plastic Shading	プラスチック効果シェーディング
 	Left Edge	左端
 	Right Edge	右端
+	Scatter Brush Options	散布ブラシオプション
+	Art Brush Options	アートブラシオプション
+	Pattern Brush Options	パターンブラシオプション
+	Scatter:	散布：
+	Rotation:	回転：
+	Rotation relative to:	回転の基準：
+	Tints	彩色
+	Tints and Shades	彩色とシェード
+	Hue Shift	色相シフト
+	Left to Right	左から右
+	Right to Left	右から左
+	Top to Bottom	上から下
+	Bottom to Top	下から上
+	Scale Proportionately	縦横比を保持して拡大・縮小
+	Stretch to Fit Stroke Length	線幅に合わせて伸縮
+	Stretch Between Guides	ガイド間で伸縮
+	Stretch to Fit	伸縮して合わせる
+	Add Space to Fit	間隔を空けて合わせる
+	Approximate Path	パスに近似
+	Brush Scale:	ブラシの比率：
+	Guides:	ガイド：
+	Direction:	方向：
+	Flip:	反転：
+	Colorization:	着色：
+	Key Color:	キーカラー：
+	Fit:	合わせ方：

@@ -63,7 +63,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "Brush Options…",
             [],
             None,
-            "{name, params?: {…fields to change (brush.get shows them; calligraphic: angle −180..180°, roundness 0..100%, size 0..1296 pt, variation: [angle°, roundness%, size pt], modes: [fixed|random|pressure for angle, roundness, size]; pressure goes from value − variation at the lightest pen pressure to value + variation at the heaviest)}, newName?} edit a brush definition (strokes using it update) → {name}",
+            "{name, params?: {…fields to change (brush.get shows them; calligraphic: angle −180..180°, roundness 0..100%, size 0..1296 pt, variation: [angle°, roundness%, size pt], modes: [fixed|random|pressure for angle, roundness, size]; pressure goes from value − variation at the lightest pen pressure to value + variation at the heaviest; scatter: size, spacing, scatter: [min, max] %, rotation: [min, max]°, rotation_relative_to_path; art: width %, direction: leftToRight|rightToLeft|topToBottom|bottomToTop, scale: {mode: proportional|stretch|betweenGuides, start?, end? 0..1}, flip_along, flip_across; pattern: scale %, spacing %, fit: stretch|addSpace|approximate, flip_along, flip_across; scatter, art and pattern: colorization: {method: none|tints|tintsAndShades|hueShift, key?: colour})}, newName?} edit a brush definition (strokes using it update) → {name}",
             has_doc,
             brush_options
         ),

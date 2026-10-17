@@ -4066,10 +4066,10 @@ area = "J"
 tier = "P1"
 milestone = "M10"
 status = "partial"
-commands = ["brush.new"]
+commands = ["brush.new", "brush.options", "ui.brushOptions"]
 tools = []
-evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection"]
-notes = "Scatter brushes draw; Scatter Brush Options depth pending"
+evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection", "crates/ui-egui/src/dialogs/brush_options.rs::scatter_options_show_ranges_and_ok_applies_them"]
+notes = "Scatter brushes draw; Scatter Brush Options dialog edits size, spacing, scatter and rotation (fixed or random ranges), rotation relative to page or path and colorization; pressure variation pending"
 
 [[feature]]
 id = "brush.art"
@@ -4078,10 +4078,10 @@ area = "J"
 tier = "P1"
 milestone = "M10"
 status = "partial"
-commands = ["brush.new"]
+commands = ["brush.new", "brush.options", "ui.brushOptions"]
 tools = []
-evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection"]
-notes = "Art brushes draw; Art Brush Options depth pending"
+evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection", "crates/ui-egui/src/dialogs/brush_options.rs::art_and_pattern_options_apply_and_strokes_keep_drawing"]
+notes = "Art brushes draw; Art Brush Options dialog edits width, scale (proportional, stretch, between guides), direction, flips and colorization; width variation and overlap options pending"
 
 [[feature]]
 id = "brush.bristle"
@@ -4102,10 +4102,10 @@ area = "J"
 tier = "P1"
 milestone = "M10"
 status = "partial"
-commands = ["brush.new"]
+commands = ["brush.new", "brush.options", "ui.brushOptions"]
 tools = []
-evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection"]
-notes = "Pattern brushes draw; Pattern Brush Options depth pending"
+evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection", "crates/ui-egui/src/dialogs/brush_options.rs::art_and_pattern_options_apply_and_strokes_keep_drawing"]
+notes = "Pattern brushes draw; Pattern Brush Options dialog edits scale, spacing, fit, flips and colorization; auto-generated corners and scale variation pending"
 
 [[feature]]
 id = "brush.libraries"
