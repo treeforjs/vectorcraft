@@ -4,6 +4,36 @@
 # Clean-room: menu and feature names follow the names Japanese users of vector illustration
 # software know, written from the meaning of VectorCraft's English labels; no other application's
 # Japanese localisation was copied. Toggles read as their action (「…を表示」「…を隠す」).
+	Accented Edges…	エッジの強調…
+	Accented Edges	エッジの強調
+	Angled Strokes…	ストローク（斜め）…
+	Angled Strokes	ストローク（斜め）
+	Crosshatch…	網目…
+	Crosshatch	網目
+	Dark Strokes…	ストローク（暗）…
+	Dark Strokes	ストローク（暗）
+	Ink Outlines…	インク画（外形）…
+	Ink Outlines	インク画（外形）
+	Spatter…	はね…
+	Spatter	はね
+	Sprayed Strokes…	ストローク（スプレー）…
+	Sprayed Strokes	ストローク（スプレー）
+	Sumi-e…	墨絵…
+	Sumi-e	墨絵
+	Direction Balance	方向のバランス
+	Stroke Length	ストロークの長さ
+	Sharpness	シャープ
+	Strength	強さの段階
+	Balance	バランス
+	Black Intensity	黒の強さ
+	White Intensity	白の強さ
+	Dark Intensity	暗部の強さ
+	Spray Radius	スプレー半径
+	Stroke Direction	ストロークの方向
+	Stroke Width	ストロークの幅
+	Stroke Pressure	ストロークの筆圧
+	Right Diagonal	右上がり
+	Left Diagonal	左上がり
 	Craquelure…	クラッキング…
 	Craquelure	クラッキング
 	Grain…	粒状…

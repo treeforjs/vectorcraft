@@ -10,6 +10,36 @@
 # Coverage: every menu string, tl! literal, plural, status and error message (enforced in tests).
 # Product, language, built-in workspace and perspective preset names follow MENU_KEEP_AS_IS.
 # Keep placeholders, ellipses and leading/trailing spaces of fragments when editing.
+	Accented Edges…	Акцент на краях…
+	Accented Edges	Акцент на краях
+	Angled Strokes…	Похилі штрихи…
+	Angled Strokes	Похилі штрихи
+	Crosshatch…	Перехресні штрихи…
+	Crosshatch	Перехресні штрихи
+	Dark Strokes…	Темні штрихи…
+	Dark Strokes	Темні штрихи
+	Ink Outlines…	Обведення тушшю…
+	Ink Outlines	Обведення тушшю
+	Spatter…	Розбризкування…
+	Spatter	Розбризкування
+	Sprayed Strokes…	Аерограф…
+	Sprayed Strokes	Аерограф
+	Sumi-e…	Сумі-е…
+	Sumi-e	Сумі-е
+	Direction Balance	Баланс напрямків
+	Stroke Length	Довжина штриха
+	Sharpness	Різкість
+	Strength	Сила
+	Balance	Баланс
+	Black Intensity	Інтенсивність чорного
+	White Intensity	Інтенсивність білого
+	Dark Intensity	Інтенсивність темного
+	Spray Radius	Радіус розбризкування
+	Stroke Direction	Напрямок штриха
+	Stroke Width	Ширина штриха
+	Stroke Pressure	Натиск
+	Right Diagonal	Права діагональ
+	Left Diagonal	Ліва діагональ
 	Craquelure…	Кракелюри…
 	Craquelure	Кракелюри
 	Grain…	Зерно…

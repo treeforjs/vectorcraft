@@ -17,6 +17,36 @@
 # commands is kept. Full-width punctuation (，。：) inside sentences; half-width parentheses and
 # the " · " separators as in the English. Terms shared with PhotoCraft use the same words as its
 # zh-hant catalog (圖層, 選取, 偏好設定, 混合模式 ...), so the two apps read alike.
+	Accented Edges…	強調邊緣…
+	Accented Edges	強調邊緣
+	Angled Strokes…	斜角筆觸…
+	Angled Strokes	斜角筆觸
+	Crosshatch…	交叉影線…
+	Crosshatch	交叉影線
+	Dark Strokes…	深色筆觸…
+	Dark Strokes	深色筆觸
+	Ink Outlines…	墨水輪廓…
+	Ink Outlines	墨水輪廓
+	Spatter…	噴濺…
+	Spatter	噴濺
+	Sprayed Strokes…	噴灑筆觸…
+	Sprayed Strokes	噴灑筆觸
+	Sumi-e…	墨染…
+	Sumi-e	墨染
+	Direction Balance	方向平衡
+	Stroke Length	筆觸長度
+	Sharpness	銳利度
+	Strength	強度級別
+	Balance	平衡
+	Black Intensity	黑色強度
+	White Intensity	白色強度
+	Dark Intensity	深色強度
+	Spray Radius	噴灑半徑
+	Stroke Direction	筆觸方向
+	Stroke Width	筆觸寬度
+	Stroke Pressure	筆觸壓力
+	Right Diagonal	右對角線
+	Left Diagonal	左對角線
 	Craquelure…	龜裂紋…
 	Craquelure	龜裂紋
 	Grain…	顆粒…

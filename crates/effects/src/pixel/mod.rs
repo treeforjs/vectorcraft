@@ -1,4 +1,6 @@
-//! Photoshop-style raster effects (Effect › Blur › Radial Blur and Smart Blur, Distort › Diffuse
+//! Photoshop-style raster effects (Effect › Blur › Radial Blur and Smart Blur, Brush Strokes ›
+//! Accented Edges, Angled Strokes, Crosshatch, Dark Strokes, Ink Outlines, Spatter, Sprayed Strokes
+//! and Sumi-e, Distort › Diffuse
 //! Glow, Glass and Ocean Ripple, Pixelate › Color
 //! Halftone, Crystallize, Mezzotint and Pointillize, Sharpen › Unsharp Mask, Stylize › Glowing
 //! Edges, Texture › Craquelure, Grain, Mosaic Tiles, Patchwork, Stained Glass and Texturizer, and
@@ -12,6 +14,7 @@
 //! - Beyond the raster's edges is transparency.
 
 mod blur;
+mod brush;
 mod distort;
 mod edges;
 mod noise;
@@ -20,6 +23,7 @@ mod sharpen;
 mod texture;
 mod video;
 
+pub use brush::{BrushStroke, Direction};
 pub use distort::{Glass, GlassTexture};
 pub use pixelate::Mezzotint;
 pub use texture::{Grain, Light, Surface, Texturizer};
@@ -30,9 +34,17 @@ use vectorcraft_geom::{Affine, Point, Rect};
 use crate::util::{num, text};
 
 /// The Photoshop-style effect ids (all raster effects, see [`crate::is_raster`]).
-pub const PIXEL_EFFECTS: [&str; 19] = [
+pub const PIXEL_EFFECTS: [&str; 27] = [
     "blur.radial",
     "blur.smart",
+    "brushStrokes.accentedEdges",
+    "brushStrokes.angledStrokes",
+    "brushStrokes.crosshatch",
+    "brushStrokes.darkStrokes",
+    "brushStrokes.inkOutlines",
+    "brushStrokes.spatter",
+    "brushStrokes.sprayedStrokes",
+    "brushStrokes.sumiE",
     "distort.diffuseGlow",
     "distort.glass",
     "distort.oceanRipple",
@@ -100,6 +112,8 @@ pub enum PixelFx {
     StainedGlass { size: f64, border: f64, light: f64 },
     /// Texture › Texturizer: the art on a lit surface.
     Texturizer(Texturizer),
+    /// Brush Strokes › any of its filters.
+    Brush(BrushStroke),
 }
 
 /// Where a raster's pixels lie in the document.
@@ -182,6 +196,49 @@ pub(crate) fn parse(id: &str, p: &Value) -> Option<PixelFx> {
             interpolate: !text(p, "create", "interpolation").eq_ignore_ascii_case("duplication"),
         },
         "video.ntscColors" => PixelFx::NtscColors,
+        "brushStrokes.accentedEdges" => PixelFx::Brush(BrushStroke::AccentedEdges {
+            width: num(p, "edgeWidth", 2.0).clamp(1.0, 14.0),
+            brightness: num(p, "edgeBrightness", 38.0).clamp(0.0, 50.0),
+            smoothness: num(p, "smoothness", 5.0).clamp(1.0, 15.0),
+        }),
+        "brushStrokes.angledStrokes" => PixelFx::Brush(BrushStroke::AngledStrokes {
+            balance: num(p, "directionBalance", 50.0).clamp(0.0, 100.0),
+            length: num(p, "strokeLength", 15.0).clamp(3.0, 50.0),
+            sharpness: num(p, "sharpness", 3.0).clamp(0.0, 10.0),
+        }),
+        "brushStrokes.crosshatch" => PixelFx::Brush(BrushStroke::Crosshatch {
+            length: num(p, "strokeLength", 9.0).clamp(3.0, 50.0),
+            sharpness: num(p, "sharpness", 6.0).clamp(0.0, 20.0),
+            strength: num(p, "strength", 1.0).round().clamp(1.0, 3.0) as u32,
+        }),
+        "brushStrokes.darkStrokes" => PixelFx::Brush(BrushStroke::DarkStrokes {
+            balance: num(p, "balance", 5.0).clamp(0.0, 10.0),
+            black: num(p, "blackIntensity", 6.0).clamp(0.0, 10.0),
+            white: num(p, "whiteIntensity", 2.0).clamp(0.0, 10.0),
+        }),
+        "brushStrokes.inkOutlines" => PixelFx::Brush(BrushStroke::InkOutlines {
+            length: num(p, "strokeLength", 4.0).clamp(1.0, 50.0),
+            dark: num(p, "darkIntensity", 20.0).clamp(0.0, 50.0),
+            light: num(p, "lightIntensity", 10.0).clamp(0.0, 50.0),
+        }),
+        "brushStrokes.spatter" => PixelFx::Brush(BrushStroke::Spatter {
+            radius: num(p, "sprayRadius", 10.0).clamp(0.0, 25.0),
+            smoothness: num(p, "smoothness", 5.0).clamp(1.0, 15.0),
+        }),
+        "brushStrokes.sprayedStrokes" => {
+            let dir = text(p, "strokeDirection", "rightDiagonal");
+            let dir = Direction::KINDS.iter().find(|(id, label, _)| id.eq_ignore_ascii_case(dir) || label.eq_ignore_ascii_case(dir));
+            PixelFx::Brush(BrushStroke::SprayedStrokes {
+                length: num(p, "strokeLength", 12.0).clamp(0.0, 20.0),
+                radius: num(p, "sprayRadius", 7.0).clamp(0.0, 25.0),
+                direction: dir.map_or(Direction::RightDiagonal, |d| d.2),
+            })
+        }
+        "brushStrokes.sumiE" => PixelFx::Brush(BrushStroke::SumiE {
+            width: num(p, "strokeWidth", 10.0).clamp(3.0, 15.0),
+            pressure: num(p, "strokePressure", 2.0).clamp(0.0, 15.0),
+            contrast: num(p, "contrast", 16.0).clamp(0.0, 40.0),
+        }),
         "texture.craquelure" => PixelFx::Craquelure {
             spacing: num(p, "crackSpacing", 15.0).clamp(2.0, 100.0),
             depth: num(p, "crackDepth", 6.0).clamp(0.0, 10.0),
@@ -249,6 +306,7 @@ impl PixelFx {
             | PixelFx::Patchwork { .. }
             | PixelFx::StainedGlass { .. }
             | PixelFx::Texturizer(_) => 0.0,
+            PixelFx::Brush(b) => b.outset(),
             // Displacements pull content out by up to their reach.
             PixelFx::Glass(g) => g.distortion * 0.5,
             PixelFx::OceanRipple { magnitude, .. } => magnitude * 0.5,
@@ -278,6 +336,7 @@ impl PixelFx {
             PixelFx::Craquelure { .. } | PixelFx::MosaicTiles { .. } | PixelFx::Texturizer(_) => Some(1.0),
             PixelFx::Patchwork { square, .. } => Some(square),
             PixelFx::StainedGlass { size, .. } => Some(3.0 * size),
+            PixelFx::Brush(b) => Some(b.reach()),
         }
     }
 
@@ -306,6 +365,7 @@ impl PixelFx {
             PixelFx::Patchwork { square, relief } => texture::patchwork(px, w, h, space, square, relief),
             PixelFx::StainedGlass { size, border, light } => texture::stained_glass(px, w, h, space, size, border, light),
             PixelFx::Texturizer(t) => texture::texturize(px, w, h, space, t),
+            PixelFx::Brush(b) => b.apply(px, w, h, space),
         }
     }
 }

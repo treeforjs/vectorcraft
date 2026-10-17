@@ -10,6 +10,36 @@
 # tested). Left in English on purpose (`MENU_KEEP_AS_IS` in the tests): the product name, language
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
 # Photoshop-style raster effects (Effect menu, their dialogs).
+	Accented Edges…	Акцент на краях…
+	Accented Edges	Акцент на краях
+	Angled Strokes…	Наклонные штрихи…
+	Angled Strokes	Наклонные штрихи
+	Crosshatch…	Перекрёстные штрихи…
+	Crosshatch	Перекрёстные штрихи
+	Dark Strokes…	Тёмные штрихи…
+	Dark Strokes	Тёмные штрихи
+	Ink Outlines…	Обводка тушью…
+	Ink Outlines	Обводка тушью
+	Spatter…	Разбрызгивание…
+	Spatter	Разбрызгивание
+	Sprayed Strokes…	Аэрограф…
+	Sprayed Strokes	Аэрограф
+	Sumi-e…	Суми-э…
+	Sumi-e	Суми-э
+	Direction Balance	Баланс направлений
+	Stroke Length	Длина штриха
+	Sharpness	Резкость
+	Strength	Сила
+	Balance	Баланс
+	Black Intensity	Интенсивность чёрного
+	White Intensity	Интенсивность белого
+	Dark Intensity	Интенсивность тёмного
+	Spray Radius	Радиус разбрызгивания
+	Stroke Direction	Направление штриха
+	Stroke Width	Ширина штриха
+	Stroke Pressure	Нажим
+	Right Diagonal	Правая диагональ
+	Left Diagonal	Левая диагональ
 	Craquelure…	Кракелюры…
 	Craquelure	Кракелюры
 	Grain…	Зерно…

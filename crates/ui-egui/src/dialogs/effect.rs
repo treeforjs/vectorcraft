@@ -171,6 +171,9 @@ pub(super) fn choices(effect: &str, key: &str) -> Option<form::Choices> {
             ("Medium Strokes", "mediumStrokes"),
             ("Long Strokes", "longStrokes"),
         ]),
+        ("brushStrokes.sprayedStrokes", "strokeDirection") => {
+            Some(&[("Right Diagonal", "rightDiagonal"), ("Horizontal", "horizontal"), ("Left Diagonal", "leftDiagonal"), ("Vertical", "vertical")])
+        }
         ("texture.grain", "grainType") => Some(&[
             ("Regular", "regular"),
             ("Soft", "soft"),
