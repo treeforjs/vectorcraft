@@ -163,6 +163,18 @@ impl Variation {
     pub fn parse(id: &str) -> Option<Self> {
         Self::ALL.into_iter().find(|v| v.id() == id)
     }
+    /// `value` varied by up to `variation` either way: by `random` (0..1) for Random, by pen
+    /// `pressure` (0..1) for Pressure; kept within `range`.
+    pub fn apply(self, value: f64, variation: f64, random: f64, pressure: f64, range: (f64, f64)) -> f64 {
+        let t = match self {
+            Variation::Fixed => 0.5,
+            Variation::Random => random,
+            Variation::Pressure => pressure,
+        };
+        let x = value + variation * (2.0 * t.clamp(0.0, 1.0) - 1.0);
+        let x = if x.is_finite() { x } else { value };
+        if x.is_finite() { x.clamp(range.0.min(range.1), range.0.max(range.1)) } else { range.0 }
+    }
 }
 
 /// Scatter brush: copies of the art along the path.
@@ -181,6 +193,21 @@ pub struct Scatter {
     /// Rotation relative to the path direction (else to the page).
     pub rotation_relative_to_path: bool,
     pub colorization: Colorization,
+    /// How size, spacing, scatter and rotation vary across their ranges. `None` (brushes saved
+    /// before there were modes): Random where the range is open, else Fixed — see
+    /// [`Scatter::modes`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modes: Option<[Variation; 4]>,
+}
+
+impl Scatter {
+    /// How size, spacing, scatter and rotation vary: Fixed takes the range's first value, Random
+    /// any value in it, Pressure goes from its first value (lightest) to its last (heaviest).
+    pub fn modes(&self) -> [Variation; 4] {
+        self.modes.unwrap_or_else(|| {
+            [self.size, self.spacing, self.scatter, self.rotation].map(|(a, b)| if a != b { Variation::Random } else { Variation::Fixed })
+        })
+    }
 }
 
 impl Default for Scatter {
@@ -193,6 +220,7 @@ impl Default for Scatter {
             rotation: (0.0, 0.0),
             rotation_relative_to_path: false,
             colorization: Colorization::None,
+            modes: None,
         }
     }
 }
@@ -231,9 +259,17 @@ pub struct ArtBrush {
     pub scale: ArtScale,
     /// Width in percent.
     pub width: f64,
+    /// How the width varies, and by how much each way (percent).
+    pub width_mode: Variation,
+    pub width_variation: f64,
     pub flip_along: bool,
     pub flip_across: bool,
     pub colorization: Colorization,
+}
+
+impl ArtBrush {
+    /// The range of the width (%).
+    pub const WIDTH_RANGE: (f64, f64) = (1.0, 1000.0);
 }
 
 impl Default for ArtBrush {
@@ -243,6 +279,8 @@ impl Default for ArtBrush {
             direction: Direction::LeftToRight,
             scale: ArtScale::Stretch,
             width: 100.0,
+            width_mode: Variation::Fixed,
+            width_variation: 0.0,
             flip_along: false,
             flip_across: false,
             colorization: Colorization::Tints,
@@ -423,8 +461,8 @@ pub fn stroke_pieces(brush: &Brush, bp: &BezPath, stroke: &StrokeLayer) -> Vec<N
     let mut out = match &brush.kind {
         BrushKind::Calligraphic(c) => calli::calligraphic(c, bp, w, stroke, &brush.name),
         BrushKind::Bristle(b) => calli::bristle(b, bp, w, &stroke.paint, &brush.name),
-        BrushKind::Art(a) => warp::art(a, bp, w),
-        BrushKind::Scatter(s) => warp::scatter(s, bp, w, &brush.name),
+        BrushKind::Art(a) => warp::art(a, bp, w, stroke, &brush.name),
+        BrushKind::Scatter(s) => warp::scatter(s, bp, w, stroke, &brush.name),
         BrushKind::Pattern(p) => warp::pattern(p, bp, w),
     };
     let colorization = match &brush.kind {

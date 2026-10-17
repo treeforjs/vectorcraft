@@ -507,3 +507,80 @@ fn junk_pressure_brushes_draw_finite_art() {
         }
     }
 }
+
+fn half_height_near(nodes: &[Node], x: f64) -> f64 {
+    let mut pts = vec![];
+    for n in nodes {
+        all_points(n, &mut pts);
+    }
+    pts.iter().filter(|p| (p.x - x).abs() <= 2.0).map(|p| p.y.abs()).fold(0.0, f64::max)
+}
+
+fn varied_art(mode: Variation, variation: f64, name: &str) -> Brush {
+    Brush {
+        name: name.into(),
+        kind: BrushKind::Art(ArtBrush {
+            art: rect_art(10.0, 4.0),
+            width_mode: mode,
+            width_variation: variation,
+            colorization: Colorization::None,
+            ..Default::default()
+        }),
+    }
+}
+
+#[test]
+fn art_width_follows_pen_pressure() {
+    // 100 % ± 50 %: half width at the lightest pressure, one and a half at the heaviest.
+    let out = stroke_pieces(&varied_art(Variation::Pressure, 50.0, "a"), &line(0.0, 0.0, 100.0, 0.0), &pressed(vec![(0.0, 0.0), (1.0, 1.0)]));
+    let (start, mid, end) = (half_height_near(&out, 0.0), half_height_near(&out, 50.0), half_height_near(&out, 100.0));
+    assert!(near(start, 1.0, 0.1) && near(mid, 2.0, 0.1) && near(end, 3.0, 0.1), "{start} {mid} {end}");
+    // Without a recording the pen is at mid pressure: the brush's own width.
+    let out = stroke_pieces(&varied_art(Variation::Pressure, 50.0, "a"), &line(0.0, 0.0, 100.0, 0.0), &stroke(1.0));
+    assert!(near(bounds(&out).height(), 4.0, 1e-6));
+}
+
+#[test]
+fn art_width_random_is_one_width_per_stroke_within_the_variation() {
+    let p = line(0.0, 0.0, 100.0, 0.0);
+    let heights: Vec<f64> = ["a", "b", "c", "d", "e"]
+        .iter()
+        .map(|name| bounds(&stroke_pieces(&varied_art(Variation::Random, 50.0, name), &p, &stroke(1.0))).height())
+        .collect();
+    assert!(heights.iter().all(|h| (2.0..=6.0).contains(h)), "{heights:?}");
+    assert!(heights.iter().any(|h| (h - heights[0]).abs() > 0.1), "random widths differ by stroke: {heights:?}");
+    let again = bounds(&stroke_pieces(&varied_art(Variation::Random, 50.0, "a"), &p, &stroke(1.0))).height();
+    assert_eq!(again, heights[0], "the same stroke keeps its width");
+    // Fixed ignores the variation.
+    assert!(near(bounds(&stroke_pieces(&varied_art(Variation::Fixed, 50.0, "a"), &p, &stroke(1.0))).height(), 4.0, 1e-6));
+}
+
+#[test]
+fn scatter_size_follows_pen_pressure() {
+    let b = Brush {
+        name: "s".into(),
+        kind: BrushKind::Scatter(Scatter {
+            art: rect_art(10.0, 10.0),
+            size: (50.0, 150.0),
+            colorization: Colorization::None,
+            modes: Some([Variation::Pressure, Variation::Fixed, Variation::Fixed, Variation::Fixed]),
+            ..Default::default()
+        }),
+    };
+    let out = stroke_pieces(&b, &line(0.0, 0.0, 300.0, 0.0), &pressed(vec![(0.0, 0.0), (1.0, 1.0)]));
+    let sizes: Vec<f64> = out.iter().map(|n| n.geometric_bounds().unwrap().height()).collect();
+    assert!(near(sizes[0], 5.0, 1e-6), "{sizes:?}");
+    assert!(sizes.windows(2).all(|w| w[1] >= w[0] - 1e-9), "copies grow with the pressure: {sizes:?}");
+    assert!(*sizes.last().unwrap() > 12.0, "{sizes:?}");
+}
+
+#[test]
+fn variation_modes_default_from_saved_brushes() {
+    // Scatter brushes saved before modes: open ranges are Random, closed ones Fixed.
+    let s: Scatter = serde_json::from_str(r#"{"size":[50.0,150.0],"spacing":[100.0,100.0]}"#).unwrap();
+    assert_eq!(s.modes(), [Variation::Random, Variation::Fixed, Variation::Fixed, Variation::Fixed]);
+    let a: ArtBrush = serde_json::from_str(r#"{"width":80.0}"#).unwrap();
+    assert_eq!((a.width_mode, a.width_variation), (Variation::Fixed, 0.0));
+    let s = Scatter { modes: Some([Variation::Pressure; 4]), ..Default::default() };
+    assert_eq!(serde_json::from_str::<Scatter>(&serde_json::to_string(&s).unwrap()).unwrap(), s);
+}
