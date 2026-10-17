@@ -246,3 +246,58 @@ fn segoe_ui_variable_lists_its_instances() {
         assert!(w(&bold) > w(&light), "{} vs {}", w(&bold), w(&light));
     }
 }
+
+fn axes(pairs: &[(&str, f64)]) -> std::collections::BTreeMap<String, f64> {
+    pairs.iter().map(|(t, v)| (t.to_string(), *v)).collect()
+}
+
+#[test]
+fn a_variable_face_lists_its_axes() {
+    let db = db();
+    let regular = db.face(FAMILY, "Regular").unwrap();
+    let a = regular.axes();
+    assert_eq!(a.len(), 1);
+    assert_eq!((a[0].tag.as_str(), a[0].min, a[0].default, a[0].max, a[0].hidden), ("wght", 400.0, 400.0, 700.0, false));
+    assert_eq!(regular.axis_value("wght"), Some(400.0));
+    assert_eq!(db.face(FAMILY, "Bold").unwrap().axis_value("wght"), Some(700.0));
+    assert_eq!(regular.axis_value("wdth"), None);
+    // A static face has none.
+    assert!(db.face(FALLBACK_FAMILY, "Regular").unwrap().axes().is_empty());
+}
+
+#[test]
+fn free_axis_settings_draw_between_the_instances() {
+    let db = db();
+    let regular = db.face(FAMILY, "Regular").unwrap();
+    let widen = f64::from(VARIABLE_WIDEN);
+    let at = db.at_axes(&regular, &axes(&[("wght", 625.0)]));
+    assert_eq!(at.variations(), [(*b"wght", 625.0)]);
+    assert_eq!((at.family.as_str(), at.style.as_str(), at.weight), (FAMILY, "Regular", 625.0));
+    // 625 is three quarters of the way from 400 to 700.
+    let g = regular.glyph_for('l');
+    assert!((at.advance(g) - regular.advance(g) * (1.0 + widen * 0.75)).abs() <= 1.0, "{} vs {}", at.advance(g), regular.advance(g));
+    // Asked again: the same face (outlines and embedding are cached per face).
+    assert!(std::sync::Arc::ptr_eq(&at, &db.at_axes(&regular, &axes(&[("wght", 625.0)]))));
+    // Clamped to the axis, unknown axes ignored, settings that change nothing give the face.
+    assert_eq!(db.at_axes(&regular, &axes(&[("wght", 5000.0), ("wdth", 50.0)])).variations(), [(*b"wght", 700.0)]);
+    assert!(std::sync::Arc::ptr_eq(&regular, &db.at_axes(&regular, &axes(&[("wght", 400.0)]))));
+    assert!(std::sync::Arc::ptr_eq(&regular, &db.at_axes(&regular, &axes(&[("wght", f64::NAN)]))));
+    let fallback = db.face(FALLBACK_FAMILY, "Regular").unwrap();
+    assert!(std::sync::Arc::ptr_eq(&fallback, &db.at_axes(&fallback, &axes(&[("wght", 700.0)]))));
+
+    // Laid out: a character style's settings pick that face.
+    let mut t = text(FAMILY, "Regular", VARIABLE_CHARS);
+    for r in &mut t.runs {
+        r.style.font_variations = axes(&[("wght", 625.0)]);
+    }
+    let l = layout(&db, &t);
+    assert!(l.glyphs.iter().all(|g| g.font_id == at.id()));
+    let width = |l: &TextLayout| l.glyphs.iter().map(|g| g.advance).sum::<f64>();
+    let lr = layout(&db, &text(FAMILY, "Regular", VARIABLE_CHARS));
+    assert!(width(&l) > width(&lr) * (1.0 + widen * 0.7), "{} vs {}", width(&l), width(&lr));
+    // Embedded as a static font of those settings.
+    let e = at.embed(&['l']).unwrap();
+    let f = skrifa::FontRef::new(&e.data).unwrap();
+    let adv = f.glyph_metrics(Size::unscaled(), LocationRef::default()).advance_width(f.charmap().map('l').unwrap()).unwrap();
+    assert!((f64::from(adv) - at.advance(g)).abs() <= 1.0, "{adv}");
+}

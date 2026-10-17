@@ -4105,3 +4105,5 @@ axis	Both	Les deux
 	Between	Entre
 	Sliced	Biseauté
 	Overlap	Superposé
+	Variable Font	Police variable
+	Return the axes to the font style's own settings	Rétablir les axes du style de police

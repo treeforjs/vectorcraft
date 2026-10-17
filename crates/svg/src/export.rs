@@ -587,8 +587,9 @@ impl Writer<'_> {
         match styling {
             Styling::PresentationAttributes => {
                 // CSS-only properties go in a style attribute (SVG Tiny has none: left out).
-                let (style, attrs): (Vec<_>, Vec<_>) =
-                    props.iter().partition(|(k, _)| matches!(*k, "mix-blend-mode" | "isolation" | "font-feature-settings" | "font-kerning"));
+                let (style, attrs): (Vec<_>, Vec<_>) = props.iter().partition(|(k, _)| {
+                    matches!(*k, "mix-blend-mode" | "isolation" | "font-feature-settings" | "font-variation-settings" | "font-kerning")
+                });
                 let mut s: String = attrs.iter().map(|(k, v)| format!(" {k}=\"{}\"", xml_escape(v))).collect();
                 if !style.is_empty() {
                     if self.tiny() {
@@ -1947,7 +1948,7 @@ fn run_diff(base: &Props, run: Props) -> Props {
 /// on a `<tspan>`).
 fn initial_value(k: &str) -> Option<&'static str> {
     Some(match k {
-        "font-weight" | "font-style" | "font-feature-settings" => "normal",
+        "font-weight" | "font-style" | "font-feature-settings" | "font-variation-settings" => "normal",
         "stroke" | "stroke-dasharray" => "none",
         "stroke-width" | "stroke-opacity" => "1",
         "stroke-linecap" => "butt",

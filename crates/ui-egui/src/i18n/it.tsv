@@ -4094,3 +4094,5 @@ axis	Both	Entrambi
 	Between	Tra
 	Sliced	Tagliato
 	Overlap	Sovrapposto
+	Variable Font	Font variabile
+	Return the axes to the font style's own settings	Riporta gli assi ai valori dello stile del font

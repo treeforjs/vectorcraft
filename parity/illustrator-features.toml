@@ -3893,11 +3893,11 @@ title = "Variable fonts (axes)"
 area = "I"
 tier = "P1"
 milestone = "M7"
-status = "partial"
+status = "shipped"
 commands = ["text.fontList"]
 tools = []
-evidence = ["crates/engine/src/tests_fontlist.rs::the_font_list_names_every_available_family_with_its_styles"]
-notes = "Named instances listed as styles; free axis sliders pending"
+evidence = ["crates/engine/src/tests_fontlist.rs::the_font_list_names_every_available_family_with_its_styles", "crates/text/src/tests_variable.rs::free_axis_settings_draw_between_the_instances", "crates/engine/src/tests_fontaxes.rs::font_variations_set_the_axes_of_the_selected_type", "crates/ui-egui/src/panels/character.rs::variable_fonts_show_their_axes"]
+notes = "Named instances listed as styles; the Character panel's Variable Font sliders set any axis (text.setStyle / text.setRangeStyle fontVariations), drawn, outlined, saved, and exported to SVG (font-variation-settings, static embedded instance) and PDF"
 
 [[feature]]
 id = "type.snap-to-glyph"

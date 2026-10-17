@@ -35,6 +35,8 @@ thiserror = { workspace = true }
 log = { workspace = true }
 
 [dev-dependencies]
+# The variable test font (Variable font axes tests).
+vectorcraft-text = { workspace = true, features = ["test-fonts"] }
 vectorcraft-affinity = { workspace = true, features = ["synth"] }
 crc32fast = { workspace = true }
 vectorcraft-testkit = { workspace = true }

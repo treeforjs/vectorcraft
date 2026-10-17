@@ -33,6 +33,8 @@ serde_json = { workspace = true }
 log = { workspace = true }
 
 [dev-dependencies]
+# The variable test font (Variable font axes tests).
+vectorcraft-text = { workspace = true, features = ["test-fonts"] }
 vectorcraft-testkit = { workspace = true }
 wat = { workspace = true }
 

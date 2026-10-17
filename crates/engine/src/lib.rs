@@ -1473,6 +1473,8 @@ mod tests_flatten;
 #[cfg(test)]
 mod tests_focal;
 #[cfg(test)]
+mod tests_fontaxes;
+#[cfg(test)]
 mod tests_fontfiles;
 #[cfg(test)]
 mod tests_fontlist;
