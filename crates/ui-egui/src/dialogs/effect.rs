@@ -171,9 +171,10 @@ pub(super) fn choices(effect: &str, key: &str) -> Option<form::Choices> {
             ("Medium Strokes", "mediumStrokes"),
             ("Long Strokes", "longStrokes"),
         ]),
-        ("brushStrokes.sprayedStrokes", "strokeDirection") => {
+        ("brushStrokes.sprayedStrokes" | "sketch.graphicPen", "strokeDirection") => {
             Some(&[("Right Diagonal", "rightDiagonal"), ("Horizontal", "horizontal"), ("Left Diagonal", "leftDiagonal"), ("Vertical", "vertical")])
         }
+        ("sketch.halftonePattern", "patternType") => Some(&[("Circle", "circle"), ("Dot", "dot"), ("Line", "line")]),
         ("texture.grain", "grainType") => Some(&[
             ("Regular", "regular"),
             ("Soft", "soft"),
@@ -186,8 +187,10 @@ pub(super) fn choices(effect: &str, key: &str) -> Option<form::Choices> {
             ("Vertical", "vertical"),
             ("Speckle", "speckle"),
         ]),
-        ("texture.texturizer", "texture") => Some(&[("Brick", "brick"), ("Burlap", "burlap"), ("Canvas", "canvas"), ("Sandstone", "sandstone")]),
-        ("texture.texturizer", "light") => Some(&[
+        ("texture.texturizer" | "sketch.conteCrayon", "texture") => {
+            Some(&[("Brick", "brick"), ("Burlap", "burlap"), ("Canvas", "canvas"), ("Sandstone", "sandstone")])
+        }
+        ("texture.texturizer" | "sketch.basRelief" | "sketch.conteCrayon" | "sketch.plaster", "light") => Some(&[
             ("Bottom", "bottom"),
             ("Bottom Left", "bottomLeft"),
             ("Left", "left"),

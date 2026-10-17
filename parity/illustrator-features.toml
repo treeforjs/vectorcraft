@@ -3313,11 +3313,11 @@ title = "Effect › Sketch › Bas Relief"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-chalk-charcoal"
@@ -3325,11 +3325,11 @@ title = "Effect › Sketch › Chalk & Charcoal"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-charcoal"
@@ -3337,11 +3337,11 @@ title = "Effect › Sketch › Charcoal"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-chrome"
@@ -3349,11 +3349,11 @@ title = "Effect › Sketch › Chrome"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-conte-crayon"
@@ -3361,11 +3361,11 @@ title = "Effect › Sketch › Conté Crayon"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-graphic-pen"
@@ -3373,11 +3373,11 @@ title = "Effect › Sketch › Graphic Pen"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-halftone-pattern"
@@ -3385,11 +3385,11 @@ title = "Effect › Sketch › Halftone Pattern"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::two_tone_sketches_threshold_the_art"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-note-paper"
@@ -3397,11 +3397,11 @@ title = "Effect › Sketch › Note Paper"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-photocopy"
@@ -3409,11 +3409,11 @@ title = "Effect › Sketch › Photocopy"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-plaster"
@@ -3421,11 +3421,11 @@ title = "Effect › Sketch › Plaster"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-reticulation"
@@ -3433,11 +3433,11 @@ title = "Effect › Sketch › Reticulation"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-stamp"
@@ -3445,11 +3445,11 @@ title = "Effect › Sketch › Stamp"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::two_tone_sketches_threshold_the_art"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-torn-edges"
@@ -3457,11 +3457,11 @@ title = "Effect › Sketch › Torn Edges"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::sketches_draw_in_grey_and_follow_the_tones"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-sketch-water-paper"
@@ -3469,11 +3469,11 @@ title = "Effect › Sketch › Water Paper"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::water_paper_bleeds_the_colours"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-texture-craquelure"

@@ -39,7 +39,7 @@ impl Light {
     ];
 
     /// The unit vector towards the light, in raster pixel axes (y down).
-    fn towards(self) -> Vec2 {
+    pub(super) fn towards(self) -> Vec2 {
         let d = std::f64::consts::FRAC_1_SQRT_2;
         match self {
             Light::Bottom => Vec2::new(0.0, 1.0),
@@ -117,7 +117,7 @@ impl Surface {
 
     /// The surface's height in [0, 1] at document point `p`, its features `scale` × their usual
     /// size.
-    fn height(self, p: Point, scale: f64) -> f64 {
+    pub(super) fn height(self, p: Point, scale: f64) -> f64 {
         let (x, y) = (p.x / scale, p.y / scale);
         match self {
             Surface::Brick => {
@@ -147,7 +147,7 @@ pub struct Texturizer {
 }
 
 /// 0 below 0, 1 above 1, an S-curve between.
-fn smooth(t: f64) -> f64 {
+pub(super) fn smooth(t: f64) -> f64 {
     let t = t.clamp(0.0, 1.0);
     t * t * (3.0 - 2.0 * t)
 }
@@ -161,7 +161,7 @@ fn weave(x: f64, y: f64, s: f64) -> f64 {
 }
 
 /// The height field `f` sampled at every pixel's centre.
-fn heights(w: usize, h: usize, space: &PixelSpace, f: impl Fn(Point) -> f64) -> Vec<f64> {
+pub(super) fn heights(w: usize, h: usize, space: &PixelSpace, f: impl Fn(Point) -> f64) -> Vec<f64> {
     let mut out = Vec::with_capacity(w.saturating_mul(h));
     for y in 0..h {
         for x in 0..w {
@@ -174,7 +174,7 @@ fn heights(w: usize, h: usize, space: &PixelSpace, f: impl Fn(Point) -> f64) -> 
 
 /// Shades `px` by the slopes of `heights` (one per pixel) lit from `light`: a slope rising by one
 /// over a point facing the light brightens by `strength`, one facing away darkens as much.
-fn relief(px: &mut [[u8; 4]], w: usize, h: usize, space: &PixelSpace, heights: &[f64], strength: f64, light: Light) {
+pub(super) fn relief(px: &mut [[u8; 4]], w: usize, h: usize, space: &PixelSpace, heights: &[f64], strength: f64, light: Light) {
     if w == 0 || h == 0 || !(space.px.is_finite() && space.px > 0.0 && strength.is_finite()) || strength == 0.0 {
         return;
     }
