@@ -3315,11 +3315,12 @@ fn effect_menu() -> Vec<Item> {
         "Distort & Transform",
         "Path",
         "Pathfinder",
+        "Rasterize",
         "Stylize",
         "SVG Filters",
         "Warp",
     ];
-    let top_level = |e: &vectorcraft_effects::EffectInfo| e.menu == ["Effect"] && order.contains(&e.label);
+    let top_level = |e: &vectorcraft_effects::EffectInfo| e.menu == ["Effect"] && order.contains(&e.label.trim_end_matches('…'));
     // The effects whose catalogue menu path is `path`.
     let items_at = |path: &[&str]| -> Vec<Item> {
         cat.iter()
@@ -3332,8 +3333,10 @@ fn effect_menu() -> Vec<Item> {
             .collect()
     };
     for sub_name in order {
-        if let Some(e) = cat.iter().find(|e| top_level(e) && e.label == sub_name) {
-            out.push(Item::Cmd(e.label, "effect.apply", json!({ "effect": e.id })));
+        if let Some(e) = cat.iter().find(|e| top_level(e) && e.label.trim_end_matches('…') == sub_name) {
+            // Items with options (Rasterize…) open their dialog; Crop Marks applies directly.
+            let cmd = if e.defaults.as_object().is_some_and(|o| o.is_empty()) { "effect.apply" } else { "effect.dialog" };
+            out.push(Item::Cmd(e.label, cmd, json!({ "effect": e.id })));
             continue;
         }
         let items = items_at(&["Effect", sub_name]);

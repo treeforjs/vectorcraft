@@ -135,6 +135,7 @@ fn lengths_of(id: &str) -> Lengths {
             always(&["strokeLength"])
         }
         "texture.mosaicTiles" => always(&["tileSize"]),
+        "rasterize" => always(&["addAround"]),
         _ => Lengths::default(),
     }
 }
@@ -334,6 +335,13 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             PIXELATE,
             "{type: \"fineDots\"|\"mediumDots\"|\"grainyDots\"|\"coarseDots\"|\"shortLines\"|\"mediumLines\"|\"longLines\"|\"shortStrokes\"|\"mediumStrokes\"|\"longStrokes\" (\"fineDots\")} turns every colour channel full or empty against random dots, lines or strokes",
             json!({"type": "fineDots"}),
+        ),
+        r(
+            "rasterize",
+            "Rasterize…",
+            &["Effect"],
+            "{resolution: \"document\"|\"screen\" (72 ppi)|\"medium\" (150)|\"high\" (300)|\"other\" (\"document\"), ppi: 1..2400 (300; with resolution other), colorModel: \"document\"|\"grayscale\"|\"bitmap\" (\"document\"), background: \"white\"|\"transparent\" (\"white\"), antiAlias: bool (true), clippingMask: bool (false; the white only under the art), addAround: pt 0..1000 (0; white room around the object)} shows the object as an image of that resolution and colour model while it stays editable art",
+            json!({"resolution": "document", "ppi": 300.0, "colorModel": "document", "background": "white", "antiAlias": true, "clippingMask": false, "addAround": 0.0}),
         ),
         r(
             "pixelate.pointillize",
