@@ -7,7 +7,12 @@ use crate::{RasterFx, raster_effects};
 
 /// A `w` × `h` raster whose pixels are document points (origin top-left).
 fn space(w: usize, h: usize) -> PixelSpace {
-    PixelSpace { to_doc: Affine::IDENTITY, px: 1.0, center: Point::new(w as f64 / 2.0, h as f64 / 2.0) }
+    PixelSpace {
+        to_doc: Affine::IDENTITY,
+        px: 1.0,
+        center: Point::new(w as f64 / 2.0, h as f64 / 2.0),
+        bounds: Rect::new(0.0, 0.0, w as f64, h as f64),
+    }
 }
 
 fn image(w: usize, h: usize, f: impl Fn(usize, usize) -> [u8; 4]) -> Vec<u8> {
@@ -224,7 +229,7 @@ fn lengths_are_document_units() {
     let edge = |scale: usize| image(40 * scale, 4, move |x, _| grey(if x < 20 * scale { 100 } else { 150 }));
     let run = |scale: usize| {
         let mut d = edge(scale);
-        let s = PixelSpace { to_doc: Affine::scale(1.0 / scale as f64), px: 1.0 / scale as f64, center: Point::ZERO };
+        let s = PixelSpace { to_doc: Affine::scale(1.0 / scale as f64), px: 1.0 / scale as f64, center: Point::ZERO, bounds: Rect::ZERO };
         fx("sharpen.unsharpMask", json!({"amount": 100, "radius": 2})).apply(&mut d, 40 * scale, 4, &s);
         (0..40 * scale).filter(|x| at(&d, 40 * scale, *x, 2)[0] < 99).count()
     };
@@ -490,7 +495,7 @@ fn craquelure_cracks_the_art_into_plates() {
     assert!(dark > w * h / 50 && dark < w * h / 2, "{dark} crack pixels");
     // The same art moved by whole cells cracks the same way where they overlap.
     let mut shifted = image(w, h, |_, _| grey(200));
-    let moved = PixelSpace { to_doc: Affine::translate((12.0, 0.0)), px: 1.0, center: Point::new(44.0, 32.0) };
+    let moved = PixelSpace { to_doc: Affine::translate((12.0, 0.0)), px: 1.0, center: Point::new(44.0, 32.0), bounds: Rect::ZERO };
     fx("texture.craquelure", json!({"crackSpacing": 12})).apply(&mut shifted, w, h, &moved);
     for y in 2..h - 2 {
         for x in 2..w - 14 {
@@ -881,6 +886,60 @@ fn watercolor_darkens_the_edges() {
     assert!(luma(at(&d, w, 23, 12)) + 30 < luma(at(&d, w, 8, 12)), "edge {:?} vs flat {:?}", at(&d, w, 23, 12), at(&d, w, 8, 12));
 }
 
+#[test]
+fn rasterize_params_take_defaults_and_stay_in_range() {
+    let r = |p: serde_json::Value| match fx("rasterize", p) {
+        PixelFx::Rasterize(r) => r,
+        other => panic!("rasterize: {other:?}"),
+    };
+    let d = r(json!({}));
+    assert_eq!(
+        (d.ppi, d.color_model, d.white, d.anti_alias, d.clipping_mask, d.add_around),
+        (None, vectorcraft_doc::RasterColorModel::Document, true, true, false, 0.0)
+    );
+    assert_eq!(r(json!({"resolution": "Screen"})).ppi, Some(72.0));
+    assert_eq!(r(json!({"resolution": "other", "ppi": 1e9})).ppi, Some(2400.0));
+    let w = r(json!({"background": "white", "addAround": 5, "colorModel": "bitmap"}));
+    assert_eq!((w.white, w.add_around, w.color_model), (true, 5.0, vectorcraft_doc::RasterColorModel::Bitmap));
+    assert_eq!(fx("rasterize", json!({"background": "white", "addAround": 5})).outset(Rect::ZERO), 5.0);
+    assert_eq!(fx("rasterize", json!({"resolution": "screen", "background": "transparent"})).outset(Rect::ZERO), 1.0);
+}
+
+/// Rasterize resamples to its resolution (cells laid from the object's bounds), makes the edges
+/// hard without anti-aliasing, and paints a white background over the bounds and the room
+/// around them.
+#[test]
+fn rasterize_resamples_and_fills_the_background() {
+    let (w, h) = (16, 8);
+    let src = image(w, h, |x, _| grey((x * 16) as u8));
+    // 72 / 18 = 4 pt cells over a 1 pt raster: four-pixel blocks of one colour.
+    let mut d = src.clone();
+    fx("rasterize", json!({"resolution": "other", "ppi": 18, "background": "transparent"})).apply(&mut d, w, h, &space(w, h));
+    for x in 0..w {
+        assert_eq!(at(&d, w, x, 0), at(&d, w, x - x % 4, 3), "block at {x}");
+    }
+    assert_ne!(at(&d, w, 0, 0), at(&d, w, 4, 0));
+    // Hard edges: half coverage becomes full or none.
+    let mut soft = image(4, 1, |x, _| if x < 2 { [60, 0, 0, 120] } else { [100, 0, 0, 200] });
+    fx("rasterize", json!({"antiAlias": false, "background": "transparent"})).apply(&mut soft, 4, 1, &space(4, 1));
+    assert_eq!(at(&soft, 4, 0, 0), [0, 0, 0, 0]);
+    assert_eq!(at(&soft, 4, 3, 0), [128, 0, 0, 255]);
+    // White over the bounds and the room around them, transparent beyond.
+    let s = PixelSpace { bounds: Rect::new(4.0, 2.0, 12.0, 6.0), ..space(w, h) };
+    let mut clear = image(w, h, |_, _| [0; 4]);
+    fx("rasterize", json!({"background": "white", "addAround": 1})).apply(&mut clear, w, h, &s);
+    assert_eq!(at(&clear, w, 3, 1), [255; 4]);
+    assert_eq!(at(&clear, w, 12, 6), [255; 4]);
+    assert_eq!(at(&clear, w, 1, 1), [0; 4]);
+    let mut masked = image(w, h, |x, _| if x == 8 { [0, 0, 0, 128] } else { [0; 4] });
+    fx("rasterize", json!({"background": "white", "clippingMask": true})).apply(&mut masked, w, h, &s);
+    assert_eq!(at(&masked, w, 8, 4), [127, 127, 127, 255]);
+    assert_eq!(at(&masked, w, 6, 4), [0; 4], "the white only under the art");
+    let mut bw = src.clone();
+    fx("rasterize", json!({"colorModel": "bitmap"})).apply(&mut bw, w, h, &space(w, h));
+    assert!(bw.chunks(4).all(|p| p[0] == 0 || p[0] == 255));
+}
+
 /// Timings on a 2000 × 2000 raster (`cargo test -p vectorcraft-effects --release -- --ignored
 /// --nocapture pixel_timings`).
 #[test]
@@ -888,7 +947,7 @@ fn watercolor_darkens_the_edges() {
 fn pixel_timings() {
     let (w, h) = (2000, 2000);
     let src = image(w, h, |x, y| [(x % 256) as u8, (y % 256) as u8, ((x ^ y) % 256) as u8, 255]);
-    let s = PixelSpace { to_doc: Affine::IDENTITY, px: 1.0, center: Point::new(1000.0, 1000.0) };
+    let s = PixelSpace { to_doc: Affine::IDENTITY, px: 1.0, center: Point::new(1000.0, 1000.0), bounds: Rect::new(0.0, 0.0, 2000.0, 2000.0) };
     let cases = [
         ("blur.radial", json!({"quality": "draft"})),
         ("video.deInterlace", json!({})),
