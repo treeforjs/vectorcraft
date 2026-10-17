@@ -767,6 +767,120 @@ fn water_paper_bleeds_the_colours() {
     assert!(d.chunks(4).any(|p| p[2] > p[0] + 100), "blues stay");
 }
 
+#[test]
+fn artistic_params_take_defaults_and_stay_in_range() {
+    let a = |id: &str, p: serde_json::Value| match fx(id, p) {
+        PixelFx::Artistic(a) => a,
+        other => panic!("{id}: {other:?}"),
+    };
+    assert_eq!(a("artistic.coloredPencil", json!({})), Artistic::ColoredPencil { width: 4.0, pressure: 8.0, paper: 25.0 });
+    assert_eq!(
+        a("artistic.cutout", json!({"numberOfLevels": 99, "edgeFidelity": 0})),
+        Artistic::Cutout { levels: 8.0, simplicity: 4.0, fidelity: 1.0 }
+    );
+    assert_eq!(
+        a("artistic.paintDaubs", json!({"brushType": "Wide Blurry", "brushSize": -3})),
+        Artistic::PaintDaubs { size: 1.0, sharpness: 7.0, brush: Daub::WideBlurry }
+    );
+    assert_eq!(
+        a("artistic.neonGlow", json!({"color": "#ff0000", "glowSize": -99})),
+        Artistic::NeonGlow { size: -24.0, brightness: 15.0, color: [1.0, 0.0, 0.0] }
+    );
+    let Artistic::RoughPastels { paper, .. } = a("artistic.roughPastels", json!({})) else { panic!("pastels") };
+    assert_eq!((paper.surface, paper.relief, paper.light), (Surface::Canvas, 20.0, Light::Bottom));
+    let Artistic::Underpainting { paper, .. } = a("artistic.underpainting", json!({"texture": "burlap", "light": "left"})) else {
+        panic!("underpainting")
+    };
+    assert_eq!((paper.surface, paper.relief, paper.light), (Surface::Burlap, 4.0, Light::Left));
+    assert_eq!(fx("artistic.sponge", json!({})).outset(Rect::ZERO), 0.0);
+}
+
+/// Every Artistic filter repaints the art inside its own coverage and changes it.
+#[test]
+fn artistic_filters_keep_the_coverage() {
+    let (w, h) = (48, 24);
+    let src = bands(w, h);
+    for id in PIXEL_EFFECTS.iter().filter(|id| id.starts_with("artistic.")) {
+        let mut d = src.clone();
+        fx(id, json!({})).apply(&mut d, w, h, &space(w, h));
+        assert!(d.chunks(4).all(|p| p[3] == 255), "{id}: full coverage");
+        assert!(differing(&d, &src) > w * h / 8, "{id}: changed {}", differing(&d, &src));
+        let mut half = image(8, 8, |_, _| [100, 20, 20, 128]);
+        fx(id, json!({})).apply(&mut half, 8, 8, &space(8, 8));
+        assert!(half.chunks(4).all(|p| p[3] == 128 && p[0] <= 128 && p[1] <= 128 && p[2] <= 128), "{id}: half coverage {half:?}");
+    }
+}
+
+/// Cutout and Poster Edges posterize; Poster Edges inks the edges black.
+#[test]
+fn cutout_and_poster_edges_posterize() {
+    let (w, h) = (64, 16);
+    let src = grey_ramp(w, h);
+    let mut d = src.clone();
+    fx("artistic.cutout", json!({"numberOfLevels": 4, "edgeSimplicity": 0, "edgeFidelity": 3})).apply(&mut d, w, h, &space(w, h));
+    assert!(d.chunks(4).all(|p| [0, 85, 170, 255].contains(&p[0])), "four levels");
+    let mut e = bands(w, h);
+    fx("artistic.posterEdges", json!({"edgeIntensity": 10})).apply(&mut e, w, h, &space(w, h));
+    let edge = at(&e, w, 6, 8);
+    let flat = at(&e, w, 3, 8);
+    assert!(u32::from(edge[0]) + u32::from(edge[2]) < 60, "edge inked: {edge:?}");
+    assert!(flat[0] > 150, "flat red kept: {flat:?}");
+}
+
+/// Neon Glow lights the light tones in its colour and leaves the dark ones dark; a negative
+/// size glows from the dark tones instead.
+#[test]
+fn neon_glow_lights_one_end_of_the_tones() {
+    let (w, h) = (64, 16);
+    let src = grey_ramp(w, h);
+    let run = |size: f64| {
+        let mut d = src.clone();
+        fx("artistic.neonGlow", json!({"glowSize": size, "glowBrightness": 50, "color": "#0000ff"})).apply(&mut d, w, h, &space(w, h));
+        d
+    };
+    let pos = run(1.0);
+    let (dark, light) = (at(&pos, w, 2, 8), at(&pos, w, 61, 8));
+    assert!(light[2] > 200 && light[0] < 60, "light glows blue: {light:?}");
+    assert!(dark[2] < 40, "dark stays dark: {dark:?}");
+    let neg = run(-1.0);
+    assert!(at(&neg, w, 2, 8)[2] > 200, "negative glows from the dark");
+}
+
+/// Film Grain with no grain and no highlight area leaves the art alone; the highlight area
+/// brightens the light tones only.
+#[test]
+fn film_grain_highlights_the_light_tones() {
+    let (w, h) = (64, 16);
+    let src = grey_ramp(w, h);
+    let mut d = src.clone();
+    fx("artistic.filmGrain", json!({"grain": 0, "highlightArea": 0})).apply(&mut d, w, h, &space(w, h));
+    assert_eq!(d, src);
+    fx("artistic.filmGrain", json!({"grain": 0, "highlightArea": 20, "intensity": 10})).apply(&mut d, w, h, &space(w, h));
+    assert_eq!(at(&d, w, 2, 8), at(&src, w, 2, 8));
+    assert!(at(&d, w, 50, 8)[0] > at(&src, w, 50, 8)[0] + 20);
+}
+
+/// Palette Knife lays the colours on in flat strokes: far fewer distinct colours than a ramp.
+#[test]
+fn palette_knife_flattens_the_colours() {
+    let (w, h) = (64, 64);
+    let src = image(w, h, |x, y| [(x * 4) as u8, (y * 4) as u8, 128, 255]);
+    let mut d = src.clone();
+    fx("artistic.paletteKnife", json!({"strokeSize": 30, "strokeDetail": 1})).apply(&mut d, w, h, &space(w, h));
+    let distinct: std::collections::HashSet<&[u8]> = d.chunks(4).collect();
+    assert!(distinct.len() < 200, "{} colours", distinct.len());
+}
+
+/// Watercolor pools the pigment along the edges: darker there than in the middle of a band.
+#[test]
+fn watercolor_darkens_the_edges() {
+    let (w, h) = (48, 24);
+    let mut d = image(w, h, |x, _| if x < 24 { grey(230) } else { grey(120) });
+    fx("artistic.watercolor", json!({"texture": 1})).apply(&mut d, w, h, &space(w, h));
+    let luma = |p: [u8; 4]| u32::from(p[0]) + u32::from(p[1]) + u32::from(p[2]);
+    assert!(luma(at(&d, w, 23, 12)) + 30 < luma(at(&d, w, 8, 12)), "edge {:?} vs flat {:?}", at(&d, w, 23, 12), at(&d, w, 8, 12));
+}
+
 /// Timings on a 2000 × 2000 raster (`cargo test -p vectorcraft-effects --release -- --ignored
 /// --nocapture pixel_timings`).
 #[test]
@@ -778,6 +892,21 @@ fn pixel_timings() {
     let cases = [
         ("blur.radial", json!({"quality": "draft"})),
         ("video.deInterlace", json!({})),
+        ("artistic.coloredPencil", json!({})),
+        ("artistic.cutout", json!({})),
+        ("artistic.dryBrush", json!({})),
+        ("artistic.filmGrain", json!({})),
+        ("artistic.fresco", json!({})),
+        ("artistic.neonGlow", json!({})),
+        ("artistic.paintDaubs", json!({})),
+        ("artistic.paletteKnife", json!({})),
+        ("artistic.plasticWrap", json!({})),
+        ("artistic.posterEdges", json!({})),
+        ("artistic.roughPastels", json!({})),
+        ("artistic.smudgeStick", json!({})),
+        ("artistic.sponge", json!({})),
+        ("artistic.underpainting", json!({})),
+        ("artistic.watercolor", json!({})),
         ("sketch.basRelief", json!({})),
         ("sketch.chalkCharcoal", json!({})),
         ("sketch.charcoal", json!({})),

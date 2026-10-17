@@ -52,7 +52,7 @@ fn lumas(px: &[[u8; 4]]) -> Vec<f32> {
 }
 
 /// `lumas` blurred by `sigma` points.
-fn soft_lumas(px: &[[u8; 4]], w: usize, h: usize, space: &PixelSpace, sigma: f64) -> Vec<f32> {
+pub(super) fn soft_lumas(px: &[[u8; 4]], w: usize, h: usize, space: &PixelSpace, sigma: f64) -> Vec<f32> {
     let mut l = lumas(px);
     if space.px.is_finite() && space.px > 0.0 {
         // Blur the ink rather than the paper so the edges don't fade into black.
@@ -77,7 +77,7 @@ fn paint(px: &mut [[u8; 4]], tone: impl Fn(usize) -> f32) {
 }
 
 /// The slope (per point, raster axes) of plane `l` at pixel (`x`, `y`).
-fn slope(l: &[f32], w: usize, h: usize, x: usize, y: usize, pt: f64) -> Vec2 {
+pub(super) fn slope(l: &[f32], w: usize, h: usize, x: usize, y: usize, pt: f64) -> Vec2 {
     let at = |x: usize, y: usize| f64::from(l.get(y * w + x).copied().unwrap_or(0.0));
     let (xl, xr) = (x.saturating_sub(1), (x + 1).min(w.saturating_sub(1)));
     let (yu, yd) = (y.saturating_sub(1), (y + 1).min(h.saturating_sub(1)));

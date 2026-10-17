@@ -154,6 +154,7 @@ const VIDEO: &[&str] = &["Effect", "Video"];
 const TEXTURE: &[&str] = &["Effect", "Texture"];
 const BRUSH_STROKES: &[&str] = &["Effect", "Brush Strokes"];
 const SKETCH: &[&str] = &["Effect", "Sketch"];
+const ARTISTIC: &[&str] = &["Effect", "Artistic"];
 const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
@@ -417,6 +418,111 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             BRUSH_STROKES,
             "{strokeWidth: 3..15 (10; strokes half this in points wide), strokePressure: 0..15 (2), contrast: 0..40 (16)} repaints the art in wide black-ink strokes on rice paper",
             json!({"strokeWidth": 10.0, "strokePressure": 2.0, "contrast": 16.0}),
+        ),
+        r(
+            "artistic.coloredPencil",
+            "Colored Pencil…",
+            ARTISTIC,
+            "{pencilWidth: 1..24 (4), strokePressure: 0..15 (8), paperBrightness: 0..50 (25)} redraws the art in crosshatched coloured pencil on paper",
+            json!({"pencilWidth": 4.0, "strokePressure": 8.0, "paperBrightness": 25.0}),
+        ),
+        r(
+            "artistic.cutout",
+            "Cutout…",
+            ARTISTIC,
+            "{numberOfLevels: 2..8 (4), edgeSimplicity: 0..10 (4), edgeFidelity: 1..3 (2)} cuts the art into flat shapes of a few colours, like coloured paper",
+            json!({"numberOfLevels": 4.0, "edgeSimplicity": 4.0, "edgeFidelity": 2.0}),
+        ),
+        r(
+            "artistic.dryBrush",
+            "Dry Brush…",
+            ARTISTIC,
+            "{brushSize: 0..10 (2), brushDetail: 0..10 (8), texture: 1..3 (1)} paints the art with a dry brush in a few tones",
+            json!({"brushSize": 2.0, "brushDetail": 8.0, "texture": 1.0}),
+        ),
+        r(
+            "artistic.filmGrain",
+            "Film Grain…",
+            ARTISTIC,
+            "{grain: 0..20 (4), highlightArea: 0..20 (0), intensity: 0..10 (10)} adds film grain to the shadows and midtones and brightens the highlights",
+            json!({"grain": 4.0, "highlightArea": 0.0, "intensity": 10.0}),
+        ),
+        r(
+            "artistic.fresco",
+            "Fresco…",
+            ARTISTIC,
+            "{brushSize: 0..10 (2), brushDetail: 0..10 (8), texture: 1..3 (1)} paints the art in short, dark, contrasty dabs",
+            json!({"brushSize": 2.0, "brushDetail": 8.0, "texture": 1.0}),
+        ),
+        r(
+            "artistic.neonGlow",
+            "Neon Glow…",
+            ARTISTIC,
+            "{glowSize: -24..24 (5; negative glows from the dark tones), glowBrightness: 0..50 (15), color: colour (\"#4080ff\")} lights the art with a coloured neon glow",
+            json!({"glowSize": 5.0, "glowBrightness": 15.0, "color": "#4080ff"}),
+        ),
+        r(
+            "artistic.paintDaubs",
+            "Paint Daubs…",
+            ARTISTIC,
+            "{brushSize: 1..50 (8), sharpness: 0..40 (7), brushType: \"simple\"|\"lightRough\"|\"darkRough\"|\"wideSharp\"|\"wideBlurry\"|\"sparkle\" (\"simple\")} paints the art in daubs",
+            json!({"brushSize": 8.0, "sharpness": 7.0, "brushType": "simple"}),
+        ),
+        r(
+            "artistic.paletteKnife",
+            "Palette Knife…",
+            ARTISTIC,
+            "{strokeSize: 1..50 (25), strokeDetail: 1..3 (3), softness: 0..10 (0)} lays the colours on in flat knife strokes",
+            json!({"strokeSize": 25.0, "strokeDetail": 3.0, "softness": 0.0}),
+        ),
+        r(
+            "artistic.plasticWrap",
+            "Plastic Wrap…",
+            ARTISTIC,
+            "{highlightStrength: 0..20 (15), detail: 1..15 (9), smoothness: 1..15 (7)} wraps the art in shiny plastic film",
+            json!({"highlightStrength": 15.0, "detail": 9.0, "smoothness": 7.0}),
+        ),
+        r(
+            "artistic.posterEdges",
+            "Poster Edges…",
+            ARTISTIC,
+            "{edgeThickness: 0..10 (2), edgeIntensity: 0..10 (1), posterization: 0..6 (2)} posterizes the art and outlines its edges in black",
+            json!({"edgeThickness": 2.0, "edgeIntensity": 1.0, "posterization": 2.0}),
+        ),
+        r(
+            "artistic.roughPastels",
+            "Rough Pastels…",
+            ARTISTIC,
+            "{strokeLength: 0..40 (6), strokeDetail: 1..20 (4), texture: \"brick\"|\"burlap\"|\"canvas\"|\"sandstone\" (\"canvas\"), scaling: % 50..200 (100), relief: 0..50 (20), light: \"bottom\"|\"bottomLeft\"|\"left\"|\"topLeft\"|\"top\"|\"topRight\"|\"right\"|\"bottomRight\" (\"bottom\"), invert: bool (false)} redraws the art in pastel chalk strokes on textured paper",
+            json!({"strokeLength": 6.0, "strokeDetail": 4.0, "texture": "canvas", "scaling": 100.0, "relief": 20.0, "light": "bottom", "invert": false}),
+        ),
+        r(
+            "artistic.smudgeStick",
+            "Smudge Stick…",
+            ARTISTIC,
+            "{strokeLength: 0..10 (2), highlightArea: 0..20 (0), intensity: 0..10 (10)} smudges the art in short diagonal strokes and brightens the highlights",
+            json!({"strokeLength": 2.0, "highlightArea": 0.0, "intensity": 10.0}),
+        ),
+        r(
+            "artistic.sponge",
+            "Sponge…",
+            ARTISTIC,
+            "{brushSize: 0..10 (2), definition: 0..25 (12), smoothness: 1..15 (5)} dabs the art on with a sponge",
+            json!({"brushSize": 2.0, "definition": 12.0, "smoothness": 5.0}),
+        ),
+        r(
+            "artistic.underpainting",
+            "Underpainting…",
+            ARTISTIC,
+            "{brushSize: 0..40 (6), textureCoverage: 0..40 (16), texture: \"brick\"|\"burlap\"|\"canvas\"|\"sandstone\" (\"canvas\"), scaling: % 50..200 (100), relief: 0..50 (4), light: \"bottom\"|\"bottomLeft\"|\"left\"|\"topLeft\"|\"top\"|\"topRight\"|\"right\"|\"bottomRight\" (\"top\"), invert: bool (false)} paints a soft underpainting of the art on a textured surface",
+            json!({"brushSize": 6.0, "textureCoverage": 16.0, "texture": "canvas", "scaling": 100.0, "relief": 4.0, "light": "top", "invert": false}),
+        ),
+        r(
+            "artistic.watercolor",
+            "Watercolor…",
+            ARTISTIC,
+            "{brushDetail: 1..14 (9), shadowIntensity: 0..10 (1), texture: 1..3 (1)} paints the art in watercolour, the pigment pooling at the edges",
+            json!({"brushDetail": 9.0, "shadowIntensity": 1.0, "texture": 1.0}),
         ),
         r(
             "sketch.basRelief",

@@ -174,6 +174,14 @@ pub(super) fn choices(effect: &str, key: &str) -> Option<form::Choices> {
         ("brushStrokes.sprayedStrokes" | "sketch.graphicPen", "strokeDirection") => {
             Some(&[("Right Diagonal", "rightDiagonal"), ("Horizontal", "horizontal"), ("Left Diagonal", "leftDiagonal"), ("Vertical", "vertical")])
         }
+        ("artistic.paintDaubs", "brushType") => Some(&[
+            ("Simple", "simple"),
+            ("Light Rough", "lightRough"),
+            ("Dark Rough", "darkRough"),
+            ("Wide Sharp", "wideSharp"),
+            ("Wide Blurry", "wideBlurry"),
+            ("Sparkle", "sparkle"),
+        ]),
         ("sketch.halftonePattern", "patternType") => Some(&[("Circle", "circle"), ("Dot", "dot"), ("Line", "line")]),
         ("texture.grain", "grainType") => Some(&[
             ("Regular", "regular"),
@@ -187,10 +195,13 @@ pub(super) fn choices(effect: &str, key: &str) -> Option<form::Choices> {
             ("Vertical", "vertical"),
             ("Speckle", "speckle"),
         ]),
-        ("texture.texturizer" | "sketch.conteCrayon", "texture") => {
+        ("texture.texturizer" | "sketch.conteCrayon" | "artistic.roughPastels" | "artistic.underpainting", "texture") => {
             Some(&[("Brick", "brick"), ("Burlap", "burlap"), ("Canvas", "canvas"), ("Sandstone", "sandstone")])
         }
-        ("texture.texturizer" | "sketch.basRelief" | "sketch.conteCrayon" | "sketch.plaster", "light") => Some(&[
+        (
+            "texture.texturizer" | "sketch.basRelief" | "sketch.conteCrayon" | "sketch.plaster" | "artistic.roughPastels" | "artistic.underpainting",
+            "light",
+        ) => Some(&[
             ("Bottom", "bottom"),
             ("Bottom Left", "bottomLeft"),
             ("Left", "left"),
