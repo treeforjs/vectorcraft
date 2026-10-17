@@ -333,6 +333,10 @@ pub struct PatternBrush {
     pub end: Option<Node>,
     /// Scale in percent.
     pub scale: f64,
+    /// How the scale varies, and by how much each way (percent): Random takes one scale per
+    /// stroke, Pressure scales each side tile across the stroke by the pen's pressure there.
+    pub scale_mode: Variation,
+    pub scale_variation: f64,
     /// Space between tiles in percent of the tile width.
     pub spacing: f64,
     pub fit: PatternFit,
@@ -341,6 +345,11 @@ pub struct PatternBrush {
     pub flip_along: bool,
     pub flip_across: bool,
     pub colorization: Colorization,
+}
+
+impl PatternBrush {
+    /// The range of the scale (%).
+    pub const SCALE_RANGE: (f64, f64) = (1.0, 10000.0);
 }
 
 impl Default for PatternBrush {
@@ -352,6 +361,8 @@ impl Default for PatternBrush {
             start: None,
             end: None,
             scale: 100.0,
+            scale_mode: Variation::Fixed,
+            scale_variation: 0.0,
             spacing: 0.0,
             fit: PatternFit::Stretch,
             auto_corner: AutoCorner::None,
@@ -463,7 +474,7 @@ pub fn stroke_pieces(brush: &Brush, bp: &BezPath, stroke: &StrokeLayer) -> Vec<N
         BrushKind::Bristle(b) => calli::bristle(b, bp, w, &stroke.paint, &brush.name),
         BrushKind::Art(a) => warp::art(a, bp, w, stroke, &brush.name),
         BrushKind::Scatter(s) => warp::scatter(s, bp, w, stroke, &brush.name),
-        BrushKind::Pattern(p) => warp::pattern(p, bp, w),
+        BrushKind::Pattern(p) => warp::pattern(p, bp, w, stroke, &brush.name),
     };
     let colorization = match &brush.kind {
         BrushKind::Art(a) => a.colorization,

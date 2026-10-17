@@ -16,15 +16,17 @@
 //! heaviest), `…Min`, `…Max`; `rotationRelativeTo` (`page` | `path`). Art: `width` (%) with
 //! `widthMode` (`fixed` | `random` | `pressure`) and `widthVariation` (%),
 //! `direction` (`leftToRight`…), `scale` (`proportional` | `stretch` | `betweenGuides`),
-//! `guideStart`, `guideEnd` (% of the art's length), `flipAlong`, `flipAcross`. Pattern: `scale`,
-//! `spacing` (%), `fit` (`stretch` | `addSpace` | `approximate`), `autoCorner` (`none` | `centered`
+//! `guideStart`, `guideEnd` (% of the art's length), `flipAlong`, `flipAcross`. Pattern: `scale` (%)
+//! with `scaleMode` and `scaleVariation` (%), `spacing` (%), `fit` (`stretch` | `addSpace` | `approximate`), `autoCorner` (`none` | `centered`
 //! | `between` | `sliced` | `overlap`, for corners without a corner tile), `flipAlong`, `flipAcross`.
 //! Scatter, Art and Pattern: `colorization` (`none` | `tints` | `tintsAndShades` | `hueShift`) and
 //! `keyColor` (`#rrggbb`); `__def` holds the brush's definition for the preview.
 
 use egui::{Color32, Sense, Stroke, pos2, vec2};
 use serde_json::{Map, Value, json};
-use vectorcraft_brush::{ArtBrush, ArtScale, AutoCorner, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternFit, Variation};
+use vectorcraft_brush::{
+    ArtBrush, ArtScale, AutoCorner, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternBrush, PatternFit, Variation,
+};
 use vectorcraft_doc::color::Color;
 
 use super::swatch_options::{grid, label};
@@ -175,6 +177,8 @@ pub fn open(app: &mut VectorcraftApp, name: Option<&str>) -> Result<Value, Strin
         }
         BrushKind::Pattern(p) => {
             f.insert("scale".into(), json!(p.scale));
+            f.insert(mode_key("scale"), json!(p.scale_mode.id()));
+            f.insert(variation_key("scale"), json!(p.scale_variation));
             f.insert("spacing".into(), json!(p.spacing));
             f.insert("fit".into(), serde_json::to_value(p.fit).unwrap_or_default());
             f.insert("autoCorner".into(), serde_json::to_value(p.auto_corner).unwrap_or_default());
@@ -287,7 +291,9 @@ fn params(d: &Dialog) -> Value {
             let fit: PatternFit = serde_json::from_value(json!(d.str("fit"))).unwrap_or_default();
             let auto_corner: AutoCorner = serde_json::from_value(json!(d.str("autoCorner"))).unwrap_or_default();
             json!({
-                "scale": clamped(d, "scale", (1.0, 10000.0)),
+                "scale": clamped(d, "scale", PatternBrush::SCALE_RANGE),
+                "scale_mode": Variation::parse(&d.str(&mode_key("scale"))).unwrap_or_default().id(),
+                "scale_variation": clamped(d, &variation_key("scale"), (0.0, PatternBrush::SCALE_RANGE.1)),
                 "spacing": clamped(d, "spacing", (0.0, 10000.0)),
                 "fit": serde_json::to_value(fit).unwrap_or_default(),
                 "auto_corner": serde_json::to_value(auto_corner).unwrap_or_default(),
@@ -358,25 +364,30 @@ fn scatter_body(ui: &mut egui::Ui, d: &mut Dialog) {
     stroke_preview(ui, "scatter", preview_def(d), vec2(STROKE_W, 64.0));
 }
 
-fn art_body(ui: &mut egui::Ui, d: &mut Dialog) {
-    let (lo, hi) = ArtBrush::WIDTH_RANGE;
-    widgets::label_row(ui, tl!("Width:"), LABEL_W, |ui| {
-        if let Some(v) = widgets::range_field(ui, "brush-art-width", clamped(d, "width", (lo, hi)), lo..=hi, "%", 0, 64.0) {
-            d.fields.insert("width".into(), json!(v));
+/// A value's row: its field (`key`, % within `range`), how it varies (`…Mode`) and by how much
+/// (`…Variation`, enabled unless Fixed).
+fn varied_row(ui: &mut egui::Ui, d: &mut Dialog, key: &str, text: &str, (lo, hi): (f64, f64)) {
+    widgets::label_row(ui, text, LABEL_W, |ui| {
+        if let Some(v) = widgets::range_field(ui, ("brush-value", key), clamped(d, key, (lo, hi)), lo..=hi, "%", 0, 64.0) {
+            d.fields.insert(key.into(), json!(v));
         }
-        let mode = Variation::parse(&d.str(&mode_key("width"))).unwrap_or_default();
+        let mode = Variation::parse(&d.str(&mode_key(key))).unwrap_or_default();
         let labels = Variation::ALL.map(Variation::label);
-        if let Some(m) = widgets::dropdown(ui, ("brush-mode", "width"), mode.label(), &labels, 104.0).and_then(|i| Variation::ALL.get(i)) {
-            d.fields.insert(mode_key("width"), json!(m.id()));
+        if let Some(m) = widgets::dropdown(ui, ("brush-mode", key), mode.label(), &labels, 104.0).and_then(|i| Variation::ALL.get(i)) {
+            d.fields.insert(mode_key(key), json!(m.id()));
         }
         label(ui, tl!("Variation:"));
-        let vkey = variation_key("width");
+        let vkey = variation_key(key);
         ui.add_enabled_ui(mode != Variation::Fixed, |ui| {
-            if let Some(v) = widgets::range_field(ui, "brush-art-width-variation", clamped(d, &vkey, (0.0, hi)), 0.0..=hi, "%", 0, 64.0) {
+            if let Some(v) = widgets::range_field(ui, ("brush-variation", key), clamped(d, &vkey, (0.0, hi)), 0.0..=hi, "%", 0, 64.0) {
                 d.fields.insert(vkey.clone(), json!(v));
             }
         });
     });
+}
+
+fn art_body(ui: &mut egui::Ui, d: &mut Dialog) {
+    varied_row(ui, d, "width", tl!("Width:"), ArtBrush::WIDTH_RANGE);
     form::choice(ui, d, "scale", tl!("Brush Scale:"), (LABEL_W, 220.0), &ART_SCALES);
     if d.str("scale") == "betweenGuides" {
         widgets::label_row(ui, tl!("Guides:"), LABEL_W, |ui| {
@@ -395,13 +406,12 @@ fn art_body(ui: &mut egui::Ui, d: &mut Dialog) {
 }
 
 fn pattern_body(ui: &mut egui::Ui, d: &mut Dialog) {
-    for (key, text, range) in [("scale", "Scale:", (1.0, 10000.0)), ("spacing", "Spacing:", (0.0, 10000.0))] {
-        widgets::label_row(ui, tl!(text), LABEL_W, |ui| {
-            if let Some(v) = widgets::range_field(ui, ("brush-pattern", key), clamped(d, key, range), range.0..=range.1, "%", 0, 64.0) {
-                d.fields.insert(key.into(), json!(v));
-            }
-        });
-    }
+    varied_row(ui, d, "scale", tl!("Scale:"), PatternBrush::SCALE_RANGE);
+    widgets::label_row(ui, tl!("Spacing:"), LABEL_W, |ui| {
+        if let Some(v) = widgets::range_field(ui, ("brush-pattern", "spacing"), clamped(d, "spacing", (0.0, 10000.0)), 0.0..=10000.0, "%", 0, 64.0) {
+            d.fields.insert("spacing".into(), json!(v));
+        }
+    });
     form::choice(ui, d, "fit", tl!("Fit:"), (LABEL_W, 160.0), &FITS);
     form::choice(ui, d, "autoCorner", tl!("Auto Corners:"), (LABEL_W, 160.0), &AUTO_CORNERS);
     flips(ui, d);
@@ -660,13 +670,17 @@ mod tests {
         for label in ["Pattern Brush Options", "Scale:", "Spacing:", "Fit:", "Stretch to Fit", "Auto Corners:"] {
             assert!(text.contains(label), "{label} in {text}");
         }
-        set(&mut app, json!({"scale": 50, "spacing": -5, "fit": "addSpace", "autoCorner": "sliced", "flipAlong": true}));
+        set(
+            &mut app,
+            json!({"scale": 50, "scaleMode": "random", "scaleVariation": 20, "spacing": -5, "fit": "addSpace", "autoCorner": "sliced", "flipAlong": true}),
+        );
         super::super::confirm(&mut app).unwrap();
         let def = app.run("brush.get", json!({"name": "Chain"})).unwrap();
         assert_eq!(
             (def["scale"].clone(), def["spacing"].clone(), def["fit"].clone(), def["flip_along"].clone(), def["auto_corner"].clone()),
             (json!(50.0), json!(0.0), json!("addSpace"), json!(true), json!("sliced"))
         );
+        assert_eq!((def["scale_mode"].clone(), def["scale_variation"].clone()), (json!("random"), json!(20.0)));
         // The tiles stay (the definition keeps its art).
         assert!(def.get("side").is_some_and(|s| !s.is_null()));
     }
