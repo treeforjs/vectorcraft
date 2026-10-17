@@ -151,7 +151,7 @@ fn language_and_appearance_are_in_the_app_menu() {
 }
 
 /// Everything the in-window bar lists is in the Mac menu bar, once: what moved to the app menu
-/// (About, Settings, Quit, Language, UI Brightness) leaves its other places, and the website link
+/// (About, Settings, Quit, Language, Appearance) leaves its other places, and the website link
 /// stays under Help.
 #[test]
 fn every_in_window_item_is_in_the_mac_menu_bar_once() {

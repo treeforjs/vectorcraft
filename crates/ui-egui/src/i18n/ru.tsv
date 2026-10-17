@@ -1448,7 +1448,6 @@
 	Marks	Метки
 	Marks and Bleed	Метки и вылет
 	Marks and Bleeds	Метки и вылеты
-	Match User Interface Brightness	Согласовать с яркостью интерфейса
 	Light Gray	Светло-серый
 	Medium Gray	Средне-серый
 	Dark Gray	Тёмно-серый
@@ -1463,8 +1462,6 @@
 	Media	Носитель
 	Medium	Средняя
 	Medium (150 ppi)	Средняя (150 ppi)
-	Medium Dark	Тёмно-средний
-	Medium Light	Светло-средний
 	Medium Thumbnail View	Средние миниатюры
 	Medium Thumbnails	Средние миниатюры
 	Menu Dialog	Диалоговое окно меню
@@ -2893,7 +2890,6 @@
 	Type Tool	Инструмент «Текст»
 	Type:	Тип:
 	Type…	Текст…
-	UI Brightness	Яркость интерфейса
 	UI Scaling	Масштаб интерфейса
 	Underline	Подчёркивание
 	Undo	Отменить
@@ -3380,7 +3376,7 @@ axis	Both	Оба
 @msg	bad trailer	недопустимый трейлер
 @msg	balance must be between 0 and 100	баланс должен быть от 0 до 100
 @msg	batch step {_1} (`{id}`) failed: {e}	шаг пакета {_1} (`{id}`) не выполнен: {e}
-@msg	brightness must be dark|mediumDark|mediumLight|light	яркость должна быть dark|mediumDark|mediumLight|light
+@msg	brightness must be system|light|dark|highContrast	яркость должна быть system|light|dark|highContrast
 @msg	can't encode the document: {0}	не удалось закодировать документ: {0}
 @msg	can't parse shortcut `{c}`	не удалось разобрать сочетание `{c}`
 @msg	can't parse shortcut `{s}` for `{k}`	не удалось разобрать сочетание `{s}` для `{k}`
@@ -3846,3 +3842,6 @@ axis	Both	Оба
 @msg	Return to the document where Effect Gallery was opened	Вернитесь к документу, в котором открыта галерея эффектов
 @msg	The effect stack must be an array with at most 128 effects.	Стек должен быть массивом не более чем из 128 эффектов.
 @msg	The effect stack contains an invalid entry.	Стек эффектов содержит недопустимую запись.
+	Match Appearance	Как в оформлении
+	System	Системная
+	High contrast	Высокая контрастность

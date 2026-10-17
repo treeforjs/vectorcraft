@@ -1,39 +1,65 @@
-//! Design tokens (Illustrator's four UI brightness levels), fonts and egui style.
+//! Design tokens (the shared craft-ui System / Light / Dark / High contrast appearances), fonts
+//! and egui style. The look follows treeforjs/craftworks DESIGN.md, not Illustrator's.
 
 use std::sync::Arc;
 
 use egui::{Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId, Stroke, TextStyle, Visuals};
 use serde::{Deserialize, Serialize};
 
+/// The interface appearance: the shared craft-ui choices every craft app offers (System, Light,
+/// Dark, High contrast). Illustrator's four brightness levels are gone; older settings and
+/// scripts that name them read as the nearest of these.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Brightness {
-    Dark,
+    /// Follow the operating system's light or dark setting.
     #[default]
-    MediumDark,
-    MediumLight,
+    System,
+    #[serde(alias = "MediumLight")]
     Light,
+    #[serde(alias = "MediumDark")]
+    Dark,
+    HighContrast,
 }
 
 impl Brightness {
-    pub const ALL: [Brightness; 4] = [Brightness::Dark, Brightness::MediumDark, Brightness::MediumLight, Brightness::Light];
+    pub const ALL: [Brightness; 4] = [Brightness::System, Brightness::Light, Brightness::Dark, Brightness::HighContrast];
     pub fn label(self) -> &'static str {
-        match self {
-            Brightness::Dark => "Dark",
-            Brightness::MediumDark => "Medium Dark",
-            Brightness::MediumLight => "Medium Light",
-            Brightness::Light => "Light",
-        }
+        self.craft().label()
     }
     pub fn id(self) -> &'static str {
-        match self {
-            Brightness::Dark => "dark",
-            Brightness::MediumDark => "mediumDark",
-            Brightness::MediumLight => "mediumLight",
-            Brightness::Light => "light",
-        }
+        self.craft().id()
     }
     pub fn parse(s: &str) -> Option<Self> {
-        Self::ALL.into_iter().find(|b| b.id().eq_ignore_ascii_case(s) || b.label().eq_ignore_ascii_case(s))
+        let s = s.trim();
+        if let Some(b) = Self::ALL.into_iter().find(|b| b.id().eq_ignore_ascii_case(s) || b.label().eq_ignore_ascii_case(s)) {
+            return Some(b);
+        }
+        // The retired Illustrator brightness levels.
+        match s.to_ascii_lowercase().replace([' ', '-', '_'], "").as_str() {
+            "mediumdark" => Some(Brightness::Dark),
+            "mediumlight" => Some(Brightness::Light),
+            _ => craft_ui::Appearance::parse(s).map(Self::from_craft),
+        }
+    }
+    fn craft(self) -> craft_ui::Appearance {
+        match self {
+            Brightness::System => craft_ui::Appearance::System,
+            Brightness::Light => craft_ui::Appearance::Light,
+            Brightness::Dark => craft_ui::Appearance::Dark,
+            Brightness::HighContrast => craft_ui::Appearance::HighContrast,
+        }
+    }
+    fn from_craft(a: craft_ui::Appearance) -> Self {
+        match a {
+            craft_ui::Appearance::System => Brightness::System,
+            craft_ui::Appearance::Light => Brightness::Light,
+            craft_ui::Appearance::Dark => Brightness::Dark,
+            craft_ui::Appearance::HighContrast => Brightness::HighContrast,
+        }
+    }
+    /// The colour mode this choice draws in, given the desktop's theme (None: unknown, dark).
+    pub fn mode(self, system: Option<egui::Theme>) -> craft_ui::Mode {
+        self.craft().resolve(system, true)
     }
 }
 
@@ -92,130 +118,60 @@ pub struct Tokens {
 }
 
 impl Tokens {
+    /// The tokens for `b`, with System drawn dark (see [`Tokens::for_mode`] for the resolved mode).
     pub fn for_brightness(b: Brightness) -> Self {
+        Self::for_mode(b.mode(None))
+    }
+
+    /// VectorCraft's tokens for one of the shared craft-ui modes, so it matches the other apps.
+    pub fn for_mode(mode: craft_ui::Mode) -> Self {
         let hex = |s: u32| Color32::from_rgb((s >> 16) as u8, (s >> 8) as u8, s as u8);
-        let base = Tokens {
-            dark: true,
-            app_bar: hex(0x262626),
-            panel: hex(0x323232),
-            panel_darker: hex(0x282828),
-            input: hex(0x1f1f1f),
-            input_border: hex(0x464646),
-            border: hex(0x1b1b1b),
-            divider: hex(0x3f3f3f),
-            text: hex(0xd8d8d8),
-            text_dim: hex(0xa8a8a8),
-            text_disabled: hex(0x6e6e6e),
-            icon: hex(0xcfcfcf),
-            hover: hex(0x444444),
-            tool_active: hex(0x1d1d1d),
-            accent: hex(0x378ef0),
-            accent_strong: hex(0x1473e6),
-            row_selected: hex(0x484b50),
-            pasteboard: hex(0x1e1e1e),
-            ruler: hex(0x2f2f2f),
-            ruler_tick: hex(0x8a8a8a),
+        let c = craft_ui::Tokens::new(mode, craft_ui::Density::Compact);
+        Tokens {
+            dark: mode != craft_ui::Mode::Light,
+            app_bar: c.bg,
+            panel: c.surface,
+            panel_darker: c.bg,
+            input: c.field,
+            input_border: c.border,
+            border: c.border,
+            divider: c.divider,
+            text: c.text,
+            text_dim: c.text_muted,
+            text_disabled: c.text_disabled,
+            icon: c.icon,
+            hover: c.hover,
+            tool_active: c.pressed,
+            accent: c.accent,
+            accent_strong: c.accent_hover,
+            row_selected: c.accent_soft,
+            pasteboard: c.bg,
+            ruler: c.surface,
+            ruler_tick: c.text_faint,
+            // Canvas overlays keep their own hues: they must read on any artwork.
             smart_guide: hex(0xff3dfc),
             guide: hex(0x4affff),
             measure_bg: Color32::from_rgba_unmultiplied(92, 92, 92, 235),
-            button: hex(0x444444),
-            radius: 2,
-            text_strong: hex(0xf5f5f5),
-            tab_strip: hex(0x282828),
-            button_border: hex(0x6a6a6a),
+            button: c.surface_raised,
+            radius: craft_ui::tokens::radius::SM,
+            text_strong: c.text,
+            tab_strip: c.bg,
+            button_border: c.border,
             selection: hex(0x4f80ff),
             anchor_selected: hex(0x3d82ff),
-            flyout_active: hex(0x54b2f7),
+            flyout_active: c.accent_text,
             font_size: 13.0,
             caption_close: hex(0xc42b1c),
             caption_close_text: Color32::WHITE,
             highlight: hex(0xff3030),
             bleed: hex(0xf03030),
-            error: hex(0xe34850),
-            warning: hex(0xf0a330),
-        };
-        match b {
-            Brightness::Dark => base,
-            // Measured from Illustrator 2026 (plan/illustrator/10-observed-ui.md §1).
-            Brightness::MediumDark => Tokens {
-                app_bar: hex(0x535353),
-                panel: hex(0x535353),
-                panel_darker: hex(0x424242),
-                tab_strip: hex(0x424242),
-                input: hex(0x454545),
-                input_border: hex(0x5f5f5f),
-                border: hex(0x383838),
-                divider: hex(0x4b4b4b),
-                text: hex(0xd1d1d1),
-                text_strong: hex(0xffffff),
-                text_dim: hex(0xb0b0b0),
-                text_disabled: hex(0x7a7a7a),
-                icon: hex(0xc2c2c2),
-                hover: hex(0x606060),
-                tool_active: hex(0x303030),
-                row_selected: hex(0x52677c),
-                pasteboard: hex(0x606060),
-                ruler: hex(0x333333),
-                ruler_tick: hex(0x8a8a8a),
-                button: hex(0x535353),
-                button_border: hex(0x747474),
-                ..base
-            },
-            Brightness::MediumLight => Tokens {
-                tab_strip: hex(0xa6a6a6),
-                text_strong: hex(0x000000),
-                button_border: hex(0x7a7a7a),
-                dark: false,
-                app_bar: hex(0xa9a9a9),
-                panel: hex(0xb8b8b8),
-                panel_darker: hex(0xaaaaaa),
-                input: hex(0xd6d6d6),
-                input_border: hex(0x8c8c8c),
-                border: hex(0x969696),
-                divider: hex(0x9e9e9e),
-                text: hex(0x1f1f1f),
-                text_dim: hex(0x3c3c3c),
-                text_disabled: hex(0x7c7c7c),
-                icon: hex(0x2a2a2a),
-                hover: hex(0xc8c8c8),
-                tool_active: hex(0x969696),
-                row_selected: hex(0x9fb4d6),
-                pasteboard: hex(0xa0a0a0),
-                ruler: hex(0xc2c2c2),
-                ruler_tick: hex(0x4a4a4a),
-                button: hex(0xcacaca),
-                ..base
-            },
-            Brightness::Light => Tokens {
-                tab_strip: hex(0xdddddd),
-                text_strong: hex(0x000000),
-                button_border: hex(0x9a9a9a),
-                dark: false,
-                app_bar: hex(0xe4e4e4),
-                panel: hex(0xf0f0f0),
-                panel_darker: hex(0xe2e2e2),
-                input: hex(0xffffff),
-                input_border: hex(0xb4b4b4),
-                border: hex(0xcfcfcf),
-                divider: hex(0xd6d6d6),
-                text: hex(0x1f1f1f),
-                text_dim: hex(0x4b4b4b),
-                text_disabled: hex(0x9a9a9a),
-                icon: hex(0x303030),
-                hover: hex(0xdddddd),
-                tool_active: hex(0xcdcdcd),
-                row_selected: hex(0xc8daf7),
-                pasteboard: hex(0xdcdcdc),
-                ruler: hex(0xeaeaea),
-                ruler_tick: hex(0x5a5a5a),
-                button: hex(0xe0e0e0),
-                ..base
-            },
+            error: c.danger,
+            warning: c.warning,
         }
     }
 
     pub fn get(ctx: &egui::Context) -> Tokens {
-        ctx.data(|d| d.get_temp::<Tokens>(egui::Id::NULL)).unwrap_or_else(|| Tokens::for_brightness(Brightness::MediumDark))
+        ctx.data(|d| d.get_temp::<Tokens>(egui::Id::NULL)).unwrap_or_else(|| Tokens::for_brightness(Brightness::Dark))
     }
     pub fn cr(&self) -> CornerRadius {
         CornerRadius::same(self.radius)
@@ -278,7 +234,7 @@ fn add_craft_fonts(fonts: &mut FontDefinitions) {
 
 /// Apply tokens to egui's global style.
 pub fn apply(ctx: &egui::Context, b: Brightness) {
-    let t = Tokens::for_brightness(b);
+    let t = Tokens::for_mode(b.mode(ctx.system_theme()));
     ctx.data_mut(|d| d.insert_temp(egui::Id::NULL, t));
     let mut v = if t.dark { Visuals::dark() } else { Visuals::light() };
     v.panel_fill = t.panel;
@@ -286,8 +242,8 @@ pub fn apply(ctx: &egui::Context, b: Brightness) {
     v.extreme_bg_color = t.input;
     v.faint_bg_color = t.panel_darker;
     v.window_stroke = Stroke::new(1.0, t.border);
-    v.window_corner_radius = CornerRadius::same(6);
-    v.menu_corner_radius = CornerRadius::same(6);
+    v.window_corner_radius = CornerRadius::same(craft_ui::tokens::radius::XL);
+    v.menu_corner_radius = CornerRadius::same(craft_ui::tokens::radius::LG);
     v.selection.bg_fill = t.accent.gamma_multiply(0.55);
     v.selection.stroke = Stroke::new(1.0, t.accent);
     v.hyperlink_color = t.accent;
@@ -308,7 +264,8 @@ pub fn apply(ctx: &egui::Context, b: Brightness) {
         wv.fg_stroke = Stroke::new(1.0, t.text);
     }
     w.noninteractive.bg_stroke = Stroke::new(1.0, t.divider);
-    w.inactive.bg_stroke = Stroke::NONE;
+    // An outline so unchecked boxes and idle fields read on light surfaces too.
+    w.inactive.bg_stroke = Stroke::new(1.0, t.input_border);
     w.hovered.bg_stroke = Stroke::new(1.0, t.input_border);
     w.active.bg_stroke = Stroke::new(1.0, t.accent);
     ctx.set_visuals(v);
@@ -341,5 +298,22 @@ mod tests {
             assert_eq!(Brightness::parse(b.label()), Some(b));
         }
         assert!(!Tokens::for_brightness(Brightness::Light).dark);
+        // Older settings and scripts that name Illustrator's levels still load.
+        assert_eq!(Brightness::parse("mediumDark"), Some(Brightness::Dark));
+        assert_eq!(Brightness::parse("Medium Light"), Some(Brightness::Light));
+        assert_eq!(serde_json::from_str::<Brightness>("\"MediumDark\"").ok(), Some(Brightness::Dark));
+        assert_eq!(Brightness::parse("purple"), None);
+    }
+
+    /// The colours are craft-ui's, so VectorCraft matches the other craft apps, and System
+    /// follows the desktop.
+    #[test]
+    fn tokens_come_from_craft_ui() {
+        let light = craft_ui::Tokens::new(craft_ui::Mode::Light, craft_ui::Density::Compact);
+        let t = Tokens::for_brightness(Brightness::Light);
+        assert_eq!((t.panel, t.accent, t.text), (light.surface, light.accent, light.text));
+        assert_eq!(Brightness::System.mode(Some(egui::Theme::Light)), craft_ui::Mode::Light);
+        assert_eq!(Brightness::System.mode(None), craft_ui::Mode::Dark);
+        assert!(Tokens::for_brightness(Brightness::HighContrast).dark);
     }
 }

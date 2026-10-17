@@ -56,10 +56,10 @@ fn set_normalizes_strings_labels_and_colours() {
     let r = s
         .execute(
             "prefs.set",
-            &json!({"values": {"uiBrightness": "Medium Light", "gridColor": "ABCDEF", "keyboardIncrement": "2.5 pt", "scaleStrokes": "false"}}),
+            &json!({"values": {"uiBrightness": "High contrast", "gridColor": "ABCDEF", "keyboardIncrement": "2.5 pt", "scaleStrokes": "false"}}),
         )
         .unwrap();
-    assert_eq!(r["uiBrightness"], json!("mediumLight"));
+    assert_eq!(r["uiBrightness"], json!("highContrast"));
     assert_eq!(s.prefs.grid_color, "#abcdef");
     assert_eq!(s.prefs.keyboard_increment, 2.5);
     assert!(!s.prefs.scale_strokes);

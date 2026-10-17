@@ -73,6 +73,7 @@ zune-jpeg = "0.5"
 
 # ui
 egui = "0.36"
+craft-ui = { git = "https://github.com/treeforjs/craftworks", rev = "f9d8e268bb4136c068c569862a584c26bd6e0f79", version = "0.1.0" }
 egui_extras = { version = "0.36", default-features = false, features = ["svg"] }
 eframe = { version = "0.36", default-features = false }
 egui_kittest = "0.36"

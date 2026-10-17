@@ -19,10 +19,7 @@
 	Cut Path at Selected Anchor Points	Rozdělit cestu ve vybraných kotevních bodech
 	Settings…	Nastavení…
 	Language	Jazyk
-	UI Brightness	Jas rozhraní
 	Dark	Tmavý
-	Medium Dark	Středně tmavý
-	Medium Light	Středně světlý
 	Light	Světlý
 	Quit VectorCraft	Ukončit VectorCraft
 	File	Soubor
@@ -660,3 +657,6 @@
 	Effect Stack	Zásobník efektů
 	Preview of the first selected object	Náhled prvního vybraného objektu
 	Raster filters run from top to bottom	Rastrové filtry se aplikují shora dolů
+	Match Appearance	Podle vzhledu
+	System	Systém
+	High contrast	Vysoký kontrast

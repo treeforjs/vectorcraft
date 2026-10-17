@@ -298,7 +298,6 @@
 	Break Link to Graphic Style	Desvincular do Estilo Gráfico
 	Break Link to Symbol	Desvincular do Símbolo
 	Brick Offset:	Deslocamento do Tijolo:
-	Brightness	Brilho
 	Brightness/Contrast…	Brilho/Contraste…
 	Brights	Realces
 	Bring Forward	Trazer para Frente
@@ -1264,7 +1263,6 @@
 	Mark as trapped	Marcar como sobreimpresso
 	Marker…	Marcador…
 	Marks	Marcas
-	Match User Interface Brightness	Corresponder ao Brilho da Interface do Usuário
 	Light Gray	Cinza Claro
 	Medium Gray	Cinza Médio
 	Dark Gray	Cinza Escuro
@@ -1276,8 +1274,6 @@
 	Measurement Labels	Rótulos de Medição
 	Media	Mídia
 	Medium	Médio
-	Medium Dark	Médio Escuro
-	Medium Light	Médio Claro
 	Menu Dialog	Diálogo de Menu
 	Merge	Mesclar
 	Merge Graphic Styles	Mesclar Estilos Gráficos
@@ -2454,7 +2450,6 @@
 	Type stays text, and every stroke is a line with its lineweight and dashes.	O texto permanece texto, e todo traço é uma linha com sua espessura e tracejados.
 	Type:	Tipo:
 	Type…	Tipo…
-	UI Brightness	Brilho da Interface
 	UI Scaling	Escala da Interface
 	UPPERCASE	MAIÚSCULAS
 	URL:	URL:
@@ -2718,3 +2713,6 @@
 	Effect Stack	Pilha de efeitos
 	Preview of the first selected object	Prévia do primeiro objeto selecionado
 	Raster filters run from top to bottom	Os filtros raster são aplicados de cima para baixo
+	Match Appearance	Corresponder à aparência
+	System	Sistema
+	High contrast	Alto contraste

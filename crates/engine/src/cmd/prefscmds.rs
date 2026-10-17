@@ -258,8 +258,8 @@ pub const PREF_SPECS: &[PrefSpec] = &[
         "uiBrightness",
         "User Interface",
         "",
-        "Brightness",
-        choice(&[("dark", "Dark"), ("mediumDark", "Medium Dark"), ("mediumLight", "Medium Light"), ("light", "Light")])
+        "Appearance",
+        choice(&[("system", "System"), ("light", "Light"), ("dark", "Dark"), ("highContrast", "High contrast")])
     ),
     p!(
         "canvasColor",
@@ -267,7 +267,7 @@ pub const PREF_SPECS: &[PrefSpec] = &[
         "",
         "Canvas Color",
         choice(&[
-            ("matchUi", "Match User Interface Brightness"),
+            ("matchUi", "Match Appearance"),
             ("white", "White"),
             ("lightGray", "Light Gray"),
             ("mediumGray", "Medium Gray"),

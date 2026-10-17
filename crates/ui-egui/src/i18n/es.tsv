@@ -1450,7 +1450,6 @@
 	Marks	Marcas
 	Marks and Bleed	Marcas y sangrado
 	Marks and Bleeds	Marcas y sangrados
-	Match User Interface Brightness	Igualar brillo de la interfaz de usuario
 	Light Gray	Gris claro
 	Medium Gray	Gris medio
 	Dark Gray	Gris oscuro
@@ -1465,8 +1464,6 @@
 	Media	Soporte
 	Medium	Media
 	Medium (150 ppi)	Media (150 ppp)
-	Medium Dark	Oscuro medio
-	Medium Light	Claro medio
 	Medium Thumbnail View	Vista de miniaturas medianas
 	Medium Thumbnails	Miniaturas medianas
 	Menu Dialog	Cuadro de diálogo de menú
@@ -2897,7 +2894,6 @@
 	Type Tool	Herramienta Texto
 	Type:	Tipo:
 	Type…	Texto…
-	UI Brightness	Brillo de la interfaz
 	UI Scaling	Escala de la interfaz
 	Underline	Subrayado
 	Undo	Deshacer
@@ -3384,7 +3380,7 @@ axis	Both	Ambos
 @msg	bad trailer	trailer no válido
 @msg	balance must be between 0 and 100	el equilibrio debe estar entre 0 y 100
 @msg	batch step {_1} (`{id}`) failed: {e}	falló el paso {_1} del lote (`{id}`): {e}
-@msg	brightness must be dark|mediumDark|mediumLight|light	el brillo debe ser dark|mediumDark|mediumLight|light
+@msg	brightness must be system|light|dark|highContrast	el brillo debe ser system|light|dark|highContrast
 @msg	can't encode the document: {0}	no se puede codificar el documento: {0}
 @msg	can't parse shortcut `{c}`	no se puede interpretar el atajo `{c}`
 @msg	can't parse shortcut `{s}` for `{k}`	no se puede interpretar el atajo `{s}` de `{k}`
@@ -3848,3 +3844,6 @@ axis	Both	Ambos
 @msg	Return to the document where Effect Gallery was opened	Vuelva al documento donde abrió la Galería de efectos
 @msg	The effect stack must be an array with at most 128 effects.	La pila debe ser una matriz con un máximo de 128 efectos.
 @msg	The effect stack contains an invalid entry.	La pila de efectos contiene una entrada no válida.
+	Match Appearance	Igualar la apariencia
+	System	Sistema
+	High contrast	Alto contraste

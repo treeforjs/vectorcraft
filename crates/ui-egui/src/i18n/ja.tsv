@@ -81,10 +81,7 @@
 	Spacing	間隔
 	Top-to-Top Leading	仮想ボディの上基準の行送り
 	Type on a Path Options	パス上文字オプション
-	UI Brightness	UI の明るさ
 	Dark	暗い
-	Medium Dark	やや暗い
-	Medium Light	やや明るい
 	Light	明るい
 	Quit VectorCraft	VectorCraft を終了
 	File	ファイル
@@ -1616,7 +1613,6 @@
 	Mark Older Files as [Converted] When Opened	古いファイルを開くときに[変換]と表示
 	Mark as trapped	トラップ済みとしてマーク
 	Marks	トンボ
-	Match User Interface Brightness	ユーザーインターフェイスの明るさに合わせる
 	Light Gray	ライトグレー
 	Medium Gray	ミディアムグレー
 	Dark Gray	ダークグレー
@@ -3714,7 +3710,7 @@ theme	Appearance	外観
 @msg	No saved views (View → New View…)	保存した表示はありません (表示 → 新規表示…)
 @msg	`command` must be a command whose menu item opens a dialog (see ui.menuDialog)	`command` には、メニュー項目がダイアログを開くコマンドを指定してください (ui.menuDialog を参照)
 @msg	`{key}` must be true or false	`{key}` には true または false を指定してください
-@msg	brightness must be dark|mediumDark|mediumLight|light	brightness には dark|mediumDark|mediumLight|light のいずれかを指定してください
+@msg	brightness must be system|light|dark|highContrast	brightness には system|light|dark|highContrast のいずれかを指定してください
 @msg	index must be a number or first, previous, next or last	index には数値、または first、previous、next、last のいずれかを指定してください
 @msg	index must be a number or first, previous, next or last, not `{other}`	index には数値、または first、previous、next、last のいずれかを指定してください (`{other}` は指定できません)
 @msg	lang must be one of {_1}	lang には {_1} のいずれかを指定してください
@@ -3840,3 +3836,6 @@ theme	Appearance	外観
 @msg	Return to the document where Effect Gallery was opened	効果ギャラリーを開いたドキュメントに戻ってください
 @msg	The effect stack must be an array with at most 128 effects.	効果スタックは最大128個の効果を含む配列で指定してください。
 @msg	The effect stack contains an invalid entry.	効果スタックに無効な項目があります。
+	Match Appearance	外観に合わせる
+	System	システム
+	High contrast	ハイコントラスト

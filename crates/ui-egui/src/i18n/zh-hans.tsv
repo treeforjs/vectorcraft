@@ -1415,7 +1415,6 @@
 	Marks	标记
 	Marks and Bleed	标记和出血
 	Marks and Bleeds	标记和出血
-	Match User Interface Brightness	匹配用户界面亮度
 	Light Gray	浅灰色
 	Medium Gray	中灰色
 	Dark Gray	深灰色
@@ -1430,8 +1429,6 @@
 	Media	介质
 	Medium	中
 	Medium (150 ppi)	中 (150 ppi)
-	Medium Dark	中深色
-	Medium Light	中浅色
 	Medium Thumbnail View	中缩略图视图
 	Medium Thumbnails	中缩略图
 	Menu Dialog	菜单对话框
@@ -2816,7 +2813,6 @@
 	Type:	类型：
 	Type…	文字…
 	Typography	文字排版
-	UI Brightness	界面亮度
 	UI Scaling	界面缩放
 	Underline	下划线
 	Undo	撤销
@@ -3486,3 +3482,6 @@ axis	Both	两者
 	Effect Stack	效果堆叠
 	Preview of the first selected object	第一个所选对象的预览
 	Raster filters run from top to bottom	栅格滤镜从上到下应用
+	Match Appearance	匹配外观
+	System	跟随系统
+	High contrast	高对比度
