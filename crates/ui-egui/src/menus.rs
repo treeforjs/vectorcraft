@@ -3339,7 +3339,12 @@ fn effect_menu() -> Vec<Item> {
             out.push(Item::Cmd(e.label, cmd, json!({ "effect": e.id })));
             continue;
         }
-        let items = items_at(&["Effect", sub_name]);
+        let mut items = items_at(&["Effect", sub_name]);
+        if sub_name == "3D and Materials" && items.len() == 3 {
+            // Extrude & Bevel, Revolve, Rotate; Inflate and Materials are still to come.
+            items.insert(2, todo("Inflate…"));
+            items.push(todo("Materials…"));
+        }
         if items.is_empty() {
             let placeholder = match sub_name {
                 "3D and Materials" => vec![todo("Extrude & Bevel…"), todo("Revolve…"), todo("Inflate…"), todo("Rotate…"), todo("Materials…")],

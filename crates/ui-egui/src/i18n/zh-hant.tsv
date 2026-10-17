@@ -3465,3 +3465,18 @@ axis	Both	兩者
 	Add Around Object	在物件周圍加入
 	Use Document Raster Effects Resolution	使用文件點陣效果解析度
 	Outline Object	建立物件外框
+	Depth	深度
+	Rotate X	繞 X 軸旋轉
+	Rotate Y	繞 Y 軸旋轉
+	Rotate Z	繞 Z 軸旋轉
+	Surface	表面
+	Ambient Light	環境光
+	Highlight Intensity	反光強度
+	Highlight Size	反光大小
+	From	從
+	Wireframe	線框
+	No Shading	無陰影
+	Diffuse Shading	漫射陰影
+	Plastic Shading	塑膠效果陰影
+	Left Edge	左邊緣
+	Right Edge	右邊緣

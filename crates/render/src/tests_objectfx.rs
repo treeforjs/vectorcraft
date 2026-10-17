@@ -162,6 +162,25 @@ fn outline_object_draws_type_as_its_outlines() {
     assert_eq!(out, sq);
 }
 
+/// Extrude & Bevel draws the square's solid: the lit front face and darker walls beyond it.
+#[test]
+fn extrude_paints_the_solid_around_the_object() {
+    let mut n = Node::path(
+        NodeId(0),
+        shapes::rectangle(Rect::new(35.0, 35.0, 65.0, 65.0)),
+        Appearance::basic(Paint::solid(Color::rgb(1.0, 0.0, 0.0)), Paint::None, 0.0),
+    );
+    n.appearance.effects.push(fx("threeD.extrude", json!({"depth": 20})));
+    let img = render(&doc_with(Document::new(100.0, 100.0), n));
+    let reddish = |p: [u8; 4]| p[0] > 60 && p[1] < 40 && p[2] < 40;
+    let outside = (0..100u32).flat_map(|y| (0..100u32).map(move |x| (x, y))).filter(|&(x, y)| !(33..=67).contains(&x) || !(33..=67).contains(&y));
+    let walls: Vec<_> = outside.filter(|&(x, y)| reddish(img.pixel(x, y))).collect();
+    assert!(walls.len() > 20, "walls beyond the square: {}", walls.len());
+    let front = img.pixel(50, 50);
+    assert!(reddish(front), "{front:?}");
+    assert!(walls.iter().any(|&(x, y)| img.pixel(x, y)[0] < front[0]), "walls darker than the front");
+}
+
 #[test]
 fn a_strokes_own_glow_paints_around_that_stroke_only() {
     let mut d = Document::new(100.0, 100.0);

@@ -3686,3 +3686,18 @@ axis	Both	两者
 	Add Around Object	在对象周围添加
 	Use Document Raster Effects Resolution	使用文档栅格效果分辨率
 	Outline Object	轮廓化对象
+	Depth	深度
+	Rotate X	绕 X 轴旋转
+	Rotate Y	绕 Y 轴旋转
+	Rotate Z	绕 Z 轴旋转
+	Surface	表面
+	Ambient Light	环境光
+	Highlight Intensity	高光强度
+	Highlight Size	高光大小
+	From	自
+	Wireframe	线框
+	No Shading	无底纹
+	Diffuse Shading	漫射底纹
+	Plastic Shading	塑料效果底纹
+	Left Edge	左边
+	Right Edge	右边

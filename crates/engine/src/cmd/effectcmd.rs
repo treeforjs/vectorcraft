@@ -434,6 +434,26 @@ fn expand_node(d: &mut Document, id: NodeId, brushes: &[vectorcraft_brush::Brush
         }
         return;
     }
+    // 3D: the solid's faces, then the shadows and glows around it expand on their own.
+    if effects::has_three_d(&n)
+        && let Some(mut m) = effects::three_d_art(&n)
+    {
+        let mut seen = std::collections::HashSet::from([id]);
+        for c in m.children_mut().into_iter().flatten() {
+            effects::fresh_ids(d, Arc::make_mut(c), &mut seen);
+        }
+        let shadows = !m.appearance.effects.is_empty();
+        if let Some(slot) = d.node_mut(id) {
+            *slot = m;
+            out.push(id);
+            if shadows {
+                expand_node(d, id, brushes, out);
+                let mut listed = std::collections::HashSet::new();
+                out.retain(|x| listed.insert(*x));
+            }
+        }
+        return;
+    }
     let image = raster_image(d, &n);
     let mut v = n.clone();
     rasterfx::strip_raster(&mut v, false);
@@ -570,6 +590,22 @@ mod tests {
         assert!(matches!(n.kind, NodeKind::Path { live: None, .. }));
         // Nothing left to expand.
         assert!(s.execute("effect.expandAppearance", &json!({})).is_err());
+    }
+
+    #[test]
+    fn expand_appearance_turns_a_3d_solid_into_its_faces() {
+        let (mut s, id) = session_with_rect();
+        s.execute("effect.apply", &json!({"effect": "threeD.extrude", "params": {"depth": 30}})).unwrap();
+        s.execute("effect.expandAppearance", &json!({})).unwrap();
+        let n = node(&s, id);
+        let faces = n.children().unwrap();
+        assert!(matches!(n.kind, NodeKind::Group { .. }) && faces.len() >= 5, "{n:?}");
+        assert!(faces.iter().all(|f| matches!(f.kind, NodeKind::Path { .. }) && f.appearance.effects.is_empty()));
+        let ids: std::collections::HashSet<_> = faces.iter().map(|f| f.id).chain([id]).collect();
+        assert_eq!(ids.len(), faces.len() + 1, "fresh ids");
+        // Undo brings the live effect back.
+        s.execute("edit.undo", &json!({})).unwrap();
+        assert_eq!(node(&s, id).appearance.effects[0].id, "threeD.extrude");
     }
 
     #[test]

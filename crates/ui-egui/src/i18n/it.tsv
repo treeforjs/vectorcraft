@@ -4048,3 +4048,18 @@ axis	Both	Entrambi
 	Add Around Object	Aggiungi attorno all'oggetto
 	Use Document Raster Effects Resolution	Usa risoluzione effetti raster documento
 	Outline Object	Crea contorno oggetto
+	Depth	Profondità
+	Rotate X	Rotazione X
+	Rotate Y	Rotazione Y
+	Rotate Z	Rotazione Z
+	Surface	Superficie
+	Ambient Light	Luce ambiente
+	Highlight Intensity	Intensità luce riflessa
+	Highlight Size	Dimensione luce riflessa
+	From	Da
+	Wireframe	Wireframe
+	No Shading	Nessuna ombreggiatura
+	Diffuse Shading	Ombreggiatura diffusa
+	Plastic Shading	Ombreggiatura plastica
+	Left Edge	Bordo sinistro
+	Right Edge	Bordo destro

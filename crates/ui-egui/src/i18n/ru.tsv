@@ -4046,3 +4046,18 @@ axis	Both	Оба
 	Add Around Object	Добавить вокруг объекта
 	Use Document Raster Effects Resolution	Использовать разрешение растровых эффектов документа
 	Outline Object	Преобразовать объект в кривые
+	Depth	Глубина
+	Rotate X	Поворот по X
+	Rotate Y	Поворот по Y
+	Rotate Z	Поворот по Z
+	Surface	Поверхность
+	Ambient Light	Рассеянный свет
+	Highlight Intensity	Интенсивность блика
+	Highlight Size	Размер блика
+	From	От
+	Wireframe	Каркас
+	No Shading	Без затенения
+	Diffuse Shading	Рассеянное затенение
+	Plastic Shading	Пластиковое затенение
+	Left Edge	Левый край
+	Right Edge	Правый край

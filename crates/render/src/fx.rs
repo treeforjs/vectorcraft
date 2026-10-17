@@ -59,7 +59,7 @@ pub(crate) fn has_fx(n: &Node) -> bool {
 pub(crate) fn has_object_fx(n: &Node) -> bool {
     (effects::needs_outline(n) && (visible(&n.appearance.effects) || n.projection().is_some()))
         || effects::has_container_appearance(n)
-        || effects::has_crop_marks(n)
+        || effects::has_object_art(n)
         || effects::has_adjustment(n)
 }
 
@@ -149,8 +149,8 @@ pub(crate) fn visual_bounds(n: &Node) -> Option<Rect> {
 /// the subtree (a shadow can reach the view while its object is outside it).
 pub(crate) fn cull_bounds(n: &Node) -> Option<Rect> {
     match &n.kind {
-        // The object and its crop marks.
-        _ if effects::has_crop_marks(n) => effects::crop_marks_art(n).and_then(|art| cull_bounds(&art)),
+        // The object and its crop marks, or its 3D solid.
+        _ if effects::has_object_art(n) => effects::object_art(n).and_then(|art| cull_bounds(&art)),
         // The evaluated art (its fills, strokes and geometry effects) and the raster effects' reach.
         _ if effects::has_container_appearance(n) => {
             let art = effects::evaluate_container(n);
@@ -408,7 +408,7 @@ impl Renderer {
             _ => None,
         };
         let container = is_container(a);
-        let art = match effects::crop_marks_art(a).or_else(|| effects::reshape(a, symbol.as_ref())) {
+        let art = match effects::object_art(a).or_else(|| effects::reshape(a, symbol.as_ref())) {
             Some(r) => r,
             None if container => effects::evaluate_container(a).unwrap_or_else(|| (**a).clone()),
             None if matches!(a.kind, NodeKind::Text(_) | NodeKind::Image(_) | NodeKind::Path { .. } | NodeKind::Compound { .. }) => (**a).clone(),
