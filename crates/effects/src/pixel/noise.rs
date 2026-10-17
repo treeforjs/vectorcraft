@@ -18,3 +18,15 @@ pub(super) fn unit(h: u64) -> f64 {
 pub(super) fn cell(v: f64, size: f64) -> i64 {
     (v / size).floor() as i64
 }
+
+/// Smooth value noise in [0, 1) at (`x`, `y`) (grid cells one unit across), different per `salt`.
+pub(super) fn value(x: f64, y: f64, salt: u64) -> f64 {
+    let (i, j) = (cell(x, 1.0), cell(y, 1.0));
+    let (fx, fy) = (x - x.floor(), y - y.floor());
+    let s = |t: f64| t * t * (3.0 - 2.0 * t);
+    let (sx, sy) = (s(fx), s(fy));
+    let at = |di: i64, dj: i64| unit(hash(i.saturating_add(di), j.saturating_add(dj), salt));
+    let top = at(0, 0) + (at(1, 0) - at(0, 0)) * sx;
+    let bottom = at(0, 1) + (at(1, 1) - at(0, 1)) * sx;
+    top + (bottom - top) * sy
+}

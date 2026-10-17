@@ -331,6 +331,58 @@ fn color_halftone_dots_follow_each_channels_level() {
     assert!(px.iter().any(|p| p[2] == 0) && px.iter().any(|p| p[2] == 255), "dots, not a flat tone");
 }
 
+#[test]
+fn distort_params_take_defaults_and_stay_in_range() {
+    assert_eq!(fx("distort.diffuseGlow", json!({})), PixelFx::DiffuseGlow { grain: 6.0, glow: 10.0, clear: 15.0 });
+    assert_eq!(
+        fx("distort.diffuseGlow", json!({"graininess": 1e9, "glowAmount": -1, "clearAmount": "50"})),
+        PixelFx::DiffuseGlow { grain: 10.0, glow: 0.0, clear: 20.0 }
+    );
+    let glass = Glass { distortion: 5.0, smoothness: 3.0, texture: GlassTexture::Frosted, scaling: 1.0, invert: false };
+    assert_eq!(fx("distort.glass", json!({})), PixelFx::Glass(glass));
+    assert_eq!(
+        fx("distort.glass", json!({"distortion": 99, "smoothness": 0, "texture": "Tiny Lens", "scaling": 1e9, "invert": true})),
+        PixelFx::Glass(Glass { distortion: 20.0, smoothness: 1.0, texture: GlassTexture::TinyLens, scaling: 2.0, invert: true })
+    );
+    assert_eq!(fx("distort.oceanRipple", json!({})), PixelFx::OceanRipple { size: 9.0, magnitude: 9.0 });
+    assert_eq!(fx("distort.glass", json!({"distortion": 4})).outset(Rect::ZERO), 2.0);
+}
+
+/// Diffuse Glow brightens the light tones towards white and leaves black alone (but for grain).
+#[test]
+fn diffuse_glow_whitens_the_highlights() {
+    let (w, h) = (40, 20);
+    let mut d = image(w, h, |x, _| if x < 20 { grey(0) } else { grey(230) });
+    fx("distort.diffuseGlow", json!({"graininess": 0})).apply(&mut d, w, h, &space(w, h));
+    assert_eq!(at(&d, w, 5, 10), grey(0), "black doesn't glow");
+    assert!(at(&d, w, 35, 10)[0] > 240, "highlights glow: {:?}", at(&d, w, 35, 10));
+    let mut grain = image(w, h, |_, _| grey(0));
+    fx("distort.diffuseGlow", json!({"graininess": 10})).apply(&mut grain, w, h, &space(w, h));
+    let specks = grain.as_chunks::<4>().0.iter().filter(|p| p[0] > 0).count();
+    assert!(specks > 0 && specks < w * h / 4, "{specks} grain specks");
+}
+
+/// Glass and Ocean Ripple move the content without changing its colours, and a stronger setting
+/// moves it further.
+#[test]
+fn glass_and_ripples_displace_the_content() {
+    let (w, h) = (64, 64);
+    let stripes = image(w, h, |x, _| if (x / 5) % 2 == 0 { [255, 0, 0, 255] } else { [0, 0, 255, 255] });
+    let changed = |id: &str, p: serde_json::Value| {
+        let mut d = stripes.clone();
+        fx(id, p).apply(&mut d, w, h, &space(w, h));
+        (0..w * h).filter(|i| d[i * 4..i * 4 + 4] != stripes[i * 4..i * 4 + 4]).count()
+    };
+    for (id, key) in [("distort.glass", "distortion"), ("distort.oceanRipple", "rippleMagnitude")] {
+        let (none, some, more) = (changed(id, json!({key: 0})), changed(id, json!({key: 4})), changed(id, json!({key: 20})));
+        assert_eq!(none, 0, "{id}: nothing moves at 0");
+        assert!(some > 0 && more > some, "{id}: {some} then {more} pixels move");
+    }
+    for texture in GlassTexture::KINDS.map(|k| k.0) {
+        assert!(changed("distort.glass", json!({"texture": texture, "distortion": 10})) > 0, "{texture}");
+    }
+}
+
 /// Timings on a 2000 × 2000 raster (`cargo test -p vectorcraft-effects --release -- --ignored
 /// --nocapture pixel_timings`).
 #[test]
@@ -350,6 +402,9 @@ fn pixel_timings() {
         ("pixelate.crystallize", json!({})),
         ("pixelate.mezzotint", json!({"type": "longStrokes"})),
         ("pixelate.pointillize", json!({})),
+        ("distort.diffuseGlow", json!({})),
+        ("distort.glass", json!({})),
+        ("distort.oceanRipple", json!({})),
     ];
     for (id, p) in cases {
         let mut d = src.clone();

@@ -18,6 +18,23 @@
 # the " · " separators as in the English. Terms shared with PhotoCraft use the same words as its
 # zh-hant catalog (圖層, 選取, 偏好設定, 混合模式 ...), so the two apps read alike.
 	Glowing Edges…	發光邊緣…
+	Distort	扭曲
+	Diffuse Glow…	擴散光暈…
+	Diffuse Glow	擴散光暈
+	Glass…	玻璃…
+	Glass	玻璃
+	Ocean Ripple…	海洋波紋…
+	Ocean Ripple	海洋波紋
+	Graininess	顆粒
+	Glow Amount	光暈量
+	Clear Amount	清除量
+	Texture	紋理
+	Ripple Size	波紋大小
+	Ripple Magnitude	波紋強度
+	Frosted	霧面
+	Blocks	區塊
+	Canvas	畫布
+	Tiny Lens	小鏡頭
 	Pixelate	像素
 	Color Halftone…	彩色網屏…
 	Color Halftone	彩色網屏

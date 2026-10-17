@@ -11,6 +11,23 @@
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
 # Photoshop-style raster effects (Effect menu, their dialogs).
 	Glowing Edges…	Светящиеся края…
+	Distort	Искажение
+	Diffuse Glow…	Рассеянное свечение…
+	Diffuse Glow	Рассеянное свечение
+	Glass…	Стекло…
+	Glass	Стекло
+	Ocean Ripple…	Океанские волны…
+	Ocean Ripple	Океанские волны
+	Graininess	Зернистость
+	Glow Amount	Сила свечения
+	Clear Amount	Очистка
+	Texture	Текстура
+	Ripple Size	Размер волн
+	Ripple Magnitude	Сила волн
+	Frosted	Матовое
+	Blocks	Блоки
+	Canvas	Холст
+	Tiny Lens	Мелкие линзы
 	Pixelate	Пикселизация
 	Color Halftone…	Цветные полутона…
 	Color Halftone	Цветные полутона

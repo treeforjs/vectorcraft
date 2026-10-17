@@ -3229,11 +3229,11 @@ title = "Effect › Distort › Diffuse Glow"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::diffuse_glow_whitens_the_highlights"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-distort-glass"
@@ -3241,11 +3241,11 @@ title = "Effect › Distort › Glass"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::glass_and_ripples_displace_the_content"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-distort-ocean-ripple"
@@ -3253,11 +3253,11 @@ title = "Effect › Distort › Ocean Ripple"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.apply"]
 tools = []
-evidence = []
-notes = "Photoshop-style raster filter not in the effect catalogue yet"
+evidence = ["crates/effects/src/pixel/tests.rs::glass_and_ripples_displace_the_content"]
+notes = ""
 
 [[feature]]
 id = "fx.ps-pixelate-color-halftone"

@@ -5,6 +5,23 @@
 # software know, written from the meaning of VectorCraft's English labels; no other application's
 # Japanese localisation was copied. Toggles read as their action (「…を表示」「…を隠す」).
 	Glowing Edges…	エッジの光彩…
+	Distort	変形
+	Diffuse Glow…	光彩拡散…
+	Diffuse Glow	光彩拡散
+	Glass…	ガラス…
+	Glass	ガラス
+	Ocean Ripple…	海の波紋…
+	Ocean Ripple	海の波紋
+	Graininess	粒子
+	Glow Amount	光彩の量
+	Clear Amount	透明度
+	Texture	テクスチャ
+	Ripple Size	波紋の大きさ
+	Ripple Magnitude	波紋の強さ
+	Frosted	すりガラス
+	Blocks	ブロック
+	Canvas	キャンバス
+	Tiny Lens	小さなレンズ
 	Pixelate	ピクセレート
 	Color Halftone…	カラーハーフトーン…
 	Color Halftone	カラーハーフトーン

@@ -11,7 +11,7 @@ pub(super) fn zoom_extent(amount: f64) -> f64 {
 
 /// `buf` (`w` × `h`) sampled bilinearly at pixel index position (`x`, `y`) (pixel centres at
 /// whole coordinates); transparent outside.
-fn bilinear(buf: &[Px16], w: usize, h: usize, x: f64, y: f64) -> [f32; 4] {
+pub(super) fn bilinear(buf: &[Px16], w: usize, h: usize, x: f64, y: f64) -> [f32; 4] {
     if !(x > -1.0 && y > -1.0 && x < w as f64 && y < h as f64) {
         return [0.0; 4];
     }
