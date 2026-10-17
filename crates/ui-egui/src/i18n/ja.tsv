@@ -5,6 +5,30 @@
 # software know, written from the meaning of VectorCraft's English labels; no other application's
 # Japanese localisation was copied. Toggles read as their action (「…を表示」「…を隠す」).
 	Glowing Edges…	エッジの光彩…
+	Pixelate	ピクセレート
+	Color Halftone…	カラーハーフトーン…
+	Color Halftone	カラーハーフトーン
+	Crystallize…	水晶…
+	Crystallize	水晶
+	Mezzotint…	メゾティント…
+	Mezzotint	メゾティント
+	Pointillize…	点描…
+	Pointillize	点描
+	Max Radius	最大半径
+	Cell Size	セルの大きさ
+	Channel 1	チャンネル 1
+	Channel 2	チャンネル 2
+	Channel 3	チャンネル 3
+	Fine Dots	細かい点
+	Medium Dots	中程度の点
+	Grainy Dots	粒状の点
+	Coarse Dots	粗い点
+	Short Lines	短い線
+	Medium Lines	中程度の線
+	Long Lines	長い線
+	Short Strokes	短いストローク
+	Medium Strokes	中程度のストローク
+	Long Strokes	長いストローク
 	Glowing Edges	エッジの光彩
 	Edge Width	エッジの幅
 	Edge Brightness	エッジの明るさ

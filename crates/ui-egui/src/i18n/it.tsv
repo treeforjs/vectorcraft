@@ -13,6 +13,30 @@
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
 # Photoshop-style raster effects (Effect menu, their dialogs).
 	Glowing Edges…	Bordi luminosi…
+	Pixelate	Effetto pixel
+	Color Halftone…	Mezzetinte colore…
+	Color Halftone	Mezzetinte colore
+	Crystallize…	Cristallizza…
+	Crystallize	Cristallizza
+	Mezzotint…	Mezzatinta…
+	Mezzotint	Mezzatinta
+	Pointillize…	Puntinismo…
+	Pointillize	Puntinismo
+	Max Radius	Raggio max
+	Cell Size	Dimensione cella
+	Channel 1	Canale 1
+	Channel 2	Canale 2
+	Channel 3	Canale 3
+	Fine Dots	Punti fini
+	Medium Dots	Punti medi
+	Grainy Dots	Punti granulosi
+	Coarse Dots	Punti grossi
+	Short Lines	Linee corte
+	Medium Lines	Linee medie
+	Long Lines	Linee lunghe
+	Short Strokes	Tratti corti
+	Medium Strokes	Tratti medi
+	Long Strokes	Tratti lunghi
 	Glowing Edges	Bordi luminosi
 	Edge Width	Larghezza bordo
 	Edge Brightness	Luminosità bordo

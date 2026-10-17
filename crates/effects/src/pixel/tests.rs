@@ -246,6 +246,91 @@ fn gaussian_and_plane_blurs_keep_their_mass() {
     assert!((plane.iter().sum::<f32>() - 100.0).abs() < 0.5 && plane[15 * w + 13] > 0.0 && plane[13 * w + 15] > 0.0);
 }
 
+#[test]
+fn pixelate_params_take_defaults_and_stay_in_range() {
+    assert_eq!(fx("pixelate.crystallize", json!({})), PixelFx::Crystallize { size: 10.0 });
+    assert_eq!(fx("pixelate.crystallize", json!({"cellSize": 1e308})), PixelFx::Crystallize { size: 300.0 });
+    assert_eq!(fx("pixelate.pointillize", json!({"cellSize": -4})), PixelFx::Pointillize { size: 3.0 });
+    assert_eq!(fx("pixelate.colorHalftone", json!({})), PixelFx::ColorHalftone { radius: 8.0, angles: [108.0, 162.0, 90.0] });
+    assert_eq!(
+        fx("pixelate.colorHalftone", json!({"maxRadius": 1, "angle1": 1e300, "angle2": "nan", "angle3": -45})),
+        PixelFx::ColorHalftone { radius: 4.0, angles: [360.0, 162.0, -45.0] }
+    );
+    assert_eq!(fx("pixelate.mezzotint", json!({})), PixelFx::Mezzotint { kind: Mezzotint::FineDots });
+    assert_eq!(fx("pixelate.mezzotint", json!({"type": "Long Strokes"})), PixelFx::Mezzotint { kind: Mezzotint::LongStrokes });
+    assert_eq!(fx("pixelate.mezzotint", json!({"type": "nonsense"})), PixelFx::Mezzotint { kind: Mezzotint::FineDots });
+}
+
+/// Crystallize fills cells with one colour each: a flat colour stays, a gradient turns into far
+/// fewer colours than it had, and the cells stay on the art when the raster's origin moves.
+#[test]
+fn crystallize_makes_flat_cells_fixed_to_the_art() {
+    let (w, h) = (60, 40);
+    let mut flat = image(w, h, |_, _| [40, 80, 120, 255]);
+    let before = flat.clone();
+    fx("pixelate.crystallize", json!({"cellSize": 8})).apply(&mut flat, w, h, &space(w, h));
+    assert_eq!(flat, before);
+    let ramp = |dx: usize| image(w, h, move |x, y| [((x + dx) * 4) as u8, (y * 6) as u8, 90, 255]);
+    let mut d = ramp(0);
+    fx("pixelate.crystallize", json!({"cellSize": 8})).apply(&mut d, w, h, &space(w, h));
+    let colours: std::collections::HashSet<[u8; 4]> = d.as_chunks::<4>().0.iter().copied().collect();
+    assert!(colours.len() < 80 && colours.len() > 10, "{} cells", colours.len());
+    // The same art rendered 10 px further left: away from the raster's edges the cells match.
+    let mut shifted = ramp(10);
+    let s = PixelSpace { to_doc: Affine::translate((10.0, 0.0)), ..space(w, h) };
+    fx("pixelate.crystallize", json!({"cellSize": 8})).apply(&mut shifted, w, h, &s);
+    let same = (20..40).all(|x| (12..28).all(|y| at(&shifted, w, x - 10, y) == at(&d, w, x, y)));
+    assert!(same, "the cells follow the art, not the raster");
+}
+
+/// Pointillize leaves transparency alone and breaks a solid colour into its dots on white.
+#[test]
+fn pointillize_draws_dots_on_white() {
+    let (w, h) = (40, 40);
+    let mut clear = vec![0u8; w * h * 4];
+    fx("pixelate.pointillize", json!({})).apply(&mut clear, w, h, &space(w, h));
+    assert!(clear.iter().all(|v| *v == 0));
+    let mut red = image(w, h, |_, _| [200, 0, 0, 255]);
+    fx("pixelate.pointillize", json!({"cellSize": 6})).apply(&mut red, w, h, &space(w, h));
+    let px = red.as_chunks::<4>().0;
+    let dots = px.iter().filter(|p| **p == [200, 0, 0, 255]).count();
+    let white = px.iter().filter(|p| **p == [255, 255, 255, 255]).count();
+    assert!(dots > px.len() / 4 && white > 0, "{dots} dot and {white} white pixels");
+    assert!(px.iter().all(|p| p[3] == 255 && p[0] >= p[1]));
+}
+
+/// Mezzotint turns each channel full or empty, about as often as its level says.
+#[test]
+fn mezzotint_thresholds_every_channel() {
+    let (w, h) = (80, 80);
+    for kind in Mezzotint::KINDS.map(|k| k.0) {
+        let mut d = image(w, h, |_, _| [128, 0, 255, 255]);
+        fx("pixelate.mezzotint", json!({"type": kind})).apply(&mut d, w, h, &space(w, h));
+        let px = d.as_chunks::<4>().0;
+        assert!(px.iter().all(|p| matches!(p[0], 0 | 255) && p[1] == 0 && p[2] == 255 && p[3] == 255), "{kind}");
+        let on = px.iter().filter(|p| p[0] == 255).count() as f64 / px.len() as f64;
+        assert!((0.2..0.8).contains(&on), "{kind}: {on}");
+    }
+    // Half-covered pixels keep their coverage, premultiplied.
+    let mut half = image(4, 4, |_, _| [64, 64, 64, 128]);
+    fx("pixelate.mezzotint", json!({})).apply(&mut half, 4, 4, &space(4, 4));
+    assert!(half.as_chunks::<4>().0.iter().all(|p| p[3] == 128 && p[..3].iter().all(|c| matches!(c, 0 | 128))));
+}
+
+/// Color Halftone: a channel at full covers its screen, an empty one leaves it empty, and a middle
+/// level covers about its share in dots.
+#[test]
+fn color_halftone_dots_follow_each_channels_level() {
+    let (w, h) = (96, 96);
+    let mut d = image(w, h, |_, _| [255, 0, 128, 255]);
+    fx("pixelate.colorHalftone", json!({"maxRadius": 6})).apply(&mut d, w, h, &space(w, h));
+    let px = d.as_chunks::<4>().0;
+    assert!(px.iter().all(|p| p[0] == 255 && p[1] == 0 && p[3] == 255));
+    let blue = px.iter().map(|p| f64::from(p[2]) / 255.0).sum::<f64>() / px.len() as f64;
+    assert!((0.35..0.65).contains(&blue), "blue covers {blue}");
+    assert!(px.iter().any(|p| p[2] == 0) && px.iter().any(|p| p[2] == 255), "dots, not a flat tone");
+}
+
 /// Timings on a 2000 × 2000 raster (`cargo test -p vectorcraft-effects --release -- --ignored
 /// --nocapture pixel_timings`).
 #[test]
@@ -261,6 +346,10 @@ fn pixel_timings() {
         ("blur.smart", json!({"quality": "low"})),
         ("blur.smart", json!({"quality": "high", "radius": 30})),
         ("sharpen.unsharpMask", json!({"radius": 20})),
+        ("pixelate.colorHalftone", json!({})),
+        ("pixelate.crystallize", json!({})),
+        ("pixelate.mezzotint", json!({"type": "longStrokes"})),
+        ("pixelate.pointillize", json!({})),
     ];
     for (id, p) in cases {
         let mut d = src.clone();

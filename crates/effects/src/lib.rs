@@ -6,7 +6,7 @@
 //! - **Geometry effects** (Distort & Transform, Path, Convert to Shape, Round Corners, Scribble,
 //!   Warp) rewrite a path: [`apply_geometry`] evaluates them in stack order.
 //! - **Raster effects** (Drop Shadow, Inner/Outer Glow, Feather, Gaussian Blur, and the
-//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Unsharp Mask and Glowing Edges) are described by
+//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Pixelate, Unsharp Mask and Glowing Edges) are described by
 //!   [`raster_effects`] and painted by the renderer; [`outset`] says how far they reach beyond
 //!   the geometry.
 //! - **Stroke geometry** ([`stroke`]): arrowheads, dash patterns and width profiles, shared by the
@@ -126,6 +126,8 @@ fn lengths_of(id: &str) -> Lengths {
         "stylize.dropShadow" => always(&["x", "y", "blur"]),
         "stylize.innerGlow" | "stylize.outerGlow" => always(&["blur"]),
         "stylize.glowingEdges" => always(&["edgeWidth", "smoothness"]),
+        "pixelate.colorHalftone" => always(&["maxRadius"]),
+        "pixelate.crystallize" | "pixelate.pointillize" => always(&["cellSize"]),
         _ => Lengths::default(),
     }
 }
@@ -139,6 +141,7 @@ const STYLIZE: &[&str] = &["Effect", "Stylize"];
 const WARP: &[&str] = &["Effect", "Warp"];
 const BLUR: &[&str] = &["Effect", "Blur"];
 const SHARPEN: &[&str] = &["Effect", "Sharpen"];
+const PIXELATE: &[&str] = &["Effect", "Pixelate"];
 const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
@@ -297,6 +300,34 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             STYLIZE,
             "{edgeWidth: pt 1..14 (2), edgeBrightness: 0..20 (6), smoothness: pt 1..15 (5)} finds alpha-weighted Sobel edges and draws bright coloured outlines on black",
             json!({"edgeWidth": 2.0, "edgeBrightness": 6.0, "smoothness": 5.0}),
+        ),
+        r(
+            "pixelate.colorHalftone",
+            "Color Halftone…",
+            PIXELATE,
+            "{maxRadius: pt 4..127 (8; the largest dot), angle1: ° (108; red's screen), angle2: ° (162; green's), angle3: ° (90; blue's)} turns each colour channel into dots on its own screen, larger where the channel is brighter",
+            json!({"maxRadius": 8.0, "angle1": 108.0, "angle2": 162.0, "angle3": 90.0}),
+        ),
+        r(
+            "pixelate.crystallize",
+            "Crystallize…",
+            PIXELATE,
+            "{cellSize: pt 3..300 (10)} clumps colours into polygons, each the average colour of its cell",
+            json!({"cellSize": 10.0}),
+        ),
+        r(
+            "pixelate.mezzotint",
+            "Mezzotint…",
+            PIXELATE,
+            "{type: \"fineDots\"|\"mediumDots\"|\"grainyDots\"|\"coarseDots\"|\"shortLines\"|\"mediumLines\"|\"longLines\"|\"shortStrokes\"|\"mediumStrokes\"|\"longStrokes\" (\"fineDots\")} turns every colour channel full or empty against random dots, lines or strokes",
+            json!({"type": "fineDots"}),
+        ),
+        r(
+            "pixelate.pointillize",
+            "Pointillize…",
+            PIXELATE,
+            "{cellSize: pt 3..300 (5)} breaks the colours into randomly placed dots on a white background",
+            json!({"cellSize": 5.0}),
         ),
     ];
     v.extend([
