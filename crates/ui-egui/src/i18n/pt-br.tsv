@@ -15,6 +15,9 @@
 # pincel, amostra, mesa de trabalho ...), following common desktop-software conventions (commands
 # in the infinitive, menus as nouns); no proprietary localisation resource, string table or product
 	Glowing Edges…	Bordas brilhantes…
+	Diffuse Glow…	Brilho difuso…
+	Glass…	Vidro…
+	Ocean Ripple…	Ondulação oceânica…
 	Color Halftone…	Meio-tom colorido…
 	Crystallize…	Cristalizar…
 	Mezzotint…	Mezzotinta…
@@ -624,7 +627,6 @@
 	Distort Appearance	Distorcer Aparência
 	Distort Linear Gradients	Distorcer Gradientes Lineares
 	Distort Pattern Fills	Distorcer Preenchimentos de Padrão
-	Distortion	Distorção
 	Distribute	Distribuir
 	Distribute Objects:	Distribuir Objetos:
 	Distribute Spacing	Distribuir Espaçamento
@@ -1115,7 +1117,6 @@
 	Internet Standard RGB (sRGB)	RGB Padrão da Internet (sRGB)
 	Intersect	Interseção
 	Inverse	Inverso
-	Invert	Inverter
 	Invert Colors	Inverter Cores
 	Invert Mask	Inverter Máscara
 	Inverted Round	Arredondado Invertido
@@ -2036,7 +2037,6 @@
 	Scale to Fit Artboard	Dimensionar para Ajustar à Mesa de Trabalho
 	Scale:	Escala:
 	Scale…	Escala…
-	Scaling	Dimensionamento
 	Scaling:	Dimensionamento:
 	Scallop Tool	Ferramenta Vieira
 	Scans:	Varreduras:

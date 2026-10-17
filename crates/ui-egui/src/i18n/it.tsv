@@ -13,6 +13,23 @@
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
 # Photoshop-style raster effects (Effect menu, their dialogs).
 	Glowing Edges…	Bordi luminosi…
+	Distort	Distorsione
+	Diffuse Glow…	Bagliore diffuso…
+	Diffuse Glow	Bagliore diffuso
+	Glass…	Vetro…
+	Glass	Vetro
+	Ocean Ripple…	Increspatura…
+	Ocean Ripple	Increspatura
+	Graininess	Granulosità
+	Glow Amount	Quantità bagliore
+	Clear Amount	Quantità pulizia
+	Texture	Texture
+	Ripple Size	Dimensione increspature
+	Ripple Magnitude	Ampiezza increspature
+	Frosted	Smerigliato
+	Blocks	Blocchi
+	Canvas	Tela
+	Tiny Lens	Lenti minute
 	Pixelate	Effetto pixel
 	Color Halftone…	Mezzetinte colore…
 	Color Halftone	Mezzetinte colore

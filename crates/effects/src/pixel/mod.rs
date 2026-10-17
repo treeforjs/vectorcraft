@@ -1,4 +1,5 @@
-//! Photoshop-style raster effects (Effect › Blur › Radial Blur and Smart Blur, Pixelate › Color
+//! Photoshop-style raster effects (Effect › Blur › Radial Blur and Smart Blur, Distort › Diffuse
+//! Glow, Glass and Ocean Ripple, Pixelate › Color
 //! Halftone, Crystallize, Mezzotint and Pointillize, Sharpen › Unsharp Mask, and Stylize › Glowing
 //! Edges): filters over premultiplied RGBA8 pixels.
 //!
@@ -10,11 +11,13 @@
 //! - Beyond the raster's edges is transparency.
 
 mod blur;
+mod distort;
 mod edges;
 mod noise;
 mod pixelate;
 mod sharpen;
 
+pub use distort::{Glass, GlassTexture};
 pub use pixelate::Mezzotint;
 
 use serde_json::Value;
@@ -23,9 +26,12 @@ use vectorcraft_geom::{Affine, Point, Rect};
 use crate::util::{num, text};
 
 /// The Photoshop-style effect ids (all raster effects, see [`crate::is_raster`]).
-pub const PIXEL_EFFECTS: [&str; 8] = [
+pub const PIXEL_EFFECTS: [&str; 11] = [
     "blur.radial",
     "blur.smart",
+    "distort.diffuseGlow",
+    "distort.glass",
+    "distort.oceanRipple",
     "pixelate.colorHalftone",
     "pixelate.crystallize",
     "pixelate.mezzotint",
@@ -59,6 +65,12 @@ pub enum PixelFx {
     Mezzotint { kind: Mezzotint },
     /// Pixelate › Pointillize: dots about `size` apart of the colour under them, on white.
     Pointillize { size: f64 },
+    /// Distort › Diffuse Glow: white glow over the highlights with white grain.
+    DiffuseGlow { grain: f64, glow: f64, clear: f64 },
+    /// Distort › Glass: the content seen through a textured pane.
+    Glass(Glass),
+    /// Distort › Ocean Ripple: the content wobbled under ripples of `size`, by `magnitude`.
+    OceanRipple { size: f64, magnitude: f64 },
 }
 
 /// Where a raster's pixels lie in the document.
@@ -117,6 +129,25 @@ pub(crate) fn parse(id: &str, p: &Value) -> Option<PixelFx> {
             PixelFx::Mezzotint { kind: kind.map_or(Mezzotint::FineDots, |k| k.2) }
         }
         "pixelate.pointillize" => PixelFx::Pointillize { size: num(p, "cellSize", 5.0).clamp(3.0, 300.0) },
+        "distort.diffuseGlow" => PixelFx::DiffuseGlow {
+            grain: num(p, "graininess", 6.0).clamp(0.0, 10.0),
+            glow: num(p, "glowAmount", 10.0).clamp(0.0, 20.0),
+            clear: num(p, "clearAmount", 15.0).clamp(0.0, 20.0),
+        },
+        "distort.glass" => {
+            let texture = text(p, "texture", "frosted");
+            let texture = GlassTexture::KINDS.iter().find(|(id, label, _)| id.eq_ignore_ascii_case(texture) || label.eq_ignore_ascii_case(texture));
+            PixelFx::Glass(Glass {
+                distortion: num(p, "distortion", 5.0).clamp(0.0, 20.0),
+                smoothness: num(p, "smoothness", 3.0).clamp(1.0, 15.0),
+                texture: texture.map_or(GlassTexture::Frosted, |t| t.2),
+                scaling: num(p, "scaling", 100.0).clamp(50.0, 200.0) / 100.0,
+                invert: crate::util::flag(p, "invert", false),
+            })
+        }
+        "distort.oceanRipple" => {
+            PixelFx::OceanRipple { size: num(p, "rippleSize", 9.0).clamp(1.0, 15.0), magnitude: num(p, "rippleMagnitude", 9.0).clamp(0.0, 20.0) }
+        }
         _ => return None,
     })
 }
@@ -136,7 +167,10 @@ impl PixelFx {
             PixelFx::GlowingEdges { width, smoothness, .. } => width.max(smoothness * 3.0),
             // Cells and dots straddling the edge reach out by up to a cell.
             PixelFx::Crystallize { size } | PixelFx::Pointillize { size } => size,
-            PixelFx::ColorHalftone { .. } | PixelFx::Mezzotint { .. } => 0.0,
+            PixelFx::ColorHalftone { .. } | PixelFx::Mezzotint { .. } | PixelFx::DiffuseGlow { .. } => 0.0,
+            // Displacements pull content out by up to their reach.
+            PixelFx::Glass(g) => g.distortion * 0.5,
+            PixelFx::OceanRipple { magnitude, .. } => magnitude * 0.5,
         }
     }
 
@@ -153,6 +187,10 @@ impl PixelFx {
             PixelFx::Pointillize { size } => Some(2.0 * size),
             PixelFx::ColorHalftone { radius, .. } => Some(4.0 * radius),
             PixelFx::Mezzotint { .. } => Some(0.0),
+            PixelFx::DiffuseGlow { .. } => Some(4.5),
+            // The steepest slope is found over the whole raster.
+            PixelFx::Glass(_) => None,
+            PixelFx::OceanRipple { magnitude, .. } => Some(magnitude * 0.5 + 1.0),
         }
     }
 
@@ -170,6 +208,9 @@ impl PixelFx {
             PixelFx::Crystallize { size } => pixelate::crystallize(px, w, h, space, size),
             PixelFx::Mezzotint { kind } => pixelate::mezzotint(px, w, h, space, kind),
             PixelFx::Pointillize { size } => pixelate::pointillize(px, w, h, space, size),
+            PixelFx::DiffuseGlow { grain, glow, clear } => distort::diffuse_glow(px, w, h, space, grain, glow, clear),
+            PixelFx::Glass(g) => distort::glass(px, w, h, space, g),
+            PixelFx::OceanRipple { size, magnitude } => distort::ocean_ripple(px, w, h, space, size, magnitude),
         }
     }
 }

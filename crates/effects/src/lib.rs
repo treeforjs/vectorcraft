@@ -6,7 +6,7 @@
 //! - **Geometry effects** (Distort & Transform, Path, Convert to Shape, Round Corners, Scribble,
 //!   Warp) rewrite a path: [`apply_geometry`] evaluates them in stack order.
 //! - **Raster effects** (Drop Shadow, Inner/Outer Glow, Feather, Gaussian Blur, and the
-//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Pixelate, Unsharp Mask and Glowing Edges) are described by
+//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Distort, Pixelate, Unsharp Mask and Glowing Edges) are described by
 //!   [`raster_effects`] and painted by the renderer; [`outset`] says how far they reach beyond
 //!   the geometry.
 //! - **Stroke geometry** ([`stroke`]): arrowheads, dash patterns and width profiles, shared by the
@@ -127,6 +127,8 @@ fn lengths_of(id: &str) -> Lengths {
         "stylize.innerGlow" | "stylize.outerGlow" => always(&["blur"]),
         "stylize.glowingEdges" => always(&["edgeWidth", "smoothness"]),
         "pixelate.colorHalftone" => always(&["maxRadius"]),
+        "distort.glass" => always(&["distortion", "smoothness"]),
+        "distort.oceanRipple" => always(&["rippleSize", "rippleMagnitude"]),
         "pixelate.crystallize" | "pixelate.pointillize" => always(&["cellSize"]),
         _ => Lengths::default(),
     }
@@ -142,6 +144,7 @@ const WARP: &[&str] = &["Effect", "Warp"];
 const BLUR: &[&str] = &["Effect", "Blur"];
 const SHARPEN: &[&str] = &["Effect", "Sharpen"];
 const PIXELATE: &[&str] = &["Effect", "Pixelate"];
+const DISTORT: &[&str] = &["Effect", "Distort"];
 const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
@@ -328,6 +331,27 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             PIXELATE,
             "{cellSize: pt 3..300 (5)} breaks the colours into randomly placed dots on a white background",
             json!({"cellSize": 5.0}),
+        ),
+        r(
+            "distort.diffuseGlow",
+            "Diffuse Glow…",
+            DISTORT,
+            "{graininess: 0..10 (6; white specks), glowAmount: 0..20 (10), clearAmount: 0..20 (15; the higher, the fewer tones glow)} lays a soft white glow over the highlights",
+            json!({"graininess": 6.0, "glowAmount": 10.0, "clearAmount": 15.0}),
+        ),
+        r(
+            "distort.glass",
+            "Glass…",
+            DISTORT,
+            "{distortion: 0..20 (5; the content moves up to half this in points), smoothness: 1..15 (3), texture: \"frosted\"|\"blocks\"|\"canvas\"|\"tinyLens\" (\"frosted\"), scaling: % 50..200 (100), invert: bool (false)} shows the content through a textured pane of glass",
+            json!({"distortion": 5.0, "smoothness": 3.0, "texture": "frosted", "scaling": 100.0, "invert": false}),
+        ),
+        r(
+            "distort.oceanRipple",
+            "Ocean Ripple…",
+            DISTORT,
+            "{rippleSize: 1..15 (9; ripples about twice this in points), rippleMagnitude: 0..20 (9; the content moves up to half this in points)} wobbles the content as if under water",
+            json!({"rippleSize": 9.0, "rippleMagnitude": 9.0}),
         ),
     ];
     v.extend([
