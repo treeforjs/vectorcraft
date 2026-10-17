@@ -3498,7 +3498,7 @@ axis	Both	Обидві
 @msg	bad trailer	неприпустимий трейлер
 @msg	balance must be between 0 and 100	баланс має бути від 0 до 100
 @msg	batch step {_1} (`{id}`) failed: {e}	крок пакету {_1} (`{id}`) не виконано: {e}
-@msg	brightness must be system|light|dark|highContrast	яскравість має бути system|light|dark|highContrast
+@msg	brightness must be system|light|cream|dim|dark|highContrast	яскравість має бути system|light|cream|dim|dark|highContrast
 @msg	can't encode the document: {0}	не вдалося закодувати документ: {0}
 @msg	can't parse shortcut `{c}`	не вдалося розібрати поєднання `{c}`
 @msg	can't parse shortcut `{s}` for `{k}`	не вдалося розібрати поєднання `{s}` для `{k}`
@@ -4023,6 +4023,8 @@ axis	Both	Обидві
 	Wide Sharp	Широкий різкий
 	Wide Blurry	Широкий розмитий
 	Sparkle	Іскри
+	Cream	Кремовий
+	Dim	Приглушений
 	Resolution	Роздільна здатність
 	Color Model	Колірна модель
 	Background	Тло

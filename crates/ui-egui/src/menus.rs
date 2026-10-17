@@ -268,7 +268,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "",
         "{collapsed?: bool} collapse the dock's Properties | Layers | Libraries group to icons (true), expand it (false) or toggle (omitted), as the double arrow at the top of the dock does; returns the new state",
     ),
-    ("window.brightness", "Appearance", "", "{brightness: system|light|dark|highContrast}"),
+    ("window.brightness", "Appearance", "", "{brightness: system|light|cream|dim|dark|highContrast}"),
     ("window.workspace", "Workspace", "", "{name} switch workspace (Essentials, Essentials Classic, Painting, …)"),
     ("window.workspace.reset", "Reset Essentials", "", "{} reset the current workspace"),
     ("window.workspace.new", "New Workspace…", "", "{name?} save the current layout"),
@@ -1158,7 +1158,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
                 app.canvas.key = None;
                 Ok(json!(b.id()))
             }
-            None => Err("brightness must be system|light|dark|highContrast".into()),
+            None => Err("brightness must be system|light|cream|dim|dark|highContrast".into()),
         },
         "window.newWindow" => Err("multiple windows land with M11.5".into()),
         "tool.select" => match s("tool") {

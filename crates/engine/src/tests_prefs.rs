@@ -65,6 +65,16 @@ fn set_normalizes_strings_labels_and_colours() {
     assert!(!s.prefs.scale_strokes);
 }
 
+/// Cream and Dim are Appearance choices, between Light and Dark.
+#[test]
+fn ui_brightness_offers_cream_and_dim() {
+    let mut s = Session::new();
+    s.execute("prefs.set", &json!({"key": "uiBrightness", "value": "Cream"})).unwrap();
+    assert_eq!(s.prefs.ui_brightness, "cream");
+    s.execute("prefs.set", &json!({"key": "uiBrightness", "value": "dim"})).unwrap();
+    assert_eq!(s.prefs.ui_brightness, "dim");
+}
+
 #[test]
 fn batch_set_is_atomic() {
     let mut s = Session::new();

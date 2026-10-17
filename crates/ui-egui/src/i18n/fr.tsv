@@ -3512,7 +3512,7 @@ axis	Both	Les deux
 @msg	bad trailer	trailer non valide
 @msg	balance must be between 0 and 100	l’équilibre doit être compris entre 0 et 100
 @msg	batch step {_1} (`{id}`) failed: {e}	l’étape {_1} du lot (`{id}`) a échoué : {e}
-@msg	brightness must be system|light|dark|highContrast	la luminosité doit valoir system|light|dark|highContrast
+@msg	brightness must be system|light|cream|dim|dark|highContrast	la luminosité doit valoir system|light|cream|dim|dark|highContrast
 @msg	can't encode the document: {0}	impossible d’encoder le document : {0}
 @msg	can't parse shortcut `{c}`	impossible d’interpréter le raccourci `{c}`
 @msg	can't parse shortcut `{s}` for `{k}`	impossible d’interpréter le raccourci `{s}` pour `{k}`
@@ -4051,6 +4051,8 @@ axis	Both	Les deux
 	Wide Sharp	Large et net
 	Wide Blurry	Large et flou
 	Sparkle	Scintillant
+	Cream	Crème
+	Dim	Tamisé
 	Resolution	Résolution
 	Color Model	Modèle colorimétrique
 	Background	Arrière-plan
