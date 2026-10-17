@@ -4,6 +4,15 @@
 # Clean-room: menu and feature names follow the names Japanese users of vector illustration
 # software know, written from the meaning of VectorCraft's English labels; no other application's
 # Japanese localisation was copied. Toggles read as their action (「…を表示」「…を隠す」).
+	Video	ビデオ
+	De-Interlace…	インターレース解除…
+	De-Interlace	インターレース解除
+	NTSC Colors	NTSC カラー
+	Eliminate	削除
+	Odd Lines	奇数ライン
+	Even Lines	偶数ライン
+	Duplication	複製
+	Interpolation	補間
 	Glowing Edges…	エッジの光彩…
 	Distort	変形
 	Diffuse Glow…	光彩拡散…

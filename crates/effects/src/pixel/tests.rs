@@ -383,6 +383,73 @@ fn glass_and_ripples_displace_the_content() {
     }
 }
 
+#[test]
+fn video_params_take_defaults() {
+    assert_eq!(fx("video.deInterlace", json!({})), PixelFx::DeInterlace { odd: true, interpolate: true });
+    assert_eq!(
+        fx("video.deInterlace", json!({"eliminate": "Even", "create": "duplication"})),
+        PixelFx::DeInterlace { odd: false, interpolate: false }
+    );
+    assert_eq!(fx("video.deInterlace", json!({"eliminate": 3, "create": null})), PixelFx::DeInterlace { odd: true, interpolate: true });
+    assert_eq!(fx("video.ntscColors", json!({"anything": 1})), PixelFx::NtscColors);
+}
+
+/// De-Interlace rebuilds the eliminated field's lines from the other field's.
+#[test]
+fn de_interlace_rebuilds_one_field_from_the_other() {
+    let (w, h) = (8, 10);
+    let (red, blue) = ([255, 0, 0, 255], [0, 0, 255, 255]);
+    let fields = image(w, h, |_, y| if y % 2 == 0 { red } else { blue });
+    let run = |p: serde_json::Value| {
+        let mut d = fields.clone();
+        fx("video.deInterlace", p).apply(&mut d, w, h, &space(w, h));
+        d
+    };
+    for create in ["duplication", "interpolation"] {
+        let d = run(json!({"eliminate": "odd", "create": create}));
+        for y in 0..h - 1 {
+            assert_eq!(at(&d, w, 3, y), red, "{create}: line {y}");
+        }
+        let d = run(json!({"eliminate": "even", "create": create}));
+        for y in 1..h {
+            assert_eq!(at(&d, w, 3, y), blue, "{create}: line {y}");
+        }
+    }
+    // The last line has nothing below it to interpolate with: half of it fades.
+    let d = run(json!({"eliminate": "odd"}));
+    assert_eq!(at(&d, w, 3, h - 1), [128, 0, 0, 128]);
+}
+
+/// NTSC Colors tames colours too strong for broadcast, keeping their hue and luma, and leaves
+/// greys, gentle colours and transparency alone.
+#[test]
+fn ntsc_colors_desaturate_only_illegal_colours() {
+    let luma = |p: [u8; 4]| 0.299 * f64::from(p[0]) + 0.587 * f64::from(p[1]) + 0.114 * f64::from(p[2]);
+    let colours =
+        [[255, 0, 0, 255], [255, 255, 0, 255], [0, 255, 255, 255], [128, 128, 128, 255], [140, 110, 100, 255], [0, 0, 0, 0], [100, 0, 0, 100]];
+    let mut d: Vec<u8> = colours.iter().flatten().copied().collect();
+    fx("video.ntscColors", json!({})).apply(&mut d, colours.len(), 1, &space(colours.len(), 1));
+    let out: Vec<[u8; 4]> = d.as_chunks::<4>().0.to_vec();
+    for i in [0, 1, 2, 6] {
+        let (before, after) = (colours[i], out[i]);
+        assert_ne!(before, after, "{before:?} is too strong");
+        assert!((luma(before) - luma(after)).abs() <= 2.0, "{before:?} → {after:?} keeps its luma");
+        assert_eq!(after[3], before[3]);
+    }
+    // Red stays the reddest channel, yellow keeps red and green level.
+    assert!(out[0][0] > out[0][1] && out[0][1] == out[0][2], "{:?}", out[0]);
+    assert!(out[1][0].abs_diff(out[1][1]) <= 1 && out[1][2] > 0, "{:?}", out[1]);
+    for i in [3, 4, 5] {
+        assert_eq!(out[i], colours[i], "{:?} is legal", colours[i]);
+    }
+    // Legal colours stay as they are: a second pass changes nothing.
+    let mut again = d.clone();
+    fx("video.ntscColors", json!({})).apply(&mut again, colours.len(), 1, &space(colours.len(), 1));
+    for (a, b) in again.iter().zip(&d) {
+        assert!(a.abs_diff(*b) <= 1);
+    }
+}
+
 /// Timings on a 2000 × 2000 raster (`cargo test -p vectorcraft-effects --release -- --ignored
 /// --nocapture pixel_timings`).
 #[test]
@@ -393,6 +460,8 @@ fn pixel_timings() {
     let s = PixelSpace { to_doc: Affine::IDENTITY, px: 1.0, center: Point::new(1000.0, 1000.0) };
     let cases = [
         ("blur.radial", json!({"quality": "draft"})),
+        ("video.deInterlace", json!({})),
+        ("video.ntscColors", json!({})),
         ("blur.radial", json!({"quality": "good"})),
         ("blur.radial", json!({"quality": "best", "method": "zoom"})),
         ("blur.smart", json!({"quality": "low"})),

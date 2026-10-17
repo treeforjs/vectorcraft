@@ -6,7 +6,7 @@
 //! - **Geometry effects** (Distort & Transform, Path, Convert to Shape, Round Corners, Scribble,
 //!   Warp) rewrite a path: [`apply_geometry`] evaluates them in stack order.
 //! - **Raster effects** (Drop Shadow, Inner/Outer Glow, Feather, Gaussian Blur, and the
-//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Distort, Pixelate, Unsharp Mask and Glowing Edges) are described by
+//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Distort, Pixelate, Unsharp Mask, Glowing Edges and Video) are described by
 //!   [`raster_effects`] and painted by the renderer; [`outset`] says how far they reach beyond
 //!   the geometry.
 //! - **Stroke geometry** ([`stroke`]): arrowheads, dash patterns and width profiles, shared by the
@@ -145,6 +145,7 @@ const BLUR: &[&str] = &["Effect", "Blur"];
 const SHARPEN: &[&str] = &["Effect", "Sharpen"];
 const PIXELATE: &[&str] = &["Effect", "Pixelate"];
 const DISTORT: &[&str] = &["Effect", "Distort"];
+const VIDEO: &[&str] = &["Effect", "Video"];
 const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
@@ -352,6 +353,20 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             DISTORT,
             "{rippleSize: 1..15 (9; ripples about twice this in points), rippleMagnitude: 0..20 (9; the content moves up to half this in points)} wobbles the content as if under water",
             json!({"rippleSize": 9.0, "rippleMagnitude": 9.0}),
+        ),
+        r(
+            "video.deInterlace",
+            "De-Interlace…",
+            VIDEO,
+            "{eliminate: \"odd\"|\"even\" (\"odd\"; which scan lines go, each 1 pt tall), create: \"duplication\"|\"interpolation\" (\"interpolation\"; how they are rebuilt)} smooths away the comb of interlaced video stills",
+            json!({"eliminate": "odd", "create": "interpolation"}),
+        ),
+        r(
+            "video.ntscColors",
+            "NTSC Colors",
+            VIDEO,
+            "{} desaturates colours too strong for a broadcast television signal, keeping their hue and brightness",
+            json!({}),
         ),
     ];
     v.extend([

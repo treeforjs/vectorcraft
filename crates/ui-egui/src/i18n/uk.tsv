@@ -10,6 +10,15 @@
 # Coverage: every menu string, tl! literal, plural, status and error message (enforced in tests).
 # Product, language, built-in workspace and perspective preset names follow MENU_KEEP_AS_IS.
 # Keep placeholders, ellipses and leading/trailing spaces of fragments when editing.
+	Video	Відео
+	De-Interlace…	Усунення черезрядковості…
+	De-Interlace	Усунення черезрядковості
+	NTSC Colors	Кольори NTSC
+	Eliminate	Видалити
+	Odd Lines	Непарні рядки
+	Even Lines	Парні рядки
+	Duplication	Дублювання
+	Interpolation	Інтерполяція
 	Glowing Edges…	Сяйливі краї…
 	Distort	Спотворення
 	Diffuse Glow…	Розсіяне сяйво…

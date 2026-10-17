@@ -9,6 +9,15 @@
 # proprietary localisation resource, string table or product UI may be copied. Product and
 # technology names stay in Latin letters. Full-width punctuation (，。：“”) in sentences, half-width
 # parentheses.
+	Video	视频
+	De-Interlace…	逐行…
+	De-Interlace	逐行
+	NTSC Colors	NTSC 颜色
+	Eliminate	消除
+	Odd Lines	奇数行
+	Even Lines	偶数行
+	Duplication	复制
+	Interpolation	插值
 	Glowing Edges…	发光边缘…
 	Distort	扭曲
 	Diffuse Glow…	扩散亮光…
