@@ -12,6 +12,43 @@
 # tested). Left in English on purpose (`MENU_KEEP_AS_IS` in the tests): the product name, language
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
 # Photoshop-style raster effects (Effect menu, their dialogs).
+	Craquelure…	Craquelado…
+	Craquelure	Craquelado
+	Grain…	Granulado…
+	Grain	Granulado
+	Mosaic Tiles…	Azulejos de mosaico…
+	Mosaic Tiles	Azulejos de mosaico
+	Patchwork…	Retazos…
+	Patchwork	Retazos
+	Stained Glass…	Vidriera…
+	Stained Glass	Vidriera
+	Texturizer…	Texturizador…
+	Texturizer	Texturizador
+	Crack Spacing	Espaciado de grietas
+	Crack Depth	Profundidad de grietas
+	Crack Brightness	Brillo de grietas
+	Intensity	Intensidad
+	Grain Type	Tipo de grano
+	Tile Size	Tamaño de azulejo
+	Grout Width	Anchura de lechada
+	Lighten Grout	Aclarar lechada
+	Square Size	Tamaño de cuadrado
+	Relief	Relieve
+	Border Thickness	Grosor del borde
+	Light Intensity	Intensidad de luz
+	Sprinkles	Salpicado
+	Clumped	Agrupado
+	Contrasty	Contrastado
+	Enlarged	Ampliado
+	Stippled	Punteado
+	Speckle	Moteado
+	Brick	Ladrillo
+	Burlap	Arpillera
+	Sandstone	Arenisca
+	Bottom Left	Abajo a la izquierda
+	Top Left	Arriba a la izquierda
+	Top Right	Arriba a la derecha
+	Bottom Right	Abajo a la derecha
 	Video	Vídeo
 	De-Interlace…	Desentrelazar…
 	De-Interlace	Desentrelazar

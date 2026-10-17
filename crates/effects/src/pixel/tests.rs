@@ -450,6 +450,144 @@ fn ntsc_colors_desaturate_only_illegal_colours() {
     }
 }
 
+#[test]
+fn texture_params_take_defaults_and_stay_in_range() {
+    assert_eq!(fx("texture.craquelure", json!({})), PixelFx::Craquelure { spacing: 15.0, depth: 6.0, brightness: 9.0 });
+    assert_eq!(fx("texture.grain", json!({})), PixelFx::Grain { intensity: 40.0, contrast: 50.0, kind: Grain::Regular });
+    assert_eq!(
+        fx("texture.grain", json!({"intensity": 1e9, "contrast": -5, "grainType": "Speckle"})),
+        PixelFx::Grain { intensity: 100.0, contrast: 0.0, kind: Grain::Speckle }
+    );
+    assert_eq!(fx("texture.mosaicTiles", json!({"tileSize": 0})), PixelFx::MosaicTiles { tile: 2.0, grout: 3.0, lighten: 9.0 });
+    assert_eq!(fx("texture.patchwork", json!({})), PixelFx::Patchwork { square: 6.0, relief: 8.0 });
+    assert_eq!(fx("texture.stainedGlass", json!({"cellSize": 999})), PixelFx::StainedGlass { size: 50.0, border: 4.0, light: 3.0 });
+    let canvas = Texturizer { surface: Surface::Canvas, scaling: 1.0, relief: 4.0, light: Light::Top, invert: false };
+    assert_eq!(fx("texture.texturizer", json!({})), PixelFx::Texturizer(canvas));
+    assert_eq!(
+        fx("texture.texturizer", json!({"texture": "Brick", "scaling": 10, "light": "Bottom Right", "invert": true})),
+        PixelFx::Texturizer(Texturizer { surface: Surface::Brick, scaling: 0.5, light: Light::BottomRight, invert: true, ..canvas })
+    );
+}
+
+/// A smooth colourful ramp to texture.
+fn ramp(w: usize, h: usize) -> Vec<u8> {
+    image(w, h, |x, y| [(40 + x * 3) as u8, (60 + y * 2) as u8, 120, 255])
+}
+
+/// How many pixels differ between two rasters.
+fn differing(a: &[u8], b: &[u8]) -> usize {
+    a.chunks(4).zip(b.chunks(4)).filter(|(p, q)| p != q).count()
+}
+
+/// Craquelure darkens thin cracks between plates, and its pattern stays on the art.
+#[test]
+fn craquelure_cracks_the_art_into_plates() {
+    let (w, h) = (64, 64);
+    let mut d = image(w, h, |_, _| grey(200));
+    fx("texture.craquelure", json!({"crackSpacing": 12})).apply(&mut d, w, h, &space(w, h));
+    let levels: Vec<u8> = d.chunks(4).map(|p| p[0]).collect();
+    let dark = levels.iter().filter(|v| **v < 150).count();
+    assert!(dark > w * h / 50 && dark < w * h / 2, "{dark} crack pixels");
+    // The same art moved by whole cells cracks the same way where they overlap.
+    let mut shifted = image(w, h, |_, _| grey(200));
+    let moved = PixelSpace { to_doc: Affine::translate((12.0, 0.0)), px: 1.0, center: Point::new(44.0, 32.0) };
+    fx("texture.craquelure", json!({"crackSpacing": 12})).apply(&mut shifted, w, h, &moved);
+    for y in 2..h - 2 {
+        for x in 2..w - 14 {
+            assert_eq!(at(&d, w, x + 12, y), at(&shifted, w, x, y), "({x}, {y})");
+        }
+    }
+}
+
+/// Grain adds noise as strong as its intensity; its kinds add specks, dots or streaks.
+#[test]
+fn grain_adds_noise_of_each_kind() {
+    let (w, h) = (48, 48);
+    let src = ramp(w, h);
+    let run = |p: serde_json::Value| {
+        let mut d = src.clone();
+        fx("texture.grain", p).apply(&mut d, w, h, &space(w, h));
+        d
+    };
+    assert_eq!(run(json!({"intensity": 0})), src, "no grain, unchanged contrast");
+    assert!(differing(&run(json!({"intensity": 60})), &src) > w * h / 2);
+    let count = |d: &[u8], v: u8| d.chunks(4).filter(|p| p[..3] == [v; 3]).count();
+    assert!(count(&run(json!({"intensity": 90, "grainType": "sprinkles"})), 255) > 20);
+    assert!(count(&run(json!({"intensity": 90, "grainType": "speckle"})), 0) > 20);
+    let stippled = run(json!({"intensity": 100, "grainType": "stippled"}));
+    assert_eq!(count(&stippled, 0) + count(&stippled, 255), w * h, "stippled is black and white");
+    // Horizontal streaks run along the rows: neighbours across them differ far more than along.
+    let streaks = run(json!({"intensity": 80, "grainType": "horizontal"}));
+    let along =
+        (0..h).flat_map(|y| (0..w - 1).map(move |x| (x, y))).filter(|&(x, y)| at(&streaks, w, x, y)[2] != at(&streaks, w, x + 1, y)[2]).count();
+    let across =
+        (0..h - 1).flat_map(|y| (0..w).map(move |x| (x, y))).filter(|&(x, y)| at(&streaks, w, x, y)[2] != at(&streaks, w, x, y + 1)[2]).count();
+    assert!(across > 3 * along, "across {across}, along {along}");
+}
+
+/// Mosaic Tiles lightens the grout and leaves the middle of each tile as it was.
+#[test]
+fn mosaic_tiles_set_the_art_in_light_grout() {
+    let (w, h) = (48, 48);
+    let mut d = image(w, h, |_, _| grey(100));
+    fx("texture.mosaicTiles", json!({"tileSize": 12, "groutWidth": 5})).apply(&mut d, w, h, &space(w, h));
+    assert_eq!(at(&d, w, 18, 18), grey(100), "the middle of a tile is flat");
+    assert!(at(&d, w, 24, 18)[0] > 150, "grout between tiles: {:?}", at(&d, w, 24, 18));
+    assert_eq!(at(&d, w, 24, 18)[3], 255);
+}
+
+/// Patchwork makes flat squares of each square's average colour; relief only shades their edges.
+#[test]
+fn patchwork_makes_squares_of_their_average_colour() {
+    let (w, h) = (48, 48);
+    let src = ramp(w, h);
+    let mut flat = src.clone();
+    fx("texture.patchwork", json!({"squareSize": 4, "relief": 0})).apply(&mut flat, w, h, &space(w, h));
+    for (x, y) in [(6, 6), (7, 11), (11, 7)] {
+        assert_eq!(at(&flat, w, x, y), at(&flat, w, 9, 9), "one square, one colour");
+    }
+    assert_ne!(at(&flat, w, 9, 9), at(&flat, w, 15, 9));
+    let mut raised = src;
+    fx("texture.patchwork", json!({"squareSize": 4, "relief": 25})).apply(&mut raised, w, h, &space(w, h));
+    assert_eq!(at(&raised, w, 9, 9), at(&flat, w, 9, 9), "a square's middle is flat");
+    assert!(differing(&raised, &flat) > w * h / 10);
+}
+
+/// Stained Glass leads flat panes with black.
+#[test]
+fn stained_glass_leads_flat_panes() {
+    let (w, h) = (64, 64);
+    let mut d = ramp(w, h);
+    fx("texture.stainedGlass", json!({"cellSize": 12, "lightIntensity": 0})).apply(&mut d, w, h, &space(w, h));
+    let lead = d.chunks(4).filter(|p| *p == [0, 0, 0, 255]).count();
+    assert!(lead > w * h / 20 && lead < w * h / 2, "{lead} lead pixels");
+    let colours: std::collections::HashSet<&[u8]> = d.chunks(4).collect();
+    assert!(colours.len() < 80, "{} colours: the panes are flat", colours.len());
+    let mut lit = ramp(w, h);
+    fx("texture.stainedGlass", json!({"cellSize": 12, "lightIntensity": 10})).apply(&mut lit, w, h, &space(w, h));
+    let sum = |d: &[u8]| d.iter().map(|v| u64::from(*v)).sum::<u64>();
+    assert!(sum(&lit) > sum(&d), "light brightens the panes");
+}
+
+/// Texturizer shades the art by its surface; no relief leaves it alone.
+#[test]
+fn texturizer_shades_the_art_by_its_surface() {
+    let (w, h) = (48, 48);
+    let src = image(w, h, |_, _| grey(128));
+    let run = |p: serde_json::Value| {
+        let mut d = src.clone();
+        fx("texture.texturizer", p).apply(&mut d, w, h, &space(w, h));
+        d
+    };
+    assert_eq!(run(json!({"relief": 0})), src);
+    for surface in Surface::KINDS.map(|k| k.0) {
+        let d = run(json!({"texture": surface, "relief": 20}));
+        assert!(differing(&d, &src) > w * h / 10, "{surface}");
+        assert_ne!(d, run(json!({"texture": surface, "relief": 20, "invert": true})), "{surface} inverted");
+        assert_ne!(d, run(json!({"texture": surface, "relief": 20, "light": "bottom"})), "{surface} lit from below");
+    }
+}
+
 /// Timings on a 2000 × 2000 raster (`cargo test -p vectorcraft-effects --release -- --ignored
 /// --nocapture pixel_timings`).
 #[test]
@@ -461,6 +599,12 @@ fn pixel_timings() {
     let cases = [
         ("blur.radial", json!({"quality": "draft"})),
         ("video.deInterlace", json!({})),
+        ("texture.craquelure", json!({})),
+        ("texture.grain", json!({})),
+        ("texture.mosaicTiles", json!({})),
+        ("texture.patchwork", json!({})),
+        ("texture.stainedGlass", json!({})),
+        ("texture.texturizer", json!({})),
         ("video.ntscColors", json!({})),
         ("blur.radial", json!({"quality": "good"})),
         ("blur.radial", json!({"quality": "best", "method": "zoom"})),

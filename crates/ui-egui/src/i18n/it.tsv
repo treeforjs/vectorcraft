@@ -12,6 +12,43 @@
 # tested). Left in English on purpose (`MENU_KEEP_AS_IS` in the tests): the product name, language
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
 # Photoshop-style raster effects (Effect menu, their dialogs).
+	Craquelure…	Craquelure…
+	Craquelure	Craquelure
+	Grain…	Grana…
+	Grain	Grana
+	Mosaic Tiles…	Tessere di mosaico…
+	Mosaic Tiles	Tessere di mosaico
+	Patchwork…	Patchwork…
+	Patchwork	Patchwork
+	Stained Glass…	Vetro colorato…
+	Stained Glass	Vetro colorato
+	Texturizer…	Applica texture…
+	Texturizer	Applica texture
+	Crack Spacing	Spaziatura crepe
+	Crack Depth	Profondità crepe
+	Crack Brightness	Luminosità crepe
+	Intensity	Intensità
+	Grain Type	Tipo di grana
+	Tile Size	Dimensione tessere
+	Grout Width	Larghezza stucco
+	Lighten Grout	Schiarisci stucco
+	Square Size	Dimensione quadrati
+	Relief	Rilievo
+	Border Thickness	Spessore bordo
+	Light Intensity	Intensità luce
+	Sprinkles	Spruzzi
+	Clumped	Raggruppata
+	Contrasty	Contrastata
+	Enlarged	Ingrandita
+	Stippled	Puntinata
+	Speckle	Maculata
+	Brick	Mattone
+	Burlap	Tela di iuta
+	Sandstone	Arenaria
+	Bottom Left	In basso a sinistra
+	Top Left	In alto a sinistra
+	Top Right	In alto a destra
+	Bottom Right	In basso a destra
 	Video	Video
 	De-Interlace…	Deinterlaccia…
 	De-Interlace	Deinterlaccia

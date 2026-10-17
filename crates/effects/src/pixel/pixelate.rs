@@ -59,14 +59,14 @@ impl Mezzotint {
 }
 
 /// The jittered seed point of grid cell (`i`, `j`), document coordinates.
-fn seed(i: i64, j: i64, size: f64, salt: u64) -> Point {
+pub(super) fn seed(i: i64, j: i64, size: f64, salt: u64) -> Point {
     let h = hash(i, j, salt);
     let (u, v) = (unit(h), unit(hash(i, j, h)));
     Point::new((i as f64 + 0.1 + 0.8 * u) * size, (j as f64 + 0.1 + 0.8 * v) * size)
 }
 
 /// The document point at the centre of pixel (`x`, `y`).
-fn centre(to_doc: Affine, x: usize, y: usize) -> Point {
+pub(super) fn centre(to_doc: Affine, x: usize, y: usize) -> Point {
     to_doc * Point::new(x as f64 + 0.5, y as f64 + 0.5)
 }
 
@@ -89,7 +89,7 @@ fn nearest_pixel(from_doc: Affine, p: Point, w: usize, h: usize) -> Option<usize
 }
 
 /// A usable grid size: finite, positive and not so small that a pixel spans millions of cells.
-fn usable(size: f64, space: &PixelSpace) -> Option<f64> {
+pub(super) fn usable(size: f64, space: &PixelSpace) -> Option<f64> {
     (size.is_finite() && size > 0.0 && space.px.is_finite() && space.px > 0.0).then(|| size.max(space.px * 0.25))
 }
 

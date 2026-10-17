@@ -10,6 +10,43 @@
 # Coverage: every menu string, tl! literal, plural, status and error message (enforced in tests).
 # Product, language, built-in workspace and perspective preset names follow MENU_KEEP_AS_IS.
 # Keep placeholders, ellipses and leading/trailing spaces of fragments when editing.
+	Craquelure…	Кракелюри…
+	Craquelure	Кракелюри
+	Grain…	Зерно…
+	Grain	Зерно
+	Mosaic Tiles…	Мозаїчні плитки…
+	Mosaic Tiles	Мозаїчні плитки
+	Patchwork…	Клаптикове шиття…
+	Patchwork	Клаптикове шиття
+	Stained Glass…	Вітраж…
+	Stained Glass	Вітраж
+	Texturizer…	Текстуризатор…
+	Texturizer	Текстуризатор
+	Crack Spacing	Крок тріщин
+	Crack Depth	Глибина тріщин
+	Crack Brightness	Яскравість тріщин
+	Intensity	Інтенсивність
+	Grain Type	Тип зерна
+	Tile Size	Розмір плитки
+	Grout Width	Ширина швів
+	Lighten Grout	Освітлити шви
+	Square Size	Розмір квадрата
+	Relief	Рельєф
+	Border Thickness	Товщина межі
+	Light Intensity	Інтенсивність світла
+	Sprinkles	Бризки
+	Clumped	Грудки
+	Contrasty	Контрастне
+	Enlarged	Збільшене
+	Stippled	Пунктир
+	Speckle	Цятки
+	Brick	Цегла
+	Burlap	Мішковина
+	Sandstone	Пісковик
+	Bottom Left	Унизу ліворуч
+	Top Left	Угорі ліворуч
+	Top Right	Угорі праворуч
+	Bottom Right	Унизу праворуч
 	Video	Відео
 	De-Interlace…	Усунення черезрядковості…
 	De-Interlace	Усунення черезрядковості
