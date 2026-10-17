@@ -4104,8 +4104,8 @@ milestone = "M10"
 status = "partial"
 commands = ["brush.new", "brush.options", "ui.brushOptions"]
 tools = []
-evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection", "crates/ui-egui/src/dialogs/brush_options.rs::art_and_pattern_options_apply_and_strokes_keep_drawing"]
-notes = "Pattern brushes draw; Pattern Brush Options dialog edits scale, spacing, fit, flips and colorization; auto-generated corners and scale variation pending"
+evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection", "crates/ui-egui/src/dialogs/brush_options.rs::art_and_pattern_options_apply_and_strokes_keep_drawing", "crates/brush/src/tests.rs::pattern_auto_corners_fill_corners_without_tiles", "crates/brush/src/tests.rs::pattern_auto_sliced_corner_is_mitred"]
+notes = "Pattern brushes draw; Pattern Brush Options dialog edits scale, spacing, fit, auto corners (centered, between, sliced, overlap), flips and colorization; scale variation pending"
 
 [[feature]]
 id = "brush.libraries"

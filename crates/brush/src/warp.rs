@@ -7,10 +7,10 @@
 use std::sync::Arc;
 
 use vectorcraft_doc::{Node, NodeKind};
-use vectorcraft_geom::{Affine, BezPath, PathData, PathEl, Point, Rect, SubPath};
+use vectorcraft_geom::{Affine, BezPath, PathData, PathEl, Point, Rect, SubPath, Vec2};
 
-use crate::track::{Rng, Track, seed_of, tracks};
-use crate::{ArtBrush, ArtScale, Direction, PatternBrush, PatternFit, Scatter, tolerance};
+use crate::track::{Rng, Track, normal, seed_of, tracks};
+use crate::{ArtBrush, ArtScale, AutoCorner, Direction, PatternBrush, PatternFit, Scatter, tolerance};
 
 /// Longest mapped segment (points in document space).
 const MAX_SEG: f64 = 1.5;
@@ -233,6 +233,61 @@ fn tile_on(t: &Track, tile: &(Node, Rect), s0: f64, s1: f64, cross: f64) -> Opti
     bend(t, &tile.0, tile.1, AlongMap::linear(tile.1.width(), s0, s1), cross)
 }
 
+/// `art` centred on the corner at `v` and turned to the bisector of `a` and `b`.
+fn centred_corner(art: &Node, bb: Rect, v: Point, a: Vec2, b: Vec2, k: f64) -> Option<Node> {
+    let bis = a + b;
+    let bis = if bis.hypot() < 1e-9 { a } else { bis / bis.hypot() };
+    let xf = Affine::translate(v.to_vec2()) * Affine::rotate(bis.y.atan2(bis.x)) * Affine::scale(k) * Affine::translate(-bb.center().to_vec2());
+    let mut n = art.clone();
+    n.transform(xf, true);
+    Some(n)
+}
+
+/// Warps `tile` so that art x runs over corner-relative positions `u0..u1` and art y across,
+/// through `f(u, d)`.
+fn tile_by(tile: &(Node, Rect), u0: f64, u1: f64, k: f64, f: &dyn Fn(f64, f64) -> Point) -> Option<Node> {
+    let (art, b) = tile;
+    let w = b.width().max(1e-9);
+    let (x0, cy) = (b.x0, b.center().y);
+    let g = move |p: Point| f(u0 + (p.x - x0) / w * (u1 - u0), (p.y - cy) * k);
+    let scale = ((u1 - u0).abs() / w).max(k).max(1e-6);
+    let flat_tol = tolerance(b.height().max(b.width()) * scale) / scale;
+    warp_node(art, &g, flat_tol, MAX_SEG / scale, k)
+}
+
+/// Corner art generated from the side tile (already oriented) at the corner `v` where the path
+/// turns from `a` to `b`. Returns the pieces and how far they reach along each leg.
+fn auto_corner(mode: AutoCorner, side: &(Node, Rect), v: Point, a: Vec2, b: Vec2, k: f64) -> (Vec<Node>, f64) {
+    let w = side.1.width() * k;
+    if w <= 1e-9 {
+        return (vec![], 0.0);
+    }
+    let (na, nb) = (normal(a), normal(b));
+    // Mitre shear: shifting along by `d * h` on each leg makes both legs meet on the bisector.
+    let cos = a.dot(b);
+    let mitre = (1.0 + cos > 0.05).then(|| a.cross(b) / (1.0 + cos));
+    let mitred = move |u: f64, d: f64, h: f64| {
+        if u < 0.0 { v + a * (u - d * h) + na * d } else { v + b * (u + d * h) + nb * d }
+    };
+    match (mode, mitre) {
+        (AutoCorner::None, _) => (vec![], 0.0),
+        (AutoCorner::Centered, _) | (AutoCorner::Sliced | AutoCorner::Between, None) => {
+            let half = if mode == AutoCorner::Between { w } else { w / 2.0 };
+            (centred_corner(&side.0, side.1, v, a, b, k).into_iter().collect(), half)
+        }
+        (AutoCorner::Sliced, Some(h)) => (tile_by(side, -w / 2.0, w / 2.0, k, &|u, d| mitred(u, d, h)).into_iter().collect(), w / 2.0),
+        (AutoCorner::Between, Some(h)) => {
+            let f = |u: f64, d: f64| mitred(u, d, h);
+            (tile_by(side, -w, 0.0, k, &f).into_iter().chain(tile_by(side, 0.0, w, k, &f)).collect(), w)
+        }
+        (AutoCorner::Overlap, _) => {
+            let leg_a = |u: f64, d: f64| v + a * u + na * d;
+            let leg_b = |u: f64, d: f64| v + b * u + nb * d;
+            (tile_by(side, -w / 2.0, w / 2.0, k, &leg_a).into_iter().chain(tile_by(side, -w / 2.0, w / 2.0, k, &leg_b)).collect(), w / 2.0)
+        }
+    }
+}
+
 pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node> {
     let orient = |n: &Node| oriented(n, Direction::LeftToRight, pb.flip_along, pb.flip_across);
     let Some(side) = orient(&pb.side) else { return vec![] };
@@ -250,23 +305,22 @@ pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node>
             continue;
         }
         let corners = t.corner_positions();
-        // Corner tiles, centred on the corner and turned to the bisector.
+        // Corner tiles, centred on the corner and turned to the bisector; corners without a tile
+        // get art generated from the side tile when the brush asks for it.
         let mut corner_half = 0.0_f64;
-        for &(i, _) in &corners {
+        for &(i, c) in &corners {
             let (a, b) = t.in_out(i);
             // Turning towards the left normal puts the tile's +y side on the inside.
             let tile = if a.cross(b) > 0.0 { inner.as_ref().or(outer.as_ref()) } else { outer.as_ref().or(inner.as_ref()) };
-            let Some((art, bb)) = tile else { continue };
+            let v = t.verts.get(i).copied().unwrap_or_else(|| t.map(c, 0.0));
+            let Some((art, bb)) = tile else {
+                let (pieces, half) = auto_corner(pb.auto_corner, &side, v, a, b, k);
+                corner_half = corner_half.max(half);
+                out.extend(pieces);
+                continue;
+            };
             corner_half = corner_half.max(bb.width() * k / 2.0);
-            let bis = a + b;
-            let bis = if bis.hypot() < 1e-9 { a } else { bis / bis.hypot() };
-            let xf = Affine::translate(t.verts[i].to_vec2())
-                * Affine::rotate(bis.y.atan2(bis.x))
-                * Affine::scale(k)
-                * Affine::translate(-bb.center().to_vec2());
-            let mut n = art.clone();
-            n.transform(xf, true);
-            out.push(n);
+            out.extend(centred_corner(art, *bb, v, a, b, k));
         }
         // Runs between corners (closed tracks wrap past the end).
         let mut bounds: Vec<f64> = corners.iter().map(|c| c.1).collect();
@@ -284,7 +338,7 @@ pub(crate) fn pattern(pb: &PatternBrush, bp: &BezPath, weight: f64) -> Vec<Node>
             v.windows(2).enumerate().map(|(i, w)| (w[0], w[1], i > 0, i + 2 < n)).collect()
         };
         let nruns = runs.len();
-        let corner_tiles = inner.is_some() || outer.is_some();
+        let corner_tiles = corner_half > 0.0;
         for (ri, (mut a, mut b, ca, cb)) in runs.into_iter().enumerate() {
             if ca && corner_tiles {
                 a += corner_half;
