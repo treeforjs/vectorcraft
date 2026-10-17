@@ -1,0 +1,5056 @@
+# VectorCraft parity checklist against the reference vector illustration app (Illustrator 2026 feature set).
+# Validated and reported by `cargo xtask parity`. One row per user-visible feature; update the row in the same PR
+# that ships or improves the feature, plus a ROADMAP.md line.
+# Status: `shipped` = usable today with at least one cited test; `partial` = part exists (notes say what is missing);
+# `planned` = not started; `na` = cloud- or service-only (notes name the local alternative).
+# `commands` are engine registry ids (`vectorcraft-cli commands`) or UI_COMMANDS ids (crates/ui-egui/src/menus.rs);
+# `tools` are tool ids from crates/tools/src/catalog.rs. Tiers: P0 everyday, P1 common, P2 advanced, P3 niche.
+[schema]
+version = 1
+statuses = ["planned", "partial", "shipped", "na"]
+tiers = ["P0", "P1", "P2", "P3", "N/A"]
+areas = { A = "files", B = "view", C = "select", D = "draw", E = "path", F = "transform", G = "paint", H = "effects", I = "type", J = "brushes", K = "layers", L = "images", M = "automation", N = "print", O = "interface", P = "cloud" }
+
+# ==================================================================================================
+# A. Documents, files and output
+# ==================================================================================================
+
+[[feature]]
+id = "file.new-document"
+title = "New document with presets (Print, Web, Mobile, Film & Video, Art & Illustration)"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.new", "file.newPresets"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_sysclip_emf.rs::an_emf_from_another_app_pastes_as_vectors_ahead_of_its_bitmap", "crates/engine/src/tests_newdoc.rs::categories_list_generated_presets_with_neutral_names"]
+notes = ""
+
+[[feature]]
+id = "file.new-from-template"
+title = "New from Template (.ait)"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["file.newFromTemplate"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_save.rs::new_from_template_takes_bytes_from_agents"]
+notes = ""
+
+[[feature]]
+id = "file.open"
+title = "Open documents (native, .ai, PDF, EPS, SVG)"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.open", "document.open"]
+tools = []
+evidence = ["crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog", "crates/ui-egui/src/tests_svgsave.rs::save_as_svg_keeps_hidden_layers_and_export_as_leaves_them_out"]
+notes = ""
+
+[[feature]]
+id = "file.open-recent"
+title = "Open Recent Files"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.openRecent1", "file.clearRecent"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::names_in_menus_are_not_interface_labels", "crates/ui-egui/src/menus.rs::recent_files_track_opens_and_saves"]
+notes = ""
+
+[[feature]]
+id = "file.close"
+title = "Close / Close All"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.close", "file.closeAll"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_recovery.rs::launching_after_a_crash_offers_the_copies", "crates/ui-egui/src/unsaved.rs::close_all_and_quit_ask_once_per_modified_document"]
+notes = ""
+
+[[feature]]
+id = "file.save"
+title = "Save"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.save"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_saveext.rs::saves_add_the_format_extension_to_a_bare_name"]
+notes = ""
+
+[[feature]]
+id = "file.save-as"
+title = "Save As"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.saveAs"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_saveext.rs::saves_add_the_format_extension_to_a_bare_name"]
+notes = ""
+
+[[feature]]
+id = "file.save-copy"
+title = "Save a Copy"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.saveCopy"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_saveext.rs::saves_add_the_format_extension_to_a_bare_name"]
+notes = ""
+
+[[feature]]
+id = "file.save-template"
+title = "Save as Template"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "shipped"
+commands = ["file.saveAsTemplate"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/save_options.rs::save_a_copy_and_template_suggest_their_names"]
+notes = ""
+
+[[feature]]
+id = "file.revert"
+title = "Revert"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["file.revert"]
+tools = []
+evidence = ["crates/ui-egui/src/shortcut_editor.rs::assign_detects_conflicts"]
+notes = ""
+
+[[feature]]
+id = "file.data-recovery"
+title = "Data Recovery (automatic recovery copies)"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.recovery.save", "file.recovery.restore"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_recovery.rs::launching_after_a_crash_offers_the_copies", "crates/engine/src/tests_recovery.rs::a_crash_leaves_copies_that_restore_modified_and_titled"]
+notes = ""
+
+[[feature]]
+id = "file.background-save"
+title = "Background save"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "shipped"
+commands = ["file.save"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_saveext.rs::saves_add_the_format_extension_to_a_bare_name"]
+notes = ""
+
+[[feature]]
+id = "file.ai-write"
+title = "Write Illustrator .ai files (PDF-compatible)"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.saveAs"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_saveext.rs::saves_add_the_format_extension_to_a_bare_name"]
+notes = ""
+
+[[feature]]
+id = "file.ai-read"
+title = "Read Illustrator .ai files with editing data"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "partial"
+commands = ["file.open"]
+tools = []
+evidence = ["crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog"]
+notes = "Editing data read for layers, groups, colours, gradients, transparency, images, type and artboards; effects, brushes and symbols in the editing data are not read yet"
+
+[[feature]]
+id = "file.ai-legacy"
+title = "Read legacy (pre-PDF) Illustrator .ai/EPS files"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "partial"
+commands = ["file.open"]
+tools = []
+evidence = ["crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog"]
+notes = "Groups and paths of legacy files open; full legacy fidelity unverified against a corpus"
+
+[[feature]]
+id = "file.pdf-import"
+title = "Open and import PDF"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.open"]
+tools = []
+evidence = ["crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog"]
+notes = ""
+
+[[feature]]
+id = "file.pdf-export"
+title = "Save as Adobe PDF with presets"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["document.exportPdf", "pdf.preset.save"]
+tools = []
+evidence = ["crates/engine/src/tests_clipflavours.rs::exported_pdf_pastes_back_as_vectors", "crates/ui-egui/src/dialogs/pdf_presets.rs::import_and_export_go_through_files"]
+notes = ""
+
+[[feature]]
+id = "file.pdf-standards"
+title = "PDF/X-1a, PDF/X-3, PDF/X-4 output"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["document.exportPdf"]
+tools = []
+evidence = ["crates/engine/src/tests_clipflavours.rs::exported_pdf_pastes_back_as_vectors"]
+notes = ""
+
+[[feature]]
+id = "file.pdf-security"
+title = "PDF security (passwords and permissions) on export"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "planned"
+commands = ["document.exportPdf"]
+tools = []
+evidence = []
+notes = "PDF import reads secured files; export does not encrypt yet"
+
+[[feature]]
+id = "file.eps-import"
+title = "Open and place EPS"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["file.open"]
+tools = []
+evidence = ["crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog"]
+notes = ""
+
+[[feature]]
+id = "file.eps-export"
+title = "Save as EPS"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["document.exportEps"]
+tools = []
+evidence = ["crates/engine/src/cmd/fileio/tests_eps.rs::eps_covers_the_art_y_up_from_the_first_artboard_with_a_preview_and_the_document"]
+notes = ""
+
+[[feature]]
+id = "file.svg-import"
+title = "Open and import SVG/SVGZ"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.open"]
+tools = []
+evidence = ["crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog"]
+notes = ""
+
+[[feature]]
+id = "file.svg-export"
+title = "Export SVG with options"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.export.svg"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_svg.rs::a_svgz_name_writes_compressed_svg"]
+notes = ""
+
+[[feature]]
+id = "file.svg-preserve-editing"
+title = "SVG Preserve Illustrator Editing Capabilities"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "shipped"
+commands = ["file.export.svg"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_svg.rs::a_svgz_name_writes_compressed_svg"]
+notes = ""
+
+[[feature]]
+id = "file.dxf"
+title = "AutoCAD DXF import and export"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "shipped"
+commands = ["document.exportDxf"]
+tools = []
+evidence = ["crates/engine/src/cmd/fileio/tests_dxf.rs::export_writes_dxf_of_the_chosen_version"]
+notes = ""
+
+[[feature]]
+id = "file.dwg"
+title = "AutoCAD DWG import and export"
+area = "A"
+tier = "P3"
+milestone = "M4"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "No open DWG specification; DXF is the supported route"
+
+[[feature]]
+id = "file.emf-wmf"
+title = "EMF and WMF import and export"
+area = "A"
+tier = "P3"
+milestone = "M4"
+status = "shipped"
+commands = ["clipboard.importEmf"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_sysclip_emf.rs::an_emf_from_another_app_pastes_as_vectors_ahead_of_its_bitmap"]
+notes = ""
+
+[[feature]]
+id = "file.png-export"
+title = "Export PNG"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.export.png"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests_export.rs::export_as_png_picks_the_file_then_shows_png_options"]
+notes = ""
+
+[[feature]]
+id = "file.jpeg-export"
+title = "Export JPEG"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.exportAs"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_save.rs::replacing_a_file_that_opening_left_things_out_of_asks_first"]
+notes = ""
+
+[[feature]]
+id = "file.tiff-export"
+title = "Export TIFF"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["file.exportAs"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_save.rs::replacing_a_file_that_opening_left_things_out_of_asks_first"]
+notes = ""
+
+[[feature]]
+id = "file.psd-export"
+title = "Export Photoshop PSD with layers"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["file.exportAs"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_save.rs::replacing_a_file_that_opening_left_things_out_of_asks_first"]
+notes = ""
+
+[[feature]]
+id = "file.psd-place-layers"
+title = "Place PSD with layers as objects"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "planned"
+commands = ["file.place"]
+tools = []
+evidence = []
+notes = "PSD places flattened; layers as objects pending"
+
+[[feature]]
+id = "file.gif-bmp-tga"
+title = "Export GIF, BMP, Targa"
+area = "A"
+tier = "P3"
+milestone = "M4"
+status = "shipped"
+commands = ["file.exportAs"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_save.rs::replacing_a_file_that_opening_left_things_out_of_asks_first"]
+notes = ""
+
+[[feature]]
+id = "file.webp-export"
+title = "Export WebP"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "planned"
+commands = ["file.exportAs"]
+tools = []
+evidence = []
+notes = "WebP export not available yet"
+
+[[feature]]
+id = "file.export-screens"
+title = "Export for Screens (artboards and assets, multiple scales and formats)"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.exportForScreens", "document.exportForScreens"]
+tools = []
+evidence = ["crates/ui-egui/src/io.rs::export_for_screens_with_params_runs_the_engine", "crates/engine/src/tests_assets.rs::export_for_screens_writes_chosen_assets_and_keeps_its_rules"]
+notes = ""
+
+[[feature]]
+id = "file.asset-export"
+title = "Asset Export panel"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["assets.add", "assets.export"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/tests_asset_export.rs::renaming_an_asset_runs_assets_rename", "crates/engine/src/tests_assets.rs::moving_the_art_moves_the_crop"]
+notes = ""
+
+[[feature]]
+id = "file.save-for-web"
+title = "Save for Web (Legacy)"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["file.saveForWeb", "document.exportForWeb"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests_save_for_web.rs::every_view_and_format_draws", "crates/engine/src/tests_webexport.rs::slices_give_one_image_each_and_a_page"]
+notes = ""
+
+[[feature]]
+id = "file.place"
+title = "Place images and documents (linked or embedded)"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.place"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_place.rs::the_place_dialog_lists_the_files_and_loads_the_cursor_with_several"]
+notes = ""
+
+[[feature]]
+id = "file.place-options"
+title = "Place options (template, replace, show import options, crop to)"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["file.place", "links.placementOptions"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_place.rs::the_place_dialog_lists_the_files_and_loads_the_cursor_with_several", "crates/ui-egui/src/panels/tests_links.rs::placement_options_dialog_sets_the_options"]
+notes = ""
+
+[[feature]]
+id = "file.place-multiple"
+title = "Place multiple files with the loaded place gun"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "shipped"
+commands = ["file.place.queue"]
+tools = []
+evidence = ["crates/engine/src/tests_textimport.rs::text_files_report_and_queue_with_their_options"]
+notes = ""
+
+[[feature]]
+id = "file.links-panel"
+title = "Links panel (relink, update, go to, embed/unembed, link info)"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["links.relink", "links.update", "links.goTo", "links.embed", "links.unembed", "links.info"]
+tools = []
+evidence = ["crates/engine/src/tests_placed_document.rs::relink_points_a_placed_document_at_another_file", "crates/ui-egui/src/dialogs/missing_links.rs::modified_links_are_offered_for_update_when_the_preference_asks"]
+notes = ""
+
+[[feature]]
+id = "file.package"
+title = "Package (collect fonts and links)"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["file.package"]
+tools = []
+evidence = ["crates/engine/src/tests_package.rs::two_links_and_a_font_are_collected_and_relinked"]
+notes = ""
+
+[[feature]]
+id = "file.file-info"
+title = "File Info (XMP metadata)"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "shipped"
+commands = ["file.info"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/file_info.rs::file_info_draws_and_ok_is_one_undo_step"]
+notes = ""
+
+[[feature]]
+id = "file.document-setup"
+title = "Document Setup (units, bleed, transparency, type options)"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["document.setup", "file.documentSetup"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_docsetup.rs::the_bleed_draws_as_a_red_outline_around_each_artboard", "crates/ui-egui/src/dialogs/tests.rs::every_dialog_draws"]
+notes = ""
+
+[[feature]]
+id = "file.document-color-mode"
+title = "Document Color Mode (CMYK / RGB)"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["file.documentColorMode"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_save.rs::the_palette_lists_document_color_mode_once"]
+notes = ""
+
+[[feature]]
+id = "file.scripts-menu"
+title = "File › Scripts menu"
+area = "A"
+tier = "P2"
+milestone = "M4"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "No scripting surface yet (see auto.scripting); plug-ins run from the plug-in menu"
+
+[[feature]]
+id = "file.print"
+title = "Print with presets"
+area = "A"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.print", "print.presets.save"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_printps.rs::postscript_is_saved_not_printed", "crates/ui-egui/src/dialogs/tests_print_presets.rs::presets_files_import_and_export"]
+notes = ""
+
+[[feature]]
+id = "file.clipboard-interop"
+title = "Clipboard interop with other apps (PDF/SVG/bitmap flavours)"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["clipboard.flavours", "edit.paste"]
+tools = []
+evidence = ["crates/engine/src/tests_clipflavours.rs::copy_offers_flavours_by_the_preferences", "crates/ui-egui/src/tests_sysclip_emf.rs::an_emf_from_another_app_pastes_as_vectors_ahead_of_its_bitmap"]
+notes = ""
+
+[[feature]]
+id = "file.drag-drop"
+title = "Drag and drop files and art in and out"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "partial"
+commands = ["file.open"]
+tools = []
+evidence = ["crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog"]
+notes = "Desktop drops carry no pointer position (winit 0.30); dragging art out to other apps is not supported"
+
+[[feature]]
+id = "file.export-selection"
+title = "Export Selection"
+area = "A"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["document.exportSelection", "file.exportSelection"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_saveext.rs::exports_add_the_format_extension_to_a_bare_name", "crates/ui-egui/src/dialogs/tests_screen_assets.rs::export_selection_collects_the_selection_and_opens_the_assets_tab"]
+notes = ""
+
+[[feature]]
+id = "file.affinity"
+title = "Open documents from other vector apps (Affinity, CorelDRAW, Sketch, Figma)"
+area = "A"
+tier = "P3"
+milestone = "M4"
+status = "partial"
+commands = ["file.open"]
+tools = []
+evidence = ["crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog"]
+notes = "Affinity 1–3 documents open; CorelDRAW, Sketch and Figma files do not"
+
+# ==================================================================================================
+# B. Viewing, rulers, guides, grids
+# ==================================================================================================
+
+[[feature]]
+id = "view.zoom"
+title = "Zoom In/Out, Fit Artboard, Fit All, Actual Size"
+area = "B"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = ["view.zoomIn", "view.zoomOut", "view.fitArtboard", "view.fitAll", "view.actualSize"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::zoom_to_selection_centres_the_selection", "crates/ui-egui/src/chrome.rs::the_artboard_navigator_goes_to_artboards_and_fitting_shows_the_current_one"]
+notes = ""
+
+[[feature]]
+id = "view.zoom-tool"
+title = "Zoom tool (scrubby, marquee, animated zoom)"
+area = "B"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = []
+tools = ["zoom"]
+evidence = ["crates/ui-egui/src/chrome.rs::hints_name_keys_as_the_menus_do"]
+notes = ""
+
+[[feature]]
+id = "view.hand-tool"
+title = "Hand tool and spacebar panning"
+area = "B"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = []
+tools = ["hand"]
+evidence = ["crates/ui-egui/src/toolbar.rs::double_clicking_the_hand_zoom_and_transform_tools"]
+notes = ""
+
+[[feature]]
+id = "view.rotate-view"
+title = "Rotate View tool and View › Rotate View"
+area = "B"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["view.rotateReset"]
+tools = ["rotateView"]
+evidence = ["crates/ui-egui/src/canvas.rs::rulers_cover_their_length_at_any_rotation", "crates/ui-egui/src/tests_docsetup.rs::the_grid_takes_the_document_colours_also_rotated"]
+notes = ""
+
+[[feature]]
+id = "view.outline-mode"
+title = "Outline / Preview modes (per layer too)"
+area = "B"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = ["view.outline", "layer.outlineOthers"]
+tools = []
+evidence = ["crates/ui-egui/src/i18n/tests.rs::dump_source_strings", "crates/engine/src/tests_layers.rs::hide_lock_and_outline_others_and_their_all_counterparts"]
+notes = ""
+
+[[feature]]
+id = "view.gpu-preview"
+title = "GPU Preview and CPU Preview"
+area = "B"
+tier = "P1"
+milestone = "M11"
+status = "partial"
+commands = []
+tools = []
+evidence = []
+notes = "The canvas renders on a background thread with caches; a GPU path renderer is a spike pending (M5)"
+
+[[feature]]
+id = "view.overprint-preview"
+title = "Overprint Preview"
+area = "B"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["view.overprintPreview"]
+tools = []
+evidence = ["crates/engine/src/tests_newdoc.rs::ppi_overprint_preview_and_bad_params"]
+notes = ""
+
+[[feature]]
+id = "view.pixel-preview"
+title = "Pixel Preview"
+area = "B"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["view.pixelPreview"]
+tools = []
+evidence = ["crates/ui-egui/src/canvas.rs::pixel_preview_shows_the_document_pixels"]
+notes = ""
+
+[[feature]]
+id = "view.proof-colors"
+title = "Proof Setup and Proof Colors"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["view.proofSetup", "view.proofColors"]
+tools = []
+evidence = ["crates/engine/src/tests_newdoc.rs::ppi_overprint_preview_and_bad_params", "crates/engine/src/tests_colormgmt.rs::view_toggles_redraw_without_dirtying"]
+notes = ""
+
+[[feature]]
+id = "view.trim-view"
+title = "Trim View"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["view.trimView"]
+tools = []
+evidence = ["crates/render/src/tests.rs::trim_view_clips_to_artboards"]
+notes = ""
+
+[[feature]]
+id = "view.presentation-mode"
+title = "Presentation Mode"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["view.presentation"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_screenmode.rs::escape_leaves_presentation_mode"]
+notes = ""
+
+[[feature]]
+id = "view.screen-modes"
+title = "Screen modes (normal, full screen with menus, full screen)"
+area = "B"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["view.screenMode"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_screenmode.rs::f_cycles_the_screen_modes_and_leaves_presentation_mode"]
+notes = ""
+
+[[feature]]
+id = "view.rulers"
+title = "Rulers (global/artboard rulers, units, origin)"
+area = "B"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = ["view.rulers"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_nativemenu.rs::clicks_run_their_command_and_the_menus_follow"]
+notes = ""
+
+[[feature]]
+id = "view.video-rulers"
+title = "Video rulers"
+area = "B"
+tier = "P3"
+milestone = "M11"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Video rulers not implemented"
+
+[[feature]]
+id = "view.guides"
+title = "Ruler guides (show, lock, clear, make/release guides)"
+area = "B"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = ["view.guides", "view.guides.make", "view.guides.release", "view.guides.lock", "view.guides.clear"]
+tools = []
+evidence = ["crates/ui-egui/src/canvas.rs::the_selection_tool_moves_and_deletes_ruler_guides", "crates/engine/src/tests_liquify.rs::guides_are_left_alone_in_selection_mode_and_the_tool_reports_skips"]
+notes = ""
+
+[[feature]]
+id = "view.smart-guides"
+title = "Smart Guides (alignment, anchor/path labels, measurement, construction, spacing)"
+area = "B"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = ["view.smartGuides"]
+tools = []
+evidence = ["crates/engine/src/tests_draw2.rs::a_dragged_handle_snaps_to_smart_guides", "crates/engine/src/tests_prefs.rs::smart_guide_display_preferences_filter_the_overlays"]
+notes = ""
+
+[[feature]]
+id = "view.grid"
+title = "Grid, Snap to Grid"
+area = "B"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["view.grid", "view.snapToGrid"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_nativemenu.rs::a_command_keeps_a_system_key_it_is_bound_to"]
+notes = ""
+
+[[feature]]
+id = "view.pixel-grid"
+title = "Pixel grid and Snap to Pixel / pixel-perfect drawing"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["view.snapToPixel", "object.makePixelPerfect"]
+tools = []
+evidence = ["crates/engine/src/cmd/docinfo.rs::pixel_perfect_snaps_edges_and_strokes"]
+notes = ""
+
+[[feature]]
+id = "view.snap-to-point"
+title = "Snap to Point and snap to glyph"
+area = "B"
+tier = "P1"
+milestone = "M11"
+status = "partial"
+commands = ["view.snapToPoint"]
+tools = []
+evidence = []
+notes = "Snap to Point done; Snap to Glyph pending (type.snap-to-glyph)"
+
+[[feature]]
+id = "view.bounding-box"
+title = "Show/Hide Bounding Box, Edges, Corner Widget"
+area = "B"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = ["view.boundingBox", "view.edges", "view.cornerWidget"]
+tools = []
+evidence = ["crates/ui-egui/src/i18n/tests.rs::dump_source_strings", "crates/ui-egui/src/tests_nativemenu.rs::vectorcraft_gets_a_mac_app_menu"]
+notes = ""
+
+[[feature]]
+id = "view.transparency-grid"
+title = "Show Transparency Grid"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["view.transparencyGrid"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_transparencygrid.rs::the_canvas_shows_the_grid_only_for_documents_that_turn_it_on"]
+notes = ""
+
+[[feature]]
+id = "view.text-threads"
+title = "Show Text Threads"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["view.textThreads"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::last_effect_dialog_and_view_toggles"]
+notes = ""
+
+[[feature]]
+id = "view.gradient-annotator"
+title = "Show Gradient Annotator"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["view.gradientAnnotator"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::last_effect_dialog_and_view_toggles"]
+notes = ""
+
+[[feature]]
+id = "view.live-paint-gaps"
+title = "Show Live Paint Gaps"
+area = "B"
+tier = "P3"
+milestone = "M11"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Live Paint gap detection exists in options; the view toggle is pending"
+
+[[feature]]
+id = "view.new-view"
+title = "New View / Edit Views (saved views)"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["view.saved.new", "view.saved.edit"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::saved_views_store_and_restore_the_view", "crates/engine/src/cmd/views.rs::save_rename_delete_views"]
+notes = ""
+
+[[feature]]
+id = "view.new-window"
+title = "New Window and multiple windows per document"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "partial"
+commands = ["window.newWindow"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_nativemenu.rs::the_window_menu_has_the_system_items"]
+notes = "New Window exists; several windows on one document with Arrange are pending"
+
+[[feature]]
+id = "view.arrange-windows"
+title = "Window › Arrange (tile, float, consolidate)"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Tile, float and consolidate windows pending (M11)"
+
+[[feature]]
+id = "view.navigator"
+title = "Navigator panel"
+area = "B"
+tier = "P1"
+milestone = "M11"
+status = "partial"
+commands = []
+tools = []
+evidence = []
+notes = "Navigator panel exists; red view box drag fidelity unverified"
+
+[[feature]]
+id = "view.isolation-mode"
+title = "Isolation mode"
+area = "B"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = ["object.isolate", "object.exitIsolation"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_contextmenu.rs::the_menu_follows_the_selection"]
+notes = ""
+
+[[feature]]
+id = "view.perspective-grid-view"
+title = "Perspective Grid show/hide/lock"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["perspective.grid.show", "perspective.grid.lock"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests_perspective.rs::perspective_grid_view_toggles_flip_their_labels_and_checks"]
+notes = ""
+
+[[feature]]
+id = "view.document-tabs"
+title = "Tabbed documents"
+area = "B"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = ["document.activate"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_transparencygrid.rs::the_canvas_shows_the_grid_only_for_documents_that_turn_it_on"]
+notes = ""
+
+[[feature]]
+id = "view.status-bar"
+title = "Status bar (zoom, artboard navigation, info)"
+area = "B"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["view.goToArtboard"]
+tools = []
+evidence = ["crates/ui-egui/src/chrome.rs::the_artboard_navigator_goes_to_artboards_and_fitting_shows_the_current_one"]
+notes = ""
+
+# ==================================================================================================
+# C. Selection
+# ==================================================================================================
+
+[[feature]]
+id = "select.selection-tool"
+title = "Selection tool"
+area = "C"
+tier = "P0"
+milestone = "M1"
+status = "shipped"
+commands = []
+tools = ["selection"]
+evidence = ["crates/ui-egui/src/chrome.rs::hints_name_keys_as_the_menus_do"]
+notes = ""
+
+[[feature]]
+id = "select.direct-selection"
+title = "Direct Selection tool"
+area = "C"
+tier = "P0"
+milestone = "M1"
+status = "shipped"
+commands = []
+tools = ["directSelection"]
+evidence = ["crates/ui-egui/src/tests_removeanchors.rs::the_path_menu_and_bars_run_it_for_direct_selected_anchors"]
+notes = ""
+
+[[feature]]
+id = "select.group-selection"
+title = "Group Selection tool"
+area = "C"
+tier = "P1"
+milestone = "M1"
+status = "shipped"
+commands = []
+tools = ["groupSelection"]
+evidence = ["crates/ui-egui/src/canvas.rs::cmd_with_another_tool_drags_with_the_selection_tool_used_last"]
+notes = ""
+
+[[feature]]
+id = "select.magic-wand"
+title = "Magic Wand tool and panel"
+area = "C"
+tier = "P1"
+milestone = "M1"
+status = "shipped"
+commands = ["select.magicWand", "magicWand.set"]
+tools = ["magicWand"]
+evidence = ["crates/engine/src/tests_paintproxy.rs::every_selection_change_bumps_the_revision", "crates/engine/src/cmd/wand.rs::fill_tolerance_stroke_weight_and_modes"]
+notes = ""
+
+[[feature]]
+id = "select.lasso"
+title = "Lasso tool"
+area = "C"
+tier = "P1"
+milestone = "M1"
+status = "shipped"
+commands = []
+tools = ["lasso"]
+evidence = ["crates/ui-egui/src/toolbar.rs::double_clicking_a_tool_button_opens_its_options"]
+notes = ""
+
+[[feature]]
+id = "select.all"
+title = "Select All / All on Active Artboard / Deselect / Reselect / Inverse"
+area = "C"
+tier = "P0"
+milestone = "M1"
+status = "shipped"
+commands = ["select.all", "select.allOnArtboard", "select.none", "select.reselect", "select.inverse"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_saveext.rs::exports_add_the_format_extension_to_a_bare_name", "crates/ui-egui/src/canvas.rs::a_click_just_outside_the_canvas_does_not_reach_the_tool"]
+notes = ""
+
+[[feature]]
+id = "select.next-above-below"
+title = "Next Object Above / Below"
+area = "C"
+tier = "P1"
+milestone = "M1"
+status = "partial"
+commands = ["select.nextAbove", "select.nextBelow"]
+tools = []
+evidence = []
+notes = "no test cited yet"
+
+[[feature]]
+id = "select.same"
+title = "Select › Same (fill, stroke, opacity, appearance, style, symbol, font…)"
+area = "C"
+tier = "P1"
+milestone = "M1"
+status = "shipped"
+commands = ["select.same.fillColor", "select.same.strokeColor", "select.same.appearance", "select.same.fontFamily", "select.same.symbolInstance"]
+tools = []
+evidence = ["crates/engine/src/tests.rs::select_same_fill", "crates/engine/src/tests_menucmds.rs::select_same_font_size_and_fill"]
+notes = ""
+
+[[feature]]
+id = "select.object"
+title = "Select › Object (brush strokes, clipping masks, stray points, text objects, direction handles…)"
+area = "C"
+tier = "P1"
+milestone = "M1"
+status = "shipped"
+commands = ["select.object.brushStrokes", "select.object.clippingMasks", "select.object.strayPoints", "select.object.textObjects", "select.object.directionHandles"]
+tools = []
+evidence = ["crates/engine/src/tests_menucmds.rs::select_point_and_area_text", "crates/engine/src/tests_menucmds.rs::select_direction_handles_selects_all_anchors"]
+notes = ""
+
+[[feature]]
+id = "select.save-selection"
+title = "Save Selection / Edit Selection"
+area = "C"
+tier = "P2"
+milestone = "M1"
+status = "shipped"
+commands = ["select.save", "select.editSaved"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::save_selection_asks_for_a_name", "crates/ui-egui/src/menus.rs::saved_selections_are_listed_at_the_bottom_of_the_select_menu"]
+notes = ""
+
+[[feature]]
+id = "select.start-global-edit"
+title = "Start Global Edit"
+area = "C"
+tier = "P2"
+milestone = "M1"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Start Global Edit pending (M10)"
+
+[[feature]]
+id = "select.key-object"
+title = "Key object for align"
+area = "C"
+tier = "P1"
+milestone = "M1"
+status = "shipped"
+commands = ["select.key"]
+tools = []
+evidence = ["crates/ui-egui/src/canvas.rs::the_key_object_has_a_thicker_outline"]
+notes = ""
+
+[[feature]]
+id = "select.layer-select"
+title = "Select via Layers panel target circles"
+area = "C"
+tier = "P1"
+milestone = "M1"
+status = "shipped"
+commands = ["layer.target", "layer.selectAll"]
+tools = []
+evidence = ["crates/engine/src/tests_layers.rs::the_selection_column_selects_a_rows_art_and_shift_adds_or_removes_it"]
+notes = ""
+
+[[feature]]
+id = "select.marquee-modifiers"
+title = "Marquee and Shift/Alt modifiers for selections"
+area = "C"
+tier = "P1"
+milestone = "M1"
+status = "shipped"
+commands = ["select.toggle"]
+tools = ["selection"]
+evidence = ["crates/engine/tests/command_sweep.rs::structured_junk", "crates/ui-egui/src/chrome.rs::hints_name_keys_as_the_menus_do"]
+notes = ""
+
+# ==================================================================================================
+# D. Drawing and shape tools
+# ==================================================================================================
+
+[[feature]]
+id = "draw.pen"
+title = "Pen tool"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["path.create", "path.appendAnchor"]
+tools = ["pen"]
+evidence = ["crates/ui-egui/src/canvas.rs::a_huge_selection_shows_its_bounds_instead_of_every_outline", "crates/tools/src/pen.rs::alt_pressed_mid_drag_keeps_the_incoming_handle"]
+notes = ""
+
+[[feature]]
+id = "draw.add-delete-anchor"
+title = "Add and Delete Anchor Point tools"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["path.insertAnchor", "path.removeAnchor"]
+tools = ["addAnchor", "deleteAnchor"]
+evidence = ["crates/engine/src/tests_draw2.rs::removing_an_anchor_refits_a_split_curve_and_undo_restores_it", "crates/engine/src/tests_draw2.rs::draw2_commands_reject_bad_params"]
+notes = ""
+
+[[feature]]
+id = "draw.anchor-point-tool"
+title = "Anchor Point (convert) tool"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["path.convertAnchor"]
+tools = ["anchorPoint"]
+evidence = ["crates/engine/src/tests_draw2.rs::draw2_commands_reject_bad_params", "crates/engine/src/tests_draw2.rs::anchor_point_tool_converts"]
+notes = ""
+
+[[feature]]
+id = "draw.curvature"
+title = "Curvature tool"
+area = "D"
+tier = "P1"
+milestone = "M2"
+status = "shipped"
+commands = ["path.curvature"]
+tools = ["curvature"]
+evidence = ["crates/engine/src/tests_draw2.rs::draw2_commands_reject_bad_params", "crates/ui-egui/src/shortcuts.rs::shifted_punctuation_shortcuts_work_as_typed"]
+notes = ""
+
+[[feature]]
+id = "draw.pencil"
+title = "Pencil tool with fidelity options"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["path.freehand"]
+tools = ["pencil"]
+evidence = ["crates/engine/src/tests_brushsym.rs::continuing_a_stroke_joins_its_pressure", "crates/ui-egui/src/canvas.rs::pen_and_touch_input_drive_the_tools_with_their_pressure"]
+notes = ""
+
+[[feature]]
+id = "draw.smooth"
+title = "Smooth tool"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = ["path.smoothRegion"]
+tools = ["smooth"]
+evidence = ["crates/engine/tests/command_sweep.rs::structured_junk", "crates/ui-egui/src/tests_removeanchors.rs::the_control_bar_converts_connects_and_cuts_selected_anchors"]
+notes = ""
+
+[[feature]]
+id = "draw.path-eraser"
+title = "Path Eraser tool"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = ["path.eraseSegments"]
+tools = ["pathEraser"]
+evidence = ["crates/engine/src/tests_draw2.rs::path_eraser_splits_selected_path"]
+notes = ""
+
+[[feature]]
+id = "draw.join-tool"
+title = "Join tool"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = ["path.joinScrub"]
+tools = ["join"]
+evidence = ["crates/engine/src/tests_draw2.rs::draw2_commands_reject_bad_params", "crates/ui-egui/src/panels/stroke.rs::while_typing_the_panel_strokes_the_selected_characters"]
+notes = ""
+
+[[feature]]
+id = "draw.paintbrush"
+title = "Paintbrush tool"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["brush.freehand"]
+tools = ["paintbrush"]
+evidence = ["crates/engine/src/tests_brushsym.rs::brush_freehand_paints_with_a_brush_in_one_step", "crates/ui-egui/src/chrome.rs::hints_name_keys_as_the_menus_do"]
+notes = ""
+
+[[feature]]
+id = "draw.blob-brush"
+title = "Blob Brush tool"
+area = "D"
+tier = "P1"
+milestone = "M2"
+status = "shipped"
+commands = ["path.blob"]
+tools = ["blobBrush"]
+evidence = ["crates/engine/src/tests_draw2.rs::draw2_commands_reject_bad_params", "crates/ui-egui/src/tests_synthetic.rs::a_typed_key_holds_its_modifiers_for_its_text"]
+notes = ""
+
+[[feature]]
+id = "draw.shaper"
+title = "Shaper tool and Shaper Groups"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "partial"
+commands = ["shaper.scribble", "shaper.release", "shaper.expand"]
+tools = ["shaper"]
+evidence = ["crates/ui-egui/src/canvas.rs::shaper_selection_highlights_only_the_visible_result", "crates/engine/src/tests_shaper.rs::shaper_source_move_resize_native_roundtrip_and_release_preserve_live_art"]
+notes = "Shaper Groups and gestures work; the construction-mode widget and gesture refinements remain"
+
+[[feature]]
+id = "draw.line"
+title = "Line Segment tool"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.line"]
+tools = ["lineSegment"]
+evidence = ["crates/ui-egui/src/canvas.rs::shaper_selection_highlights_only_the_visible_result", "crates/ui-egui/src/dialogs/tests.rs::kinds_map_to_their_dialogs"]
+notes = ""
+
+[[feature]]
+id = "draw.arc"
+title = "Arc tool"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.arc"]
+tools = ["arc"]
+evidence = ["crates/tools/src/draw2/family.rs::click_opens_dialog_and_arc_shift", "crates/ui-egui/src/dialogs/envelope.rs::reset_mesh_dialog_switches_the_kind_and_cancel_rolls_back"]
+notes = ""
+
+[[feature]]
+id = "draw.spiral"
+title = "Spiral tool"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.spiral"]
+tools = ["spiral"]
+evidence = ["crates/engine/src/tests_newdoc.rs::ppi_overprint_preview_and_bad_params"]
+notes = ""
+
+[[feature]]
+id = "draw.rect-grid"
+title = "Rectangular Grid tool"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.rectangularGrid"]
+tools = ["rectangularGrid"]
+evidence = ["crates/tools/src/draw2/family.rs::grid_drag_and_arrows", "crates/ui-egui/src/shortcuts.rs::arrows_while_dragging_a_grid_change_its_rows_and_columns"]
+notes = ""
+
+[[feature]]
+id = "draw.polar-grid"
+title = "Polar Grid tool"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.polarGrid"]
+tools = ["polarGrid"]
+evidence = ["crates/engine/src/tests_persp_text.rs::flare_spiral_and_polar_grid_draw_in_perspective"]
+notes = ""
+
+[[feature]]
+id = "draw.rectangle"
+title = "Rectangle tool (click for dialog)"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.rectangle"]
+tools = ["rectangle"]
+evidence = ["crates/ui-egui/src/graphics.rs::losing_the_graphics_keeps_recovery_copies_at_once", "crates/ui-egui/src/chrome.rs::hints_name_keys_as_the_menus_do"]
+notes = ""
+
+[[feature]]
+id = "draw.rounded-rectangle"
+title = "Rounded Rectangle tool"
+area = "D"
+tier = "P1"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.rectangle"]
+tools = ["roundedRectangle"]
+evidence = ["crates/ui-egui/src/graphics.rs::losing_the_graphics_keeps_recovery_copies_at_once", "crates/ui-egui/src/toolbar.rs::right_clicking_a_tool_group_opens_its_flyout"]
+notes = ""
+
+[[feature]]
+id = "draw.ellipse"
+title = "Ellipse tool"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.ellipse"]
+tools = ["ellipse"]
+evidence = ["crates/ui-egui/src/tests_sysclip_emf.rs::an_emf_from_another_app_pastes_as_vectors_ahead_of_its_bitmap", "crates/ui-egui/src/toolbar.rs::window_float_tools_floats_and_puts_back_a_group"]
+notes = ""
+
+[[feature]]
+id = "draw.polygon"
+title = "Polygon tool"
+area = "D"
+tier = "P1"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.polygon"]
+tools = ["polygon"]
+evidence = ["crates/engine/src/tests_livecorners.rs::a_polygon_keeps_its_corners_through_sides_and_scales", "crates/ui-egui/src/panels/attributes.rs::panel_shows_the_selections_attributes"]
+notes = ""
+
+[[feature]]
+id = "draw.star"
+title = "Star tool"
+area = "D"
+tier = "P1"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.star"]
+tools = ["star"]
+evidence = ["crates/ui-egui/src/canvas.rs::a_star_shows_corner_widgets_with_direct_selection", "crates/ui-egui/src/toolbar.rs::window_float_tools_floats_and_puts_back_a_group"]
+notes = ""
+
+[[feature]]
+id = "draw.flare"
+title = "Flare tool"
+area = "D"
+tier = "P3"
+milestone = "M2"
+status = "shipped"
+commands = ["shape.flare"]
+tools = ["flare"]
+evidence = ["crates/engine/src/tests_persp_text.rs::flare_spiral_and_polar_grid_draw_in_perspective", "crates/engine/src/tests.rs::flare_tool_two_step_gesture_is_one_undo"]
+notes = ""
+
+[[feature]]
+id = "draw.live-shapes"
+title = "Live Shapes (Shape properties, transform widgets)"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["object.setLiveShape", "object.expandShape"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/corners.rs::ui_corners_opens_on_the_selection_and_leaves_mixed_values_alone", "crates/engine/src/tests_menucmds.rs::convert_rotated_rectangle_and_ellipse"]
+notes = ""
+
+[[feature]]
+id = "draw.live-corners"
+title = "Live Corners widget and Corners dialog"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["ui.corners"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/corners.rs::ui_corners_opens_on_the_selection_and_leaves_mixed_values_alone"]
+notes = ""
+
+[[feature]]
+id = "draw.eraser"
+title = "Eraser tool"
+area = "D"
+tier = "P1"
+milestone = "M2"
+status = "shipped"
+commands = ["path.eraseRegion"]
+tools = ["eraser"]
+evidence = ["crates/engine/src/tests_draw2.rs::eraser_removes_small_shape_entirely", "crates/ui-egui/src/dialogs/freehand.rs::each_tool_shows_its_options_and_ok_sets_them"]
+notes = ""
+
+[[feature]]
+id = "draw.scissors"
+title = "Scissors tool"
+area = "D"
+tier = "P1"
+milestone = "M2"
+status = "shipped"
+commands = ["path.split"]
+tools = ["scissors"]
+evidence = ["crates/engine/src/tests_draw2.rs::scissors_splits_open_path_in_two", "crates/engine/src/tests_draw2.rs::scissors_opens_closed_path"]
+notes = ""
+
+[[feature]]
+id = "draw.knife"
+title = "Knife tool"
+area = "D"
+tier = "P1"
+milestone = "M2"
+status = "shipped"
+commands = ["path.knife"]
+tools = ["knife"]
+evidence = ["crates/engine/src/tests_draw2.rs::knife_partial_cut_does_nothing", "crates/ui-egui/src/tests_cut.rs::the_cut_tools_have_their_own_icons_and_toolbar_slot"]
+notes = ""
+
+[[feature]]
+id = "draw.symbol-sprayer"
+title = "Symbolism tools (sprayer, shifter, scruncher, sizer, spinner, stainer, screener, styler)"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = ["symbol.spray", "symbol.adjust"]
+tools = ["symbolSprayer", "symbolShifter", "symbolScruncher", "symbolSizer", "symbolSpinner", "symbolStainer", "symbolScreener", "symbolStyler"]
+evidence = ["crates/engine/src/tests_brushsym.rs::sprayer_command_creates_a_symbol_set_and_alt_removes", "crates/engine/src/tests_brushsym.rs::symbolism_adjustments"]
+notes = ""
+
+[[feature]]
+id = "draw.mesh-tool"
+title = "Mesh tool"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = ["object.mesh.addLine"]
+tools = ["mesh"]
+evidence = ["crates/engine/src/tests_live.rs::mesh_add_line_and_delete_point", "crates/ui-egui/src/dialogs/expand.rs::opens_with_what_applies_and_ok_expands_the_gradient_to_a_mesh"]
+notes = ""
+
+[[feature]]
+id = "draw.gradient-tool"
+title = "Gradient tool"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["paint.setGradientGeom"]
+tools = ["gradient"]
+evidence = ["crates/engine/src/tests_gradient.rs::gradient_vector_follows_the_active_proxy_or_an_item_index", "crates/ui-egui/src/toolbar.rs::double_clicking_a_tool_button_opens_its_options"]
+notes = ""
+
+[[feature]]
+id = "draw.eyedropper"
+title = "Eyedropper tool with options"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["paint.sampleColor", "eyedropper.setOptions"]
+tools = ["eyedropper"]
+evidence = ["crates/engine/src/tests_gradpanel.rs::sample_color_with_a_stop_recolours_that_stop_in_one_undo_step", "crates/engine/src/tests_gradpanel.rs::eyedropper_options_choose_what_copy_from_takes"]
+notes = ""
+
+[[feature]]
+id = "draw.measure"
+title = "Measure tool and Info panel"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = []
+tools = ["measure"]
+evidence = ["crates/ui-egui/src/shortcut_editor.rs::global_override_reaches_shortcut_of_and_tools"]
+notes = ""
+
+[[feature]]
+id = "draw.blend-tool"
+title = "Blend tool"
+area = "D"
+tier = "P1"
+milestone = "M2"
+status = "shipped"
+commands = ["object.blend.make"]
+tools = ["blend"]
+evidence = ["crates/ui-egui/src/dialogs/blend_options.rs::opens_on_the_blend_previews_and_keeps_smooth_color", "crates/ui-egui/src/panels/layers.rs::target_circle_fills_for_non_default_transparency"]
+notes = ""
+
+[[feature]]
+id = "draw.live-paint-bucket"
+title = "Live Paint Bucket tool"
+area = "D"
+tier = "P1"
+milestone = "M2"
+status = "shipped"
+commands = ["livePaint.fill", "livePaint.strokeEdge"]
+tools = ["livePaintBucket"]
+evidence = ["crates/engine/src/tests_paintproxy.rs::live_paint_and_appearance_items_feed_recent_colours", "crates/engine/src/tests_build.rs::live_paint_stroke_edge"]
+notes = ""
+
+[[feature]]
+id = "draw.live-paint-selection"
+title = "Live Paint Selection tool"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = []
+tools = ["livePaintSelection"]
+evidence = ["crates/engine/src/tests_build.rs::live_paint_bucket_tool_fills_face"]
+notes = ""
+
+[[feature]]
+id = "draw.slice-tools"
+title = "Slice and Slice Selection tools"
+area = "D"
+tier = "P3"
+milestone = "M2"
+status = "shipped"
+commands = ["object.slice.create"]
+tools = ["slice", "sliceSelection"]
+evidence = ["crates/ui-egui/src/tests_slices.rs::the_slice_tools_are_real_tools"]
+notes = ""
+
+[[feature]]
+id = "draw.artboard-tool"
+title = "Artboard tool"
+area = "D"
+tier = "P0"
+milestone = "M2"
+status = "shipped"
+commands = ["artboard.new", "artboard.move"]
+tools = ["artboard"]
+evidence = ["crates/ui-egui/src/chrome.rs::the_artboard_navigator_goes_to_artboards_and_fitting_shows_the_current_one", "crates/engine/src/tests_menucmds.rs::artboard_guides_go_with_their_artboard"]
+notes = ""
+
+[[feature]]
+id = "draw.graph-tools"
+title = "Graph tools (column, stacked, bar, line, area, scatter, pie, radar)"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "shipped"
+commands = ["graph.create"]
+tools = ["columnGraph", "barGraph", "lineGraph", "areaGraph", "scatterGraph", "pieGraph", "radarGraph"]
+evidence = ["crates/engine/src/tests_liquify.rs::type_symbols_graphs_and_live_contents_are_left_alone_and_reported", "crates/tools/src/extra.rs::create_covers_both"]
+notes = ""
+
+[[feature]]
+id = "draw.touch-type"
+title = "Touch Type tool"
+area = "D"
+tier = "P3"
+milestone = "M2"
+status = "planned"
+commands = []
+tools = ["touchType"]
+evidence = []
+notes = "Touch Type tool is in the toolbar but not implemented"
+
+[[feature]]
+id = "draw.dimension"
+title = "Dimension tool (dimension lines and labels)"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Dimension tool (2025) not implemented"
+
+[[feature]]
+id = "draw.pen-pressure"
+title = "Pen pressure, tilt and rotation for drawing tools"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "partial"
+commands = []
+tools = ["paintbrush"]
+evidence = ["crates/ui-egui/src/chrome.rs::hints_name_keys_as_the_menus_do"]
+notes = "Pressure drives Calligraphic brushes, Blob Brush and Liquify; tilt, bearing and rotation need tablet input beyond pressure"
+
+[[feature]]
+id = "draw.intertwine"
+title = "Intertwine (Object › Intertwine)"
+area = "D"
+tier = "P2"
+milestone = "M2"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Object › Intertwine not implemented"
+
+# ==================================================================================================
+# E. Path editing and construction
+# ==================================================================================================
+
+[[feature]]
+id = "path.join"
+title = "Join (Object › Path › Join)"
+area = "E"
+tier = "P0"
+milestone = "M6"
+status = "shipped"
+commands = ["path.join"]
+tools = []
+evidence = ["crates/engine/src/tests_draw2.rs::join_takes_the_paths_and_the_ends_to_join"]
+notes = ""
+
+[[feature]]
+id = "path.average"
+title = "Average"
+area = "E"
+tier = "P1"
+milestone = "M6"
+status = "shipped"
+commands = ["path.average"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::menu_parameter_dialogs_are_compact"]
+notes = ""
+
+[[feature]]
+id = "path.outline-stroke"
+title = "Outline Stroke"
+area = "E"
+tier = "P0"
+milestone = "M6"
+status = "shipped"
+commands = ["object.path.outlineStroke"]
+tools = []
+evidence = ["crates/engine/src/tests_strokegradient.rs::outline_stroke_and_expand_keep_the_picture"]
+notes = ""
+
+[[feature]]
+id = "path.offset-path"
+title = "Offset Path"
+area = "E"
+tier = "P0"
+milestone = "M6"
+status = "shipped"
+commands = ["object.path.offsetPath"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::menu_parameter_dialogs_are_compact"]
+notes = ""
+
+[[feature]]
+id = "path.reverse-direction"
+title = "Reverse Path Direction"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "shipped"
+commands = ["path.reverse"]
+tools = []
+evidence = ["crates/engine/src/tests_attributes.rs::reverse_path_direction_on_and_off_set_the_winding"]
+notes = ""
+
+[[feature]]
+id = "path.simplify"
+title = "Simplify (auto and dialog)"
+area = "E"
+tier = "P1"
+milestone = "M6"
+status = "shipped"
+commands = ["object.path.simplify"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::every_dialog_draws"]
+notes = ""
+
+[[feature]]
+id = "path.add-anchors"
+title = "Add Anchor Points"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "shipped"
+commands = ["object.path.addAnchorPoints"]
+tools = []
+evidence = ["crates/engine/src/tests_pathops.rs::add_anchor_points_doubles"]
+notes = ""
+
+[[feature]]
+id = "path.remove-anchors"
+title = "Remove Anchor Points"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "shipped"
+commands = ["path.removeAnchors"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_removeanchors.rs::the_path_menu_and_bars_run_it_for_direct_selected_anchors"]
+notes = ""
+
+[[feature]]
+id = "path.divide-below"
+title = "Divide Objects Below"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "shipped"
+commands = ["object.path.divideObjectsBelow"]
+tools = []
+evidence = ["crates/engine/src/tests_pathops.rs::divide_objects_below_cuts"]
+notes = ""
+
+[[feature]]
+id = "path.split-grid"
+title = "Split Into Grid"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "shipped"
+commands = ["object.path.splitIntoGrid"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::menu_parameter_dialogs_are_compact"]
+notes = ""
+
+[[feature]]
+id = "path.clean-up"
+title = "Clean Up (stray points, unpainted objects, empty text)"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "shipped"
+commands = ["object.path.cleanUp"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::a_form_dialog_is_as_wide_as_its_fields_not_the_window"]
+notes = ""
+
+[[feature]]
+id = "path.cut-at-anchors"
+title = "Cut path at selected anchor points"
+area = "E"
+tier = "P1"
+milestone = "M6"
+status = "shipped"
+commands = ["path.cutAtAnchors"]
+tools = []
+evidence = ["crates/engine/src/tests_draw2.rs::cut_at_anchors_splits_paths_and_leaves_one_end_selected"]
+notes = ""
+
+[[feature]]
+id = "path.convert-anchors"
+title = "Convert anchors (corner/smooth) from the Control bar"
+area = "E"
+tier = "P0"
+milestone = "M6"
+status = "shipped"
+commands = ["path.convertAnchors"]
+tools = []
+evidence = ["crates/engine/src/tests_draw2.rs::convert_anchors_turns_the_selected_anchors_corner_or_smooth"]
+notes = ""
+
+[[feature]]
+id = "path.compound"
+title = "Make/Release Compound Path"
+area = "E"
+tier = "P0"
+milestone = "M6"
+status = "shipped"
+commands = ["object.compoundPath.make", "object.compoundPath.release"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_contextmenu.rs::every_context_label_is_a_menu_string"]
+notes = ""
+
+[[feature]]
+id = "path.pathfinder"
+title = "Pathfinder panel (unite, minus front, intersect, exclude, divide, trim, merge, crop, outline, minus back)"
+area = "E"
+tier = "P0"
+milestone = "M6"
+status = "shipped"
+commands = ["object.pathfinder.unite", "object.pathfinder.minusFront", "object.pathfinder.intersect", "object.pathfinder.exclude", "object.pathfinder.divide", "object.pathfinder.trim", "object.pathfinder.merge", "object.pathfinder.crop", "object.pathfinder.outline", "object.pathfinder.minusBack"]
+tools = []
+evidence = ["crates/engine/src/tests_pathops.rs::unite_two_rects", "crates/engine/src/tests_pathops.rs::minus_front_keeps_back_style"]
+notes = ""
+
+[[feature]]
+id = "path.shape-modes"
+title = "Compound shapes (Alt+shape modes, Expand)"
+area = "E"
+tier = "P1"
+milestone = "M6"
+status = "partial"
+commands = ["object.pathfinder.unite"]
+tools = []
+evidence = ["crates/engine/src/tests_pathops.rs::unite_two_rects"]
+notes = "Shape modes apply destructively; live compound shapes (Alt+shape mode, Expand) pending"
+
+[[feature]]
+id = "path.pathfinder-options"
+title = "Pathfinder Options (precision, remove redundant points)"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "partial"
+commands = ["object.pathfinder.unite"]
+tools = []
+evidence = ["crates/engine/src/tests_pathops.rs::unite_two_rects"]
+notes = "Precision is fixed; Pathfinder Options dialog pending"
+
+[[feature]]
+id = "path.shape-builder"
+title = "Shape Builder tool"
+area = "E"
+tier = "P0"
+milestone = "M6"
+status = "shipped"
+commands = ["shapeBuilder.merge"]
+tools = ["shapeBuilder"]
+evidence = ["crates/engine/src/tests_build.rs::shape_builder_drag_merges_touched_regions", "crates/engine/src/tests_build.rs::shape_builder_tool_drives_the_command"]
+notes = ""
+
+[[feature]]
+id = "path.width-tool"
+title = "Width tool and width profiles"
+area = "E"
+tier = "P1"
+milestone = "M6"
+status = "shipped"
+commands = ["stroke.widthPoint.set", "stroke.widthProfile.set"]
+tools = ["width"]
+evidence = ["crates/ui-egui/src/tests_distortkeys.rs::delete_and_backspace_remove_the_selected_width_point_then_clear", "crates/engine/src/tests_widthtool.rs::width_point_commands_given_a_member_edit_the_compound"]
+notes = ""
+
+[[feature]]
+id = "path.reshape"
+title = "Reshape tool"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "shipped"
+commands = ["path.reshape"]
+tools = ["reshape"]
+evidence = ["crates/engine/src/tests.rs::reshape_moves_the_grabbed_point_and_its_neighbourhood", "crates/tools/src/extra.rs::create_covers_both"]
+notes = ""
+
+[[feature]]
+id = "path.smart-anchors"
+title = "Anchor point handles and handle display options"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "shipped"
+commands = ["path.setHandle"]
+tools = []
+evidence = ["crates/engine/src/tests_draw2.rs::convert_anchors_turns_the_selected_anchors_corner_or_smooth"]
+notes = ""
+
+[[feature]]
+id = "path.expand"
+title = "Expand / Expand Appearance"
+area = "E"
+tier = "P0"
+milestone = "M6"
+status = "shipped"
+commands = ["object.expand", "effect.expandAppearance"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/expand.rs::opens_with_what_applies_and_ok_expands_the_gradient_to_a_mesh", "crates/ui-egui/src/menus.rs::expand_appearance_is_an_object_menu_item_only"]
+notes = ""
+
+[[feature]]
+id = "path.flatten-transparency"
+title = "Flatten Transparency"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "shipped"
+commands = ["object.flattenTransparency"]
+tools = []
+evidence = ["crates/engine/src/tests_cmykflatten.rs::cmyk_documents_flatten_to_ink_colours"]
+notes = ""
+
+[[feature]]
+id = "path.rasterize"
+title = "Object › Rasterize"
+area = "E"
+tier = "P1"
+milestone = "M6"
+status = "shipped"
+commands = ["object.rasterize"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/raster_effects.rs::raster_effects_settings_draw_and_ok_is_one_undo_step"]
+notes = ""
+
+[[feature]]
+id = "path.live-paint"
+title = "Live Paint groups (make, merge, release, expand, gap options)"
+area = "E"
+tier = "P1"
+milestone = "M6"
+status = "shipped"
+commands = ["livePaint.make", "livePaint.merge", "livePaint.release", "livePaint.expand"]
+tools = []
+evidence = ["crates/engine/src/tests_paintproxy.rs::live_paint_and_appearance_items_feed_recent_colours", "crates/engine/src/tests_build.rs::live_paint_merge_keeps_paint_and_adds_faces"]
+notes = ""
+
+[[feature]]
+id = "path.trim-marks"
+title = "Create Trim Marks"
+area = "E"
+tier = "P2"
+milestone = "M6"
+status = "shipped"
+commands = ["object.createTrimMarks"]
+tools = []
+evidence = ["crates/engine/src/tests_registration.rs::trim_marks_print_on_every_plate"]
+notes = ""
+
+[[feature]]
+id = "path.crop-marks-effect"
+title = "Effect › Crop Marks"
+area = "E"
+tier = "P3"
+milestone = "M6"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/engine/src/tests_registration.rs::crop_marks_effect_follows_the_object", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+# ==================================================================================================
+# F. Transform, arrange, distort
+# ==================================================================================================
+
+[[feature]]
+id = "xform.move"
+title = "Move dialog and arrow-key nudge"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.move", "object.nudge"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/tests_units.rs::dialog_lengths_show_in_the_general_unit", "crates/engine/src/tests_menucmds.rs::ruler_guides_select_move_and_delete"]
+notes = ""
+
+[[feature]]
+id = "xform.rotate"
+title = "Rotate tool and dialog"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.rotate"]
+tools = ["rotate"]
+evidence = ["crates/ui-egui/src/panels/transform.rs::rotation_field_shows_the_angle_the_box_keeps", "crates/ui-egui/src/chrome.rs::hints_name_keys_as_the_menus_do"]
+notes = ""
+
+[[feature]]
+id = "xform.reflect"
+title = "Reflect tool and dialog"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.reflect"]
+tools = ["reflect"]
+evidence = ["crates/ui-egui/src/dialogs/tests_modal.rs::form_dialog_axes_are_dropdowns", "crates/ui-egui/src/toolbar.rs::double_clicking_the_hand_zoom_and_transform_tools"]
+notes = ""
+
+[[feature]]
+id = "xform.scale"
+title = "Scale tool and dialog"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.scale"]
+tools = ["scale"]
+evidence = ["crates/ui-egui/src/dialogs/transform.rs::scale_options_start_from_and_update_the_preferences", "crates/ui-egui/src/tests_printtiling.rs::the_canvas_numbers_the_print_tiles_of_print_preview"]
+notes = ""
+
+[[feature]]
+id = "xform.shear"
+title = "Shear tool and dialog"
+area = "F"
+tier = "P1"
+milestone = "M8"
+status = "shipped"
+commands = ["object.shear"]
+tools = ["shear"]
+evidence = ["crates/ui-egui/src/dialogs/tests_modal.rs::form_dialog_axes_are_dropdowns", "crates/ui-egui/src/toolbar.rs::double_clicking_the_hand_zoom_and_transform_tools"]
+notes = ""
+
+[[feature]]
+id = "xform.free-transform"
+title = "Free Transform tool (constrain, perspective, free distort)"
+area = "F"
+tier = "P1"
+milestone = "M8"
+status = "shipped"
+commands = ["object.distort"]
+tools = ["freeTransform"]
+evidence = ["crates/engine/src/tests_gradient.rs::free_distort_maps_gradients_once", "crates/engine/src/tests_xform.rs::free_transform_distort_mode_via_pointer"]
+notes = ""
+
+[[feature]]
+id = "xform.transform-each"
+title = "Transform Each"
+area = "F"
+tier = "P1"
+milestone = "M8"
+status = "shipped"
+commands = ["object.transformEach"]
+tools = []
+evidence = ["crates/engine/src/tests_scalestrokes.rs::relative_distances_and_fill_and_stroke_effects"]
+notes = ""
+
+[[feature]]
+id = "xform.transform-again"
+title = "Transform Again"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.transformAgain"]
+tools = []
+evidence = ["crates/engine/src/tests.rs::transform_and_again"]
+notes = ""
+
+[[feature]]
+id = "xform.reset-bbox"
+title = "Reset Bounding Box"
+area = "F"
+tier = "P2"
+milestone = "M8"
+status = "shipped"
+commands = ["object.resetBoundingBox"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/transform.rs::rotation_field_shows_the_angle_the_box_keeps"]
+notes = ""
+
+[[feature]]
+id = "xform.transform-panel"
+title = "Transform panel (reference point, scale strokes/corners, rotation)"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.transform", "object.setBounds"]
+tools = []
+evidence = ["crates/engine/src/tests_pattern.rs::repeat_moves_with_transform", "crates/ui-egui/src/panels/tests_constrain.rs::the_link_is_a_preference_agents_can_read_and_set"]
+notes = ""
+
+[[feature]]
+id = "xform.align"
+title = "Align panel (align objects, distribute objects, distribute spacing, align to)"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.align", "object.distribute", "object.distributeSpacing"]
+tools = []
+evidence = ["crates/engine/src/tests.rs::align_left", "crates/engine/src/tests.rs::a_click_sets_the_key_object_that_align_and_spacing_keep_still"]
+notes = ""
+
+[[feature]]
+id = "xform.arrange"
+title = "Arrange (bring to front, forward, backward, send to back, send to layer)"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.arrange.bringToFront", "object.arrange.bringForward", "object.arrange.sendBackward", "object.arrange.sendToBack", "object.arrange.sendToCurrentLayer"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_contextmenu.rs::the_menu_follows_the_selection", "crates/engine/src/tests.rs::arrange_order"]
+notes = ""
+
+[[feature]]
+id = "xform.group"
+title = "Group / Ungroup"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.group", "object.ungroup"]
+tools = []
+evidence = ["crates/ui-egui/src/palette.rs::entries_are_built_once_per_language_and_match_english_shown_text_and_ids", "crates/engine/src/tests_bboxrotate.rs::groups_type_and_multiple_selections_keep_their_angle"]
+notes = ""
+
+[[feature]]
+id = "xform.lock-hide"
+title = "Lock / Unlock All, Hide / Show All"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.lock", "object.unlockAll", "object.hide", "object.showAll"]
+tools = []
+evidence = ["crates/engine/src/tests.rs::layers_and_lock_hide"]
+notes = ""
+
+[[feature]]
+id = "xform.puppet-warp"
+title = "Puppet Warp tool"
+area = "F"
+tier = "P2"
+milestone = "M8"
+status = "shipped"
+commands = ["object.puppetWarp"]
+tools = ["puppetWarp"]
+evidence = ["crates/engine/src/tests_distort.rs::puppet_warp_satisfies_pins_and_keeps_area", "crates/ui-egui/src/tests_distortkeys.rs::delete_and_backspace_remove_the_selected_pin_then_clear"]
+notes = ""
+
+[[feature]]
+id = "xform.liquify"
+title = "Liquify tools (width, warp, twirl, pucker, bloat, scallop, crystallize, wrinkle)"
+area = "F"
+tier = "P2"
+milestone = "M8"
+status = "shipped"
+commands = ["object.liquify"]
+tools = ["warp", "twirl", "pucker", "bloat", "scallop", "crystallize", "wrinkle"]
+evidence = ["crates/ui-egui/src/canvas.rs::pen_and_touch_input_drive_the_tools_with_their_pressure", "crates/ui-egui/src/dialogs/liquify.rs::each_tool_shows_its_options_and_ok_sets_them"]
+notes = ""
+
+[[feature]]
+id = "xform.envelope"
+title = "Envelope Distort (warp, mesh, top object, edit contents, options, expand)"
+area = "F"
+tier = "P1"
+milestone = "M8"
+status = "shipped"
+commands = ["object.envelope.makeWithWarp", "object.envelope.makeWithMesh", "object.envelope.makeWithTopObject", "object.envelope.editContents", "object.envelope.expand"]
+tools = []
+evidence = ["crates/ui-egui/src/i18n/tests.rs::dump_source_strings", "crates/engine/src/tests_envelope.rs::options_with_nothing_selected_are_the_defaults_for_new_envelopes"]
+notes = ""
+
+[[feature]]
+id = "xform.blend"
+title = "Blends (make, release, options, expand, replace spine, reverse)"
+area = "F"
+tier = "P1"
+milestone = "M8"
+status = "shipped"
+commands = ["object.blend.make", "object.blend.release", "object.blend.options", "object.blend.expand", "object.blend.replaceSpine"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/blend_options.rs::opens_on_the_blend_previews_and_keeps_smooth_color", "crates/engine/src/tests_blendspine.rs::release_keeps_the_spine_as_a_path"]
+notes = ""
+
+[[feature]]
+id = "xform.perspective-grid"
+title = "Perspective Grid and Perspective Selection tools"
+area = "F"
+tier = "P2"
+milestone = "M8"
+status = "shipped"
+commands = ["perspective.grid.define", "perspective.attach"]
+tools = ["perspectiveGrid", "perspectiveSelection"]
+evidence = ["crates/engine/src/tests_perspgrid.rs::define_sets_the_grid_from_the_dialog_fields_in_one_undo_step", "crates/ui-egui/src/shortcuts.rs::digit_keys_reach_a_dragging_tool_once_per_press"]
+notes = ""
+
+[[feature]]
+id = "xform.repeat"
+title = "Repeat (radial, grid, mirror)"
+area = "F"
+tier = "P1"
+milestone = "M8"
+status = "shipped"
+commands = ["object.repeat.radial", "object.repeat.grid", "object.repeat.mirror"]
+tools = []
+evidence = ["crates/engine/src/tests_pattern.rs::save_load_roundtrip_keeps_patterns_and_repeats", "crates/engine/src/tests_pattern.rs::grid_repeat_and_options"]
+notes = ""
+
+[[feature]]
+id = "xform.clipping-mask"
+title = "Clipping masks (make, release, edit contents, draw inside)"
+area = "F"
+tier = "P0"
+milestone = "M8"
+status = "shipped"
+commands = ["object.clippingMask.make", "object.clippingMask.release", "object.clippingMask.editContents"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_contextmenu.rs::every_context_label_is_a_menu_string", "crates/engine/src/tests_clip.rs::compound_clip_keeps_its_hole_and_release_gives_the_compound_back"]
+notes = ""
+
+[[feature]]
+id = "xform.draw-modes"
+title = "Draw Normal / Behind / Inside"
+area = "F"
+tier = "P1"
+milestone = "M8"
+status = "shipped"
+commands = ["view.drawMode"]
+tools = []
+evidence = ["crates/engine/src/tests_file.rs::draw_behind_and_inside"]
+notes = ""
+
+# ==================================================================================================
+# G. Paint, colour and transparency
+# ==================================================================================================
+
+[[feature]]
+id = "paint.fill-stroke"
+title = "Fill and stroke (toolbar swatches, swap, default, none)"
+area = "G"
+tier = "P0"
+milestone = "M3"
+status = "shipped"
+commands = ["paint.setFill", "paint.setStroke", "paint.swap", "paint.default", "paint.none"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_overprint.rs::overprint_black_menu_opens_the_dialog", "crates/engine/src/tests.rs::fill_and_stroke_commands"]
+notes = ""
+
+[[feature]]
+id = "paint.swatches"
+title = "Swatches panel (process, global, spot, groups, tints)"
+area = "G"
+tier = "P0"
+milestone = "M3"
+status = "shipped"
+commands = ["swatch.new", "swatch.newGroup", "swatch.edit"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/color.rs::a_global_colour_shows_tint_mode_and_the_t_slider_sets_its_tint", "crates/engine/src/tests_swatchlib.rs::save_and_load_round_trip_keeps_cmyk_spot_and_groups"]
+notes = ""
+
+[[feature]]
+id = "paint.swatch-libraries"
+title = "Swatch libraries (open, save, .ase/.aco exchange)"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["swatch.library.list", "swatch.library.save", "swatch.library.load"]
+tools = []
+evidence = ["crates/engine/src/tests_swatchlib.rs::list_and_get_every_builtin_library", "crates/engine/src/tests_swatchlib.rs::save_and_load_round_trip_keeps_cmyk_spot_and_groups"]
+notes = ""
+
+[[feature]]
+id = "paint.color-books"
+title = "Color books (spot colour libraries)"
+area = "G"
+tier = "P2"
+milestone = "M3"
+status = "shipped"
+commands = ["swatch.library.load"]
+tools = []
+evidence = ["crates/engine/src/tests_swatchlib.rs::save_and_load_round_trip_keeps_cmyk_spot_and_groups"]
+notes = ""
+
+[[feature]]
+id = "paint.color-panel"
+title = "Color panel (Grayscale, RGB, HSB, CMYK, Web Safe, spectrum)"
+area = "G"
+tier = "P0"
+milestone = "M3"
+status = "shipped"
+commands = ["paint.setFill"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_overprint.rs::overprint_black_menu_opens_the_dialog"]
+notes = ""
+
+[[feature]]
+id = "paint.color-picker"
+title = "Color Picker"
+area = "G"
+tier = "P0"
+milestone = "M3"
+status = "shipped"
+commands = ["ui.colorPicker"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::dialogs_do_not_stretch_to_the_screen"]
+notes = ""
+
+[[feature]]
+id = "paint.color-guide"
+title = "Color Guide panel and harmony rules"
+area = "G"
+tier = "P2"
+milestone = "M3"
+status = "shipped"
+commands = ["color.harmony"]
+tools = []
+evidence = ["crates/engine/src/tests_colorguide.rs::harmony_query_returns_the_group_and_its_grid"]
+notes = ""
+
+[[feature]]
+id = "paint.color-themes"
+title = "Color Themes panel"
+area = "G"
+tier = "P3"
+milestone = "M3"
+status = "shipped"
+commands = ["colorTheme.list", "colorTheme.save"]
+tools = []
+evidence = ["crates/engine/src/tests_colorthemes.rs::themes_save_list_edit_and_delete", "crates/ui-egui/src/panels/color_themes.rs::my_themes_edit_add_to_swatches_and_delete"]
+notes = ""
+
+[[feature]]
+id = "paint.recolor"
+title = "Recolor Artwork (color wheel, edit, assign, presets)"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["recolor.apply", "ui.recolorDialog"]
+tools = []
+evidence = ["crates/engine/src/tests_editcolors.rs::invert_recolours_an_embedded_image", "crates/ui-egui/src/tests_recolor.rs::the_dialog_reduces_previews_and_applies_as_one_undo_step"]
+notes = ""
+
+[[feature]]
+id = "paint.edit-colors"
+title = "Edit › Edit Colors (blend, invert, adjust, convert, saturate, overprint black)"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["edit.colors.invert", "edit.colors.adjustBalance", "edit.colors.toCMYK", "edit.colors.saturate", "edit.colors.blendFrontToBack", "edit.colors.overprintBlack"]
+tools = []
+evidence = ["crates/engine/src/tests_editcolors.rs::edit_colors_reach_mesh_points", "crates/engine/src/tests_editcolors.rs::adjust_balance_modes"]
+notes = ""
+
+[[feature]]
+id = "paint.gradient-panel"
+title = "Gradient panel (linear, radial, aspect, angle, stops, opacity)"
+area = "G"
+tier = "P0"
+milestone = "M3"
+status = "shipped"
+commands = ["paint.editGradient"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/gradient_stop.rs::on_a_freeform_gradient_it_edits_the_selected_point"]
+notes = ""
+
+[[feature]]
+id = "paint.freeform-gradient"
+title = "Freeform gradients (points and lines)"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["paint.freeform.addPoint", "paint.freeform.addLine"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/gradient_stop.rs::on_a_freeform_gradient_it_edits_the_selected_point", "crates/engine/src/tests_freeform.rs::freeform_paints_survive_saving_and_old_files_load"]
+notes = ""
+
+[[feature]]
+id = "paint.gradient-stroke"
+title = "Gradients on strokes (within, along, across)"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["paint.editGradient"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/gradient_stop.rs::on_a_freeform_gradient_it_edits_the_selected_point"]
+notes = ""
+
+[[feature]]
+id = "paint.gradient-mesh"
+title = "Gradient mesh (create, edit, expand)"
+area = "G"
+tier = "P2"
+milestone = "M3"
+status = "shipped"
+commands = ["object.mesh.create", "object.mesh.expand"]
+tools = ["mesh"]
+evidence = ["crates/engine/src/tests_editcolors.rs::balance_previews_and_commits_one_step", "crates/engine/src/tests_live.rs::mesh_expand_to_flat_pieces"]
+notes = ""
+
+[[feature]]
+id = "paint.patterns"
+title = "Pattern swatches and Pattern Options editing"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["object.pattern.make", "pattern.options"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/pattern_options.rs::show_swatch_bounds_toggles_the_pattern_option", "crates/engine/src/tests_pattern.rs::edit_then_cancel_restores_definition"]
+notes = ""
+
+[[feature]]
+id = "paint.stroke-panel"
+title = "Stroke panel (weight, cap, join, miter, align, dashes, arrowheads, profile)"
+area = "G"
+tier = "P0"
+milestone = "M3"
+status = "shipped"
+commands = ["stroke.set"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/tests_strokeux.rs::weights_and_dashes_show_in_the_stroke_unit_everywhere"]
+notes = ""
+
+[[feature]]
+id = "paint.variable-width"
+title = "Variable width profiles"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["stroke.widthProfile.set", "stroke.widthProfile.add"]
+tools = []
+evidence = ["crates/engine/src/tests_widthtool.rs::width_point_commands_given_a_member_edit_the_compound", "crates/ui-egui/src/panels/tests_strokedepth.rs::menu_saves_deletes_and_resets_profiles"]
+notes = ""
+
+[[feature]]
+id = "paint.transparency"
+title = "Transparency panel (opacity, blend modes)"
+area = "G"
+tier = "P0"
+milestone = "M3"
+status = "shipped"
+commands = ["transparency.set"]
+tools = []
+evidence = ["crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "paint.opacity-mask"
+title = "Opacity masks (make, release, clip, invert, edit)"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["transparency.makeOpacityMask", "transparency.releaseOpacityMask", "transparency.editOpacityMask"]
+tools = []
+evidence = ["crates/ui-egui/src/chrome.rs::the_tab_title_names_the_opacity_mask_while_it_is_edited", "crates/ui-egui/src/panels/transparency.rs::panel_in_mask_editing_mode_shows_and_edits_the_masked_object"]
+notes = ""
+
+[[feature]]
+id = "paint.knockout-isolate"
+title = "Knockout group and isolate blending"
+area = "G"
+tier = "P2"
+milestone = "M3"
+status = "shipped"
+commands = ["transparency.set"]
+tools = []
+evidence = ["crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "paint.attributes"
+title = "Attributes panel (overprint, image map, URL, show center)"
+area = "G"
+tier = "P2"
+milestone = "M3"
+status = "shipped"
+commands = ["attributes.set"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/attributes.rs::panel_shows_the_selections_attributes"]
+notes = ""
+
+[[feature]]
+id = "paint.overprint"
+title = "Overprint fill/stroke and overprint preview"
+area = "G"
+tier = "P2"
+milestone = "M3"
+status = "shipped"
+commands = ["object.setOverprint", "view.overprintPreview"]
+tools = []
+evidence = ["crates/engine/src/tests_overprint.rs::cyan_stroke_overprinting_yellow_previews_green_under_the_stroke_only", "crates/engine/src/tests_newdoc.rs::ppi_overprint_preview_and_bad_params"]
+notes = ""
+
+[[feature]]
+id = "paint.color-management"
+title = "Color management (Color Settings, Assign Profile, ICC)"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["edit.colorSettings", "edit.assignProfile"]
+tools = []
+evidence = ["crates/engine/tests/color_settings.rs::color_settings_lists_profiles_and_validates", "crates/engine/src/tests_colormgmt.rs::assign_profile_is_stored_and_undoable"]
+notes = ""
+
+[[feature]]
+id = "paint.separations-preview"
+title = "Separations Preview panel"
+area = "G"
+tier = "P2"
+milestone = "M3"
+status = "shipped"
+commands = ["view.separationsPreview"]
+tools = []
+evidence = ["crates/engine/src/tests_colormgmt.rs::spot_colours_get_their_own_plate"]
+notes = ""
+
+[[feature]]
+id = "paint.global-colors"
+title = "Global colours updating everywhere"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["swatch.new"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/color.rs::a_global_colour_shows_tint_mode_and_the_t_slider_sets_its_tint"]
+notes = ""
+
+[[feature]]
+id = "paint.registration"
+title = "Registration colour"
+area = "G"
+tier = "P2"
+milestone = "M3"
+status = "shipped"
+commands = ["swatch.new"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/color.rs::a_global_colour_shows_tint_mode_and_the_t_slider_sets_its_tint"]
+notes = ""
+
+[[feature]]
+id = "paint.lab-spot"
+title = "Lab values for spot colours"
+area = "G"
+tier = "P3"
+milestone = "M3"
+status = "shipped"
+commands = ["swatch.spotOptions"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/swatches.rs::lab_spot_tiles_show_the_colour_the_spot_colors_options_pick"]
+notes = ""
+
+[[feature]]
+id = "paint.eyedropper-sample"
+title = "Eyedropper sampling appearance and screen colours"
+area = "G"
+tier = "P1"
+milestone = "M3"
+status = "shipped"
+commands = ["appearance.copyFrom", "paint.sampleColor"]
+tools = ["eyedropper"]
+evidence = ["crates/engine/src/tests_gradpanel.rs::the_eyedropper_places_copied_gradients_on_the_target", "crates/engine/src/tests_gradpanel.rs::sample_color_with_a_stop_recolours_that_stop_in_one_undo_step"]
+notes = ""
+
+# ==================================================================================================
+# H. Appearance and effects
+# ==================================================================================================
+
+[[feature]]
+id = "fx.appearance-panel"
+title = "Appearance panel (multiple fills/strokes, effects, duplicate, clear, reduce to basic)"
+area = "H"
+tier = "P0"
+milestone = "M9"
+status = "shipped"
+commands = ["appearance.addFill", "appearance.addStroke", "appearance.clear", "appearance.reduceToBasic", "appearance.duplicateItem"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/appearance.rs::groups_show_a_contents_row_and_type_a_characters_row_in_their_slot", "crates/ui-egui/src/panels/layers.rs::target_circle_fills_for_non_default_transparency"]
+notes = ""
+
+[[feature]]
+id = "fx.graphic-styles"
+title = "Graphic Styles panel and libraries"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "partial"
+commands = ["graphicStyle.new", "graphicStyle.apply", "graphicStyle.libraries"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/appearance.rs::with_nothing_selected_it_lists_what_new_art_gets", "crates/engine/src/tests_stylelib.rs::builtin_libraries_are_listed_with_original_styles_using_catalogued_effects"]
+notes = "Graphic Styles panel works; bundled graphic style libraries are few"
+
+[[feature]]
+id = "fx.effect-menu-apply-last"
+title = "Apply Last Effect / Last Effect"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.applyLast", "effect.last"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::last_effect_dialog_and_view_toggles"]
+notes = ""
+
+[[feature]]
+id = "fx.document-raster-settings"
+title = "Document Raster Effects Settings"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "shipped"
+commands = ["document.rasterEffectsSettings"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/raster_effects.rs::raster_effects_settings_draw_and_ok_is_one_undo_step"]
+notes = ""
+
+[[feature]]
+id = "fx.3d-classic"
+title = "3D (Classic): Extrude & Bevel, Revolve, Rotate"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "3D (Classic) not implemented (largest single gap, M9)"
+
+[[feature]]
+id = "fx.3d-materials"
+title = "3D and Materials panel (Extrude, Revolve, Inflate, Rotate, materials, lighting)"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "3D and Materials not implemented"
+
+[[feature]]
+id = "fx.3d-render"
+title = "3D ray-traced rendering"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Ray-traced 3D rendering not implemented"
+
+[[feature]]
+id = "fx.3d-map-art"
+title = "Map Art onto 3D surfaces"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Map Art not implemented"
+
+[[feature]]
+id = "fx.convert-to-shape"
+title = "Effect › Convert to Shape (rectangle, rounded rectangle, ellipse)"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply", "object.shape.convertToShape"]
+tools = []
+evidence = ["crates/effects/src/tests.rs::convert_to_shape_sizes", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.distort-transform"
+title = "Effect › Distort & Transform (free distort, pucker & bloat, roughen, transform, tweak, twist, zig zag)"
+area = "H"
+tier = "P0"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::last_effect_dialog_and_view_toggles", "crates/ui-egui/src/dialogs/effect.rs::fields_that_pick_a_value_are_dropdowns_of_its_values"]
+notes = ""
+
+[[feature]]
+id = "fx.path-effects"
+title = "Effect › Path (offset path, outline object, outline stroke)"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "partial"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/effect.rs::fields_that_pick_a_value_are_dropdowns_of_its_values", "crates/effects/src/tests.rs::outline_stroke_uses_context_stroke"]
+notes = "Offset Path and Outline Stroke done; Outline Object pending"
+
+[[feature]]
+id = "fx.pathfinder-effects"
+title = "Effect › Pathfinder"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "partial"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/effects/src/group.rs::shape_modes_follow_the_pathfinder_panel", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = "Add, Intersect, Exclude, Subtract, Minus Back, Divide, Trim, Merge, Crop and Outline done; Hard Mix, Soft Mix and Trap pending"
+
+[[feature]]
+id = "fx.rasterize-effect"
+title = "Effect › Rasterize"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "partial"
+commands = ["object.rasterize"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/raster_effects.rs::raster_effects_settings_draw_and_ok_is_one_undo_step"]
+notes = "Object › Rasterize done; Effect › Rasterize as a live effect pending"
+
+[[feature]]
+id = "fx.stylize-drop-shadow"
+title = "Effect › Stylize › Drop Shadow"
+area = "H"
+tier = "P0"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/appearance.rs::labels", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.stylize-feather"
+title = "Effect › Stylize › Feather"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/effects/src/tests.rs::raster_effects_parse_and_outset", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.stylize-glows"
+title = "Effect › Stylize › Inner Glow and Outer Glow"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/effects/src/tests.rs::raster_effects_parse_and_outset", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.stylize-round-corners"
+title = "Effect › Stylize › Round Corners"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/effects/src/tests.rs::open_paths_stay_open", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.stylize-scribble"
+title = "Effect › Stylize › Scribble"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/effects/src/tests.rs::scribble_produces_filled_outline_inside_bounds", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.svg-filters"
+title = "Effect › SVG Filters (apply, import, edit)"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "SVG Filters effect not implemented (SVG import keeps filters)"
+
+[[feature]]
+id = "fx.warp"
+title = "Effect › Warp (15 styles)"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/effects/src/tests.rs::open_paths_stay_open", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.effect-gallery"
+title = "Effect Gallery"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "partial"
+commands = ["effect.gallery", "effect.setStack"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/effect_gallery/tests.rs::gallery_preview_cancel_and_unchanged_ok_keep_history_and_redo", "crates/ui-egui/src/dialogs/effect_gallery/tests.rs::sparse_native_stack_is_unchanged_by_opening_the_gallery"]
+notes = "Gallery edits the supported filter stack with preview; zoomable previews and filter thumbnails remain"
+
+[[feature]]
+id = "fx.ps-blur-gaussian"
+title = "Effect › Blur › Gaussian Blur"
+area = "H"
+tier = "P1"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/effect_gallery/tests.rs::gallery_preview_cancel_and_unchanged_ok_keep_history_and_redo", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.ps-blur-radial"
+title = "Effect › Blur › Radial Blur"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::raster_filter_dialogs_preview_and_apply", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.ps-blur-smart"
+title = "Effect › Blur › Smart Blur"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "partial"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::raster_filter_dialogs_preview_and_apply", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = "Normal mode only; Edge Only and Overlay Edge pending"
+
+[[feature]]
+id = "fx.ps-sharpen-unsharp-mask"
+title = "Effect › Sharpen › Unsharp Mask"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::raster_filter_dialogs_preview_and_apply", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.ps-stylize-glowing-edges"
+title = "Effect › Stylize › Glowing Edges"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/effects/src/pixel/tests.rs::params_take_defaults_and_stay_in_range", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
+notes = ""
+
+[[feature]]
+id = "fx.ps-artistic-colored-pencil"
+title = "Effect › Artistic › Colored Pencil"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-cutout"
+title = "Effect › Artistic › Cutout"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-dry-brush"
+title = "Effect › Artistic › Dry Brush"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-film-grain"
+title = "Effect › Artistic › Film Grain"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-fresco"
+title = "Effect › Artistic › Fresco"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-neon-glow"
+title = "Effect › Artistic › Neon Glow"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-paint-daubs"
+title = "Effect › Artistic › Paint Daubs"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-palette-knife"
+title = "Effect › Artistic › Palette Knife"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-plastic-wrap"
+title = "Effect › Artistic › Plastic Wrap"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-poster-edges"
+title = "Effect › Artistic › Poster Edges"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-rough-pastels"
+title = "Effect › Artistic › Rough Pastels"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-smudge-stick"
+title = "Effect › Artistic › Smudge Stick"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-sponge"
+title = "Effect › Artistic › Sponge"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-underpainting"
+title = "Effect › Artistic › Underpainting"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-artistic-watercolor"
+title = "Effect › Artistic › Watercolor"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-brush-strokes-accented-edges"
+title = "Effect › Brush Strokes › Accented Edges"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-brush-strokes-angled-strokes"
+title = "Effect › Brush Strokes › Angled Strokes"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-brush-strokes-crosshatch"
+title = "Effect › Brush Strokes › Crosshatch"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-brush-strokes-dark-strokes"
+title = "Effect › Brush Strokes › Dark Strokes"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-brush-strokes-ink-outlines"
+title = "Effect › Brush Strokes › Ink Outlines"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-brush-strokes-spatter"
+title = "Effect › Brush Strokes › Spatter"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-brush-strokes-sprayed-strokes"
+title = "Effect › Brush Strokes › Sprayed Strokes"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-brush-strokes-sumi-e"
+title = "Effect › Brush Strokes › Sumi-e"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-distort-diffuse-glow"
+title = "Effect › Distort › Diffuse Glow"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-distort-glass"
+title = "Effect › Distort › Glass"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-distort-ocean-ripple"
+title = "Effect › Distort › Ocean Ripple"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-pixelate-color-halftone"
+title = "Effect › Pixelate › Color Halftone"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-pixelate-crystallize"
+title = "Effect › Pixelate › Crystallize"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-pixelate-mezzotint"
+title = "Effect › Pixelate › Mezzotint"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-pixelate-pointillize"
+title = "Effect › Pixelate › Pointillize"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-bas-relief"
+title = "Effect › Sketch › Bas Relief"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-chalk-charcoal"
+title = "Effect › Sketch › Chalk & Charcoal"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-charcoal"
+title = "Effect › Sketch › Charcoal"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-chrome"
+title = "Effect › Sketch › Chrome"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-conte-crayon"
+title = "Effect › Sketch › Conté Crayon"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-graphic-pen"
+title = "Effect › Sketch › Graphic Pen"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-halftone-pattern"
+title = "Effect › Sketch › Halftone Pattern"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-note-paper"
+title = "Effect › Sketch › Note Paper"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-photocopy"
+title = "Effect › Sketch › Photocopy"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-plaster"
+title = "Effect › Sketch › Plaster"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-reticulation"
+title = "Effect › Sketch › Reticulation"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-stamp"
+title = "Effect › Sketch › Stamp"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-torn-edges"
+title = "Effect › Sketch › Torn Edges"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-sketch-water-paper"
+title = "Effect › Sketch › Water Paper"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-texture-craquelure"
+title = "Effect › Texture › Craquelure"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-texture-grain"
+title = "Effect › Texture › Grain"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-texture-mosaic-tiles"
+title = "Effect › Texture › Mosaic Tiles"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-texture-patchwork"
+title = "Effect › Texture › Patchwork"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-texture-stained-glass"
+title = "Effect › Texture › Stained Glass"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-texture-texturizer"
+title = "Effect › Texture › Texturizer"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-video-de-interlace"
+title = "Effect › Video › De-Interlace"
+area = "H"
+tier = "P3"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.ps-video-ntsc-colors"
+title = "Effect › Video › NTSC Colors"
+area = "H"
+tier = "P3"
+milestone = "M9"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Photoshop-style raster filter not in the effect catalogue yet"
+
+[[feature]]
+id = "fx.color-adjustments"
+title = "Color adjustments on raster/effects (Adjust Colors, Convert to Grayscale…)"
+area = "H"
+tier = "P2"
+milestone = "M9"
+status = "shipped"
+commands = ["effect.apply"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_adjust.rs::levels_and_curves_show_their_channel_and_values", "crates/ui-egui/src/tests_adjust.rs::an_adjustment_dialog_has_sliders_and_previews_live"]
+notes = ""
+
+# ==================================================================================================
+# I. Type
+# ==================================================================================================
+
+[[feature]]
+id = "type.point"
+title = "Point type"
+area = "I"
+tier = "P0"
+milestone = "M7"
+status = "shipped"
+commands = ["text.create"]
+tools = ["type"]
+evidence = ["crates/ui-egui/src/tests_pdfoutput.rs::output_and_advanced_choices_reach_the_pdf", "crates/ui-egui/src/canvas.rs::double_clicking_type_with_the_selection_tool_puts_the_caret_there"]
+notes = ""
+
+[[feature]]
+id = "type.area"
+title = "Area type and Area Type Options"
+area = "I"
+tier = "P0"
+milestone = "M7"
+status = "shipped"
+commands = ["text.areaOptions", "text.createInPath"]
+tools = ["areaType"]
+evidence = ["crates/ui-egui/src/dialogs/command.rs::area_type_options_choices_match_the_params_doc", "crates/ui-egui/src/tests_pathtype.rs::type_on_a_path_options_keep_the_type_where_it_is"]
+notes = ""
+
+[[feature]]
+id = "type.on-path"
+title = "Type on a path and Type on a Path Options/effects"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "shipped"
+commands = ["type.pathOptions"]
+tools = ["typeOnPath"]
+evidence = ["crates/ui-egui/src/tests_pathtype.rs::type_on_a_path_options_keep_the_type_where_it_is", "crates/ui-egui/src/toolbar.rs::type_button_long_press_selects_vertical_type_in_both_layouts"]
+notes = ""
+
+[[feature]]
+id = "type.vertical"
+title = "Vertical type (point, area, on a path)"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "partial"
+commands = ["type.orientation.vertical"]
+tools = ["verticalType", "verticalAreaType", "verticalTypeOnPath"]
+evidence = ["crates/engine/src/cmd/typecmd.rs::vertical_point_type_keeps_its_anchor_on_the_column_centre_line", "crates/ui-egui/src/toolbar.rs::type_button_long_press_selects_vertical_type_in_both_layouts"]
+notes = "Vertical point, area and path type with kinsoku and tate-chu-yoko; proportional vertical metrics open"
+
+[[feature]]
+id = "type.threading"
+title = "Threaded text (link, unthread, remove threading)"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "shipped"
+commands = ["text.thread.create", "text.thread.releaseSelection", "text.thread.remove"]
+tools = []
+evidence = ["crates/engine/src/tests_paragraphs.rs::threaded_frames_keep_each_paragraphs_style", "crates/engine/src/cmd/threads.rs::release_and_remove"]
+notes = ""
+
+[[feature]]
+id = "type.character-panel"
+title = "Character panel (font, size, leading, kerning, tracking, scale, baseline, rotation, caps, language)"
+area = "I"
+tier = "P0"
+milestone = "M7"
+status = "shipped"
+commands = ["text.setStyle", "text.setRangeStyle"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::names_in_menus_are_not_interface_labels", "crates/engine/src/tests.rs::given_targets_are_used_as_given_and_range_style_takes_the_selected_type"]
+notes = ""
+
+[[feature]]
+id = "type.paragraph-panel"
+title = "Paragraph panel (alignment, indents, space before/after, hyphenation)"
+area = "I"
+tier = "P0"
+milestone = "M7"
+status = "shipped"
+commands = ["text.setFormat"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/paragraph.rs::alignment_buttons_show_the_resolved_alignment_and_direction_sets_it"]
+notes = ""
+
+[[feature]]
+id = "type.styles"
+title = "Character and Paragraph Styles"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "shipped"
+commands = ["charStyle.new", "paraStyle.new", "charStyle.apply", "paraStyle.apply"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/text_styles.rs::panels_draw_and_apply_headless", "crates/engine/src/tests_paragraphs.rs::paragraph_style_applies_to_one_paragraph"]
+notes = ""
+
+[[feature]]
+id = "type.opentype"
+title = "OpenType panel and features"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "shipped"
+commands = ["text.setRangeStyle"]
+tools = []
+evidence = ["crates/engine/src/tests.rs::given_targets_are_used_as_given_and_range_style_takes_the_selected_type"]
+notes = ""
+
+[[feature]]
+id = "type.glyphs"
+title = "Glyphs panel"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "shipped"
+commands = ["type.insert"]
+tools = []
+evidence = ["crates/engine/src/tests_menucmds.rs::placeholder_and_insert_characters"]
+notes = ""
+
+[[feature]]
+id = "type.tabs"
+title = "Tabs panel"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "shipped"
+commands = ["text.tabs.set"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/tabs.rs::panel_draws_empty_with_text_and_with_stops"]
+notes = ""
+
+[[feature]]
+id = "type.tab-leaders"
+title = "Tab leaders"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "planned"
+commands = ["text.tabs.set"]
+tools = []
+evidence = []
+notes = "Tab leaders pending"
+
+[[feature]]
+id = "type.find-replace"
+title = "Find and Replace"
+area = "I"
+tier = "P0"
+milestone = "M7"
+status = "shipped"
+commands = ["edit.findReplace", "edit.findNext"]
+tools = []
+evidence = ["crates/engine/src/tests_menucmds.rs::find_and_replace_options", "crates/engine/src/tests_menucmds.rs::find_next_cycles_through_text_objects"]
+notes = ""
+
+[[feature]]
+id = "type.find-font"
+title = "Find Font / Replace missing fonts"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "shipped"
+commands = ["type.findFont", "text.replaceFont"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::every_dialog_draws", "crates/engine/src/cmd/fonts.rs::list_flag_missing_replace_and_select"]
+notes = ""
+
+[[feature]]
+id = "type.spell-check"
+title = "Check Spelling and Edit Custom Dictionary"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Check Spelling needs an openly licensed dictionary; pending"
+
+[[feature]]
+id = "type.change-case"
+title = "Change Case"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "shipped"
+commands = ["type.changeCase"]
+tools = []
+evidence = ["crates/engine/src/tests_menucmds.rs::change_case_variants"]
+notes = ""
+
+[[feature]]
+id = "type.smart-punctuation"
+title = "Smart Punctuation"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "shipped"
+commands = ["type.smartPunctuation"]
+tools = []
+evidence = ["crates/engine/src/tests_docsetup.rs::smart_punctuation_uses_the_document_quotes"]
+notes = ""
+
+[[feature]]
+id = "type.create-outlines"
+title = "Create Outlines"
+area = "I"
+tier = "P0"
+milestone = "M7"
+status = "shipped"
+commands = ["type.createOutlines"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::every_bound_menu_command_exists"]
+notes = ""
+
+[[feature]]
+id = "type.text-wrap"
+title = "Text Wrap"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "shipped"
+commands = ["object.textWrap.make", "object.textWrap.options"]
+tools = []
+evidence = ["crates/engine/src/cmd/textwrap.rs::area_type_wraps_around_objects_above_and_follows_edits"]
+notes = ""
+
+[[feature]]
+id = "type.fit-headline"
+title = "Fit Headline"
+area = "I"
+tier = "P3"
+milestone = "M7"
+status = "shipped"
+commands = ["type.fitHeadline"]
+tools = []
+evidence = ["crates/engine/src/tests_textedit.rs::fit_headline_fills_the_frame_width"]
+notes = ""
+
+[[feature]]
+id = "type.optical-margin"
+title = "Optical Margin Alignment"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Optical Margin Alignment pending"
+
+[[feature]]
+id = "type.hyphenation-justification"
+title = "Hyphenation and Justification settings"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "partial"
+commands = ["text.setFormat"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/paragraph.rs::alignment_buttons_show_the_resolved_alignment_and_direction_sets_it"]
+notes = "Hyphenate on/off done; full Hyphenation and Justification dialogs pending"
+
+[[feature]]
+id = "type.composer"
+title = "Every-line / Single-line Composer"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "shipped"
+commands = ["text.setFormat"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/paragraph.rs::alignment_buttons_show_the_resolved_alignment_and_direction_sets_it"]
+notes = ""
+
+[[feature]]
+id = "type.show-hidden"
+title = "Show Hidden Characters"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "shipped"
+commands = ["type.hiddenCharacters"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::last_effect_dialog_and_view_toggles"]
+notes = ""
+
+[[feature]]
+id = "type.font-menu"
+title = "Font menu with preview, favourites, filters, recent fonts"
+area = "I"
+tier = "P0"
+milestone = "M7"
+status = "shipped"
+commands = ["text.fontList"]
+tools = []
+evidence = ["crates/engine/src/tests_fontlist.rs::the_font_list_names_every_available_family_with_its_styles"]
+notes = ""
+
+[[feature]]
+id = "type.variable-fonts"
+title = "Variable fonts (axes)"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "partial"
+commands = ["text.fontList"]
+tools = []
+evidence = ["crates/engine/src/tests_fontlist.rs::the_font_list_names_every_available_family_with_its_styles"]
+notes = "Named instances listed as styles; free axis sliders pending"
+
+[[feature]]
+id = "type.snap-to-glyph"
+title = "Snap to Glyph"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Snap to Glyph pending"
+
+[[feature]]
+id = "type.touch-type"
+title = "Touch Type characters as objects"
+area = "I"
+tier = "P3"
+milestone = "M7"
+status = "planned"
+commands = []
+tools = ["touchType"]
+evidence = []
+notes = "Touch Type pending"
+
+[[feature]]
+id = "type.legacy-text"
+title = "Legacy text update"
+area = "I"
+tier = "P3"
+milestone = "M7"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Legacy text update pending"
+
+[[feature]]
+id = "type.bidi"
+title = "Middle Eastern / bidirectional type"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "shipped"
+commands = ["text.setFormat"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/paragraph.rs::alignment_buttons_show_the_resolved_alignment_and_direction_sets_it"]
+notes = ""
+
+[[feature]]
+id = "type.cjk"
+title = "CJK composition (kinsoku, mojikumi, tate-chu-yoko, ruby, warichu)"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "partial"
+commands = ["text.setFormat"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/paragraph.rs::alignment_buttons_show_the_resolved_alignment_and_direction_sets_it"]
+notes = "Kinsoku, tate-chu-yoko and burasagari done; ruby, mojikumi, warichu pending"
+
+[[feature]]
+id = "type.fill-placeholder"
+title = "Fill with Placeholder Text"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "shipped"
+commands = ["type.fillPlaceholder"]
+tools = []
+evidence = ["crates/engine/src/tests_menucmds.rs::placeholder_and_insert_characters"]
+notes = ""
+
+[[feature]]
+id = "type.insert-special"
+title = "Insert special characters, white space and break characters"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "shipped"
+commands = ["type.insert"]
+tools = []
+evidence = ["crates/engine/src/tests_menucmds.rs::placeholder_and_insert_characters"]
+notes = ""
+
+[[feature]]
+id = "type.area-auto-size"
+title = "Auto-sizing area type"
+area = "I"
+tier = "P1"
+milestone = "M7"
+status = "shipped"
+commands = ["text.areaOptions"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/command.rs::area_type_options_choices_match_the_params_doc"]
+notes = ""
+
+[[feature]]
+id = "type.text-import"
+title = "Place text files (TXT, RTF, DOCX)"
+area = "I"
+tier = "P2"
+milestone = "M7"
+status = "partial"
+commands = ["file.place"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_place.rs::the_place_dialog_lists_the_files_and_loads_the_cursor_with_several"]
+notes = "Plain text places; RTF and DOCX pending"
+
+[[feature]]
+id = "type.export-text"
+title = "Export text"
+area = "I"
+tier = "P3"
+milestone = "M7"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Export as text pending (clipboard text export exists)"
+
+[[feature]]
+id = "type.type-object-selection"
+title = "Type object selection by path only"
+area = "I"
+tier = "P3"
+milestone = "M7"
+status = "shipped"
+commands = ["prefs.set"]
+tools = []
+evidence = ["crates/ui-egui/src/chrome.rs::the_zoom_hint_follows_animated_zoom"]
+notes = ""
+
+# ==================================================================================================
+# J. Brushes, symbols, patterns
+# ==================================================================================================
+
+[[feature]]
+id = "brush.panel"
+title = "Brushes panel"
+area = "J"
+tier = "P0"
+milestone = "M10"
+status = "shipped"
+commands = ["brush.list", "brush.apply", "brush.new"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/tests_effectedit.rs::stroke_rows_note_dashes_brushes_and_show_all_hidden_attributes", "crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection"]
+notes = ""
+
+[[feature]]
+id = "brush.calligraphic"
+title = "Calligraphic brushes and options"
+area = "J"
+tier = "P1"
+milestone = "M10"
+status = "shipped"
+commands = ["brush.options"]
+tools = []
+evidence = ["crates/engine/src/tests_brushsym.rs::brush_options_rename_duplicate_and_delete_update_strokes"]
+notes = ""
+
+[[feature]]
+id = "brush.scatter"
+title = "Scatter brushes and options"
+area = "J"
+tier = "P1"
+milestone = "M10"
+status = "partial"
+commands = ["brush.new"]
+tools = []
+evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection"]
+notes = "Scatter brushes draw; Scatter Brush Options depth pending"
+
+[[feature]]
+id = "brush.art"
+title = "Art brushes and options"
+area = "J"
+tier = "P1"
+milestone = "M10"
+status = "partial"
+commands = ["brush.new"]
+tools = []
+evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection"]
+notes = "Art brushes draw; Art Brush Options depth pending"
+
+[[feature]]
+id = "brush.bristle"
+title = "Bristle brushes and options"
+area = "J"
+tier = "P2"
+milestone = "M10"
+status = "shipped"
+commands = ["brush.options"]
+tools = []
+evidence = ["crates/engine/src/tests_brushsym.rs::brush_options_rename_duplicate_and_delete_update_strokes"]
+notes = ""
+
+[[feature]]
+id = "brush.pattern"
+title = "Pattern brushes and options"
+area = "J"
+tier = "P1"
+milestone = "M10"
+status = "partial"
+commands = ["brush.new"]
+tools = []
+evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection"]
+notes = "Pattern brushes draw; Pattern Brush Options depth pending"
+
+[[feature]]
+id = "brush.libraries"
+title = "Brush libraries (bundled, open, save)"
+area = "J"
+tier = "P2"
+milestone = "M10"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Bundled brush libraries (original, generated in code) pending"
+
+[[feature]]
+id = "brush.image-brush"
+title = "Image brushes"
+area = "J"
+tier = "P3"
+milestone = "M10"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Image brushes pending"
+
+[[feature]]
+id = "brush.colorization"
+title = "Brush colorization methods (tints, hue shift)"
+area = "J"
+tier = "P2"
+milestone = "M10"
+status = "partial"
+commands = ["brush.options"]
+tools = []
+evidence = ["crates/engine/src/tests_brushsym.rs::brush_options_rename_duplicate_and_delete_update_strokes"]
+notes = "Tints colorization works; hue shift and key colour depth unverified"
+
+[[feature]]
+id = "symbol.panel"
+title = "Symbols panel (new, place, replace, break link, redefine)"
+area = "J"
+tier = "P1"
+milestone = "M10"
+status = "shipped"
+commands = ["symbol.new", "symbol.place", "symbol.replace", "symbol.breakLink", "symbol.update"]
+tools = []
+evidence = ["crates/ui-egui/src/canvas.rs::a_symbol_dropped_on_the_canvas_is_placed_there", "crates/engine/src/tests_persp_text.rs::symbols_in_perspective_stay_instances"]
+notes = ""
+
+[[feature]]
+id = "symbol.dynamic"
+title = "Dynamic symbols"
+area = "J"
+tier = "P2"
+milestone = "M10"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Dynamic symbols pending"
+
+[[feature]]
+id = "symbol.libraries"
+title = "Symbol libraries"
+area = "J"
+tier = "P2"
+milestone = "M10"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Bundled symbol libraries pending"
+
+[[feature]]
+id = "symbol.edit"
+title = "Edit symbol in isolation"
+area = "J"
+tier = "P1"
+milestone = "M10"
+status = "shipped"
+commands = ["symbol.edit"]
+tools = []
+evidence = ["crates/engine/src/tests_brushsym.rs::edit_then_update_redefines_all_instances"]
+notes = ""
+
+[[feature]]
+id = "symbol.9-slice"
+title = "9-slice scaling for symbols"
+area = "J"
+tier = "P3"
+milestone = "M10"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "9-slice scaling pending"
+
+[[feature]]
+id = "pattern.make"
+title = "Object › Pattern › Make / Edit / Tile Edge Color"
+area = "J"
+tier = "P1"
+milestone = "M10"
+status = "shipped"
+commands = ["object.pattern.make", "object.pattern.edit", "ui.tileEdgeColor"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/pattern_options.rs::show_swatch_bounds_toggles_the_pattern_option", "crates/engine/src/tests_pattern.rs::edit_then_cancel_restores_definition"]
+notes = ""
+
+[[feature]]
+id = "pattern.options"
+title = "Pattern Options panel (tile types, copies, overlap)"
+area = "J"
+tier = "P1"
+milestone = "M10"
+status = "shipped"
+commands = ["pattern.options"]
+tools = []
+evidence = ["crates/engine/src/tests_pattern.rs::edit_then_cancel_restores_definition"]
+notes = ""
+
+[[feature]]
+id = "library.local-libraries"
+title = "Local asset libraries panel"
+area = "J"
+tier = "P3"
+milestone = "M10"
+status = "shipped"
+commands = ["library.create", "library.add", "library.use"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/libraries.rs::the_panel_draws_its_libraries", "crates/engine/src/tests_library.rs::a_graphic_goes_into_a_library_and_comes_out_in_another_document"]
+notes = ""
+
+# ==================================================================================================
+# K. Layers, artboards, organisation
+# ==================================================================================================
+
+[[feature]]
+id = "layer.panel"
+title = "Layers panel (layers, sublayers, objects, visibility, lock, target)"
+area = "K"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = ["layer.new", "layer.newSublayer", "layer.delete", "layer.move"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_svgsave.rs::save_as_svg_keeps_hidden_layers_and_export_as_leaves_them_out", "crates/ui-egui/src/panels/layers.rs::alt_clicking_an_eye_or_lock_toggles_the_other_layers"]
+notes = ""
+
+[[feature]]
+id = "layer.options"
+title = "Layer Options (name, colour, template, print, preview, dim images)"
+area = "K"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["layer.setProps", "ui.layerOptions"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_svgsave.rs::save_as_svg_keeps_hidden_layers_and_export_as_leaves_them_out", "crates/ui-egui/src/dialogs/layer_options.rs::layer_options_edit_the_layer_and_ok_is_one_undo_step"]
+notes = ""
+
+[[feature]]
+id = "layer.release-to-layers"
+title = "Release to Layers (sequence / build)"
+area = "K"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["layer.releaseToLayers", "layer.releaseToLayersBuild"]
+tools = []
+evidence = ["crates/engine/src/tests_layers.rs::release_to_layers_sequence_and_build"]
+notes = ""
+
+[[feature]]
+id = "layer.collect-merge-flatten"
+title = "Collect in New Layer, Merge Selected, Flatten Artwork"
+area = "K"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["layer.collectInNew", "layer.merge", "layer.flatten"]
+tools = []
+evidence = ["crates/engine/src/tests_layers.rs::collect_merge_flatten_and_reverse"]
+notes = ""
+
+[[feature]]
+id = "layer.locate-object"
+title = "Locate Object"
+area = "K"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["layer.locate"]
+tools = []
+evidence = ["crates/engine/src/tests_layers.rs::locate_object_highlights_its_row"]
+notes = ""
+
+[[feature]]
+id = "layer.clipping-layer"
+title = "Make/Release clipping mask from Layers panel"
+area = "K"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["layer.clippingMask.toggle"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/layers.rs::a_layer_clipping_mask_underlines_its_clipping_path"]
+notes = ""
+
+[[feature]]
+id = "layer.paste-remembers-layers"
+title = "Paste Remembers Layers"
+area = "K"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["layer.pasteRemembersLayers"]
+tools = []
+evidence = ["crates/engine/src/tests_clipboard.rs::paste_remembers_layers_restores_the_source_layers"]
+notes = ""
+
+[[feature]]
+id = "artboard.panel"
+title = "Artboards panel (new, duplicate, delete, reorder, options)"
+area = "K"
+tier = "P0"
+milestone = "M11"
+status = "shipped"
+commands = ["artboard.new", "artboard.duplicate", "artboard.delete", "artboard.reorder"]
+tools = []
+evidence = ["crates/ui-egui/src/chrome.rs::the_artboard_navigator_goes_to_artboards_and_fitting_shows_the_current_one", "crates/engine/src/tests_menucmds.rs::artboard_guides_go_with_their_artboard"]
+notes = ""
+
+[[feature]]
+id = "artboard.rearrange"
+title = "Rearrange All Artboards"
+area = "K"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["artboard.rearrange"]
+tools = []
+evidence = ["crates/engine/src/tests_newdoc.rs::rearrange_keeps_its_grid"]
+notes = ""
+
+[[feature]]
+id = "artboard.fit"
+title = "Fit to Artwork Bounds / Selected Art"
+area = "K"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["artboard.fitToArt", "artboard.fitToSelection"]
+tools = []
+evidence = ["crates/engine/src/cmd/fileio/tests_aiimport.rs::fit_to_artwork_bounds_leaves_out_the_hidden_art_and_guides_the_editing_data_has"]
+notes = ""
+
+[[feature]]
+id = "artboard.convert"
+title = "Convert to Artboards"
+area = "K"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["artboard.convertToArtboards"]
+tools = []
+evidence = ["crates/engine/src/tests_menucmds.rs::convert_to_artboards_and_rearrange"]
+notes = ""
+
+[[feature]]
+id = "artboard.options"
+title = "Artboard Options (presets, orientation, display marks)"
+area = "K"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["artboard.setProps"]
+tools = []
+evidence = ["crates/ui-egui/src/io.rs::export_uses_the_engine_options_and_keeps_the_path"]
+notes = ""
+
+[[feature]]
+id = "artboard.move-copy-art"
+title = "Move/copy artwork with artboard"
+area = "K"
+tier = "P1"
+milestone = "M11"
+status = "shipped"
+commands = ["artboard.copy", "artboard.move"]
+tools = []
+evidence = ["crates/engine/src/tests_menucmds.rs::artboard_guides_go_with_their_artboard"]
+notes = ""
+
+[[feature]]
+id = "artboard.many"
+title = "Up to 1000 artboards"
+area = "K"
+tier = "P2"
+milestone = "M11"
+status = "shipped"
+commands = ["artboard.new"]
+tools = []
+evidence = ["crates/ui-egui/src/chrome.rs::the_artboard_navigator_goes_to_artboards_and_fitting_shows_the_current_one"]
+notes = ""
+
+# ==================================================================================================
+# L. Images and tracing
+# ==================================================================================================
+
+[[feature]]
+id = "image.embed-unembed"
+title = "Embed and Unembed images"
+area = "L"
+tier = "P0"
+milestone = "M12"
+status = "shipped"
+commands = ["links.embed", "links.unembed"]
+tools = []
+evidence = ["crates/engine/src/tests_placed_document.rs::break_link_gives_the_editable_copy_placing_without_link_gives", "crates/engine/src/tests_linkspanel.rs::unembed_writes_the_bytes_and_links_to_them"]
+notes = ""
+
+[[feature]]
+id = "image.crop"
+title = "Crop Image"
+area = "L"
+tier = "P1"
+milestone = "M12"
+status = "shipped"
+commands = ["object.cropImage"]
+tools = []
+evidence = ["crates/engine/src/tests_menucmds.rs::crop_image_to_rect"]
+notes = ""
+
+[[feature]]
+id = "image.trace"
+title = "Image Trace (presets, modes, palettes, options, expand)"
+area = "L"
+tier = "P1"
+milestone = "M12"
+status = "shipped"
+commands = ["imageTrace.make", "imageTrace.expand", "imageTrace.presets"]
+tools = []
+evidence = ["crates/ui-egui/src/menus.rs::image_trace_make_traces_with_the_default_preset", "crates/engine/src/tests_build.rs::image_trace_release_and_expand"]
+notes = ""
+
+[[feature]]
+id = "image.mask"
+title = "Mask image from the Control bar/Properties"
+area = "L"
+tier = "P1"
+milestone = "M12"
+status = "shipped"
+commands = ["object.maskImage"]
+tools = []
+evidence = ["crates/engine/src/tests_menucmds.rs::mask_image_clips_it_to_its_outline_and_selects_the_clipping_path"]
+notes = ""
+
+[[feature]]
+id = "image.rasterize"
+title = "Rasterize objects"
+area = "L"
+tier = "P1"
+milestone = "M12"
+status = "shipped"
+commands = ["object.rasterize"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/raster_effects.rs::raster_effects_settings_draw_and_ok_is_one_undo_step"]
+notes = ""
+
+[[feature]]
+id = "image.resolution"
+title = "Image resolution and colour mode conversion"
+area = "L"
+tier = "P2"
+milestone = "M12"
+status = "partial"
+commands = ["image.info"]
+tools = []
+evidence = ["crates/engine/src/tests_place.rs::replace_keeps_the_transform_and_the_stacking_place"]
+notes = "Image info reported; resample and colour conversion of placed images pending"
+
+[[feature]]
+id = "image.edit-original"
+title = "Edit Original in an external app"
+area = "L"
+tier = "P2"
+milestone = "M12"
+status = "shipped"
+commands = ["links.editOriginal"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_place.rs::a_vectorcraft_document_places_linked_and_edit_original_opens_it"]
+notes = ""
+
+# ==================================================================================================
+# M. Automation and data
+# ==================================================================================================
+
+[[feature]]
+id = "auto.actions"
+title = "Actions panel (record, play, sets, insert menu item, stop)"
+area = "M"
+tier = "P1"
+milestone = "M13"
+status = "partial"
+commands = []
+tools = []
+evidence = []
+notes = "Actions panel records and plays persisted actions; insert menu item, stops and dialog toggles depth unverified"
+
+[[feature]]
+id = "auto.batch"
+title = "Batch processing of actions"
+area = "M"
+tier = "P2"
+milestone = "M13"
+status = "partial"
+commands = ["command.batch"]
+tools = []
+evidence = ["crates/engine/src/tests_file.rs::batch_is_one_undo_step"]
+notes = "Command batches over MCP; the Batch dialog over folders of files pending"
+
+[[feature]]
+id = "auto.variables"
+title = "Variables panel and data-driven graphics (datasets, XML import/export)"
+area = "M"
+tier = "P2"
+milestone = "M13"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Variables panel and data merge pending (M13)"
+
+[[feature]]
+id = "auto.scripting"
+title = "Scripting (JavaScript ExtendScript/UXP-style API)"
+area = "M"
+tier = "P1"
+milestone = "M13"
+status = "partial"
+commands = []
+tools = []
+evidence = []
+notes = "Every command is scriptable over MCP, the CLI and the control channel; an in-app script runtime pending"
+
+[[feature]]
+id = "auto.graph-data"
+title = "Graph Data and Graph Type dialogs"
+area = "M"
+tier = "P2"
+milestone = "M13"
+status = "shipped"
+commands = ["graph.setData", "graph.setType"]
+tools = []
+evidence = ["crates/engine/src/cmd/graph.rs::column_heights_follow_data_and_data_edits_regenerate_in_place"]
+notes = ""
+
+[[feature]]
+id = "auto.graph-design"
+title = "Graph Design / Column / Marker designs"
+area = "M"
+tier = "P3"
+milestone = "M13"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Graph Design, Column and Marker designs pending"
+
+[[feature]]
+id = "auto.command-palette"
+title = "Command search (Help search / command palette)"
+area = "M"
+tier = "P2"
+milestone = "M13"
+status = "shipped"
+commands = ["help.commandPalette"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/expand.rs::the_command_palette_opens_it_and_ui_expand_dialog_too"]
+notes = ""
+
+[[feature]]
+id = "auto.plugins"
+title = "Plug-ins / extensions"
+area = "M"
+tier = "P2"
+milestone = "M13"
+status = "shipped"
+commands = ["plugin.list", "plugin.run", "plugin.install"]
+tools = []
+evidence = ["crates/engine/src/tests_plugins.rs::plugin_management_commands", "crates/engine/src/tests_plugins.rs::object_filter_recolours_the_selection_as_one_undo_step"]
+notes = ""
+
+# ==================================================================================================
+# N. Print and production
+# ==================================================================================================
+
+[[feature]]
+id = "print.print-dialog"
+title = "Print dialog (general, marks and bleed, output, graphics, color management, advanced)"
+area = "N"
+tier = "P0"
+milestone = "M4"
+status = "shipped"
+commands = ["file.print", "print.setup"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_printps.rs::postscript_is_saved_not_printed", "crates/ui-egui/src/tests_printtiling.rs::the_canvas_numbers_the_print_tiles_of_print_preview"]
+notes = ""
+
+[[feature]]
+id = "print.presets"
+title = "Print Presets"
+area = "N"
+tier = "P1"
+milestone = "M4"
+status = "shipped"
+commands = ["print.presets.save", "print.presets.list"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/tests_print_presets.rs::presets_files_import_and_export", "crates/engine/src/tests_printpresets.rs::default_is_listed_first_and_protected"]
+notes = ""
+
+[[feature]]
+id = "print.tiling"
+title = "Print Tiling tool"
+area = "N"
+tier = "P2"
+milestone = "M4"
+status = "shipped"
+commands = ["print.tiling.set", "view.printTiling"]
+tools = ["printTiling"]
+evidence = ["crates/ui-egui/src/tests_printtiling.rs::the_canvas_numbers_the_print_tiles_of_print_preview"]
+notes = ""
+
+[[feature]]
+id = "print.separations"
+title = "Separations output"
+area = "N"
+tier = "P2"
+milestone = "M4"
+status = "shipped"
+commands = ["file.print"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_printps.rs::postscript_is_saved_not_printed"]
+notes = ""
+
+[[feature]]
+id = "print.flattener-preview"
+title = "Flattener Preview panel and presets"
+area = "N"
+tier = "P3"
+milestone = "M4"
+status = "shipped"
+commands = ["flattener.preview"]
+tools = []
+evidence = ["crates/engine/src/tests_flatpreview.rs::rasterized_areas_follow_the_balance_and_raster_effects"]
+notes = ""
+
+[[feature]]
+id = "print.trap"
+title = "Effect › Pathfinder › Trap"
+area = "N"
+tier = "P3"
+milestone = "M4"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Trap pending"
+
+[[feature]]
+id = "print.output-preview"
+title = "Output preview and preflight warnings"
+area = "N"
+tier = "P2"
+milestone = "M4"
+status = "partial"
+commands = ["view.separationsPreview"]
+tools = []
+evidence = ["crates/engine/src/tests_colormgmt.rs::spot_colours_get_their_own_plate"]
+notes = "Separations and overprint previews; preflight warnings pending"
+
+[[feature]]
+id = "print.slices"
+title = "Slices (make, divide, options)"
+area = "N"
+tier = "P3"
+milestone = "M4"
+status = "shipped"
+commands = ["object.slice.make", "object.slice.divide", "object.slice.options"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_slices.rs::the_canvas_numbers_slices_until_they_are_hidden", "crates/ui-egui/src/tests_slices.rs::slice_menu_items_follow_the_state"]
+notes = ""
+
+[[feature]]
+id = "print.css-export"
+title = "CSS Properties panel and export"
+area = "N"
+tier = "P3"
+milestone = "M4"
+status = "shipped"
+commands = ["css.generate", "css.export"]
+tools = []
+evidence = ["crates/engine/src/tests_css.rs::generate_covers_the_document_and_an_empty_selection_has_none", "crates/engine/src/tests_css.rs::export_writes_the_sheet_and_rasterized_art"]
+notes = ""
+
+# ==================================================================================================
+# O. Interface and preferences
+# ==================================================================================================
+
+[[feature]]
+id = "ui.properties-panel"
+title = "Properties panel (contextual)"
+area = "O"
+tier = "P0"
+milestone = "M14"
+status = "shipped"
+commands = []
+tools = []
+evidence = ["crates/ui-egui/src/tests_paintchips.rs::the_properties_panel_has_the_control_bars_fill_and_stroke", "crates/ui-egui/src/panels/tests_links.rs::properties_shows_the_selected_image_and_its_link_actions"]
+notes = ""
+
+[[feature]]
+id = "ui.control-bar"
+title = "Control bar"
+area = "O"
+tier = "P0"
+milestone = "M14"
+status = "shipped"
+commands = ["window.control"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_removeanchors.rs::the_control_bar_and_properties_hide_it_without_anchors"]
+notes = ""
+
+[[feature]]
+id = "ui.contextual-task-bar"
+title = "Contextual Task Bar"
+area = "O"
+tier = "P1"
+milestone = "M14"
+status = "shipped"
+commands = ["window.taskBar"]
+tools = []
+evidence = ["crates/ui-egui/src/canvas.rs::the_task_bar_is_dragged_by_its_handle_pinned_and_reset"]
+notes = ""
+
+[[feature]]
+id = "ui.toolbar"
+title = "Toolbar (basic/advanced, flyouts, tear-off, edit toolbar)"
+area = "O"
+tier = "P0"
+milestone = "M14"
+status = "shipped"
+commands = ["window.toolbar", "window.toolbarAdvanced", "window.floatTools"]
+tools = []
+evidence = ["crates/ui-egui/src/toolbar.rs::the_columns_command_toggles_or_sets_the_toolbar_columns", "crates/ui-egui/src/toolbar.rs::window_float_tools_floats_and_puts_back_a_group"]
+notes = ""
+
+[[feature]]
+id = "ui.workspaces"
+title = "Workspaces (save, reset, manage)"
+area = "O"
+tier = "P1"
+milestone = "M14"
+status = "shipped"
+commands = ["window.workspace.new", "window.workspace.reset", "window.workspace.manage"]
+tools = []
+evidence = ["crates/ui-egui/src/floating.rs::floating_panels_are_kept_in_workspaces_and_preferences_and_clamped_into_the_window"]
+notes = ""
+
+[[feature]]
+id = "ui.panels-docking"
+title = "Panel docking, grouping, floating, collapsing"
+area = "O"
+tier = "P0"
+milestone = "M14"
+status = "shipped"
+commands = ["window.panel.float", "window.panel.dock", "window.collapseDock"]
+tools = []
+evidence = ["crates/ui-egui/src/floating.rs::a_dock_tab_dragged_out_floats_and_dropped_on_the_dock_docks_again", "crates/ui-egui/src/floating.rs::icons_dragged_out_float_stack_onto_another_group_and_tear_out_of_it"]
+notes = ""
+
+[[feature]]
+id = "ui.keyboard-shortcuts"
+title = "Keyboard Shortcuts editor"
+area = "O"
+tier = "P0"
+milestone = "M14"
+status = "shipped"
+commands = ["edit.keyboardShortcuts", "shortcuts.set"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_nativemenu.rs::every_in_window_item_is_in_the_mac_menu_bar_once"]
+notes = ""
+
+[[feature]]
+id = "ui.preferences"
+title = "Preferences (general, selection, type, units, guides, smart guides, slices, hyphenation, plug-ins, UI, performance, file handling, clipboard, appearance of black)"
+area = "O"
+tier = "P0"
+milestone = "M14"
+status = "shipped"
+commands = ["edit.preferences", "prefs.set"]
+tools = []
+evidence = ["crates/ui-egui/src/shortcuts.rs::cmd_comma_opens_settings_on_a_mac", "crates/ui-egui/src/chrome.rs::the_zoom_hint_follows_animated_zoom"]
+notes = ""
+
+[[feature]]
+id = "ui.context-menus"
+title = "Context menus"
+area = "O"
+tier = "P0"
+milestone = "M14"
+status = "shipped"
+commands = []
+tools = []
+evidence = ["crates/ui-egui/src/tests_contextmenu.rs::right_click_selects_the_object_and_lists_its_commands"]
+notes = ""
+
+[[feature]]
+id = "ui.undo-history"
+title = "Undo/redo with history panel"
+area = "O"
+tier = "P0"
+milestone = "M14"
+status = "partial"
+commands = ["edit.undo", "edit.redo"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_font_menu.rs::preview_changes_the_text_live_and_only_a_choice_is_a_step", "crates/ui-egui/src/touch.rs::two_and_three_finger_taps"]
+notes = "Unlimited undo/redo; a History panel is beyond the reference app and not built"
+
+[[feature]]
+id = "ui.home-screen"
+title = "Home screen"
+area = "O"
+tier = "P2"
+milestone = "M14"
+status = "shipped"
+commands = ["app.home"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_home.rs::home_shows_over_open_documents_until_a_document_is_chosen"]
+notes = ""
+
+[[feature]]
+id = "ui.languages"
+title = "Interface languages"
+area = "O"
+tier = "P1"
+milestone = "M14"
+status = "shipped"
+commands = ["app.language"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_nativemenu.rs::language_and_appearance_are_in_the_app_menu"]
+notes = ""
+
+[[feature]]
+id = "ui.dark-themes"
+title = "UI brightness themes"
+area = "O"
+tier = "P1"
+milestone = "M14"
+status = "shipped"
+commands = ["window.brightness"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_nativemenu.rs::the_window_menu_has_the_system_items"]
+notes = ""
+
+[[feature]]
+id = "ui.touch"
+title = "Touch workspace and gestures"
+area = "O"
+tier = "P2"
+milestone = "M14"
+status = "partial"
+commands = []
+tools = []
+evidence = []
+notes = "Two- and three-finger taps and two-finger pan; a touch workspace pending"
+
+[[feature]]
+id = "ui.help-search"
+title = "Help and discover search"
+area = "O"
+tier = "P2"
+milestone = "M14"
+status = "shipped"
+commands = ["help.commandPalette"]
+tools = []
+evidence = ["crates/ui-egui/src/dialogs/expand.rs::the_command_palette_opens_it_and_ui_expand_dialog_too"]
+notes = ""
+
+[[feature]]
+id = "ui.info-panel"
+title = "Info panel"
+area = "O"
+tier = "P2"
+milestone = "M14"
+status = "shipped"
+commands = []
+tools = ["measure"]
+evidence = ["crates/ui-egui/src/shortcut_editor.rs::global_override_reaches_shortcut_of_and_tools"]
+notes = ""
+
+[[feature]]
+id = "ui.document-info"
+title = "Document Info panel"
+area = "O"
+tier = "P2"
+milestone = "M14"
+status = "shipped"
+commands = ["document.info"]
+tools = []
+evidence = ["crates/ui-egui/src/panels/doc_info.rs::names_in_rows_are_told_from_labels"]
+notes = ""
+
+[[feature]]
+id = "ui.accessibility"
+title = "Accessibility (screen reader, keyboard navigation)"
+area = "O"
+tier = "P2"
+milestone = "M14"
+status = "planned"
+commands = []
+tools = []
+evidence = []
+notes = "Screen reader and full keyboard navigation pending (M14)"
+
+[[feature]]
+id = "ui.multi-platform"
+title = "macOS, Windows, Linux and web builds"
+area = "O"
+tier = "P0"
+milestone = "M14"
+status = "partial"
+commands = []
+tools = []
+evidence = []
+notes = "macOS and web verified; broader Windows and Linux hardware QA pending"
+
+[[feature]]
+id = "ui.agent-control"
+title = "Agent control (MCP, control channel, CLI)"
+area = "O"
+tier = "P0"
+milestone = "M14"
+status = "shipped"
+commands = ["document.inspect", "command.batch"]
+tools = []
+evidence = ["crates/ui-egui/src/tests_selectall.rs::cmd_a_while_editing_type_selects_all_of_its_text", "crates/engine/src/tests_file.rs::batch_is_one_undo_step"]
+notes = ""
+
+# ==================================================================================================
+# P. Cloud and generative AI
+# ==================================================================================================
+
+[[feature]]
+id = "file.cloud-documents"
+title = "Cloud documents, versions and offline sync"
+area = "P"
+tier = "N/A"
+milestone = "none"
+status = "na"
+commands = []
+tools = []
+evidence = []
+notes = "Cloud service; local files, Data Recovery and any file-sync service stand in"
+
+[[feature]]
+id = "file.share-review"
+title = "Share for Review / invite to edit"
+area = "P"
+tier = "N/A"
+milestone = "none"
+status = "na"
+commands = []
+tools = []
+evidence = []
+notes = "Cloud service; export a PDF for review instead"
+
+[[feature]]
+id = "type.retype"
+title = "Retype (identify fonts in images, AI)"
+area = "P"
+tier = "N/A"
+milestone = "none"
+status = "na"
+commands = []
+tools = []
+evidence = []
+notes = "Cloud AI font identification; Find Font and the font menu cover local fonts"
+
+[[feature]]
+id = "type.font-services"
+title = "Adobe Fonts activation"
+area = "P"
+tier = "N/A"
+milestone = "none"
+status = "na"
+commands = []
+tools = []
+evidence = []
+notes = "Cloud font service; installed fonts, including those that services activate, are listed"
+
+[[feature]]
+id = "library.cc-libraries"
+title = "Creative Cloud Libraries panel"
+area = "P"
+tier = "N/A"
+milestone = "none"
+status = "na"
+commands = []
+tools = []
+evidence = []
+notes = "Cloud libraries; local libraries (library.local-libraries) stand in"
+
+[[feature]]
+id = "image.mockup"
+title = "Mockup (AI)"
+area = "P"
+tier = "N/A"
+milestone = "none"
+status = "na"
+commands = []
+tools = []
+evidence = []
+notes = "Cloud generative AI; Envelope Distort and Perspective Grid place art on surfaces locally"
+
+[[feature]]
+id = "image.generative-fill"
+title = "Generative Shape Fill / Text to Vector Graphic (AI)"
+area = "P"
+tier = "N/A"
+milestone = "none"
+status = "na"
+commands = []
+tools = []
+evidence = []
+notes = "Cloud generative AI; Image Trace and agent drawing over MCP stand in"
+
+[[feature]]
+id = "image.generative-recolor"
+title = "Generative Recolor (AI)"
+area = "P"
+tier = "N/A"
+milestone = "none"
+status = "na"
+commands = []
+tools = []
+evidence = []
+notes = "Cloud generative AI; Recolor Artwork and Color Themes stand in"
