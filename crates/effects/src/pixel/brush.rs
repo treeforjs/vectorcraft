@@ -30,7 +30,7 @@ impl Direction {
         ("vertical", "Vertical", Direction::Vertical),
     ];
 
-    fn vector(self) -> Vec2 {
+    pub(super) fn vector(self) -> Vec2 {
         match self {
             Direction::RightDiagonal => RISING,
             Direction::Horizontal => Vec2::new(1.0, 0.0),
@@ -41,14 +41,14 @@ impl Direction {
 }
 
 /// Unit vectors along the two diagonals (document y runs down): rising to the right, and falling.
-const RISING: Vec2 = Vec2::new(std::f64::consts::FRAC_1_SQRT_2, -std::f64::consts::FRAC_1_SQRT_2);
-const FALLING: Vec2 = Vec2::new(std::f64::consts::FRAC_1_SQRT_2, std::f64::consts::FRAC_1_SQRT_2);
+pub(super) const RISING: Vec2 = Vec2::new(std::f64::consts::FRAC_1_SQRT_2, -std::f64::consts::FRAC_1_SQRT_2);
+pub(super) const FALLING: Vec2 = Vec2::new(std::f64::consts::FRAC_1_SQRT_2, std::f64::consts::FRAC_1_SQRT_2);
 
 /// The most samples a stroke averages.
 const MAX_SAMPLES: usize = 16;
 
 /// The source raster, sampled at document points.
-struct Source {
+pub(super) struct Source {
     buf: Vec<Px16>,
     w: usize,
     h: usize,
@@ -57,7 +57,7 @@ struct Source {
 }
 
 impl Source {
-    fn new(px: &[[u8; 4]], w: usize, h: usize, space: &PixelSpace) -> Option<Source> {
+    pub(super) fn new(px: &[[u8; 4]], w: usize, h: usize, space: &PixelSpace) -> Option<Source> {
         let from_doc = space.to_doc.inverse();
         (w > 0 && h > 0 && from_doc.is_finite() && space.px.is_finite() && space.px > 0.0).then(|| Source {
             buf: to16(px),
@@ -69,14 +69,14 @@ impl Source {
     }
 
     /// The colour at document point `p` (premultiplied, 0..65535; transparent beyond the edges).
-    fn at(&self, p: Point) -> [f32; 4] {
+    pub(super) fn at(&self, p: Point) -> [f32; 4] {
         let q = self.from_doc * p;
         bilinear(&self.buf, self.w, self.h, q.x - 0.5, q.y - 0.5)
     }
 
     /// The average colour along the stroke through `p`: lanes `width` apart run along `dir`, cut
     /// into segments `len` long and staggered per lane by `salt`.
-    fn stroke(&self, p: Point, dir: Vec2, len: f64, width: f64, salt: u64) -> [f32; 4] {
+    pub(super) fn stroke(&self, p: Point, dir: Vec2, len: f64, width: f64, salt: u64) -> [f32; 4] {
         if !(len.is_finite() && len > 0.0 && width.is_finite() && width > 0.0) {
             return self.at(p);
         }
@@ -100,7 +100,7 @@ impl Source {
 }
 
 /// A premultiplied 16-bit colour's straight luma in [0, 1] (0 where transparent).
-fn luma(c: [f32; 4]) -> f32 {
+pub(super) fn luma(c: [f32; 4]) -> f32 {
     if c[3] > 0.0 { ((0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / c[3]).clamp(0.0, 1.0) } else { 0.0 }
 }
 
@@ -118,13 +118,13 @@ fn contrast(c: [f32; 4], k: f32) -> [f32; 4] {
 }
 
 /// Writes a premultiplied 16-bit colour to an 8-bit pixel.
-fn put(out: &mut [u8; 4], c: [f32; 4]) {
+pub(super) fn put(out: &mut [u8; 4], c: [f32; 4]) {
     let a = c[3].round().clamp(0.0, 65535.0);
     *out = [c[0], c[1], c[2], c[3]].map(|v| to8(v.round().clamp(0.0, a) as u16));
 }
 
 /// Runs `f` (document point, pixel index) → colour over every pixel.
-fn each(px: &mut [[u8; 4]], w: usize, h: usize, space: &PixelSpace, f: impl Fn(Point, usize) -> [f32; 4]) {
+pub(super) fn each(px: &mut [[u8; 4]], w: usize, h: usize, space: &PixelSpace, f: impl Fn(Point, usize) -> [f32; 4]) {
     for y in 0..h {
         for x in 0..w {
             let i = y * w + x;

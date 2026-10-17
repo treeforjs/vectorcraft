@@ -689,6 +689,84 @@ fn spatter_scatters_by_its_radius() {
     assert!(changed(25.0) > changed(4.0), "{} then {}", changed(4.0), changed(25.0));
 }
 
+/// A left-to-right grey ramp, black to white.
+fn grey_ramp(w: usize, h: usize) -> Vec<u8> {
+    image(w, h, |x, _| grey((x * 255 / (w - 1)) as u8))
+}
+
+#[test]
+fn sketch_params_take_defaults_and_stay_in_range() {
+    let k = |id: &str, p: serde_json::Value| match fx(id, p) {
+        PixelFx::Sketch(k) => k,
+        other => panic!("{id}: {other:?}"),
+    };
+    assert_eq!(k("sketch.basRelief", json!({})), Sketch::BasRelief { detail: 13.0, smoothness: 3.0, light: Light::Bottom });
+    assert_eq!(
+        k("sketch.halftonePattern", json!({"patternType": "Line", "size": 99})),
+        Sketch::HalftonePattern { size: 12.0, contrast: 5.0, screen: Screen::Line }
+    );
+    assert_eq!(k("sketch.stamp", json!({"smoothness": 0})), Sketch::Stamp { balance: 25.0, smoothness: 1.0 });
+    let Sketch::ConteCrayon { paper, .. } = k("sketch.conteCrayon", json!({"texture": "brick"})) else { panic!("conté") };
+    assert_eq!(paper.surface, Surface::Brick);
+    assert_eq!(fx("sketch.stamp", json!({})).outset(Rect::ZERO), 0.0);
+}
+
+/// Every sketch but Water Paper redraws the art in greys only, keeps its coverage, and draws
+/// dark art darker than light art.
+#[test]
+fn sketches_draw_in_grey_and_follow_the_tones() {
+    let (w, h) = (64, 32);
+    let src = grey_ramp(w, h);
+    for id in PIXEL_EFFECTS.iter().filter(|id| id.starts_with("sketch.") && **id != "sketch.waterPaper") {
+        let mut d = src.clone();
+        fx(id, json!({})).apply(&mut d, w, h, &space(w, h));
+        assert!(d.chunks(4).all(|p| p[0] == p[1] && p[1] == p[2] && p[3] == 255), "{id}: greys at full coverage");
+        let mean = |x0: usize, x1: usize| {
+            let v: Vec<u32> = (8..24).flat_map(|y| (x0..x1).map(move |x| (x, y))).map(|(x, y)| u32::from(at(&d, w, x, y)[0])).collect();
+            v.iter().sum::<u32>() / v.len() as u32
+        };
+        if *id != "sketch.chrome" && *id != "sketch.basRelief" {
+            assert!(mean(4, 16) + 30 < mean(48, 60), "{id}: dark {} vs light {}", mean(4, 16), mean(48, 60));
+        }
+    }
+    let mut half = image(4, 1, |_, _| [64, 64, 64, 128]);
+    fx("sketch.stamp", json!({})).apply(&mut half, 4, 1, &space(4, 1));
+    assert!(half.chunks(4).all(|p| p[3] == 128 && p[0] <= 128), "coverage kept: {half:?}");
+}
+
+/// Stamp and Torn Edges come out black or white away from the threshold; Halftone Pattern's
+/// screens get denser with the tone.
+#[test]
+fn two_tone_sketches_threshold_the_art() {
+    let (w, h) = (64, 32);
+    let src = grey_ramp(w, h);
+    let run = |id: &str, p: serde_json::Value| {
+        let mut d = src.clone();
+        fx(id, p).apply(&mut d, w, h, &space(w, h));
+        d
+    };
+    let stamp = run("sketch.stamp", json!({"smoothness": 1}));
+    assert_eq!(at(&stamp, w, 4, 16), grey(0));
+    assert_eq!(at(&stamp, w, 60, 16), grey(255));
+    for screen in Screen::KINDS.map(|k| k.0) {
+        let d = run("sketch.halftonePattern", json!({"patternType": screen, "size": 3}));
+        let ink = |x0: usize| (0..h).flat_map(|y| (x0..x0 + 16).map(move |x| (x, y))).filter(|&(x, y)| at(&d, w, x, y)[0] < 128).count();
+        assert!(ink(4) > ink(44), "{screen}: {} dark vs {} light", ink(4), ink(44));
+    }
+}
+
+/// Water Paper keeps the colours, bleeding them along the fibres.
+#[test]
+fn water_paper_bleeds_the_colours() {
+    let (w, h) = (48, 48);
+    let src = bands(w, h);
+    let mut d = src.clone();
+    fx("sketch.waterPaper", json!({"brightness": 50, "contrast": 80})).apply(&mut d, w, h, &space(w, h));
+    assert!(differing(&d, &src) > w * h / 4);
+    assert!(d.chunks(4).any(|p| p[0] > p[2] + 100), "reds stay");
+    assert!(d.chunks(4).any(|p| p[2] > p[0] + 100), "blues stay");
+}
+
 /// Timings on a 2000 × 2000 raster (`cargo test -p vectorcraft-effects --release -- --ignored
 /// --nocapture pixel_timings`).
 #[test]
@@ -700,6 +778,20 @@ fn pixel_timings() {
     let cases = [
         ("blur.radial", json!({"quality": "draft"})),
         ("video.deInterlace", json!({})),
+        ("sketch.basRelief", json!({})),
+        ("sketch.chalkCharcoal", json!({})),
+        ("sketch.charcoal", json!({})),
+        ("sketch.chrome", json!({})),
+        ("sketch.conteCrayon", json!({})),
+        ("sketch.graphicPen", json!({})),
+        ("sketch.halftonePattern", json!({})),
+        ("sketch.notePaper", json!({})),
+        ("sketch.photocopy", json!({})),
+        ("sketch.plaster", json!({})),
+        ("sketch.reticulation", json!({})),
+        ("sketch.stamp", json!({})),
+        ("sketch.tornEdges", json!({})),
+        ("sketch.waterPaper", json!({})),
         ("brushStrokes.accentedEdges", json!({})),
         ("brushStrokes.angledStrokes", json!({})),
         ("brushStrokes.crosshatch", json!({"strength": 3})),

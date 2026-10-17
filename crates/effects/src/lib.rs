@@ -6,7 +6,7 @@
 //! - **Geometry effects** (Distort & Transform, Path, Convert to Shape, Round Corners, Scribble,
 //!   Warp) rewrite a path: [`apply_geometry`] evaluates them in stack order.
 //! - **Raster effects** (Drop Shadow, Inner/Outer Glow, Feather, Gaussian Blur, and the
-//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Brush Strokes, Distort, Pixelate, Unsharp Mask, Glowing Edges, Texture and Video) are described by
+//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Brush Strokes, Distort, Pixelate, Unsharp Mask, Glowing Edges, Sketch, Texture and Video) are described by
 //!   [`raster_effects`] and painted by the renderer; [`outset`] says how far they reach beyond
 //!   the geometry.
 //! - **Stroke geometry** ([`stroke`]): arrowheads, dash patterns and width profiles, shared by the
@@ -153,6 +153,7 @@ const DISTORT: &[&str] = &["Effect", "Distort"];
 const VIDEO: &[&str] = &["Effect", "Video"];
 const TEXTURE: &[&str] = &["Effect", "Texture"];
 const BRUSH_STROKES: &[&str] = &["Effect", "Brush Strokes"];
+const SKETCH: &[&str] = &["Effect", "Sketch"];
 const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
@@ -416,6 +417,104 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             BRUSH_STROKES,
             "{strokeWidth: 3..15 (10; strokes half this in points wide), strokePressure: 0..15 (2), contrast: 0..40 (16)} repaints the art in wide black-ink strokes on rice paper",
             json!({"strokeWidth": 10.0, "strokePressure": 2.0, "contrast": 16.0}),
+        ),
+        r(
+            "sketch.basRelief",
+            "Bas Relief…",
+            SKETCH,
+            "{detail: 1..15 (13), smoothness: 1..15 (3), light: \"bottom\"|\"bottomLeft\"|\"left\"|\"topLeft\"|\"top\"|\"topRight\"|\"right\"|\"bottomRight\" (\"bottom\")} carves the art in low relief, lit from one side, in black and white",
+            json!({"detail": 13.0, "smoothness": 3.0, "light": "bottom"}),
+        ),
+        r(
+            "sketch.chalkCharcoal",
+            "Chalk & Charcoal…",
+            SKETCH,
+            "{charcoalArea: 0..20 (6), chalkArea: 0..20 (6), strokePressure: 0..5 (1)} redraws the shadows in black charcoal and the highlights in white chalk on grey",
+            json!({"charcoalArea": 6.0, "chalkArea": 6.0, "strokePressure": 1.0}),
+        ),
+        r(
+            "sketch.charcoal",
+            "Charcoal…",
+            SKETCH,
+            "{charcoalThickness: 1..7 (1), detail: 0..5 (5), lightDarkBalance: 0..100 (50)} redraws the art in smudged diagonal charcoal strokes",
+            json!({"charcoalThickness": 1.0, "detail": 5.0, "lightDarkBalance": 50.0}),
+        ),
+        r(
+            "sketch.chrome",
+            "Chrome…",
+            SKETCH,
+            "{detail: 0..10 (4), smoothness: 0..10 (7)} turns the art into polished chrome",
+            json!({"detail": 4.0, "smoothness": 7.0}),
+        ),
+        r(
+            "sketch.conteCrayon",
+            "Conté Crayon…",
+            SKETCH,
+            "{foregroundLevel: 1..15 (11), backgroundLevel: 1..15 (7), texture: \"brick\"|\"burlap\"|\"canvas\"|\"sandstone\" (\"canvas\"), scaling: % 50..200 (100), relief: 0..50 (4), light: \"bottom\"|\"bottomLeft\"|\"left\"|\"topLeft\"|\"top\"|\"topRight\"|\"right\"|\"bottomRight\" (\"top\"), invert: bool (false)} redraws the art in dense black and white crayon on textured paper",
+            json!({"foregroundLevel": 11.0, "backgroundLevel": 7.0, "texture": "canvas", "scaling": 100.0, "relief": 4.0, "light": "top", "invert": false}),
+        ),
+        r(
+            "sketch.graphicPen",
+            "Graphic Pen…",
+            SKETCH,
+            "{strokeLength: pt 1..15 (15), lightDarkBalance: 0..100 (50), strokeDirection: \"rightDiagonal\"|\"horizontal\"|\"leftDiagonal\"|\"vertical\" (\"rightDiagonal\")} redraws the art in fine, straight ink strokes",
+            json!({"strokeLength": 15.0, "lightDarkBalance": 50.0, "strokeDirection": "rightDiagonal"}),
+        ),
+        r(
+            "sketch.halftonePattern",
+            "Halftone Pattern…",
+            SKETCH,
+            "{size: 1..12 (1; cells 1.5 pt per step), contrast: 0..50 (5), patternType: \"circle\"|\"dot\"|\"line\" (\"dot\")} screens the art with a black and white halftone",
+            json!({"size": 1.0, "contrast": 5.0, "patternType": "dot"}),
+        ),
+        r(
+            "sketch.notePaper",
+            "Note Paper…",
+            SKETCH,
+            "{imageBalance: 0..50 (25), graininess: 0..20 (10), relief: 0..25 (11)} embosses the art into grainy handmade paper",
+            json!({"imageBalance": 25.0, "graininess": 10.0, "relief": 11.0}),
+        ),
+        r(
+            "sketch.photocopy",
+            "Photocopy…",
+            SKETCH,
+            "{detail: 1..24 (7), darkness: 1..50 (8)} copies the art's edges in black as a photocopier would",
+            json!({"detail": 7.0, "darkness": 8.0}),
+        ),
+        r(
+            "sketch.plaster",
+            "Plaster…",
+            SKETCH,
+            "{imageBalance: 0..50 (20), smoothness: 1..15 (2), light: \"bottom\"|\"bottomLeft\"|\"left\"|\"topLeft\"|\"top\"|\"topRight\"|\"right\"|\"bottomRight\" (\"top\")} moulds the dark areas in raised plaster",
+            json!({"imageBalance": 20.0, "smoothness": 2.0, "light": "top"}),
+        ),
+        r(
+            "sketch.reticulation",
+            "Reticulation…",
+            SKETCH,
+            "{density: 0..50 (12), foregroundLevel: 0..50 (40), backgroundLevel: 0..50 (5)} clumps the art into the grain of shrunken film emulsion",
+            json!({"density": 12.0, "foregroundLevel": 40.0, "backgroundLevel": 5.0}),
+        ),
+        r(
+            "sketch.stamp",
+            "Stamp…",
+            SKETCH,
+            "{lightDarkBalance: 0..50 (25), smoothness: 1..50 (5)} prints the art as a black rubber stamp",
+            json!({"lightDarkBalance": 25.0, "smoothness": 5.0}),
+        ),
+        r(
+            "sketch.tornEdges",
+            "Torn Edges…",
+            SKETCH,
+            "{imageBalance: 0..50 (25), smoothness: 1..15 (11), contrast: 1..25 (17)} redraws the art as black and white torn paper",
+            json!({"imageBalance": 25.0, "smoothness": 11.0, "contrast": 17.0}),
+        ),
+        r(
+            "sketch.waterPaper",
+            "Water Paper…",
+            SKETCH,
+            "{fiberLength: 3..50 (15; fibres 0.3 pt per step), brightness: 0..100 (60), contrast: 0..100 (80)} bleeds the colours along the fibres of damp paper",
+            json!({"fiberLength": 15.0, "brightness": 60.0, "contrast": 80.0}),
         ),
         r(
             "texture.craquelure",

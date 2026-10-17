@@ -3,7 +3,9 @@
 //! and Sumi-e, Distort › Diffuse
 //! Glow, Glass and Ocean Ripple, Pixelate › Color
 //! Halftone, Crystallize, Mezzotint and Pointillize, Sharpen › Unsharp Mask, Stylize › Glowing
-//! Edges, Texture › Craquelure, Grain, Mosaic Tiles, Patchwork, Stained Glass and Texturizer, and
+//! Edges, Sketch › Bas Relief, Chalk & Charcoal, Charcoal, Chrome, Conté Crayon, Graphic Pen,
+//! Halftone Pattern, Note Paper, Photocopy, Plaster, Reticulation, Stamp, Torn Edges and Water
+//! Paper, Texture › Craquelure, Grain, Mosaic Tiles, Patchwork, Stained Glass and Texturizer, and
 //! Video › De-Interlace and NTSC Colors): filters over premultiplied RGBA8 pixels.
 //!
 //! - Every distance is in document units (points) and becomes pixels through the raster's
@@ -20,12 +22,14 @@ mod edges;
 mod noise;
 mod pixelate;
 mod sharpen;
+mod sketch;
 mod texture;
 mod video;
 
 pub use brush::{BrushStroke, Direction};
 pub use distort::{Glass, GlassTexture};
 pub use pixelate::Mezzotint;
+pub use sketch::{Screen, Sketch};
 pub use texture::{Grain, Light, Surface, Texturizer};
 
 use serde_json::Value;
@@ -34,7 +38,7 @@ use vectorcraft_geom::{Affine, Point, Rect};
 use crate::util::{num, text};
 
 /// The Photoshop-style effect ids (all raster effects, see [`crate::is_raster`]).
-pub const PIXEL_EFFECTS: [&str; 27] = [
+pub const PIXEL_EFFECTS: [&str; 41] = [
     "blur.radial",
     "blur.smart",
     "brushStrokes.accentedEdges",
@@ -53,6 +57,20 @@ pub const PIXEL_EFFECTS: [&str; 27] = [
     "pixelate.mezzotint",
     "pixelate.pointillize",
     "sharpen.unsharpMask",
+    "sketch.basRelief",
+    "sketch.chalkCharcoal",
+    "sketch.charcoal",
+    "sketch.chrome",
+    "sketch.conteCrayon",
+    "sketch.graphicPen",
+    "sketch.halftonePattern",
+    "sketch.notePaper",
+    "sketch.photocopy",
+    "sketch.plaster",
+    "sketch.reticulation",
+    "sketch.stamp",
+    "sketch.tornEdges",
+    "sketch.waterPaper",
     "stylize.glowingEdges",
     "texture.craquelure",
     "texture.grain",
@@ -114,6 +132,8 @@ pub enum PixelFx {
     Texturizer(Texturizer),
     /// Brush Strokes › any of its filters.
     Brush(BrushStroke),
+    /// Sketch › any of its filters.
+    Sketch(Sketch),
 }
 
 /// Where a raster's pixels lie in the document.
@@ -126,6 +146,11 @@ pub struct PixelSpace {
     pub px: f64,
     /// The object's centre (document coordinates): where Radial Blur blurs around.
     pub center: Point,
+}
+
+/// The kind in `kinds` (id, label, kind) named `name` by id or label, else `default`.
+fn pick<T: Copy, const N: usize>(kinds: &[(&str, &str, T); N], name: &str, default: T) -> T {
+    kinds.iter().find(|(id, label, _)| id.eq_ignore_ascii_case(name) || label.eq_ignore_ascii_case(name)).map_or(default, |k| k.2)
 }
 
 /// Effect `id`'s parameters `p` (defaults merged in) as a [`PixelFx`]; `None` for other effects.
@@ -239,6 +264,77 @@ pub(crate) fn parse(id: &str, p: &Value) -> Option<PixelFx> {
             pressure: num(p, "strokePressure", 2.0).clamp(0.0, 15.0),
             contrast: num(p, "contrast", 16.0).clamp(0.0, 40.0),
         }),
+        "sketch.basRelief" => PixelFx::Sketch(Sketch::BasRelief {
+            detail: num(p, "detail", 13.0).clamp(1.0, 15.0),
+            smoothness: num(p, "smoothness", 3.0).clamp(1.0, 15.0),
+            light: pick(&Light::KINDS, text(p, "light", "bottom"), Light::Bottom),
+        }),
+        "sketch.chalkCharcoal" => PixelFx::Sketch(Sketch::ChalkCharcoal {
+            charcoal: num(p, "charcoalArea", 6.0).clamp(0.0, 20.0),
+            chalk: num(p, "chalkArea", 6.0).clamp(0.0, 20.0),
+            pressure: num(p, "strokePressure", 1.0).clamp(0.0, 5.0),
+        }),
+        "sketch.charcoal" => PixelFx::Sketch(Sketch::Charcoal {
+            thickness: num(p, "charcoalThickness", 1.0).clamp(1.0, 7.0),
+            detail: num(p, "detail", 5.0).clamp(0.0, 5.0),
+            balance: num(p, "lightDarkBalance", 50.0).clamp(0.0, 100.0),
+        }),
+        "sketch.chrome" => {
+            PixelFx::Sketch(Sketch::Chrome { detail: num(p, "detail", 4.0).clamp(0.0, 10.0), smoothness: num(p, "smoothness", 7.0).clamp(0.0, 10.0) })
+        }
+        "sketch.conteCrayon" => PixelFx::Sketch(Sketch::ConteCrayon {
+            foreground: num(p, "foregroundLevel", 11.0).clamp(1.0, 15.0),
+            background: num(p, "backgroundLevel", 7.0).clamp(1.0, 15.0),
+            paper: Texturizer {
+                surface: pick(&Surface::KINDS, text(p, "texture", "canvas"), Surface::Canvas),
+                scaling: num(p, "scaling", 100.0).clamp(50.0, 200.0) / 100.0,
+                relief: num(p, "relief", 4.0).clamp(0.0, 50.0),
+                light: pick(&Light::KINDS, text(p, "light", "top"), Light::Top),
+                invert: crate::util::flag(p, "invert", false),
+            },
+        }),
+        "sketch.graphicPen" => PixelFx::Sketch(Sketch::GraphicPen {
+            length: num(p, "strokeLength", 15.0).clamp(1.0, 15.0),
+            balance: num(p, "lightDarkBalance", 50.0).clamp(0.0, 100.0),
+            direction: pick(&Direction::KINDS, text(p, "strokeDirection", "rightDiagonal"), Direction::RightDiagonal),
+        }),
+        "sketch.halftonePattern" => PixelFx::Sketch(Sketch::HalftonePattern {
+            size: num(p, "size", 1.0).clamp(1.0, 12.0),
+            contrast: num(p, "contrast", 5.0).clamp(0.0, 50.0),
+            screen: pick(&Screen::KINDS, text(p, "patternType", "dot"), Screen::Dot),
+        }),
+        "sketch.notePaper" => PixelFx::Sketch(Sketch::NotePaper {
+            balance: num(p, "imageBalance", 25.0).clamp(0.0, 50.0),
+            grain: num(p, "graininess", 10.0).clamp(0.0, 20.0),
+            relief: num(p, "relief", 11.0).clamp(0.0, 25.0),
+        }),
+        "sketch.photocopy" => {
+            PixelFx::Sketch(Sketch::Photocopy { detail: num(p, "detail", 7.0).clamp(1.0, 24.0), darkness: num(p, "darkness", 8.0).clamp(1.0, 50.0) })
+        }
+        "sketch.plaster" => PixelFx::Sketch(Sketch::Plaster {
+            balance: num(p, "imageBalance", 20.0).clamp(0.0, 50.0),
+            smoothness: num(p, "smoothness", 2.0).clamp(1.0, 15.0),
+            light: pick(&Light::KINDS, text(p, "light", "top"), Light::Top),
+        }),
+        "sketch.reticulation" => PixelFx::Sketch(Sketch::Reticulation {
+            density: num(p, "density", 12.0).clamp(0.0, 50.0),
+            foreground: num(p, "foregroundLevel", 40.0).clamp(0.0, 50.0),
+            background: num(p, "backgroundLevel", 5.0).clamp(0.0, 50.0),
+        }),
+        "sketch.stamp" => PixelFx::Sketch(Sketch::Stamp {
+            balance: num(p, "lightDarkBalance", 25.0).clamp(0.0, 50.0),
+            smoothness: num(p, "smoothness", 5.0).clamp(1.0, 50.0),
+        }),
+        "sketch.tornEdges" => PixelFx::Sketch(Sketch::TornEdges {
+            balance: num(p, "imageBalance", 25.0).clamp(0.0, 50.0),
+            smoothness: num(p, "smoothness", 11.0).clamp(1.0, 15.0),
+            contrast: num(p, "contrast", 17.0).clamp(1.0, 25.0),
+        }),
+        "sketch.waterPaper" => PixelFx::Sketch(Sketch::WaterPaper {
+            fiber: num(p, "fiberLength", 15.0).clamp(3.0, 50.0),
+            brightness: num(p, "brightness", 60.0).clamp(0.0, 100.0),
+            contrast: num(p, "contrast", 80.0).clamp(0.0, 100.0),
+        }),
         "texture.craquelure" => PixelFx::Craquelure {
             spacing: num(p, "crackSpacing", 15.0).clamp(2.0, 100.0),
             depth: num(p, "crackDepth", 6.0).clamp(0.0, 10.0),
@@ -307,6 +403,8 @@ impl PixelFx {
             | PixelFx::StainedGlass { .. }
             | PixelFx::Texturizer(_) => 0.0,
             PixelFx::Brush(b) => b.outset(),
+            // Sketches repaint the art's own coverage.
+            PixelFx::Sketch(_) => 0.0,
             // Displacements pull content out by up to their reach.
             PixelFx::Glass(g) => g.distortion * 0.5,
             PixelFx::OceanRipple { magnitude, .. } => magnitude * 0.5,
@@ -337,6 +435,7 @@ impl PixelFx {
             PixelFx::Patchwork { square, .. } => Some(square),
             PixelFx::StainedGlass { size, .. } => Some(3.0 * size),
             PixelFx::Brush(b) => Some(b.reach()),
+            PixelFx::Sketch(k) => Some(k.reach()),
         }
     }
 
@@ -366,6 +465,7 @@ impl PixelFx {
             PixelFx::StainedGlass { size, border, light } => texture::stained_glass(px, w, h, space, size, border, light),
             PixelFx::Texturizer(t) => texture::texturize(px, w, h, space, t),
             PixelFx::Brush(b) => b.apply(px, w, h, space),
+            PixelFx::Sketch(k) => k.apply(px, w, h, space),
         }
     }
 }
