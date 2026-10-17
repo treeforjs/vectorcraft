@@ -1,4 +1,4 @@
-//! Photoshop-style raster effects (Effect › Artistic › Colored Pencil, Cutout, Dry Brush, Film
+//! Photoshop-style raster effects (Effect › Rasterize, Artistic › Colored Pencil, Cutout, Dry Brush, Film
 //! Grain, Fresco, Neon Glow, Paint Daubs, Palette Knife, Plastic Wrap, Poster Edges, Rough Pastels,
 //! Smudge Stick, Sponge, Underpainting and Watercolor, Blur › Radial Blur and Smart Blur, Brush Strokes ›
 //! Accented Edges, Angled Strokes, Crosshatch, Dark Strokes, Ink Outlines, Spatter, Sprayed Strokes
@@ -24,6 +24,7 @@ mod distort;
 mod edges;
 mod noise;
 mod pixelate;
+mod rasterize;
 mod sharpen;
 mod sketch;
 mod texture;
@@ -33,6 +34,7 @@ pub use artistic::{Artistic, Daub};
 pub use brush::{BrushStroke, Direction};
 pub use distort::{Glass, GlassTexture};
 pub use pixelate::Mezzotint;
+pub use rasterize::Rasterize;
 pub use sketch::{Screen, Sketch};
 pub use texture::{Grain, Light, Surface, Texturizer};
 
@@ -42,7 +44,7 @@ use vectorcraft_geom::{Affine, Point, Rect};
 use crate::util::{num, text};
 
 /// The Photoshop-style effect ids (all raster effects, see [`crate::is_raster`]).
-pub const PIXEL_EFFECTS: [&str; 56] = [
+pub const PIXEL_EFFECTS: [&str; 57] = [
     "artistic.coloredPencil",
     "artistic.cutout",
     "artistic.dryBrush",
@@ -75,6 +77,7 @@ pub const PIXEL_EFFECTS: [&str; 56] = [
     "pixelate.crystallize",
     "pixelate.mezzotint",
     "pixelate.pointillize",
+    "rasterize",
     "sharpen.unsharpMask",
     "sketch.basRelief",
     "sketch.chalkCharcoal",
@@ -149,6 +152,8 @@ pub enum PixelFx {
     StainedGlass { size: f64, border: f64, light: f64 },
     /// Texture › Texturizer: the art on a lit surface.
     Texturizer(Texturizer),
+    /// Effect › Rasterize: the object shown as an image of its own resolution and colour model.
+    Rasterize(Rasterize),
     /// Brush Strokes › any of its filters.
     Brush(BrushStroke),
     /// Artistic › any of its filters.
@@ -167,6 +172,9 @@ pub struct PixelSpace {
     pub px: f64,
     /// The object's centre (document coordinates): where Radial Blur blurs around.
     pub center: Point,
+    /// The bounds of the object's painted content (document coordinates): where Rasterize's
+    /// background and image grid lie.
+    pub bounds: Rect,
 }
 
 /// The kind in `kinds` (id, label, kind) named `name` by id or label, else `default`.
@@ -371,6 +379,24 @@ pub(crate) fn parse(id: &str, p: &Value) -> Option<PixelFx> {
             shadow: num(p, "shadowIntensity", 1.0).clamp(0.0, 10.0),
             texture: num(p, "texture", 1.0).clamp(1.0, 3.0),
         }),
+        "rasterize" => {
+            let ppi = match text(p, "resolution", "document") {
+                r if r.eq_ignore_ascii_case("screen") => Some(72.0),
+                r if r.eq_ignore_ascii_case("medium") => Some(150.0),
+                r if r.eq_ignore_ascii_case("high") => Some(300.0),
+                r if r.eq_ignore_ascii_case("other") => Some(num(p, "ppi", 300.0).clamp(1.0, 2400.0)),
+                _ => None,
+            };
+            let model = text(p, "colorModel", "document");
+            PixelFx::Rasterize(Rasterize {
+                ppi,
+                color_model: vectorcraft_doc::RasterColorModel::ALL.into_iter().find(|m| m.id().eq_ignore_ascii_case(model)).unwrap_or_default(),
+                white: !text(p, "background", "white").eq_ignore_ascii_case("transparent"),
+                anti_alias: crate::util::flag(p, "antiAlias", true),
+                clipping_mask: crate::util::flag(p, "clippingMask", false),
+                add_around: num(p, "addAround", 0.0).clamp(0.0, vectorcraft_doc::rastersettings::MAX_ADD_AROUND),
+            })
+        }
         "sketch.basRelief" => PixelFx::Sketch(Sketch::BasRelief {
             detail: num(p, "detail", 13.0).clamp(1.0, 15.0),
             smoothness: num(p, "smoothness", 3.0).clamp(1.0, 15.0),
@@ -512,6 +538,7 @@ impl PixelFx {
             PixelFx::Brush(b) => b.outset(),
             // Sketches and artistic media repaint the art's own coverage.
             PixelFx::Sketch(_) | PixelFx::Artistic(_) => 0.0,
+            PixelFx::Rasterize(r) => r.outset(),
             // Displacements pull content out by up to their reach.
             PixelFx::Glass(g) => g.distortion * 0.5,
             PixelFx::OceanRipple { magnitude, .. } => magnitude * 0.5,
@@ -542,6 +569,8 @@ impl PixelFx {
             PixelFx::Patchwork { square, .. } => Some(square),
             PixelFx::StainedGlass { size, .. } => Some(3.0 * size),
             PixelFx::Brush(b) => Some(b.reach()),
+            // A pixel takes the average of its image cell.
+            PixelFx::Rasterize(r) => Some(1.5 * r.cell().unwrap_or(0.0)),
             PixelFx::Sketch(k) => Some(k.reach()),
             PixelFx::Artistic(a) => Some(a.reach()),
         }
@@ -573,6 +602,7 @@ impl PixelFx {
             PixelFx::StainedGlass { size, border, light } => texture::stained_glass(px, w, h, space, size, border, light),
             PixelFx::Texturizer(t) => texture::texturize(px, w, h, space, t),
             PixelFx::Brush(b) => b.apply(px, w, h, space),
+            PixelFx::Rasterize(r) => r.apply(px, w, h, space),
             PixelFx::Sketch(k) => k.apply(px, w, h, space),
             PixelFx::Artistic(a) => a.apply(px, w, h, space),
         }

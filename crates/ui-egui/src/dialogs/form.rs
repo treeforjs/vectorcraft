@@ -355,6 +355,9 @@ pub(super) fn humanize(k: &str) -> String {
         "Angle3" => "Channel 3:".into(),
         "Include Cmy Blacks" => "Include Blacks with CMY:".into(),
         "Align To Path" => "Align to Path:".into(),
+        "Ppi" => "PPI:".into(),
+        "Anti Alias" => "Anti-alias:".into(),
+        "Add Around" => "Add Around Object:".into(),
         _ => format!("{s}:"),
     }
 }
