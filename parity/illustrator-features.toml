@@ -2761,11 +2761,11 @@ title = "Effect › Path (offset path, outline object, outline stroke)"
 area = "H"
 tier = "P1"
 milestone = "M9"
-status = "partial"
+status = "shipped"
 commands = ["effect.apply"]
 tools = []
-evidence = ["crates/ui-egui/src/dialogs/effect.rs::fields_that_pick_a_value_are_dropdowns_of_its_values", "crates/effects/src/tests.rs::outline_stroke_uses_context_stroke"]
-notes = "Offset Path and Outline Stroke done; Outline Object pending"
+evidence = ["crates/ui-egui/src/dialogs/effect.rs::fields_that_pick_a_value_are_dropdowns_of_its_values", "crates/effects/src/tests.rs::outline_stroke_uses_context_stroke", "crates/render/src/tests_objectfx.rs::outline_object_draws_type_as_its_outlines"]
+notes = "Offset Path, Outline Object and Outline Stroke"
 
 [[feature]]
 id = "fx.pathfinder-effects"

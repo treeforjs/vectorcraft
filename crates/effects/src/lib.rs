@@ -250,6 +250,13 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             json!({"offset": 10.0, "joins": "miter", "miterLimit": 4.0}),
         ),
         g(
+            "path.outlineObject",
+            "Outline Object",
+            PATH,
+            "{} the object as its outlines (type as glyph shapes, live objects and symbols as their art) for the effects after it, Expand Appearance and the exporters; paths stay as they are",
+            json!({}),
+        ),
+        g(
             "path.outlineStroke",
             "Outline Stroke",
             PATH,
@@ -950,6 +957,8 @@ pub(crate) fn apply_one(id: &str, p: &Value, path: &PathData, b: Rect, ctx: &Geo
             }
             vectorcraft_pathops::offset_path(path, off, join(p, "joins"), num(p, "miterLimit", 4.0).clamp(1.0, 500.0))
         }
+        // The outlines are the object's: reaching here, type and live objects already are.
+        "path.outlineObject" => path.clone(),
         "path.outlineStroke" => {
             let fallback;
             let base = match ctx.stroke {
