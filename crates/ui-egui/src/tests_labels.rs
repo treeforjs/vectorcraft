@@ -50,6 +50,19 @@ fn effect_menu_has_a_vector_effects_section() {
     assert!(effect.iter().any(|i| matches!(i, Item::Header("Vector Effects"))));
 }
 
+/// Every raster effect sits in its submenu (Effect › Pixelate › Crystallize…), none loose at the
+/// end of the Effect menu.
+#[test]
+fn raster_effects_sit_in_their_submenus() {
+    let app = app();
+    let entries = menus::menu_entries(&app);
+    for id in vectorcraft_effects::PIXEL_EFFECTS {
+        let info = vectorcraft_effects::effect_info(id).expect("catalogued");
+        let entry = entries.iter().find(|e| e.params.get("effect").and_then(|v| v.as_str()) == Some(id)).expect(id);
+        assert_eq!(entry.path, info.menu, "{id}");
+    }
+}
+
 #[test]
 fn library_submenus_are_disabled_placeholders() {
     let app = app();
