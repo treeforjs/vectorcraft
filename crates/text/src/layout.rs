@@ -1058,7 +1058,7 @@ fn leader_outline(db: &FontDb, g: &SGlyph, leader: &str, origin: f64, x0: f64, x
         })
         .collect();
     let cycle: f64 = glyphs.iter().map(|(_, a)| a).sum();
-    if glyphs.is_empty() || !(cycle > 1e-6) || !(x1 - x0).is_finite() {
+    if glyphs.is_empty() || cycle <= 1e-6 || !(x1 - x0).is_finite() {
         return out;
     }
     // The first whole cycle at or after x0 on the grid.
