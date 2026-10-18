@@ -4139,3 +4139,8 @@ axis	Both	Оба
 @msg	too many actions in this set	слишком много операций в наборе
 @msg	too many steps in this action	слишком много шагов в операции
 @msg	unknown command `{id}`	неизвестная команда `{id}`
+	Symbol Options…	Параметры символа…
+	Symbol Options	Параметры символа
+	Enable Guides for 9-Slice Scaling	Включить направляющие для 9-секционного масштабирования
+	Corners keep their size when instances are scaled; the edges and centre stretch.	При масштабировании экземпляров углы сохраняют размер, а края и центр растягиваются.
+@msg	no symbol `{name}`	нет символа `{name}`

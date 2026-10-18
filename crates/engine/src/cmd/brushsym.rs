@@ -11,6 +11,7 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 use vectorcraft_brush::{self as brush, Brush};
 use vectorcraft_color::{Color, Paint};
+use vectorcraft_doc::nine_slice::NineSlice;
 use vectorcraft_doc::{AppearanceItem, Document, FillLayer, Node, NodeId, NodeKind, Symbol};
 use vectorcraft_geom::{Affine, Point, Vec2};
 
@@ -140,6 +141,15 @@ pub fn specs() -> Vec<CommandSpec> {
             "{name, expandInstances?: true} delete a symbol; its instances are expanded (or deleted with false)",
             has_doc,
             symbol_delete
+        ),
+        cmd!(
+            "symbol.options",
+            "Symbol Options…",
+            [],
+            None,
+            "{name?, nineSlice?: bool, guides?: {left, top, right, bottom}} turn 9-slice scaling on or off and set its guides (points in from the art's edges at natural size; new guides start a quarter in) → {name, nineSlice, guides?, size: [w,h]}",
+            has_doc,
+            symbol_options
         ),
         cmd!("symbol.duplicate", "Duplicate Symbol", [], None, "{name, newName?} → {name}", has_doc, symbol_duplicate),
         cmd!(
@@ -546,7 +556,7 @@ fn symbol_list(s: &mut Session, _: &Value) -> Result<Value> {
         .iter()
         .map(|sym| {
             let (w, h) = natural_size(d, &sym.name);
-            json!({"name": sym.name, "instances": instances_of(d, Some(&sym.name)).len(), "size": [w, h]})
+            json!({"name": sym.name, "instances": instances_of(d, Some(&sym.name)).len(), "size": [w, h], "nineSlice": sym.slice.is_some()})
         })
         .collect();
     Ok(json!({ "symbols": list, "current": current_symbol(d).or_else(|| symbol_names(d).into_iter().next()) }))
@@ -571,7 +581,7 @@ fn symbol_new(s: &mut Session, p: &Value) -> Result<Value> {
     let name = unique_symbol_name(&s.doc()?.doc, str_param(p, "name").filter(|n| !n.trim().is_empty()).unwrap_or("New Symbol"));
     let id = s.edit("New Symbol", |d, sel| {
         let art = d.reid(&art);
-        d.symbols.push(Symbol { name: name.clone(), art: Arc::new(art) });
+        d.symbols.push(Symbol { name: name.clone(), art: Arc::new(art), slice: None });
         set_natural_size(d, &name, Some(size));
         d.unknown.insert(CURRENT_SYMBOL.into(), json!(name));
         let id = replace_with_instance(d, &ids, &name, place_xf(c, size))?;
@@ -609,9 +619,8 @@ fn symbol_place(s: &mut Session, p: &Value) -> Result<Value> {
 
 /// The plain art of instance `inst` in document space (fresh ids).
 fn expanded_instance(d: &mut Document, inst: &Node) -> Option<Node> {
-    let NodeKind::SymbolInstance { symbol, xf } = &inst.kind else { return None };
-    let sym = d.symbols.iter().find(|s| &s.name == symbol)?;
-    let mut art = (*sym.art).clone();
+    let NodeKind::SymbolInstance { xf, .. } = &inst.kind else { return None };
+    let mut art = (*d.symbol_art_for(inst)?).clone();
     if let Some(f) = inst.appearance.fill()
         && let Some(c) = f.paint.color()
     {
@@ -742,6 +751,66 @@ fn symbol_delete(s: &mut Session, p: &Value) -> Result<Value> {
     ok()
 }
 
+/// The art of symbol `name` at its natural size: its width and height in points.
+fn art_size(d: &Document, name: &str) -> Option<(f64, f64)> {
+    let b = d.symbols.iter().find(|x| x.name == name)?.art.geometric_bounds()?;
+    let n = d.symbol_natural_xf(name).as_coeffs();
+    Some((b.width() * n[0].abs(), b.height() * n[3].abs()))
+}
+
+fn guides_json(g: &NineSlice) -> Value {
+    json!({"left": g.left, "top": g.top, "right": g.right, "bottom": g.bottom})
+}
+
+fn symbol_options(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "symbol.options";
+    let d = &s.doc()?.doc;
+    let name = resolve_symbol(d, p, C)?;
+    let (w, h) = art_size(d, &name).unwrap_or((0.0, 0.0));
+    let old = d.symbols.iter().find(|x| x.name == name).and_then(|x| x.slice);
+    let on = match p.get("nineSlice") {
+        None | Some(Value::Null) => old.is_some() || p.get("guides").is_some_and(Value::is_object),
+        Some(v) => v.as_bool().ok_or_else(|| bad(C, "`nineSlice` must be true or false"))?,
+    };
+    let slice = if on {
+        let mut g = old.unwrap_or_else(|| NineSlice::quarter(w, h));
+        if let Some(o) = p.get("guides").filter(|v| !v.is_null()) {
+            let o = o.as_object().ok_or_else(|| bad(C, "`guides` must be {left, top, right, bottom}"))?;
+            for (k, f) in [("left", &mut g.left), ("top", &mut g.top), ("right", &mut g.right), ("bottom", &mut g.bottom)] {
+                if let Some(v) = o.get(k) {
+                    *f = v
+                        .as_f64()
+                        .filter(|v| v.is_finite() && *v >= 0.0)
+                        .ok_or_else(|| bad(C, format!("`guides.{k}` must be a number of points, 0 or more")))?;
+                }
+            }
+        }
+        if g.left + g.right > w + 1e-6 || g.top + g.bottom > h + 1e-6 {
+            return Err(bad(C, format!("the guides must fit inside the symbol's art ({w:.2} × {h:.2} pt)")));
+        }
+        Some(g)
+    } else {
+        None
+    };
+    if slice != old {
+        s.edit("Symbol Options", |d, _| {
+            if let Some(sym) = d.symbols.iter_mut().find(|x| x.name == name) {
+                sym.slice = slice;
+            }
+            // Instances draw again with the new guides.
+            for i in instances_of(d, Some(&name)) {
+                let _ = d.node_mut(i);
+            }
+            Ok(())
+        })?;
+    }
+    let mut out = json!({"name": name, "nineSlice": slice.is_some(), "size": [w, h]});
+    if let Some(g) = &slice {
+        out["guides"] = guides_json(g);
+    }
+    Ok(out)
+}
+
 fn symbol_duplicate(s: &mut Session, p: &Value) -> Result<Value> {
     const C: &str = "symbol.duplicate";
     let name = name_param(p, C)?.to_string();
@@ -751,7 +820,7 @@ fn symbol_duplicate(s: &mut Session, p: &Value) -> Result<Value> {
     let size = natural_size(d, &name);
     s.edit("Duplicate Symbol", |d, _| {
         let art = d.reid(&sym.art);
-        d.symbols.push(Symbol { name: new.clone(), art: Arc::new(art) });
+        d.symbols.push(Symbol { name: new.clone(), art: Arc::new(art), slice: sym.slice });
         set_natural_size(d, &new, Some(size));
         Ok(())
     })?;

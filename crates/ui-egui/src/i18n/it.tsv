@@ -4141,3 +4141,8 @@ axis	Both	Entrambi
 @msg	too many actions in this set	troppe azioni in questo set
 @msg	too many steps in this action	troppi passi in questa azione
 @msg	unknown command `{id}`	comando sconosciuto `{id}`
+	Symbol Options…	Opzioni simbolo…
+	Symbol Options	Opzioni simbolo
+	Enable Guides for 9-Slice Scaling	Attiva guide per ridimensionamento a 9 sezioni
+	Corners keep their size when instances are scaled; the edges and centre stretch.	Gli angoli mantengono le dimensioni quando le istanze vengono ridimensionate; i bordi e il centro si allungano.
+@msg	no symbol `{name}`	nessun simbolo `{name}`

@@ -406,6 +406,12 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "{name?} (default: the selected path's brush, else the current brush) open its Brush Options, what double-clicking a brush in the Brushes panel opens: Calligraphic (dialog `brushOptions`, fields name, angle −180..180, roundness 0..100, size 0..1296 pt, angleMode/roundnessMode/sizeMode: fixed|random|pressure, angleVariation/roundnessVariation/sizeVariation) Bristle (fields name, shape, size, length, density, thickness, opacity, stiffness), Scatter (sizeMode/spacingMode/scatterMode/rotationMode: fixed|random with …Min/…Max, rotationRelativeTo: page|path), Art (width %, scale: proportional|stretch|betweenGuides with guideStart/guideEnd %, direction, flipAlong, flipAcross, overlap: fold|adjust) or Pattern (scale %, spacing %, fit: stretch|addSpace|approximate, flipAlong, flipAcross); Scatter, Art and Pattern also colorization: none|tints|tintsAndShades|hueShift with keyColor #rrggbb; OK runs brush.options",
     ),
     (
+        "ui.symbolOptions",
+        "Symbol Options…",
+        "",
+        "{name?} (default: the current symbol) open Symbol Options (dialog `symbolOptions`, fields nineSlice: bool, left/top/right/bottom: guide distances in pt from the art's edges at natural size); OK runs symbol.options",
+    ),
+    (
         "ui.graphicStyleOptions",
         "Graphic Style Options…",
         "",
@@ -1276,6 +1282,13 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         }
         "ui.colorPicker" => crate::dialogs::open_color_picker(app, p),
         "ui.graphicStyleOptions" => crate::dialogs::graphic_style_options::open(app, s("name").as_deref()),
+        "ui.symbolOptions" => {
+            let current = || app.run("symbol.list", json!({})).ok().and_then(|v| v["current"].as_str().map(str::to_string));
+            match s("name").or_else(current) {
+                Some(n) => crate::dialogs::symbol_options::open(app, &n),
+                None => Err("the document has no symbols".into()),
+            }
+        }
         "ui.brushOptions" => crate::dialogs::brush_options::open(app, s("name").as_deref()),
         "tool.options" => crate::toolbar::open_options(app, &s("tool").unwrap_or_default()),
         "ui.colorGuideOptions" => {
@@ -1942,6 +1955,7 @@ pub fn enabled(app: &VectorcraftApp, id: &str) -> bool {
         "ui.findFontsInFolder" => crate::picks::can(app, &crate::picks::PickRequest::Folder) && app.session.active().is_some(),
         "ui.swatchOptions" | "ui.newSwatch" | "ui.newColorGroup" => app.session.active().is_some(),
         "ui.graphicStyleOptions" => app.session.active().is_some(),
+        "ui.symbolOptions" => app.session.active().is_some_and(|d| !d.doc.symbols.is_empty()),
         "ui.brushOptions" => crate::dialogs::brush_options::available(app),
         "ui.colorBalanceDialog" | "ui.saturateDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "ui.saveSwatchLibrary" => app.session.active().is_some(),

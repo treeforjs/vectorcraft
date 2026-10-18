@@ -22,9 +22,8 @@ pub fn text_outliner() -> Outliner<'static> {
 /// Type outlined, or a symbol instance as its symbol's art (from `doc`) placed by the instance.
 fn outline(doc: Option<&Document>, n: &Node) -> Option<Node> {
     match &n.kind {
-        NodeKind::SymbolInstance { symbol, xf } => {
-            let sym = doc?.symbols.iter().find(|s| s.name == *symbol)?;
-            let mut art = (*sym.art).clone();
+        NodeKind::SymbolInstance { xf, .. } => {
+            let mut art = (*doc?.symbol_art_for(n)?).clone();
             art.transform(*xf, false);
             Some(Node::group(n.id, vec![Arc::new(art)]))
         }

@@ -991,9 +991,9 @@ impl Exporter<'_> {
             }
             NodeKind::Text(t) => self.text(s, n, t, page),
             NodeKind::Image(im) => self.image(s, im),
-            NodeKind::SymbolInstance { symbol, xf } => {
-                if let Some(sym) = self.doc.symbols.iter().find(|x| &x.name == symbol) {
-                    let mut art = (*sym.art).clone();
+            NodeKind::SymbolInstance { xf, .. } => {
+                if let Some(sym) = self.doc.symbol_art_for(n) {
+                    let mut art = (*sym).clone();
                     art.transform(*xf, false);
                     self.node(s, &art, page, true);
                 }

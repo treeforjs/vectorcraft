@@ -1027,9 +1027,9 @@ impl Renderer {
             }
             NodeKind::Text(t) => self.draw_text(ctx, f, n, t),
             NodeKind::Image(im) => self.draw_image(ctx, f, im),
-            NodeKind::SymbolInstance { symbol, xf } => {
-                if let Some(sym) = f.doc.symbols.iter().find(|s| &s.name == symbol) {
-                    let mut art = brush_fx::instance_art(&sym.art, n);
+            NodeKind::SymbolInstance { xf, .. } => {
+                if let Some(sym) = f.doc.symbol_art_for(n) {
+                    let mut art = brush_fx::instance_art(&sym, n);
                     art.transform(*xf, false);
                     self.draw_node(ctx, f, &art, true);
                 }

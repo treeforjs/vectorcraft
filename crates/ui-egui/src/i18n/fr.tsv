@@ -4152,3 +4152,8 @@ axis	Both	Les deux
 @msg	too many actions in this set	trop d’actions dans ce jeu
 @msg	too many steps in this action	trop d’étapes dans cette action
 @msg	unknown command `{id}`	commande inconnue `{id}`
+	Symbol Options…	Options de symbole…
+	Symbol Options	Options de symbole
+	Enable Guides for 9-Slice Scaling	Activer les repères pour la mise à l’échelle en 9 tranches
+	Corners keep their size when instances are scaled; the edges and centre stretch.	Les coins gardent leur taille quand les occurrences sont mises à l’échelle ; les bords et le centre s’étirent.
+@msg	no symbol `{name}`	aucun symbole `{name}`
