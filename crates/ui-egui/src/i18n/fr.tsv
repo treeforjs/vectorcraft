@@ -4157,3 +4157,13 @@ axis	Both	Les deux
 	Enable Guides for 9-Slice Scaling	Activer les repères pour la mise à l’échelle en 9 tranches
 	Corners keep their size when instances are scaled; the edges and centre stretch.	Les coins gardent leur taille quand les occurrences sont mises à l’échelle ; les bords et le centre s’étirent.
 @msg	no symbol `{name}`	aucun symbole `{name}`
+	Pathfinder Options	Options de Pathfinder
+	Precision:	Précision :
+	How closely results follow the exact shapes; smaller is more precise.	La fidélité des résultats aux formes exactes ; plus la valeur est petite, plus le résultat est précis.
+	Remove Redundant Points	Supprimer les points redondants
+	Divide and Outline Will Remove Unpainted Artwork	Diviser et Contour suppriment les illustrations non peintes
+	Defaults	Valeurs par défaut
+@msg	precision must be a number of points	la précision doit être un nombre de points
+@msg	precision must be between {_1} and {_2} pt	la précision doit être comprise entre {_1} et {_2} pt
+@msg	{k} must be true or false	{k} doit valoir true ou false
+@msg	{label}: every face is unpainted (see Pathfinder Options)	{label} : toutes les faces sont non peintes (voir Options de Pathfinder)

@@ -3563,3 +3563,13 @@ axis	Both	兩者
 	Enable Guides for 9-Slice Scaling	啟用 9 格切片縮放的參考線
 	Corners keep their size when instances are scaled; the edges and centre stretch.	縮放實例時角保持大小，邊緣和中心會拉伸。
 @msg	no symbol `{name}`	沒有符號 `{name}`
+	Pathfinder Options	路徑管理員選項
+	Precision:	精確度：
+	How closely results follow the exact shapes; smaller is more precise.	結果貼合精確形狀的程度；數值越小越精確。
+	Remove Redundant Points	移除多餘的錨點
+	Divide and Outline Will Remove Unpainted Artwork	分割和外框將移除未上色的圖稿
+	Defaults	預設值
+@msg	precision must be a number of points	精確度必須是點數
+@msg	precision must be between {_1} and {_2} pt	精確度必須介於 {_1} 和 {_2} pt 之間
+@msg	{k} must be true or false	{k} 必須為 true 或 false
+@msg	{label}: every face is unpainted (see Pathfinder Options)	{label}：所有面都未上色（請參閱「路徑管理員選項」）

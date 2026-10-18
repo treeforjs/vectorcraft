@@ -4138,3 +4138,13 @@ theme	Appearance	外観
 	Enable Guides for 9-Slice Scaling	9 分割の拡大・縮小のためのガイドを有効にする
 	Corners keep their size when instances are scaled; the edges and centre stretch.	インスタンスを拡大・縮小しても角のサイズは変わらず、辺と中央が伸縮します。
 @msg	no symbol `{name}`	シンボル `{name}` が見つかりません
+	Pathfinder Options	パスファインダーオプション
+	Precision:	精度:
+	How closely results follow the exact shapes; smaller is more precise.	結果が正確な形状にどれだけ沿うか。小さいほど精密になります。
+	Remove Redundant Points	余分なポイントを削除
+	Divide and Outline Will Remove Unpainted Artwork	分割およびアウトラインで塗りのないアートワークを削除
+	Defaults	初期設定
+@msg	precision must be a number of points	精度はポイント数で指定してください
+@msg	precision must be between {_1} and {_2} pt	精度は {_1}〜{_2} pt の範囲で指定してください
+@msg	{k} must be true or false	{k} は true または false で指定してください
+@msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: すべての面に塗りがありません (パスファインダーオプションを参照)

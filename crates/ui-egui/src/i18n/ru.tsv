@@ -4144,3 +4144,13 @@ axis	Both	Оба
 	Enable Guides for 9-Slice Scaling	Включить направляющие для 9-секционного масштабирования
 	Corners keep their size when instances are scaled; the edges and centre stretch.	При масштабировании экземпляров углы сохраняют размер, а края и центр растягиваются.
 @msg	no symbol `{name}`	нет символа `{name}`
+	Pathfinder Options	Параметры обработки контуров
+	Precision:	Точность:
+	How closely results follow the exact shapes; smaller is more precise.	Насколько точно результат следует исходным формам; чем меньше значение, тем точнее.
+	Remove Redundant Points	Удалять лишние точки
+	Divide and Outline Will Remove Unpainted Artwork	Разделение и Контур удаляют неокрашенные объекты
+	Defaults	По умолчанию
+@msg	precision must be a number of points	точность должна быть числом пунктов
+@msg	precision must be between {_1} and {_2} pt	точность должна быть от {_1} до {_2} pt
+@msg	{k} must be true or false	{k} должно быть true или false
+@msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: все области не окрашены (см. «Параметры обработки контуров»)

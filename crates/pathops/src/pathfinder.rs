@@ -7,7 +7,10 @@ use kurbo::{BezPath, ParamCurve, ParamCurveNearest, Point, Shape as _};
 use linesweeper::topology::ContourIdx;
 use vectorcraft_geom::{FillRule, PathData};
 
-use crate::boolean::{Arrangement, Multi, Seg, all_contours_to_path, contours_to_path, fill_bezpath, normalize_bez, segs_to_subpath, unite_all};
+use crate::boolean::{
+    Arrangement, DEFAULT_PRECISION, Multi, Seg, all_contours_to_path, contours_to_path, fill_bezpath, normalize_bez, segs_to_subpath, unite_all,
+    unite_all_with,
+};
 
 /// A filled shape in a Pathfinder stack. `key` identifies its paint (e.g. a hashed fill colour);
 /// results carry the key of the object whose paint they keep.
@@ -85,6 +88,14 @@ fn one(path: PathData, key: u64) -> Vec<Shape> {
 
 /// Run a Pathfinder operation over `shapes` (back → front).
 pub fn pathfinder(op: PathfinderOp, shapes: &[Shape]) -> Vec<Shape> {
+    pathfinder_with(op, shapes, DEFAULT_PRECISION)
+}
+
+/// [`pathfinder`] with an explicit `precision` (points; Pathfinder Options → Precision): how far
+/// a refitted curve may stray from the exact result, and the mean width below which a sliver
+/// face is dropped as debris. Not finite or not positive reads as the default.
+pub fn pathfinder_with(op: PathfinderOp, shapes: &[Shape], precision: f64) -> Vec<Shape> {
+    let precision = if precision.is_finite() && precision > 0.0 { precision } else { DEFAULT_PRECISION };
     let n = shapes.len();
     if n == 0 {
         return Vec::new();
@@ -92,13 +103,14 @@ pub fn pathfinder(op: PathfinderOp, shapes: &[Shape]) -> Vec<Shape> {
     let front_key = shapes[n - 1].key;
     let unite = || {
         let v: Vec<(&PathData, FillRule)> = shapes.iter().map(|s| (&s.path, s.rule)).collect();
-        one(unite_all(&v), front_key)
+        one(unite_all_with(&v, precision), front_key)
     };
     // Unite doesn't need the arrangement.
     if op == PathfinderOp::Unite {
         return unite();
     }
-    let Some(arr) = arrangement(shapes) else { return Vec::new() };
+    let Some(mut arr) = arrangement(shapes) else { return Vec::new() };
+    arr.tidy.precision = precision;
     let p = &arr.tidy;
     match op {
         PathfinderOp::Unite => unite(),

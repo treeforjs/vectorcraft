@@ -148,6 +148,68 @@ fn divide_produces_group_of_faces() {
 }
 
 #[test]
+fn pathfinder_options_are_kept_with_the_preferences_and_validated() {
+    let mut s = session();
+    let o = |s: &mut Session, p: Value| s.execute("object.pathfinder.options", &p);
+    assert_eq!(o(&mut s, json!({})).unwrap(), json!({"precision": 0.01, "removeRedundantPoints": true, "removeUnpainted": false}));
+    let v = o(&mut s, json!({"precision": "0.5 pt", "removeUnpainted": true})).unwrap();
+    assert_eq!(v, json!({"precision": 0.5, "removeRedundantPoints": true, "removeUnpainted": true}));
+    assert_eq!(s.prefs.pathfinder.precision, 0.5);
+    for bad in [json!({"precision": 50}), json!({"precision": 0}), json!({"precision": "fine"}), json!({"removeUnpainted": "yes"})] {
+        assert!(o(&mut s, bad.clone()).is_err(), "{bad}");
+    }
+    assert_eq!(s.prefs.pathfinder.precision, 0.5, "a rejected call changes nothing");
+    assert_eq!(s.execute("prefs.get", &json!({"key": "pathfinder"})).unwrap()["removeUnpainted"], json!(true));
+    s.execute("prefs.set", &json!({"key": "pathfinder", "value": {"removeRedundantPoints": false}})).unwrap();
+    assert!(!s.prefs.pathfinder.remove_redundant_points && s.prefs.pathfinder.remove_unpainted);
+    assert!(s.execute("prefs.set", &json!({"key": "pathfinder", "value": {"precision": -1}})).is_err());
+    assert_eq!(o(&mut s, json!({"defaults": true})).unwrap()["precision"], json!(0.01));
+    o(&mut s, json!({"precision": 2})).unwrap();
+    s.execute("prefs.reset", &json!({})).unwrap();
+    assert_eq!(s.prefs.pathfinder, crate::cmd::PathfinderOptions::default());
+}
+
+#[test]
+fn divide_drops_unpainted_faces_when_the_option_is_on() {
+    let mut s = session();
+    let (a, b) = two_rects(&mut s);
+    s.edit("t", |d, _| {
+        d.node_mut(b).unwrap().appearance.set_fill(Paint::None);
+        Ok(())
+    })
+    .unwrap();
+    s.execute("select.set", &json!({"ids": [a.0, b.0]})).unwrap();
+    let count = |s: &mut Session| {
+        let r = ids(&s.execute("object.pathfinder.divide", &json!({})).unwrap());
+        let n = node(s, r[0]).children().unwrap().len();
+        s.execute("edit.undo", &json!({})).unwrap();
+        n
+    };
+    assert_eq!(count(&mut s), 3);
+    s.execute("object.pathfinder.options", &json!({"removeUnpainted": true})).unwrap();
+    // The front rectangle has no fill: its own face and the overlap (which it tops) go.
+    assert_eq!(count(&mut s), 1);
+    // Outline keeps only the edges of painted faces too.
+    let r = ids(&s.execute("object.pathfinder.outline", &json!({})).unwrap());
+    let red = Paint::solid(Color::rgb(1.0, 0.0, 0.0));
+    assert!(node(&s, r[0]).children().unwrap().iter().all(|c| c.appearance.stroke_paint() == red));
+}
+
+#[test]
+fn pathfinder_precision_option_drops_slivers() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0, 0.0, 100.0, 100.0);
+    let b = rect(&mut s, 99.5, 0.0, 0.5, 100.0);
+    s.execute("select.set", &json!({"ids": [a.0, b.0]})).unwrap();
+    let r = ids(&s.execute("object.pathfinder.divide", &json!({})).unwrap());
+    assert_eq!(node(&s, r[0]).children().unwrap().len(), 2);
+    s.execute("edit.undo", &json!({})).unwrap();
+    s.execute("object.pathfinder.options", &json!({"precision": 1})).unwrap();
+    let r = ids(&s.execute("object.pathfinder.divide", &json!({})).unwrap());
+    assert_eq!(node(&s, r[0]).children().unwrap().len(), 1);
+}
+
+#[test]
 fn trim_and_merge() {
     let mut s = session();
     two_rects(&mut s);

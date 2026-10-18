@@ -51,6 +51,7 @@ pub mod new_swatch;
 pub mod office_export;
 pub mod package;
 mod path_ops;
+pub mod pathfinder_options;
 pub mod pdf_presets;
 pub mod perspective_grid;
 pub mod perspective_options;
@@ -283,6 +284,7 @@ registry! {
     LiquifyOptions: [liquify::KIND] => liquify::SPEC,
     FreehandOptions: [freehand::KIND] => freehand::SPEC,
     PerspectiveGridPresets: [perspective_presets::KIND] => perspective_presets::SPEC,
+    PathfinderOptions: [pathfinder_options::KIND] => pathfinder_options::SPEC,
     PerspectiveGridOptions: [perspective_options::KIND] => perspective_options::SPEC,
     BlendOptions: [blend_options::KIND] => blend_options::SPEC,
     BrushOptions: [brush_options::KIND] => brush_options::SPEC,

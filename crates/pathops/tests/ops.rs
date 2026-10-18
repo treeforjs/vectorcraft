@@ -366,6 +366,30 @@ fn remove_redundant_collinear_and_curve() {
 }
 
 #[test]
+fn remove_coincident_points_merges_only_stacked_anchors() {
+    let pts = [(0.0, 0.0), (5.0, 0.0), (10.0, 0.0), (10.0, 0.0005), (10.0, 10.0), (0.0, 10.0), (0.0, 0.0002)];
+    let p = PathData::single(SubPath::polyline(&pts.map(|(x, y)| Point::new(x, y)), true));
+    let r = remove_coincident_points(&p, 0.01);
+    // The stacked corner and the closing point that lands on the start merge; the collinear
+    // point on the bottom edge stays.
+    assert_eq!(r.anchor_count(), 5);
+    assert!(r.subpaths[0].anchors.iter().any(|a| a.p == Point::new(5.0, 0.0)));
+    assert_eq!(remove_coincident_points(&p, 1e-6).anchor_count(), 7);
+    assert_eq!(remove_coincident_points(&p, f64::NAN).anchor_count(), 7);
+    assert_eq!(remove_coincident_points(&PathData::default(), 1.0), PathData::default());
+}
+
+#[test]
+fn pathfinder_precision_drops_slivers_below_it() {
+    let shapes = [shape(rect(0.0, 0.0, 100.0, 100.0), 0), shape(rect(99.5, 0.0, 0.5, 100.0), 1)];
+    assert_eq!(pathfinder(PathfinderOp::Divide, &shapes).len(), 2);
+    assert_eq!(pathfinder_with(PathfinderOp::Divide, &shapes, 1.0).len(), 1);
+    // A precision that isn't a positive number reads as the default.
+    assert_eq!(pathfinder_with(PathfinderOp::Divide, &shapes, f64::NAN).len(), 2);
+    assert_eq!(pathfinder_with(PathfinderOp::Divide, &shapes, -1.0).len(), 2);
+}
+
+#[test]
 fn add_anchor_points_doubles() {
     let c = circle(0.0, 0.0, 10.0);
     let a = add_anchor_points(&c);

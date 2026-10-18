@@ -108,6 +108,15 @@ pub fn specs() -> Vec<CommandSpec> {
             |s, _| run_pf(s, PathfinderOp::MinusBack)
         ),
         cmd!(
+            query "object.pathfinder.options",
+            "Pathfinder Options",
+            ["Window", "Pathfinder"],
+            None,
+            "{precision?: pt (0.001–10, a string with a unit also reads), removeRedundantPoints?: bool, removeUnpainted?: bool (Divide and Outline drop faces and edges with no fill), defaults?: true (reset first)} how the Pathfinder buttons build their results (kept with the preferences; no params reads them) → {precision, removeRedundantPoints, removeUnpainted}",
+            always,
+            pf_options
+        ),
+        cmd!(
             "object.path.outlineStroke",
             "Outline Stroke",
             ["Object", "Path"],
@@ -289,6 +298,64 @@ fn shape_node_styled(d: &mut Document, path: PathData, style: &Style) -> Node {
 
 // ---------- Pathfinder ----------
 
+/// Pathfinder Options (the Pathfinder panel menu): kept with the preferences (a preference group,
+/// see [`super::prefscmds::PREF_GROUPS`]).
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct PathfinderOptions {
+    /// How far, in points, a result's refitted curves may stray from the exact shape (also the
+    /// mean width below which a sliver face is dropped as debris).
+    pub precision: f64,
+    /// Merge anchors that land on top of each other.
+    pub remove_redundant_points: bool,
+    /// Divide and Outline drop the faces and edges whose art has no fill.
+    pub remove_unpainted: bool,
+}
+
+impl Default for PathfinderOptions {
+    fn default() -> Self {
+        Self { precision: po::DEFAULT_PRECISION, remove_redundant_points: true, remove_unpainted: false }
+    }
+}
+
+/// The range Precision takes, in points.
+pub const PF_PRECISION_RANGE: std::ops::RangeInclusive<f64> = 0.001..=10.0;
+
+impl PathfinderOptions {
+    /// These options with `p`'s keys applied (`defaults: true` starts from the defaults).
+    pub fn merged(mut self, p: &Value) -> std::result::Result<Self, String> {
+        if p.get("defaults").and_then(Value::as_bool) == Some(true) {
+            self = Self::default();
+        }
+        if let Some(v) = p.get("precision") {
+            let x = v
+                .as_f64()
+                .or_else(|| v.as_str().and_then(|s| vectorcraft_doc::Unit::Points.parse(s)))
+                .ok_or("precision must be a number of points")?;
+            if !PF_PRECISION_RANGE.contains(&x) {
+                return Err(format!("precision must be between {} and {} pt", PF_PRECISION_RANGE.start(), PF_PRECISION_RANGE.end()));
+            }
+            self.precision = x;
+        }
+        for (k, slot) in [("removeRedundantPoints", &mut self.remove_redundant_points), ("removeUnpainted", &mut self.remove_unpainted)] {
+            if let Some(v) = p.get(k) {
+                *slot = v.as_bool().ok_or_else(|| format!("{k} must be true or false"))?;
+            }
+        }
+        Ok(self)
+    }
+    /// The precision to compute with (a stored value out of range reads as the default).
+    fn precision(&self) -> f64 {
+        if PF_PRECISION_RANGE.contains(&self.precision) { self.precision } else { po::DEFAULT_PRECISION }
+    }
+}
+
+fn pf_options(s: &mut Session, p: &Value) -> Result<Value> {
+    let o = s.prefs.pathfinder.merged(p).map_err(|e| bad("object.pathfinder.options", e))?;
+    s.prefs.pathfinder = o;
+    Ok(json!(o))
+}
+
 fn pf_label(op: PathfinderOp) -> &'static str {
     match op {
         PathfinderOp::Unite => "Unite",
@@ -310,6 +377,8 @@ fn run_pf(s: &mut Session, op: PathfinderOp) -> Result<Value> {
     let shape_mode =
         matches!(op, PathfinderOp::Unite | PathfinderOp::MinusFront | PathfinderOp::Intersect | PathfinderOp::Exclude | PathfinderOp::MinusBack);
     let label = pf_label(op);
+    let opts = s.prefs.pathfinder;
+    let precision = opts.precision();
     let ids = s.edit(label, |d, sel| {
         // Build the stack (back → front) with a style per entry.
         let mut styles: Vec<Style> = vec![];
@@ -341,7 +410,7 @@ fn run_pf(s: &mut Session, op: PathfinderOp) -> Result<Value> {
                 // A group acts as one shape (the union of its leaves) with its top leaf's style.
                 let parts: Vec<(PathData, FillRule)> = lv.iter().filter_map(node_path).collect();
                 let refs: Vec<(&PathData, FillRule)> = parts.iter().map(|(p, r)| (p, *r)).collect();
-                push(po::unite_all(&refs), FillRule::NonZero, style_of(top));
+                push(po::unite_all_with(&refs, precision), FillRule::NonZero, style_of(top));
             } else {
                 for l in &lv {
                     if let Some((p, r)) = node_path(l) {
@@ -356,7 +425,19 @@ fn run_pf(s: &mut Session, op: PathfinderOp) -> Result<Value> {
         if shapes.iter().any(|s| s.path.subpaths.iter().any(|sp| sp.anchors.iter().any(|a| !(a.p.x.is_finite() && a.p.y.is_finite())))) {
             return Err(EngineError::Other("paths contain invalid coordinates".into()));
         }
-        let results = po::pathfinder(op, &shapes);
+        let mut results = po::pathfinder_with(op, &shapes, precision);
+        if opts.remove_redundant_points {
+            for r in &mut results {
+                r.path = po::remove_coincident_points(&r.path, precision);
+            }
+        }
+        if opts.remove_unpainted && matches!(op, PathfinderOp::Divide | PathfinderOp::Outline) {
+            // Unpainted: the art the face or edge comes from has no fill.
+            results.retain(|r| styles.get(r.key as usize).is_some_and(|st| !st.appearance.fill_paint().is_none()));
+            if results.is_empty() {
+                return Err(EngineError::Other(format!("{label}: every face is unpainted (see Pathfinder Options)")));
+            }
+        }
         if results.iter().all(|r| r.path.is_empty()) {
             return Err(EngineError::Other(format!("{label} produced an empty result")));
         }
@@ -372,7 +453,7 @@ fn run_pf(s: &mut Session, op: PathfinderOp) -> Result<Value> {
                 if r.path.is_empty() {
                     continue;
                 }
-                let st = &styles[r.key as usize];
+                let Some(st) = styles.get(r.key as usize) else { continue };
                 let mut n = shape_node_styled(d, r.path, st);
                 if op == PathfinderOp::Outline {
                     // Outline: open edges stroked with the face's former fill.
