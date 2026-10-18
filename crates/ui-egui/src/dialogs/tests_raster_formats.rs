@@ -102,12 +102,21 @@ fn text_export_options_write_the_stories() {
 }
 
 #[test]
-fn webp_options_say_the_file_is_lossless() {
-    let (mut app, _) = app(1);
+fn webp_options_pick_lossless_or_a_lossy_quality() {
+    let (mut app, written) = app(1);
     app.run("file.exportAs", json!({"format": "webp"})).unwrap();
     confirm(&mut app).unwrap();
     assert_eq!(kind(&app), Some("webpOptions"));
+    let d = app.ui.dialog.as_ref().unwrap();
+    assert_eq!((d.bool("lossless"), d.f64("quality", 0.0)), (true, 90.0));
     frame(&mut app);
+    set(&mut app, "lossless", json!(false));
+    set(&mut app, "quality", json!(70));
+    frame(&mut app);
+    confirm(&mut app).unwrap();
+    let (_, bytes) = written.borrow().last().cloned().unwrap();
+    // Transparent art goes in an extended file (VP8X + ALPH), the colour in a lossy VP8 chunk.
+    assert!(bytes.windows(4).any(|c| c == b"VP8 "), "a lossy file");
 }
 
 #[test]

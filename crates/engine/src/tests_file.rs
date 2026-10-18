@@ -180,11 +180,9 @@ fn export_selection_reports_the_encoders_warnings() {
     let plain = s.execute("document.exportSelection", &json!({"format": "svg"})).unwrap();
     assert_eq!(plain["format"], "svg");
     assert!(warnings(&plain).is_empty(), "{plain}");
-    for (format, options, says) in [
-        ("webp", json!({"lossless": false}), "lossless"),
-        ("svg", json!({"profile": "tiny12"}), "blend"),
-        ("pdf", json!({"createLayers": true, "compatibility": "1.4"}), "layers"),
-    ] {
+    for (format, options, says) in
+        [("svg", json!({"profile": "tiny12"}), "blend"), ("pdf", json!({"createLayers": true, "compatibility": "1.4"}), "layers")]
+    {
         let mut p = options.clone();
         p["format"] = json!(format);
         let sel = s.execute("document.exportSelection", &p).unwrap();

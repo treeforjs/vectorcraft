@@ -417,11 +417,11 @@ title = "Export WebP"
 area = "A"
 tier = "P2"
 milestone = "M4"
-status = "partial"
+status = "shipped"
 commands = ["file.exportAs", "document.export"]
 tools = []
-evidence = ["crates/engine/src/cmd/fileio/tests_text.rs::webp_is_lossless_and_says_so_when_lossy_is_asked_for", "crates/ui-egui/src/dialogs/tests_raster_formats.rs::webp_options_say_the_file_is_lossless"]
-notes = "Lossless WebP export (Export As, Export for Screens, document.export); lossy WebP pending"
+evidence = ["crates/render/src/encode/tests_vp8.rs::lossy_files_decode_close_to_the_source_and_shrink_with_quality", "crates/render/src/encode/tests_vp8.rs::transparency_stays_exact", "crates/engine/src/cmd/fileio/tests_text.rs::webp_is_lossless_unless_lossy_is_asked_for", "crates/ui-egui/src/dialogs/tests_raster_formats.rs::webp_options_pick_lossless_or_a_lossy_quality"]
+notes = "Lossless (VP8L) and lossy (VP8 with quality 0-100, exact lossless alpha) WebP from Export As, Export for Screens and document.export"
 
 [[feature]]
 id = "file.export-screens"

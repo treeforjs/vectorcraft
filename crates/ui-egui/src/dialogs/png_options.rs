@@ -100,6 +100,9 @@ pub(super) fn defaults(app: &VectorcraftApp, f: &Format) -> Map<String, Value> {
                 ("interlaced".into(), json!(false)),
             ]);
         }
+        "webp" => {
+            o.extend([("lossless".into(), json!(true)), ("quality".into(), json!(90))]);
+        }
         "psd" => psd_options::defaults(cmyk, &mut o),
         id => tiff_bmp_tga::defaults(id, cmyk, &mut o),
     }
@@ -204,8 +207,12 @@ pub(super) fn option_rows(ui: &mut egui::Ui, d: &mut Dialog, id: &str, screens: 
         "gif" | "png8" => palette_rows(ui, d, &label),
         "webp" => {
             ui.label("");
-            label(ui, tl!("Lossless (lossy WebP isn't available yet)"));
+            form::check(ui, d, "lossless", tl!("Lossless"));
             ui.end_row();
+            // Lossy files are smaller; their transparency stays exact.
+            if !d.bool("lossless") {
+                quality_row(ui, d, &label);
+            }
         }
         "psd" => psd_options::rows(ui, d, &label),
         id => tiff_bmp_tga::rows(ui, d, id, &label),
