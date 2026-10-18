@@ -105,9 +105,25 @@ pub fn ui_commands(menus_rs: &str) -> HashSet<String> {
 }
 
 /// Engine command ids, from the CLI's `commands` dump (`[{id, …}]` or `{commands: [{id, …}]}`).
+///
+/// `VECTORCRAFT_CLI` names an already built CLI to ask instead. CI sets it to the binary its
+/// `cargo test --workspace` step built: `cargo run -p vectorcraft-cli` resolves a different
+/// feature set and recompiled most of the dependency graph (100 s of every CI run).
 fn engine_commands() -> Result<HashSet<String>, String> {
-    let out =
-        cargo().args(["run", "--quiet", "-p", "vectorcraft-cli", "--", "commands"]).output().map_err(|e| format!("vectorcraft-cli commands: {e}"))?;
+    let mut cmd = match std::env::var_os("VECTORCRAFT_CLI") {
+        Some(cli) => {
+            let mut c = std::process::Command::new(root().join(cli));
+            c.current_dir(root());
+            c.arg("commands");
+            c
+        }
+        None => {
+            let mut c = cargo();
+            c.args(["run", "--quiet", "-p", "vectorcraft-cli", "--", "commands"]);
+            c
+        }
+    };
+    let out = cmd.output().map_err(|e| format!("vectorcraft-cli commands: {e}"))?;
     if !out.status.success() {
         return Err(format!("vectorcraft-cli commands failed:\n{}", String::from_utf8_lossy(&out.stderr)));
     }
