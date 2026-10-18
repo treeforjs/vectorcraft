@@ -1724,6 +1724,12 @@ impl Writer<'_> {
             self.warn("bidirectional text is outlined to preserve shaping and visual order");
             return self.text_outlines(n, t);
         }
+        // Tab leaders have no SVG text equivalent.
+        let plain = t.plain_text();
+        if lay.glyphs.iter().any(|g| !g.outline.elements().is_empty() && plain.get(g.byte..g.byte + g.len) == Some("\t")) {
+            self.warn("type with tab leaders is outlined to keep its leaders");
+            return self.text_outlines(n, t);
+        }
         if let TextKind::OnPath { path, start, end } = &t.kind {
             // `<textPath>` has a start offset only: an end bracket, Align to Path and Spacing
             // keep their look as outlines.
