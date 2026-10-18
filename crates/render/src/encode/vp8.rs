@@ -79,7 +79,7 @@ impl Source<'_> {
         }
     }
     fn has_alpha(&self) -> bool {
-        self.px.chunks_exact(4).any(|p| p.get(3).is_some_and(|&a| a < 255))
+        self.px.as_chunks::<4>().0.iter().any(|p| p.get(3).is_some_and(|&a| a < 255))
     }
 }
 
@@ -880,7 +880,7 @@ fn reset(cx: &mut Contexts, mbx: usize) {
 
 /// The ALPH chunk's payload: the alpha plane as a lossless image stream (no filtering).
 fn alpha_chunk(src: &Source) -> Result<Vec<u8>, String> {
-    let alpha: Vec<u8> = src.px.chunks_exact(4).map(|p| p.get(3).copied().unwrap_or(255)).collect();
+    let alpha: Vec<u8> = src.px.as_chunks::<4>().0.iter().map(|p| p.get(3).copied().unwrap_or(255)).collect();
     let mut file = Vec::new();
     let enc = image::codecs::webp::WebPEncoder::new_lossless(&mut file);
     image::ImageEncoder::write_image(enc, &alpha, src.w as u32, src.h as u32, image::ExtendedColorType::L8)

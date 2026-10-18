@@ -31,7 +31,9 @@ fn decode(file: &[u8]) -> image::RgbaImage {
 /// The luma of RGBA pixels, as grey RGBA (chroma is subsampled 2 × 2, so single-pixel colour
 /// detail is lost by any 4:2:0 encoder; luma shows the coding quality).
 fn luma(p: &[u8]) -> Vec<u8> {
-    p.chunks_exact(4)
+    p.as_chunks::<4>()
+        .0
+        .iter()
         .flat_map(|c| {
             let y = ((66 * i32::from(c[0]) + 129 * i32::from(c[1]) + 25 * i32::from(c[2]) + 128) >> 8) as u8 + 16;
             [y, y, y, 255]
@@ -47,7 +49,7 @@ fn smooth(w: u32, h: u32) -> Vec<u8> {
 /// Peak signal-to-noise ratio of the colour channels, in dB.
 fn psnr(a: &[u8], b: &[u8]) -> f64 {
     let (mut se, mut n) = (0.0, 0.0);
-    for (p, q) in a.chunks_exact(4).zip(b.chunks_exact(4)) {
+    for (p, q) in a.as_chunks::<4>().0.iter().zip(b.as_chunks::<4>().0.iter()) {
         for c in 0..3 {
             se += (f64::from(p[c]) - f64::from(q[c])).powi(2);
             n += 1.0;
@@ -92,7 +94,7 @@ fn transparency_stays_exact() {
     let file = encode(&src, w, h, 80).unwrap();
     assert_eq!(&file[12..16], b"VP8X");
     let img = decode(&file);
-    for (p, q) in img.pixels().zip(src.chunks_exact(4)) {
+    for (p, q) in img.pixels().zip(src.as_chunks::<4>().0.iter()) {
         assert_eq!(p.0[3], q[3]);
     }
     // The colour of an opaque pixel survives too.
