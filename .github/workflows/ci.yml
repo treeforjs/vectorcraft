@@ -19,9 +19,11 @@ env:
   CARGO_PROFILE_DEV_DEBUG: line-tables-only
   CARGO_INCREMENTAL: 0
 
+# A newer push to a PR branch cancels its older run. Runs on main are never cancelled, so they
+# finish and save the dependency cache that PR runs restore.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   gates:
@@ -31,8 +33,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Unused toolchains in the image are deleted in the background: it took 2 minutes in the
+      # foreground, and the space is free long before the test build needs it.
       - name: Free disk space
-        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        run: |
+          nohup sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL \
+            </dev/null >/dev/null 2>&1 &
 
       - name: Install system dependencies (egui/winit/rfd)
         run: |
@@ -46,7 +52,12 @@ jobs:
           components: clippy, rustfmt
           targets: wasm32-unknown-unknown
 
+      # Only main saves caches; PRs restore main's. A save per PR branch (usable by that branch
+      # only) fills the repo's 10 GB cache budget and evicts main's.
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+          cache-on-failure: true
 
       - name: Format
         run: cargo fmt --all -- --check
@@ -63,7 +74,11 @@ jobs:
           cargo xtask brands
           cargo xtask layers
 
+      # Reuses the CLI the Test step built; `cargo run -p vectorcraft-cli` would rebuild most of
+      # the graph with a different feature set.
       - name: Parity checklist
+        env:
+          VECTORCRAFT_CLI: target/debug/vectorcraft-cli
         run: cargo xtask parity
 
       - name: wasm
