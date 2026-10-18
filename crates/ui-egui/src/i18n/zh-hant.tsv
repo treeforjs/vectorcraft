@@ -3575,3 +3575,28 @@ axis	Both	兩者
 @msg	{label}: every face is unpainted (see Pathfinder Options)	{label}：所有面都未上色（請參閱「路徑管理員選項」）
 	Edge Only	僅限邊緣
 	Overlay Edge	疊加邊緣
+# Check Spelling and Edit Custom Dictionary
+	Change to:	變更為：
+	Check Spelling	拼字檢查
+	Edit Custom Dictionary	編輯自訂字典
+	Find:	尋找：
+	Ignore All	全部略過
+	Ignore:	略過：
+	No spelling problems found.	未發現拼字問題。
+	No suggestions	沒有建議
+	No words yet	尚無單字
+	Not Found in Dictionary:	字典中找不到：
+	Repeated Word:	重複的單字：
+	Uncapitalized Start of Sentence:	句首未大寫：
+	Word:	單字：
+	Check Spelling Options	拼字檢查選項
+	Repeated Words	重複的單字
+	Uncapitalized Start of Sentence	句首未大寫
+	Words That Are All Uppercase	全部大寫的單字
+	Roman Numerals	羅馬數字
+	Words with Numbers	含數字的單字
+@msg	nothing left to check	已沒有需要檢查的內容
+@msg	unknown action	未知的動作
+@msg	word list: bad header	單字表: 檔頭錯誤
+@msg	word list: bad prefix	單字表: 前綴錯誤
+@msg	word list: truncated	單字表: 已截斷

@@ -635,6 +635,9 @@ pub struct Prefs {
     /// Pathfinder Options (the Pathfinder panel menu, `object.pathfinder.options`; a preference
     /// group, see [`cmd::prefscmds::PREF_GROUPS`]).
     pub pathfinder: cmd::PathfinderOptions,
+    /// The custom dictionary and Check Spelling's options (Edit › Spelling; not a Preferences
+    /// dialog field, and resetting the preferences keeps it).
+    pub spelling: cmd::spelling::SpellingPrefs,
 }
 
 impl Default for Prefs {
@@ -778,6 +781,7 @@ impl Default for Prefs {
             blend_options: None,
             perspective_widget: Default::default(),
             pathfinder: Default::default(),
+            spelling: Default::default(),
         }
     }
 }
@@ -1622,6 +1626,8 @@ mod tests_shaper;
 mod tests_slices;
 #[cfg(test)]
 mod tests_smartguides;
+#[cfg(test)]
+mod tests_spelling;
 #[cfg(test)]
 mod tests_strokegeom;
 #[cfg(test)]

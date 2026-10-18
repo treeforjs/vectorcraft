@@ -624,7 +624,7 @@ pub(crate) fn find_all(hay: &str, needle: &str, match_case: bool, whole_word: bo
     out
 }
 
-fn all_texts(d: &Document) -> Vec<NodeId> {
+pub(crate) fn all_texts(d: &Document) -> Vec<NodeId> {
     let mut v = vec![];
     for l in d.layers.iter().filter(|l| l.visible && !l.locked) {
         l.walk(&mut |n| {

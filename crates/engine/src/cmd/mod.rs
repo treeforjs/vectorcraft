@@ -66,6 +66,7 @@ pub mod recovery;
 mod select;
 pub(crate) mod shaper;
 pub(crate) mod slices;
+pub mod spelling;
 mod stroke;
 mod style;
 pub mod stylelib;
@@ -222,6 +223,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(colorcmds::specs());
         v.extend(colormgmt::specs());
         v.extend(typemenu::specs());
+        v.extend(spelling::specs());
         v.extend(textedit::specs());
         v.extend(inline::specs());
         v.extend(textstyles::specs());

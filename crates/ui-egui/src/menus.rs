@@ -406,6 +406,18 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "{name?} (default: the selected path's brush, else the current brush) open its Brush Options, what double-clicking a brush in the Brushes panel opens: Calligraphic (dialog `brushOptions`, fields name, angle −180..180, roundness 0..100, size 0..1296 pt, angleMode/roundnessMode/sizeMode: fixed|random|pressure, angleVariation/roundnessVariation/sizeVariation) Bristle (fields name, shape, size, length, density, thickness, opacity, stiffness), Scatter (sizeMode/spacingMode/scatterMode/rotationMode: fixed|random with …Min/…Max, rotationRelativeTo: page|path), Art (width %, scale: proportional|stretch|betweenGuides with guideStart/guideEnd %, direction, flipAlong, flipAcross, overlap: fold|adjust) or Pattern (scale %, spacing %, fit: stretch|addSpace|approximate, flipAlong, flipAcross); Scatter, Art and Pattern also colorization: none|tints|tintsAndShades|hueShift with keyColor #rrggbb; OK runs brush.options",
     ),
     (
+        "ui.checkSpelling",
+        "Check Spelling…",
+        "Cmd+I",
+        "{} open Check Spelling on the document (dialog `checkSpelling`, fields findings: type.checkSpelling's, the current one first; to: the replacement; ignore, skipped; repeatedWords, uncapitalizedStart, ignoreUppercase, ignoreRomanNumerals, ignoreWordsWithNumbers: bools). Set action: ignore|ignoreAll|change|changeAll|add|recheck and confirm to take a step → {findings: count}",
+    ),
+    (
+        "ui.customDictionary",
+        "Edit Custom Dictionary…",
+        "",
+        "{} open Edit Custom Dictionary (dialog `customDictionary`, fields words, word, selected); set action: add|remove and confirm (type.spelling.dictionary)",
+    ),
+    (
         "ui.pathfinderOptions",
         "Pathfinder Options…",
         "",
@@ -1287,6 +1299,8 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             crate::dialogs::new_color_group::open(app, names.unwrap_or_default())
         }
         "ui.colorPicker" => crate::dialogs::open_color_picker(app, p),
+        "ui.checkSpelling" => crate::dialogs::check_spelling::open(app),
+        "ui.customDictionary" => crate::dialogs::check_spelling::open_dictionary(app),
         "ui.pathfinderOptions" => {
             crate::dialogs::pathfinder_options::open(app);
             Ok(Value::Null)
@@ -2104,7 +2118,10 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 Sep,
                 cp("Find and Replace…", "edit.findReplace", json!({"find": "", "replace": "", "matchCase": false, "wholeWord": false})),
                 cp("Find Next", "edit.findNext", json!({"find": ""})),
-                sub("Spelling", vec![todo("Auto Spell Check"), todos("Check Spelling…", "Cmd+I"), todo("Edit Custom Dictionary…")]),
+                sub(
+                    "Spelling",
+                    vec![todo("Auto Spell Check"), c("Check Spelling…", "ui.checkSpelling"), c("Edit Custom Dictionary…", "ui.customDictionary")],
+                ),
                 Sep,
                 sub(
                     "Edit Colors",

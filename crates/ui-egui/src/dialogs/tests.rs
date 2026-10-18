@@ -409,3 +409,74 @@ fn pathfinder_options_edits_the_preferences() {
     assert!(app.ui.dialog.is_some());
     assert_eq!(app.session.prefs.pathfinder.precision, 0.25);
 }
+
+#[test]
+fn check_spelling_steps_through_the_problems() {
+    let mut app = app();
+    let id = app.run("text.create", json!({"x": 20, "y": 40, "text": "Teh cat sat on the the mat. zorp"})).unwrap()["id"].as_u64().unwrap();
+    let plain = |app: &VectorcraftApp| match &app.session.active().unwrap().doc.node(vectorcraft_doc::NodeId(id)).unwrap().kind {
+        vectorcraft_doc::NodeKind::Text(t) => t.plain_text(),
+        _ => panic!("not text"),
+    };
+    let set = |app: &mut VectorcraftApp, k: &str, v: serde_json::Value| {
+        app.ui.dialog.as_mut().unwrap().fields.insert(k.into(), v);
+    };
+    let word = |app: &VectorcraftApp| app.ui.dialog.as_ref().unwrap().fields["findings"][0]["word"].clone();
+    assert_eq!(app.run("ui.checkSpelling", json!({})).unwrap()["findings"], 3);
+    assert_eq!(app.ui.dialog.as_ref().unwrap().kind, check_spelling::KIND);
+    assert_eq!((word(&app), app.ui.dialog.as_ref().unwrap().str("to")), (json!("Teh"), "The".to_string()));
+    frame(&mut app, Default::default());
+    // Change takes the replacement; the next problem comes up.
+    set(&mut app, "action", json!("change"));
+    assert_eq!(confirm(&mut app).unwrap()["findings"], 2);
+    assert!(plain(&app).starts_with("The cat"));
+    assert_eq!(word(&app), json!("the"));
+    // Change to nothing removes the repeat.
+    set(&mut app, "to", json!(""));
+    set(&mut app, "action", json!("change"));
+    confirm(&mut app).unwrap();
+    assert_eq!(plain(&app), "The cat sat on the mat. zorp");
+    // Ignore skips "zorp", and a recheck keeps it skipped.
+    assert_eq!(word(&app), json!("zorp"));
+    set(&mut app, "action", json!("ignore"));
+    assert_eq!(confirm(&mut app).unwrap()["findings"], 0);
+    frame(&mut app, Default::default());
+    set(&mut app, "action", json!("recheck"));
+    assert_eq!(confirm(&mut app).unwrap()["findings"], 0);
+    assert!(confirm(&mut app).is_err(), "no action");
+    assert!(app.ui.dialog.is_some(), "a failed step keeps the dialog");
+    // Add puts a word in the custom dictionary, which the dictionary dialog edits.
+    cancel(&mut app);
+    app.run("ui.checkSpelling", json!({})).unwrap();
+    set(&mut app, "action", json!("add"));
+    confirm(&mut app).unwrap();
+    assert_eq!(app.session.prefs.spelling.words, ["zorp"]);
+    cancel(&mut app);
+    app.run("ui.customDictionary", json!({})).unwrap();
+    assert_eq!(app.ui.dialog.as_ref().unwrap().fields["words"], json!(["zorp"]));
+    frame(&mut app, Default::default());
+    set(&mut app, "word", json!("Blerg"));
+    set(&mut app, "action", json!("add"));
+    confirm(&mut app).unwrap();
+    set(&mut app, "selected", json!("zorp"));
+    set(&mut app, "action", json!("remove"));
+    confirm(&mut app).unwrap();
+    assert_eq!(app.ui.dialog.as_ref().unwrap().fields["words"], json!(["blerg"]));
+    assert_eq!(app.session.prefs.spelling.words, ["blerg"]);
+    frame(&mut app, Default::default());
+}
+
+#[test]
+fn check_spelling_options_recheck() {
+    let mut app = app();
+    app.run("text.create", json!({"x": 20, "y": 40, "text": "it is OK. NASA"})).unwrap();
+    app.run("ui.checkSpelling", json!({})).unwrap();
+    let n = |app: &VectorcraftApp| app.ui.dialog.as_ref().unwrap().fields["findings"].as_array().unwrap().len();
+    assert_eq!(n(&app), 1, "the lowercase start");
+    let d = app.ui.dialog.as_mut().unwrap();
+    d.fields.insert("uncapitalizedStart".into(), json!(false));
+    d.fields.insert("action".into(), json!("recheck"));
+    confirm(&mut app).unwrap();
+    assert_eq!(n(&app), 0);
+    assert!(!app.session.prefs.spelling.options.uncapitalized_start, "the options are kept");
+}

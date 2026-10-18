@@ -3792,3 +3792,28 @@ axis	Both	两者
 @msg	{label}: every face is unpainted (see Pathfinder Options)	{label}：所有面都未上色（请参阅“路径查找器选项”）
 	Edge Only	仅限边缘
 	Overlay Edge	叠加边缘
+# Check Spelling and Edit Custom Dictionary
+	Change to:	更改为：
+	Check Spelling	拼写检查
+	Edit Custom Dictionary	编辑自定词典
+	Find:	查找：
+	Ignore All	全部忽略
+	Ignore:	忽略：
+	No spelling problems found.	未发现拼写问题。
+	No suggestions	无建议
+	No words yet	尚无单词
+	Not Found in Dictionary:	词典中未找到：
+	Repeated Word:	重复的单词：
+	Uncapitalized Start of Sentence:	句首未大写：
+	Word:	单词：
+	Check Spelling Options	拼写检查选项
+	Repeated Words	重复的单词
+	Uncapitalized Start of Sentence	句首未大写
+	Words That Are All Uppercase	全部大写的单词
+	Roman Numerals	罗马数字
+	Words with Numbers	含数字的单词
+@msg	nothing left to check	没有需要检查的内容了
+@msg	unknown action	未知操作
+@msg	word list: bad header	单词表: 文件头错误
+@msg	word list: bad prefix	单词表: 前缀错误
+@msg	word list: truncated	单词表: 已截断

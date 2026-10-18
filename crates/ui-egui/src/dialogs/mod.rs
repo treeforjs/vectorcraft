@@ -12,6 +12,7 @@ mod all_tools;
 mod artboard_options;
 pub mod blend_options;
 pub mod brush_options;
+pub mod check_spelling;
 pub mod color_balance;
 pub mod color_guide_options;
 mod color_picker;
@@ -285,6 +286,7 @@ registry! {
     FreehandOptions: [freehand::KIND] => freehand::SPEC,
     PerspectiveGridPresets: [perspective_presets::KIND] => perspective_presets::SPEC,
     PathfinderOptions: [pathfinder_options::KIND] => pathfinder_options::SPEC,
+    CheckSpelling: [check_spelling::KIND, check_spelling::DICTIONARY] => check_spelling::SPEC,
     PerspectiveGridOptions: [perspective_options::KIND] => perspective_options::SPEC,
     BlendOptions: [blend_options::KIND] => blend_options::SPEC,
     BrushOptions: [brush_options::KIND] => brush_options::SPEC,

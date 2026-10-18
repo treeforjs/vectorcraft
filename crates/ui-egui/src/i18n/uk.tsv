@@ -4141,3 +4141,28 @@ axis	Both	Обидві
 @msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: усі області не зафарбовані (див. «Параметри обробки контурів»)
 	Edge Only	Лише краї
 	Overlay Edge	Накладання країв
+# Check Spelling and Edit Custom Dictionary
+	Change to:	Замінити на:
+	Check Spelling	Перевірка правопису
+	Edit Custom Dictionary	Змінити користувацький словник
+	Find:	Знайти:
+	Ignore All	Пропустити все
+	Ignore:	Пропускати:
+	No spelling problems found.	Помилок правопису не знайдено.
+	No suggestions	Немає варіантів
+	No words yet	Слів поки немає
+	Not Found in Dictionary:	Немає в словнику:
+	Repeated Word:	Повтор слова:
+	Uncapitalized Start of Sentence:	Речення з малої літери:
+	Word:	Слово:
+	Check Spelling Options	Параметри перевірки правопису
+	Repeated Words	Повторювані слова
+	Uncapitalized Start of Sentence	Речення з малої літери
+	Words That Are All Uppercase	Слова з самих великих літер
+	Roman Numerals	Римські цифри
+	Words with Numbers	Слова з цифрами
+@msg	nothing left to check	перевіряти більше нічого
+@msg	unknown action	невідома дія
+@msg	word list: bad header	список слів: неправильний заголовок
+@msg	word list: bad prefix	список слів: неправильний префікс
+@msg	word list: truncated	список слів: обрізаний
