@@ -1,4 +1,4 @@
-//! Design tokens (the shared craft-ui System / Light / Cream / Dim / Dark / High contrast appearances), fonts
+//! Design tokens (the shared craft-ui System / Light / Warm / Dim / Dark / High contrast appearances), fonts
 //! and egui style. The look follows treeforjs/craftworks DESIGN.md, not Illustrator's.
 
 use std::sync::Arc;
@@ -7,9 +7,10 @@ use egui::{Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId,
 use serde::{Deserialize, Serialize};
 
 /// The interface appearance: the shared craft-ui choices every craft app offers (System, Light,
-/// Cream, Dim, Dark, High contrast). Illustrator's four brightness levels are gone; older settings
+/// Warm, Dim, Dark, High contrast). Illustrator's four brightness levels are gone; older settings
 /// and scripts that name them read as the nearest of these (Medium Dark is Dim).
-/// Cream and Light draw light; Dim, Dark and High contrast draw dark.
+/// Warm (once called Cream, then Paper; settings saved under those names still load) and Light
+/// draw light; Dim, Dark and High contrast draw dark.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Brightness {
     /// Follow the operating system's light or dark setting.
@@ -17,8 +18,9 @@ pub enum Brightness {
     System,
     #[serde(alias = "MediumLight")]
     Light,
-    /// Warm paper surfaces with a red accent.
-    Cream,
+    /// Off-white with a faint rose warmth and a red accent.
+    #[serde(alias = "Cream", alias = "Paper")]
+    Warm,
     /// Mid-grey dark: softer than Dark.
     #[serde(alias = "MediumDark")]
     Dim,
@@ -28,7 +30,7 @@ pub enum Brightness {
 
 impl Brightness {
     pub const ALL: [Brightness; 6] =
-        [Brightness::System, Brightness::Light, Brightness::Cream, Brightness::Dim, Brightness::Dark, Brightness::HighContrast];
+        [Brightness::System, Brightness::Light, Brightness::Warm, Brightness::Dim, Brightness::Dark, Brightness::HighContrast];
     pub fn label(self) -> &'static str {
         self.craft().label()
     }
@@ -51,7 +53,7 @@ impl Brightness {
         match self {
             Brightness::System => craft_ui::Appearance::System,
             Brightness::Light => craft_ui::Appearance::Light,
-            Brightness::Cream => craft_ui::Appearance::Cream,
+            Brightness::Warm => craft_ui::Appearance::Warm,
             Brightness::Dim => craft_ui::Appearance::Dim,
             Brightness::Dark => craft_ui::Appearance::Dark,
             Brightness::HighContrast => craft_ui::Appearance::HighContrast,
@@ -61,7 +63,7 @@ impl Brightness {
         match a {
             craft_ui::Appearance::System => Brightness::System,
             craft_ui::Appearance::Light => Brightness::Light,
-            craft_ui::Appearance::Cream => Brightness::Cream,
+            craft_ui::Appearance::Warm => Brightness::Warm,
             craft_ui::Appearance::Dim => Brightness::Dim,
             craft_ui::Appearance::Dark => Brightness::Dark,
             craft_ui::Appearance::HighContrast => Brightness::HighContrast,
@@ -328,13 +330,14 @@ mod tests {
         assert!(Tokens::for_brightness(Brightness::HighContrast).dark);
     }
 
-    /// Cream and Dim: the in-between appearances. Cream is light (warm paper, red accent), Dim is dark.
+    /// Warm and Dim: the in-between appearances. Warm is light (off-white, red accent), Dim is dark.
     #[test]
-    fn cream_and_dim() {
+    fn warm_and_dim() {
         let ids: Vec<_> = Brightness::ALL.iter().map(|b| b.id()).collect();
-        assert_eq!(ids, ["system", "light", "cream", "dim", "dark", "high-contrast"]);
-        assert_eq!(Brightness::parse("Cream"), Some(Brightness::Cream));
-        assert_eq!(Brightness::parse("sepia"), Some(Brightness::Cream));
+        assert_eq!(ids, ["system", "light", "warm", "dim", "dark", "high-contrast"]);
+        assert_eq!(Brightness::Warm.label(), "Warm");
+        assert_eq!(Brightness::parse("Warm"), Some(Brightness::Warm));
+        assert_eq!(Brightness::parse("sepia"), Some(Brightness::Warm));
         assert_eq!(Brightness::parse("dim"), Some(Brightness::Dim));
         assert_eq!(Brightness::parse("grey"), Some(Brightness::Dim));
         assert_eq!(Brightness::parse("highContrast"), Some(Brightness::HighContrast));
@@ -342,11 +345,22 @@ mod tests {
             let json = serde_json::to_string(&b).unwrap_or_default();
             assert_eq!(serde_json::from_str::<Brightness>(&json).ok(), Some(b));
         }
-        assert_eq!(Brightness::Cream.mode(Some(egui::Theme::Dark)), craft_ui::Mode::Cream);
+        assert_eq!(Brightness::Warm.mode(Some(egui::Theme::Dark)), craft_ui::Mode::Warm);
         assert_eq!(Brightness::Dim.mode(Some(egui::Theme::Light)), craft_ui::Mode::Dim);
-        let cream = Tokens::for_brightness(Brightness::Cream);
-        assert!(!cream.dark, "Cream draws light");
-        assert_eq!(cream.accent, craft_ui::Tokens::new(craft_ui::Mode::Cream, craft_ui::Density::Compact).accent);
+        let warm = Tokens::for_brightness(Brightness::Warm);
+        assert!(!warm.dark, "Warm draws light");
+        assert_eq!(warm.accent, craft_ui::Tokens::new(craft_ui::Mode::Warm, craft_ui::Density::Compact).accent);
         assert!(Tokens::for_brightness(Brightness::Dim).dark);
+    }
+
+    /// The theme was called Cream, then Paper: settings and scripts that name it still get Warm.
+    #[test]
+    fn cream_and_paper_load_as_warm() {
+        for old in ["cream", "Cream", "paper", "Paper", "PAPER"] {
+            assert_eq!(Brightness::parse(old), Some(Brightness::Warm), "{old}");
+        }
+        assert_eq!(serde_json::from_str::<Brightness>("\"Cream\"").ok(), Some(Brightness::Warm));
+        assert_eq!(serde_json::from_str::<Brightness>("\"Paper\"").ok(), Some(Brightness::Warm));
+        assert_eq!(serde_json::to_string(&Brightness::Warm).ok().as_deref(), Some("\"Warm\""));
     }
 }

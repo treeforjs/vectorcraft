@@ -259,7 +259,7 @@ pub const PREF_SPECS: &[PrefSpec] = &[
         "User Interface",
         "",
         "Appearance",
-        choice(&[("system", "System"), ("light", "Light"), ("cream", "Cream"), ("dim", "Dim"), ("dark", "Dark"), ("highContrast", "High contrast")])
+        choice(&[("system", "System"), ("light", "Light"), ("warm", "Warm"), ("dim", "Dim"), ("dark", "Dark"), ("highContrast", "High contrast")])
     ),
     p!(
         "canvasColor",
@@ -399,6 +399,8 @@ pub fn validate(key: &str, v: &Value) -> std::result::Result<Value, String> {
         },
         PrefKind::Choice(opts) => {
             let s = v.as_str().ok_or_else(|| format!("`{key}` must be a string"))?;
+            // The Warm appearance was called Cream, then Paper; old settings and scripts still work.
+            let s = if key == "uiBrightness" && ["cream", "paper"].iter().any(|o| o.eq_ignore_ascii_case(s.trim())) { "warm" } else { s };
             opts.iter()
                 .find(|(val, label)| val.eq_ignore_ascii_case(s) || label.eq_ignore_ascii_case(s))
                 .map(|(val, _)| json!(val))

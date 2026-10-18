@@ -65,12 +65,18 @@ fn set_normalizes_strings_labels_and_colours() {
     assert!(!s.prefs.scale_strokes);
 }
 
-/// Cream and Dim are Appearance choices, between Light and Dark.
+/// Warm and Dim are Appearance choices, between Light and Dark.
 #[test]
-fn ui_brightness_offers_cream_and_dim() {
+fn ui_brightness_offers_warm_and_dim() {
     let mut s = Session::new();
-    s.execute("prefs.set", &json!({"key": "uiBrightness", "value": "Cream"})).unwrap();
-    assert_eq!(s.prefs.ui_brightness, "cream");
+    s.execute("prefs.set", &json!({"key": "uiBrightness", "value": "Warm"})).unwrap();
+    assert_eq!(s.prefs.ui_brightness, "warm");
+    // Warm was called Cream, then Paper: those names still set it.
+    for old in ["cream", "Cream", "paper", "Paper"] {
+        s.execute("prefs.set", &json!({"key": "uiBrightness", "value": "dim"})).unwrap();
+        s.execute("prefs.set", &json!({"key": "uiBrightness", "value": old})).unwrap();
+        assert_eq!(s.prefs.ui_brightness, "warm", "{old}");
+    }
     s.execute("prefs.set", &json!({"key": "uiBrightness", "value": "dim"})).unwrap();
     assert_eq!(s.prefs.ui_brightness, "dim");
 }
