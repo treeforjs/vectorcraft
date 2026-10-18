@@ -466,6 +466,49 @@ fn tab_stops_position_text() {
     assert!((x_of(&p, 4) - 72.0).abs() < 1e-6);
 }
 
+#[test]
+fn tab_leaders_fill_the_gap_and_line_up() {
+    use vectorcraft_doc::{TabAlign, TabStop};
+    let stop = |leader: &str| TabStop { position: 200.0, align: TabAlign::Right, leader: leader.into(), align_on: '.' };
+    let mut t = point("Intro\t1\nA longer chapter\t23", style(12.0));
+    t.para.tabs = vec![stop(".")];
+    let lay = layout(db(), &t);
+    let plain = t.plain_text();
+    let tabs: Vec<&crate::PositionedGlyph> = lay.glyphs.iter().filter(|g| plain.get(g.byte..g.byte + g.len) == Some("\t")).collect();
+    assert_eq!(tabs.len(), 2);
+    for g in &tabs {
+        let b = g.outline.bounding_box();
+        assert!(!g.outline.elements().is_empty(), "the gap is filled with dots");
+        // Inside the tab's gap, on the baseline.
+        assert!(b.x0 >= g.origin.x - 1e-6 && b.x1 <= g.origin.x + g.advance + 1e-6, "{b:?} vs {} + {}", g.origin.x, g.advance);
+        assert!(b.y1 <= g.origin.y + 1.0 && b.y0 > g.origin.y - 12.0, "{b:?}");
+    }
+    // Dots on both lines sit on one grid: every dot of the shorter gap is also one of the longer.
+    let starts_of = |g: &crate::PositionedGlyph| -> Vec<f64> {
+        g.outline.elements().iter().filter_map(|e| if let kurbo::PathEl::MoveTo(p) = e { Some(p.x) } else { None }).collect()
+    };
+    let (long, short) = (starts_of(tabs[0]), starts_of(tabs[1]));
+    assert!(!short.is_empty());
+    for x in &short {
+        assert!(long.iter().any(|l| (l - x).abs() < 1e-6), "{x} not in {long:?}");
+    }
+    // No leader: the tab draws nothing.
+    t.para.tabs = vec![stop("")];
+    let lay = layout(db(), &t);
+    assert!(lay.glyphs.iter().filter(|g| plain.get(g.byte..g.byte + g.len) == Some("\t")).all(|g| g.outline.elements().is_empty()));
+}
+
+#[test]
+fn a_tab_leader_to_a_far_stop_is_capped() {
+    use vectorcraft_doc::{TabAlign, TabStop};
+    let mut t = point("a\tb", style(12.0));
+    t.para.tabs = vec![TabStop { position: 1e9, align: TabAlign::Left, leader: ". ".into(), align_on: '.' }];
+    let lay = layout(db(), &t);
+    let tab = lay.glyphs.iter().find(|g| g.byte == 1).unwrap();
+    let moves = tab.outline.elements().iter().filter(|e| matches!(e, kurbo::PathEl::MoveTo(_))).count();
+    assert!(moves > 0 && moves <= 2048 * 4, "{moves}");
+}
+
 /// Are the Japanese craft-fonts faces built in? Tests of Japanese glyphs skip (and say so) when
 /// they aren't: the bundled fonts have none, and [`db`] reads no system fonts.
 fn japanese_fonts() -> bool {

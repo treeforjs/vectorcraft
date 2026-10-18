@@ -1420,6 +1420,11 @@ impl Exporter<'_> {
             if blank && !ch.is_some_and(|c| c.is_whitespace() && !c.is_control()) {
                 continue;
             }
+            // A tab's leader dots are its outline: drawn as paths.
+            if ch.is_some_and(char::is_control) {
+                rest.extend(g.outline.iter());
+                continue;
+            }
             // The glyph at the font size of its vertical scale: `frame` maps that size's glyph
             // space (y down, krilla's) to text space.
             let [a, b, c, d, ..] = g.xf.as_coeffs();
