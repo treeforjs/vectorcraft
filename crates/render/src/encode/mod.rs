@@ -1,6 +1,7 @@
 //! Raster export: render a document region with [`RasterExportOptions`] (resolution, background,
 //! anti-aliasing) and encode it as PNG ([`png`]: resolution in `pHYs`, Adam7 interlacing), JPEG
-//! ([`jpeg`]: RGB, CMYK or grey, progressive, resolution and colour profile), lossless WebP, or
+//! ([`jpeg`]: RGB, CMYK or grey, progressive, resolution and colour profile), WebP (lossless, or
+//! lossy [`vp8`]), or
 //! a palette image ([`quantize`]) as PNG-8 or [`gif`], [`tiff`] (RGB, CMYK or grey, LZW, either byte
 //! order, the profile), [`bmp`] (1–32 bits, RLE) or [`tga`]; [`web`] adds what Save for Web optimises
 //! further (web snap, colour table edits, lossy GIF, comments); [`psd`] writes layered bitmaps.
@@ -13,6 +14,8 @@ pub mod psd;
 pub mod quantize;
 pub mod tga;
 pub mod tiff;
+pub mod vp8;
+mod vp8_tables;
 pub mod web;
 
 use vectorcraft_doc::{Document, Node, NodeKind};
@@ -46,8 +49,10 @@ pub struct RasterExportOptions {
     pub anti_alias: AntiAlias,
     /// PNG, PNG-8: Adam7 interlacing; GIF: interlaced rows.
     pub interlaced: bool,
-    /// JPEG quality 0–100.
+    /// JPEG and lossy WebP quality 0–100.
     pub quality: u8,
+    /// WebP: lossless (exact) rather than lossy at `quality`.
+    pub webp_lossless: bool,
     /// JPEG colour model, coding and profile.
     pub jpeg: jpeg::JpegOptions,
     /// PNG-8 and GIF: the colour reduction (also BMP's at 1, 4 and 8 bits).
@@ -70,6 +75,7 @@ impl Default for RasterExportOptions {
             anti_alias: AntiAlias::Art,
             interlaced: false,
             quality: 90,
+            webp_lossless: true,
             jpeg: jpeg::JpegOptions::default(),
             palette: quantize::PaletteOptions::default(),
             tiff: tiff::TiffOptions::default(),
@@ -115,7 +121,8 @@ impl RasterExportOptions {
                 };
                 jpeg::encode(&px, img.width, img.height, self.quality, Some(self.ppi), &self.jpeg)
             }
-            RasterFormat::WebP => webp(img),
+            RasterFormat::WebP if self.webp_lossless => webp(img),
+            RasterFormat::WebP => vp8::encode(&img.to_straight(), img.width, img.height, self.quality),
             RasterFormat::Png8 | RasterFormat::Gif => {
                 let ix = quantize::quantize(&img.to_straight(), img.width, img.height, &self.palette);
                 match format {
@@ -217,5 +224,7 @@ mod tests_psd;
 mod tests_tga;
 #[cfg(test)]
 mod tests_tiff;
+#[cfg(test)]
+mod tests_vp8;
 #[cfg(test)]
 mod tests_web;

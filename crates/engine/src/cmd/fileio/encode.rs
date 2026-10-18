@@ -196,6 +196,7 @@ impl RasterOptions {
             anti_alias: self.anti_alias.as_deref().map(anti_alias).transpose().map_err(|e| bad(C, e))?.unwrap_or_default(),
             interlaced: self.interlaced.unwrap_or(false),
             quality: self.quality.unwrap_or(90).min(100),
+            webp_lossless: self.lossless.unwrap_or(true),
             jpeg: JpegOptions {
                 color_model,
                 method: parse(self.method.as_deref(), jpeg::Method::from_id, "method", "baseline, optimized or progressive")?,
@@ -478,9 +479,6 @@ fn encode_files(doc: &Document, f: &Format, p: &Value) -> Result<Encoded> {
             }
             if enc.files.is_empty() {
                 return Err(bad(C, "the document has no artboard"));
-            }
-            if format == RasterFormat::WebP && o.lossless == Some(false) {
-                enc.warnings.push("lossy WebP isn't available yet: the file is lossless (exact, but larger)".into());
             }
             return Ok(enc);
         }
