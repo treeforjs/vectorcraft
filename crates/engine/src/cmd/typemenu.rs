@@ -57,6 +57,15 @@ pub fn specs() -> Vec<CommandSpec> {
             path_options
         ),
         cmd!(
+            "type.opticalMargin",
+            "Optical Margin Alignment",
+            ["Type"],
+            None,
+            "{ids?, on?: bool (default: toggle, on unless every selected text object has it)} hang punctuation at the edges of area type partly outside the frame → {ids, on}",
+            has_selection,
+            optical_margin
+        ),
+        cmd!(
             "type.fillPlaceholder",
             "Fill with Placeholder Text",
             ["Type"],
@@ -257,6 +266,30 @@ fn smart_punctuation(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 // ---------- Area / Point conversion ----------
+
+fn optical_margin(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "type.opticalMargin";
+    let ids = texts(s, p, C)?;
+    let d = &s.doc()?.doc;
+    let all_on = !ids.is_empty() && ids.iter().all(|id| matches!(d.node(*id).map(|n| &n.kind), Some(NodeKind::Text(t)) if t.area.optical_margin));
+    let on = match p.get("on") {
+        None | Some(Value::Null) => !all_on,
+        Some(v) => v.as_bool().ok_or_else(|| bad(C, "`on` must be true or false"))?,
+    };
+    s.edit("Optical Margin Alignment", |d, _| {
+        for id in &ids {
+            if let Some(NodeKind::Text(t)) = d.node_mut(*id).map(|n| &mut n.kind) {
+                t.area.optical_margin = on;
+                t.cached_bounds = None;
+                refresh_bounds(t);
+            }
+        }
+        Ok(())
+    })?;
+    let mut out = ids_json(&ids);
+    out["on"] = json!(on);
+    Ok(out)
+}
 
 fn to_area(s: &mut Session, p: &Value) -> Result<Value> {
     let ids = texts(s, p, "type.convertToAreaType")?;

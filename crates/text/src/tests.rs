@@ -771,3 +771,38 @@ fn burasagari_leaves_latin_commas_and_full_stops_inside_the_line() {
         }
     }
 }
+
+#[test]
+fn optical_margin_hangs_quotes_and_stops_outside_the_frame() {
+    let frame = Rect::new(0.0, 0.0, 200.0, 400.0);
+    let mut t =
+        area("\u{201c}Quoted text runs on,\u{201d} said one, and on and on until it wraps to another line here.", style(12.0), frame, Justify::Left);
+    let plain = t.plain_text();
+    let first_x = |t: &TextObject| layout(db(), t).glyphs.first().map(|g| g.origin.x).unwrap();
+    assert!(first_x(&t).abs() < 1e-6, "flush without it");
+    t.area.optical_margin = true;
+    let lay = layout(db(), &t);
+    let q = lay.glyphs.first().unwrap();
+    assert_eq!(plain.get(q.byte..q.byte + q.len), Some("\u{201c}"));
+    assert!((q.origin.x + q.advance).abs() < 1e-6, "the opening quote hangs wholly outside: {} + {}", q.origin.x, q.advance);
+    // A line starting with a letter stays flush.
+    let mut p = area("Plain text that starts with a letter and wraps onto more lines than one.", style(12.0), frame, Justify::Left);
+    p.area.optical_margin = true;
+    assert!(first_x(&p).abs() < 1e-6);
+    // Right aligned: a final full stop hangs half its width past the right edge.
+    let mut r = area("Ends with a stop.", style(12.0), frame, Justify::Right);
+    let end_of = |t: &TextObject| {
+        let l = layout(db(), t);
+        let g = l.glyphs.iter().rev().find(|g| plain_char(t, g) == Some('.')).cloned().unwrap();
+        (g.origin.x, g.advance)
+    };
+    let (x0, adv) = end_of(&r);
+    assert!((x0 + adv - 200.0).abs() < 1e-6);
+    r.area.optical_margin = true;
+    let (x1, _) = end_of(&r);
+    assert!((x1 - x0 - adv * 0.5).abs() < 1e-6, "{x0} → {x1} (advance {adv})");
+}
+
+fn plain_char(t: &TextObject, g: &crate::PositionedGlyph) -> Option<char> {
+    t.plain_text().get(g.byte..g.byte + g.len).and_then(|s| s.chars().next())
+}

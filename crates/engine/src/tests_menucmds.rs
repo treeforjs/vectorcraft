@@ -1191,3 +1191,26 @@ fn crop_image_trim_cuts_to_the_opaque_pixels_as_they_are() {
     assert_eq!((r["trimmed"].as_bool(), r["width"].as_u64()), (Some(false), Some(30)), "{r}");
     assert_eq!(bounds(&s, img), b);
 }
+
+#[test]
+fn optical_margin_alignment_toggles_on_selected_type_and_undoes() {
+    let mut s = session();
+    let a =
+        id_of(&s.execute("text.create", &json!({"x": 0, "y": 0, "text": "\u{201c}Quoted\u{201d}", "area": {"width": 100, "height": 50}})).unwrap());
+    let on = |s: &Session| matches!(&node(s, a).kind, NodeKind::Text(t) if t.area.optical_margin);
+    sel(&mut s, &[a]);
+    assert_eq!(s.execute("type.opticalMargin", &json!({})).unwrap()["on"], true);
+    assert!(on(&s));
+    // Toggled again: off.
+    assert_eq!(s.execute("type.opticalMargin", &json!({})).unwrap()["on"], false);
+    assert!(!on(&s));
+    s.execute("type.opticalMargin", &json!({"on": true})).unwrap();
+    s.execute("edit.undo", &json!({})).unwrap();
+    assert!(!on(&s));
+    assert!(s.execute("type.opticalMargin", &json!({"on": "yes"})).is_err());
+    // Saved with the document.
+    s.execute("type.opticalMargin", &json!({"on": true})).unwrap();
+    let text = serde_json::to_string(&s.doc().unwrap().doc).unwrap();
+    let back: vectorcraft_doc::Document = serde_json::from_str(&text).unwrap();
+    assert!(matches!(&back.node(a).unwrap().kind, NodeKind::Text(t) if t.area.optical_margin));
+}

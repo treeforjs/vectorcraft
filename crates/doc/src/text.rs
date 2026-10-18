@@ -705,6 +705,11 @@ pub struct AreaOptions {
     /// How the frame and its text fit each other (Auto Size, Shrink Text to Fit).
     #[serde(skip_serializing_if = "crate::skip::is_default")]
     pub fit: AreaFit,
+    /// Type › Optical Margin Alignment: punctuation at the start and end of area type lines
+    /// (quotes, hyphens, commas, full stops) hangs partly outside the frame so the edges look
+    /// straight.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub optical_margin: bool,
 }
 
 impl Default for AreaOptions {
@@ -718,6 +723,7 @@ impl Default for AreaOptions {
             first_baseline_min: 0.0,
             vertical_align: VerticalAlign::Top,
             fit: AreaFit::None,
+            optical_margin: false,
         }
     }
 }
