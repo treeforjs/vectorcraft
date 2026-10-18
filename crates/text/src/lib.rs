@@ -63,6 +63,8 @@ pub struct LayoutOptions {
     /// Overrides the object's paragraph composer (`None` = use `ParaStyle::composer`).
     pub composer: Option<Composer>,
     pub features: OtFeatures,
+    /// Area type only: Optical Margin Alignment (see [`vectorcraft_doc::text::AreaOptions`]).
+    pub optical_margin: bool,
 }
 
 impl Default for LayoutOptions {
@@ -78,6 +80,7 @@ impl Default for LayoutOptions {
             fit: AreaFit::None,
             composer: None,
             features: OtFeatures::default(),
+            optical_margin: false,
         }
     }
 }

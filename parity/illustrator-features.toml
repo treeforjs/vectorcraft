@@ -3833,11 +3833,11 @@ title = "Optical Margin Alignment"
 area = "I"
 tier = "P2"
 milestone = "M7"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["type.opticalMargin"]
 tools = []
-evidence = []
-notes = "Optical Margin Alignment pending"
+evidence = ["crates/text/src/tests.rs::optical_margin_hangs_quotes_and_stops_outside_the_frame", "crates/engine/src/tests_menucmds.rs::optical_margin_alignment_toggles_on_selected_type_and_undoes"]
+notes = "Type › Optical Margin Alignment per text object: quotes hang wholly, hyphens, dashes, stops and commas half, colons and semicolons a quarter outside area type edges; letters (A, V, W) are not adjusted"
 
 [[feature]]
 id = "type.hyphenation-justification"

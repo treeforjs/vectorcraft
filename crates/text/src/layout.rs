@@ -141,6 +141,7 @@ pub fn layout(db: &FontDb, t: &TextObject) -> TextLayout {
         first_baseline_min: a.first_baseline_min,
         vertical_align: a.vertical_align,
         fit: a.fit,
+        optical_margin: a.optical_margin,
         ..LayoutOptions::default()
     };
     layout_with(db, t, &opts)
@@ -1039,6 +1040,20 @@ fn tab_advance<'t>(tabs: &'t [vectorcraft_doc::TabStop], origin: f64, x: f64, re
     ((at - rel).max(0.0), leader)
 }
 
+/// How far Optical Margin Alignment lets glyph `g` stand outside the frame when it starts or ends
+/// a line: quotation marks all of their width, hyphens, dashes, full stops and commas half,
+/// colons and semicolons a quarter, other characters not at all.
+fn optical_hang(g: &SGlyph) -> f64 {
+    let share = match g.ch {
+        '"' | '\'' | '‘' | '’' | '‚' | '“' | '”' | '„' | '«' | '»' | '‹' | '›' => 1.0,
+        '-' | '‐' | '‑' | '–' | '—' | '.' | ',' | '…' => 0.5,
+        ':' | ';' => 0.25,
+        _ => 0.0,
+    };
+    let w = g.adv * share;
+    if w.is_finite() && w > 0.0 { w } else { 0.0 }
+}
+
 /// Most leader glyphs one tab draws (a hostile tab stop can be miles away).
 const MAX_LEADER_GLYPHS: usize = 2048;
 
@@ -1569,6 +1584,19 @@ fn flow(cx: &mut Ctx<'_>, paras: &[Range<usize>], t: &TextObject, regions: Optio
                 });
             let body = if hang.is_some() { trimmed - 1 } else { trimmed };
             let w = w - hang.unwrap_or(0.0);
+            // Optical Margin Alignment: the line's first and last marks stand partly outside the
+            // frame, so the line has that much more room on each side.
+            let (ax0, ax1, width) = if cx.opts.optical_margin && regions.is_some() && !rtl && !cx.vertical {
+                let left = sg.get(i).filter(|_| body > i).map_or(0.0, optical_hang);
+                let right = match &hyphen {
+                    Some(h) => optical_hang(h),
+                    None if hang.is_none() && body > i + 1 => sg.get(body - 1).map_or(0.0, optical_hang),
+                    None => 0.0,
+                };
+                (ax0 - left, ax1 + right, width + left + right)
+            } else {
+                (ax0, ax1, width)
+            };
             let (align, justify) = match para.justify {
                 Justify::Auto => (if rtl { 2 } else { 0 }, false),
                 Justify::Left => (0, false),
