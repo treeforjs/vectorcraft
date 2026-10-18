@@ -1491,6 +1491,8 @@ mod tests_gradpanel;
 #[cfg(test)]
 mod tests_halftone;
 #[cfg(test)]
+mod tests_historystate;
+#[cfg(test)]
 mod tests_inline;
 #[cfg(test)]
 mod tests_journal;

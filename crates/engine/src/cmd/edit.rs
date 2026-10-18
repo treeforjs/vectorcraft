@@ -39,6 +39,33 @@ pub fn specs() -> Vec<CommandSpec> {
         ),
         cmd!("edit.undo", "Undo", ["Edit"], Some("Cmd+Z"), "{}", can_undo, undo),
         cmd!("edit.redo", "Redo", ["Edit"], Some("Cmd+Shift+Z"), "{}", can_redo, redo),
+        cmd!(
+            query "edit.history",
+            "History",
+            [],
+            None,
+            "{} the document's states, oldest first (state 0 is the document as opened) → {states: [label…], current}",
+            has_doc,
+            history
+        ),
+        cmd!(
+            "edit.goToState",
+            "Go to History State",
+            [],
+            None,
+            "{state} undo or redo to history state `state` (0 = as opened, see edit.history) in one go → {current}",
+            has_doc,
+            go_to_state
+        ),
+        cmd!(
+            "edit.clearHistory",
+            "Clear History",
+            [],
+            None,
+            "{} forget every undo and redo step; the document stays as it is → {}",
+            has_doc,
+            clear_history
+        ),
         cmd!("edit.cut", "Cut", ["Edit"], Some("Cmd+X"), "{} (the Artboard tool chosen: artboard.cut)", has_selection_or_artboard_tool, cut),
         cmd!("edit.copy", "Copy", ["Edit"], Some("Cmd+C"), "{} (the Artboard tool chosen: artboard.copy)", has_selection_or_artboard_tool, copy),
         cmd!(
@@ -206,6 +233,46 @@ fn redo(s: &mut Session, _: &Value) -> Result<Value> {
     st.selection.prune(&st.doc);
     super::maskedit::follow_history(st, editing);
     Ok(json!({ "redone": label }))
+}
+
+fn history(s: &mut Session, _: &Value) -> Result<Value> {
+    let h = &s.doc()?.history;
+    let mut states = vec![json!("Open")];
+    states.extend(h.undo.iter().map(|e| json!(e.label)));
+    let current = h.undo.len();
+    states.extend(h.redo.iter().rev().map(|e| json!(e.label)));
+    Ok(json!({ "states": states, "current": current }))
+}
+
+fn go_to_state(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "edit.goToState";
+    let target = p.get("state").and_then(Value::as_u64).and_then(|v| usize::try_from(v).ok()).ok_or_else(|| bad(C, "missing state"))?;
+    let (current, total) = {
+        let h = &s.doc()?.history;
+        (h.undo.len(), h.undo.len().saturating_add(h.redo.len()))
+    };
+    if target > total {
+        return Err(bad(C, format!("state must be 0..={total}")));
+    }
+    if target < current {
+        for _ in target..current {
+            undo(s, &Value::Null)?;
+        }
+    } else {
+        for _ in current..target {
+            redo(s, &Value::Null)?;
+        }
+    }
+    Ok(json!({ "current": s.doc()?.history.undo.len() }))
+}
+
+fn clear_history(s: &mut Session, _: &Value) -> Result<Value> {
+    s.commit_interaction()?;
+    let st = s.doc_mut()?;
+    st.history.undo.clear();
+    st.history.redo.clear();
+    st.revision += 1;
+    Ok(json!({}))
 }
 
 /// Selected top-level objects in paint order, dropping any whose ancestor is also selected.

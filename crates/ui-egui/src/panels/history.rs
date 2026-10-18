@@ -50,17 +50,16 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         });
     });
     if let Some(s) = steps {
-        let (cmd, n) = if s < 0 { ("edit.undo", -s) } else { ("edit.redo", s) };
-        for _ in 0..n {
-            if app.run(cmd, json!({})).is_err() {
-                break;
-            }
-        }
+        let target = (current as i64).saturating_add(s).max(0);
+        app.run("edit.goToState", json!({ "state": target })).ok();
     }
 }
 
-pub fn menu(_app: &mut VectorcraftApp, ui: &mut Ui) {
-    menu_item(ui, tl!("History Options…"), false, false);
+pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
+    let has_steps = app.session.active().is_some_and(|d| !d.history.undo.is_empty() || !d.history.redo.is_empty());
+    if menu_item(ui, tl!("Clear History"), has_steps, false) {
+        app.run("edit.clearHistory", json!({})).ok();
+    }
 }
 
 #[cfg(test)]
