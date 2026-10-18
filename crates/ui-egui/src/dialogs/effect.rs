@@ -158,6 +158,7 @@ pub(super) fn choices(effect: &str, key: &str) -> Option<form::Choices> {
         ("blur.radial", "method") => Some(&[("Spin", "spin"), ("Zoom", "zoom")]),
         ("blur.radial", "quality") => Some(&[("Draft", "draft"), ("Good", "good"), ("Best", "best")]),
         ("blur.smart", "quality") => Some(&[("Low", "low"), ("Medium", "medium"), ("High", "high")]),
+        ("blur.smart", "mode") => Some(&[("Normal", "normal"), ("Edge Only", "edgeOnly"), ("Overlay Edge", "overlayEdge")]),
         ("distort.glass", "texture") => Some(&[("Frosted", "frosted"), ("Blocks", "blocks"), ("Canvas", "canvas"), ("Tiny Lens", "tinyLens")]),
         ("pixelate.mezzotint", "type") => Some(&[
             ("Fine Dots", "fineDots"),

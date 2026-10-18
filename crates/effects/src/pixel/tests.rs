@@ -50,10 +50,10 @@ fn params_take_defaults_and_stay_in_range() {
         PixelFx::RadialBlur { amount: 100.0, zoom: true, passes: 8 }
     );
     assert_eq!(fx("blur.radial", json!({"amount": -5, "quality": "nonsense"})), PixelFx::RadialBlur { amount: 1.0, zoom: false, passes: 6 });
-    assert_eq!(fx("blur.smart", json!({})), PixelFx::SmartBlur { radius: 3.0, threshold: 25.0, samples: 7 });
+    assert_eq!(fx("blur.smart", json!({})), PixelFx::SmartBlur { radius: 3.0, threshold: 25.0, samples: 7, mode: super::blur::SmartMode::Normal });
     assert_eq!(
         fx("blur.smart", json!({"radius": "1e999", "threshold": -1, "quality": "low"})),
-        PixelFx::SmartBlur { radius: 3.0, threshold: 0.1, samples: 5 }
+        PixelFx::SmartBlur { radius: 3.0, threshold: 0.1, samples: 5, mode: super::blur::SmartMode::Normal }
     );
     assert_eq!(fx("sharpen.unsharpMask", json!({})), PixelFx::UnsharpMask { amount: 0.5, radius: 1.0, threshold: 0.0 });
     assert_eq!(
@@ -199,6 +199,30 @@ fn smart_blur_smooths_noise_and_keeps_edges() {
     let mut all = src.clone();
     fx("blur.smart", json!({"radius": 3, "threshold": 100})).apply(&mut all, w, h, &space(w, h));
     assert_eq!(at(&all, w, 20, 10)[0], 255, "a 155-level step is still past 100");
+}
+
+#[test]
+fn smart_blur_edge_modes_draw_the_steps_in_white() {
+    use super::blur::SmartMode;
+    let (w, h) = (40, 20);
+    let src = image(w, h, |x, y| if x < 20 { grey(if (x + y) % 2 == 0 { 94 } else { 106 }) } else { grey(255) });
+    assert_eq!(fx("blur.smart", json!({"mode": "Edge Only"})), fx("blur.smart", json!({"mode": "edgeOnly"})));
+    assert!(matches!(fx("blur.smart", json!({"mode": "overlayEdge"})), PixelFx::SmartBlur { mode: SmartMode::OverlayEdge, .. }));
+    let mut e = src.clone();
+    fx("blur.smart", json!({"radius": 3, "threshold": 25, "mode": "edgeOnly"})).apply(&mut e, w, h, &space(w, h));
+    assert_eq!(at(&e, w, 19, 10), [255, 255, 255, 255], "the step is a white line");
+    assert_eq!(at(&e, w, 8, 10), [0, 0, 0, 255], "noise under the threshold stays black");
+    assert_eq!(at(&e, w, 30, 10), [0, 0, 0, 255]);
+    let mut o = src.clone();
+    fx("blur.smart", json!({"radius": 3, "threshold": 25, "mode": "overlayEdge"})).apply(&mut o, w, h, &space(w, h));
+    assert_eq!(at(&o, w, 19, 10), [255, 255, 255, 255]);
+    let v = at(&o, w, 8, 10)[0];
+    assert!((97..=103).contains(&v), "the rest is blurred: {v}");
+    // Transparent pixels stay transparent; one pixel wide images don't trip the neighbour scan.
+    let mut clear = vec![[0u8; 4]; 3];
+    super::blur::smart(&mut clear, 1, 3, 3.0, 25.0, 7, SmartMode::EdgeOnly);
+    assert_eq!(clear, vec![[0u8; 4]; 3]);
+    super::blur::smart(&mut [], 0, 0, 3.0, 25.0, 7, SmartMode::OverlayEdge);
 }
 
 #[test]

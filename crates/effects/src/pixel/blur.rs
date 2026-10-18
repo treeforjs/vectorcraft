@@ -69,13 +69,73 @@ pub(super) fn radial(px: &mut [[u8; 4]], w: usize, h: usize, space: &PixelSpace,
 /// The largest radius (pixels) Smart Blur looks over: farther neighbours are as good as gone.
 const MAX_SMART: f64 = 4096.0;
 
-/// Smart Blur (Normal mode): each pixel averaged with itself and the neighbours within `radius`
+/// What Smart Blur draws.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SmartMode {
+    /// The blurred image.
+    Normal,
+    /// White edges on black: the pixels where the colour steps by more than the threshold.
+    EdgeOnly,
+    /// The blurred image with those edges drawn over it in white.
+    OverlayEdge,
+}
+
+impl SmartMode {
+    /// (id, label, mode).
+    pub const KINDS: [(&'static str, &'static str, SmartMode); 3] = [
+        ("normal", "Normal", SmartMode::Normal),
+        ("edgeOnly", "Edge Only", SmartMode::EdgeOnly),
+        ("overlayEdge", "Overlay Edge", SmartMode::OverlayEdge),
+    ];
+}
+
+/// Smart Blur in `mode`: Normal blurs ([`smart_normal`]), Edge Only draws the edges white on
+/// black, Overlay Edge draws them white over the blurred image (transparency kept).
+pub(super) fn smart(px: &mut [[u8; 4]], w: usize, h: usize, radius: f64, threshold: f64, samples: u32, mode: SmartMode) {
+    if w == 0 || h == 0 || px.len() < w.saturating_mul(h) {
+        return;
+    }
+    let edges = (mode != SmartMode::Normal).then(|| smart_edges(px, w, h, threshold));
+    if mode != SmartMode::EdgeOnly {
+        smart_normal(px, w, h, radius, threshold, samples);
+    }
+    let Some(edges) = edges else { return };
+    for (p, &e) in px.iter_mut().zip(&edges) {
+        let a = p[3];
+        // Premultiplied: white is the alpha in every channel, black is none.
+        *p = match (mode, e) {
+            (_, true) => [a, a, a, a],
+            (SmartMode::EdgeOnly, false) => [0, 0, 0, a],
+            _ => *p,
+        };
+    }
+}
+
+/// The edges Smart Blur's edge modes draw: pixels whose colour differs from their right, lower
+/// or diagonal neighbour by more than `threshold` levels in some channel (a line one pixel
+/// wide on one side of each step).
+fn smart_edges(px: &[[u8; 4]], w: usize, h: usize, threshold: f64) -> Vec<bool> {
+    let t = threshold.clamp(0.0, 255.0);
+    let differs = |a: &[u8; 4], b: &[u8; 4]| a.iter().zip(b).any(|(x, y)| f64::from(x.abs_diff(*y)) > t);
+    (0..px.len())
+        .map(|i| {
+            let (x, y) = (i % w.max(1), i / w.max(1));
+            let Some(c) = px.get(i) else { return false };
+            [(1, 0), (0, 1), (1, 1), (-1, 1)].iter().any(|&(dx, dy): &(isize, usize)| {
+                let (Some(nx), ny) = (x.checked_add_signed(dx), y + dy) else { return false };
+                nx < w && ny < h && px.get(ny * w + nx).is_some_and(|n| differs(c, n))
+            })
+        })
+        .collect()
+}
+
+/// Smart Blur's Normal mode: each pixel averaged with itself and the neighbours within `radius`
 /// pixels whose premultiplied channels all lie within `threshold` levels of its own. Wide radii
 /// look at `samples` × `samples` neighbours spread over the disc, read from a copy box-blurred
 /// over the gaps between them so the blur stays smooth (a neighbour counts when both it and its
 /// blurred surroundings are within the threshold, so at most a fringe under the threshold crosses
 /// an edge).
-pub(super) fn smart(px: &mut [[u8; 4]], w: usize, h: usize, radius: f64, threshold: f64, samples: u32) {
+fn smart_normal(px: &mut [[u8; 4]], w: usize, h: usize, radius: f64, threshold: f64, samples: u32) {
     if radius.is_nan() || radius < 0.5 {
         return;
     }

@@ -19,6 +19,7 @@
 
 mod artistic;
 mod blur;
+pub use blur::SmartMode;
 mod brush;
 mod distort;
 mod edges;
@@ -111,10 +112,10 @@ pub enum PixelFx {
     /// Blur › Radial Blur around the object's centre: along arcs (spin, an arc of `amount`°) or
     /// along rays (zoom, the content scaled by up to about ±`amount`/2 %), averaging 2^`passes` samples.
     RadialBlur { amount: f64, zoom: bool, passes: u32 },
-    /// Blur › Smart Blur (Normal mode): each pixel averaged with the neighbours within `radius`
-    /// whose colour differs from its own by no more than `threshold` levels, over a grid of
-    /// `samples` × `samples` neighbours at most.
-    SmartBlur { radius: f64, threshold: f64, samples: u32 },
+    /// Blur › Smart Blur: each pixel averaged with the neighbours within `radius` whose colour
+    /// differs from its own by no more than `threshold` levels, over a grid of `samples` ×
+    /// `samples` neighbours at most; `mode` can draw the edges (steps past the threshold) instead.
+    SmartBlur { radius: f64, threshold: f64, samples: u32, mode: blur::SmartMode },
     /// Sharpen › Unsharp Mask: colours pushed away from a Gaussian blur of σ = `radius` by `amount`
     /// (1 = 100 %), where they differ from it by at least `threshold` levels.
     UnsharpMask { amount: f64, radius: f64, threshold: f64 },
@@ -209,6 +210,7 @@ pub(crate) fn parse(id: &str, p: &Value) -> Option<PixelFx> {
             radius: num(p, "radius", 3.0).clamp(0.1, 100.0),
             threshold: num(p, "threshold", 25.0).clamp(0.1, 100.0),
             samples: quality([("low", 5), ("medium", 7), ("high", 9)], 7),
+            mode: pick(&blur::SmartMode::KINDS, text(p, "mode", "normal"), blur::SmartMode::Normal),
         },
         "sharpen.unsharpMask" => PixelFx::UnsharpMask {
             amount: num(p, "amount", 50.0).clamp(1.0, 500.0) / 100.0,
@@ -583,7 +585,7 @@ impl PixelFx {
         let to_px = |len: f64| len / space.px.max(1e-9);
         match *self {
             PixelFx::RadialBlur { amount, zoom, passes } => blur::radial(px, w, h, space, amount, zoom, passes),
-            PixelFx::SmartBlur { radius, threshold, samples } => blur::smart(px, w, h, to_px(radius), threshold, samples),
+            PixelFx::SmartBlur { radius, threshold, samples, mode } => blur::smart(px, w, h, to_px(radius), threshold, samples, mode),
             PixelFx::UnsharpMask { amount, radius, threshold } => sharpen::unsharp(px, w, h, amount, to_px(radius), threshold),
             PixelFx::GlowingEdges { width, brightness, smoothness } => edges::glow(px, w, h, to_px(width), brightness, to_px(smoothness)),
             PixelFx::ColorHalftone { radius, angles } => pixelate::halftone(px, w, h, space, radius, angles),

@@ -3573,3 +3573,5 @@ axis	Both	兩者
 @msg	precision must be between {_1} and {_2} pt	精確度必須介於 {_1} 和 {_2} pt 之間
 @msg	{k} must be true or false	{k} 必須為 true 或 false
 @msg	{label}: every face is unpainted (see Pathfinder Options)	{label}：所有面都未上色（請參閱「路徑管理員選項」）
+	Edge Only	僅限邊緣
+	Overlay Edge	疊加邊緣

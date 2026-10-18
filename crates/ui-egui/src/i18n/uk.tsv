@@ -4139,3 +4139,5 @@ axis	Both	Обидві
 @msg	precision must be between {_1} and {_2} pt	точність має бути від {_1} до {_2} pt
 @msg	{k} must be true or false	{k} має бути true або false
 @msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: усі області не зафарбовані (див. «Параметри обробки контурів»)
+	Edge Only	Лише краї
+	Overlay Edge	Накладання країв
