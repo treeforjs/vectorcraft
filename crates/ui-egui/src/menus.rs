@@ -276,6 +276,62 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("window.workspace.delete", "Delete Workspace", "", "{name}"),
     ("window.workspace.rename", "Rename Workspace", "", "{name, to}"),
     ("window.workspace.list", "List Workspaces", "", "{}"),
+    (
+        "actions.list",
+        "List Actions",
+        "",
+        "{} the Actions panel's sets → {sets: [{name, actions: [{name, steps: [{command, params, enabled}]}]}], recording, paused: [set, action, step]?}",
+    ),
+    ("actions.newSet", "New Set", "", "{name?} a new, empty action set → {set}"),
+    ("actions.newSetDialog", "New Set…", "", "{} open New Set (dialog `actionNewSet`, field name); OK runs actions.newSet"),
+    ("actions.newAction", "New Action", "", "{set? (0), name?, record?: bool} a new, empty action (record: start recording into it) → {set, action}"),
+    (
+        "actions.record",
+        "Start Recording",
+        "",
+        "{set? (0), action?, name?} record the commands that follow into `action` (appending), else into a new action `name` → {recording}",
+    ),
+    ("actions.stop", "Stop Playing/Recording", "", "{} finish the recording (→ {set, action}) and forget a paused playback"),
+    (
+        "actions.play",
+        "Play Action",
+        "",
+        "{set? (0), action, step?} play the action (from `step`; a paused action continues where it stopped); engine steps run as one undo step per run, a stop or a step that opens a dialog pauses → {played} | {stopped, next} | {paused, next}",
+    ),
+    (
+        "actions.insertMenuItem",
+        "Insert Menu Item",
+        "",
+        "{set? (0), action, command: id or menu label, params?, at?} insert a command step (default: at the end) → {step}",
+    ),
+    (
+        "actions.insertMenuItemDialog",
+        "Insert Menu Item…",
+        "",
+        "{set? (0), action, at?} open Insert Menu Item (dialog `actionInsertMenuItem`, field command: an id or a menu label); OK runs actions.insertMenuItem",
+    ),
+    (
+        "actions.insertStop",
+        "Insert Stop",
+        "",
+        "{set? (0), action, message?, allowContinue? (true), at?} insert a stop that shows `message` and pauses playback → {step}",
+    ),
+    (
+        "actions.insertStopDialog",
+        "Insert Stop…",
+        "",
+        "{set? (0), action, at?} open Record Stop (dialog `actionInsertStop`, fields message, allowContinue); OK runs actions.insertStop",
+    ),
+    (
+        "actions.setStepEnabled",
+        "Toggle Item On/Off",
+        "",
+        "{set? (0), action, step, enabled} turn a step on or off (playback skips steps that are off)",
+    ),
+    ("actions.delete", "Delete Action", "", "{set? (0), action?, step?} delete the step, else the action, else the set"),
+    ("actions.duplicate", "Duplicate Action", "", "{set? (0), action} copy the action below itself → {set, action}"),
+    ("actions.rename", "Rename Action", "", "{set? (0), action?, to} rename the action, else the set"),
+    ("actions.reset", "Reset Actions", "", "{} bring back the default actions (custom sets are removed)"),
     ("window.newWindow", "New Window", "", "{}"),
     ("tool.select", "Select Tool", "", "{tool: id} (see tools)"),
     (
@@ -860,6 +916,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
     }
     if let Some(r) = crate::shortcut_editor::run_command(app, id, p)
         .or_else(|| crate::workspaces::run_command(app, id, p))
+        .or_else(|| crate::panels::actions::run_command(app, id, p))
         .or_else(|| crate::floating::command(app, id, p))
     {
         return Some(r);

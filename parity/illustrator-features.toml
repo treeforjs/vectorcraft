@@ -4509,11 +4509,11 @@ title = "Actions panel (record, play, sets, insert menu item, stop)"
 area = "M"
 tier = "P1"
 milestone = "M13"
-status = "partial"
-commands = []
+status = "shipped"
+commands = ["actions.record", "actions.play", "actions.insertMenuItem", "actions.insertStop", "actions.setStepEnabled", "actions.newSet", "actions.newAction", "actions.duplicate", "actions.delete", "actions.reset"]
 tools = []
-evidence = []
-notes = "Actions panel records and plays persisted actions; insert menu item, stops and dialog toggles depth unverified"
+evidence = ["crates/ui-egui/src/panels/actions.rs::record_insert_toggle_stop_and_continue", "crates/ui-egui/src/panels/actions.rs::recording_into_an_action_appends_and_a_dialog_pauses", "crates/ui-egui/src/panels/actions.rs::old_pairs_still_load"]
+notes = "Actions panel records (into a new action or appending to one) and plays persisted actions in sets; steps expand with on/off toggles; Insert Menu Item (by id or menu label) and Insert Stop (message, allow continue); a stop or a step that opens a dialog pauses and Play continues; New Set/Action, Duplicate, Delete, Reset; all as actions.* commands. Batch and saving action sets to files are not built"
 
 [[feature]]
 id = "auto.batch"

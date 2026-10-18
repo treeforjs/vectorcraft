@@ -7,6 +7,7 @@
 //! Shortcuts, Workspaces, Find Font) draw their own window.
 
 mod about;
+pub mod action_options;
 mod all_tools;
 mod artboard_options;
 pub mod blend_options;
@@ -214,6 +215,7 @@ registry! {
     SaveChanges: [crate::unsaved::KIND] => save_changes::SPEC,
     Preferences: ["preferences"] => DialogSpec::window(crate::prefs_dialog::show, |app, _| crate::prefs_dialog::confirm(app)),
     Shortcuts: ["shortcuts"] => DialogSpec::window(crate::shortcut_editor::show, |app, _| crate::shortcut_editor::confirm(app)),
+    ActionOptions: [action_options::NEW_SET, action_options::MENU_ITEM, action_options::STOP] => action_options::SPEC,
     Workspaces: ["newWorkspace", "manageWorkspaces"] => DialogSpec::window(crate::workspaces::show, |app, _| crate::workspaces::confirm(app)),
     FindFont: ["findFont"] => DialogSpec::window(crate::find_font::show, |app, _| crate::find_font::confirm(app)),
     SwatchOptions: [swatch_options::KIND] => swatch_options::SPEC,

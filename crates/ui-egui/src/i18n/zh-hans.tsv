@@ -3737,3 +3737,41 @@ axis	Both	两者
 	Overlap	重叠
 	Variable Font	可变字体
 	Return the axes to the font style's own settings	将轴恢复为字体样式自身的设置
+	Delete Action	删除动作
+	Duplicate Action	复制动作
+	Insert Menu Item	插入菜单项
+	Insert Menu Item…	插入菜单项…
+	Insert Stop	插入停止
+	Insert Stop…	插入停止…
+	List Actions	列出动作
+	New Action	新建动作
+	New Action…	新建动作…
+	New Set	新建动作集
+	New Set…	新建动作集…
+	Play Action	播放动作
+	Rename Action	重命名动作
+	Reset Actions	复位动作
+	Start Recording	开始记录
+	Toggle Item On/Off	切换项目开/关
+	Create New Action	创建新动作
+	Menu Item:	菜单项：
+	Paused: Play continues	已暂停：播放可继续
+	Play	播放
+	Record Stop	记录停止
+	Set {n}	动作集 {n}
+	Stop: {message}	停止：{message}
+	Type a menu command's name, e.g. Select All	输入菜单命令名称，例如“全选”
+	{name} copy	{name} 副本
+@msg	already recording	已在记录
+@msg	missing action	缺少动作
+@msg	missing command	缺少命令
+@msg	missing enabled	缺少 enabled
+@msg	missing step	缺少步骤
+@msg	missing to	缺少 to
+@msg	no menu command `{command}`	没有菜单命令 `{command}`
+@msg	no such set	没有此动作集
+@msg	no such step	没有此步骤
+@msg	too many action sets	动作集过多
+@msg	too many actions in this set	此动作集中的动作过多
+@msg	too many steps in this action	此动作的步骤过多
+@msg	unknown command `{id}`	未知命令 `{id}`

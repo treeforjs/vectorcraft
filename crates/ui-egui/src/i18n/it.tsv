@@ -4103,3 +4103,41 @@ axis	Both	Entrambi
 	Overlap	Sovrapposto
 	Variable Font	Font variabile
 	Return the axes to the font style's own settings	Riporta gli assi ai valori dello stile del font
+	Delete Action	Elimina azione
+	Duplicate Action	Duplica azione
+	Insert Menu Item	Inserisci voce di menu
+	Insert Menu Item…	Inserisci voce di menu…
+	Insert Stop	Inserisci interruzione
+	Insert Stop…	Inserisci interruzione…
+	List Actions	Elenca azioni
+	New Action	Nuova azione
+	New Action…	Nuova azione…
+	New Set	Nuovo set
+	New Set…	Nuovo set…
+	Play Action	Esegui azione
+	Rename Action	Rinomina azione
+	Reset Actions	Ripristina azioni
+	Start Recording	Avvia registrazione
+	Toggle Item On/Off	Attiva/disattiva voce
+	Create New Action	Crea nuova azione
+	Menu Item:	Voce di menu:
+	Paused: Play continues	In pausa: Esegui riprende
+	Play	Esegui
+	Record Stop	Registra interruzione
+	Set {n}	Set {n}
+	Stop: {message}	Interruzione: {message}
+	Type a menu command's name, e.g. Select All	Digita il nome di un comando di menu, ad es. Seleziona tutto
+	{name} copy	{name} copia
+@msg	already recording	registrazione già in corso
+@msg	missing action	azione mancante
+@msg	missing command	comando mancante
+@msg	missing enabled	enabled mancante
+@msg	missing step	passo mancante
+@msg	missing to	to mancante
+@msg	no menu command `{command}`	nessun comando di menu `{command}`
+@msg	no such set	set inesistente
+@msg	no such step	passo inesistente
+@msg	too many action sets	troppi set di azioni
+@msg	too many actions in this set	troppe azioni in questo set
+@msg	too many steps in this action	troppi passi in questa azione
+@msg	unknown command `{id}`	comando sconosciuto `{id}`
