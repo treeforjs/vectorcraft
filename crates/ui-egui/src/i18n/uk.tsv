@@ -4129,3 +4129,13 @@ axis	Both	Обидві
 	Enable Guides for 9-Slice Scaling	Увімкнути напрямні для 9-секційного масштабування
 	Corners keep their size when instances are scaled; the edges and centre stretch.	Під час масштабування екземплярів кути зберігають розмір, а краї й центр розтягуються.
 @msg	no symbol `{name}`	немає символу `{name}`
+	Pathfinder Options	Параметри обробки контурів
+	Precision:	Точність:
+	How closely results follow the exact shapes; smaller is more precise.	Наскільки точно результат слідує вихідним формам; що менше значення, то точніше.
+	Remove Redundant Points	Вилучати зайві точки
+	Divide and Outline Will Remove Unpainted Artwork	Поділ і Контур вилучають незафарбовані об’єкти
+	Defaults	Типові
+@msg	precision must be a number of points	точність має бути числом пунктів
+@msg	precision must be between {_1} and {_2} pt	точність має бути від {_1} до {_2} pt
+@msg	{k} must be true or false	{k} має бути true або false
+@msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: усі області не зафарбовані (див. «Параметри обробки контурів»)

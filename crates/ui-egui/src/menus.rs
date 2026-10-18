@@ -406,6 +406,12 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "{name?} (default: the selected path's brush, else the current brush) open its Brush Options, what double-clicking a brush in the Brushes panel opens: Calligraphic (dialog `brushOptions`, fields name, angle −180..180, roundness 0..100, size 0..1296 pt, angleMode/roundnessMode/sizeMode: fixed|random|pressure, angleVariation/roundnessVariation/sizeVariation) Bristle (fields name, shape, size, length, density, thickness, opacity, stiffness), Scatter (sizeMode/spacingMode/scatterMode/rotationMode: fixed|random with …Min/…Max, rotationRelativeTo: page|path), Art (width %, scale: proportional|stretch|betweenGuides with guideStart/guideEnd %, direction, flipAlong, flipAcross, overlap: fold|adjust) or Pattern (scale %, spacing %, fit: stretch|addSpace|approximate, flipAlong, flipAcross); Scatter, Art and Pattern also colorization: none|tints|tintsAndShades|hueShift with keyColor #rrggbb; OK runs brush.options",
     ),
     (
+        "ui.pathfinderOptions",
+        "Pathfinder Options…",
+        "",
+        "{} open Pathfinder Options (dialog `pathfinderOptions`, fields precision: pt, removeRedundantPoints, removeUnpainted: bools); OK runs object.pathfinder.options",
+    ),
+    (
         "ui.symbolOptions",
         "Symbol Options…",
         "",
@@ -1281,6 +1287,10 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             crate::dialogs::new_color_group::open(app, names.unwrap_or_default())
         }
         "ui.colorPicker" => crate::dialogs::open_color_picker(app, p),
+        "ui.pathfinderOptions" => {
+            crate::dialogs::pathfinder_options::open(app);
+            Ok(Value::Null)
+        }
         "ui.graphicStyleOptions" => crate::dialogs::graphic_style_options::open(app, s("name").as_deref()),
         "ui.symbolOptions" => {
             let current = || app.run("symbol.list", json!({})).ok().and_then(|v| v["current"].as_str().map(str::to_string));

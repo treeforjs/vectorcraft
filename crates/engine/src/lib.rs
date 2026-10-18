@@ -632,6 +632,9 @@ pub struct Prefs {
     /// Perspective Grid Options (double-click the Perspective Grid tool): whether the Plane
     /// Switching Widget shows and where (`perspective.widget.options`).
     pub perspective_widget: vectorcraft_tools::distort::perspective::widget::WidgetOptions,
+    /// Pathfinder Options (the Pathfinder panel menu, `object.pathfinder.options`; a preference
+    /// group, see [`cmd::prefscmds::PREF_GROUPS`]).
+    pub pathfinder: cmd::PathfinderOptions,
 }
 
 impl Default for Prefs {
@@ -774,6 +777,7 @@ impl Default for Prefs {
             perspective_presets: vec![],
             blend_options: None,
             perspective_widget: Default::default(),
+            pathfinder: Default::default(),
         }
     }
 }

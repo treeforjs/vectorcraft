@@ -204,6 +204,46 @@ pub fn remove_redundant_points(path: &PathData, tolerance: f64) -> PathData {
     PathData::new(out)
 }
 
+/// Merge anchors that sit on top of the one before them (within `tolerance`): Pathfinder
+/// Options → Remove Redundant Points. The merged anchor keeps the first one's incoming handle
+/// and the last one's outgoing handle; nothing else moves (unlike
+/// [`remove_redundant_points`], collinear and curve joints stay).
+pub fn remove_coincident_points(path: &PathData, tolerance: f64) -> PathData {
+    let tol = if tolerance.is_finite() { tolerance.max(1e-9) } else { 1e-9 };
+    let subpaths = path
+        .subpaths
+        .iter()
+        .map(|sp| {
+            let mut out: Vec<Anchor> = Vec::with_capacity(sp.anchors.len());
+            for a in &sp.anchors {
+                match out.last_mut() {
+                    Some(prev) if prev.p.distance(a.p) <= tol => {
+                        prev.h_out = a.h_out;
+                        if a.kind != prev.kind {
+                            prev.kind = vectorcraft_geom::AnchorKind::Corner;
+                        }
+                    }
+                    _ => out.push(*a),
+                }
+            }
+            if sp.closed && out.len() > 1 {
+                let wraps = matches!((out.first(), out.last()), (Some(f), Some(l)) if f.p.distance(l.p) <= tol);
+                if wraps
+                    && let Some(l) = out.pop()
+                    && let Some(f) = out.first_mut()
+                {
+                    f.h_in = l.h_in;
+                    if l.kind != f.kind {
+                        f.kind = vectorcraft_geom::AnchorKind::Corner;
+                    }
+                }
+            }
+            SubPath::new(out, sp.closed)
+        })
+        .collect();
+    PathData::new(subpaths)
+}
+
 fn merge_pair(a: &Seg, b: &Seg, tol: f64) -> Option<Seg> {
     if a.line && b.line {
         let chord = b.c.p3 - a.c.p0;

@@ -4146,3 +4146,13 @@ axis	Both	Ambos
 	Enable Guides for 9-Slice Scaling	Activar guías para escala en 9 sectores
 	Corners keep their size when instances are scaled; the edges and centre stretch.	Las esquinas conservan su tamaño al escalar las instancias; los bordes y el centro se estiran.
 @msg	no symbol `{name}`	no hay ningún símbolo `{name}`
+	Pathfinder Options	Opciones de buscatrazos
+	Precision:	Precisión:
+	How closely results follow the exact shapes; smaller is more precise.	Lo fielmente que los resultados siguen las formas exactas; un valor menor es más preciso.
+	Remove Redundant Points	Eliminar puntos redundantes
+	Divide and Outline Will Remove Unpainted Artwork	Dividir y Contorno eliminarán las ilustraciones sin pintar
+	Defaults	Valores por defecto
+@msg	precision must be a number of points	la precisión debe ser un número de puntos
+@msg	precision must be between {_1} and {_2} pt	la precisión debe estar entre {_1} y {_2} pt
+@msg	{k} must be true or false	{k} debe ser true o false
+@msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: todas las caras están sin pintar (consulte Opciones de buscatrazos)

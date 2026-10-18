@@ -451,6 +451,7 @@ pub(crate) fn clock_date(s: &mut Session, key: &str, given: Option<Option<i64>>)
 pub use opacitymask::TransparencyInfo;
 
 /// Eyedropper Options (`Prefs::eyedropper`).
+pub use pathops::PathfinderOptions;
 pub use xform::{AppearanceAttrs, EyedropperAttrs, EyedropperOptions, FillAttrs, StrokeAttrs};
 
 /// The Attributes panel's state ([`Session::attributes_info`]).

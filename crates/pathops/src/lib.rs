@@ -13,13 +13,13 @@ mod offset;
 mod pathfinder;
 mod planar;
 
-pub use boolean::{BoolOp, DEFAULT_PRECISION, area, boolean, boolean_n, normalize, try_boolean, try_normalize, unite_all};
+pub use boolean::{BoolOp, DEFAULT_PRECISION, area, boolean, boolean_n, normalize, try_boolean, try_normalize, unite_all, unite_all_with};
 pub use edit::{
-    AverageAxis, SimplifyOptions, add_anchor_points, average, join, remove_anchor, remove_redundant_points, simplify, simplify_with, smooth,
-    split_into_grid,
+    AverageAxis, SimplifyOptions, add_anchor_points, average, join, remove_anchor, remove_coincident_points, remove_redundant_points, simplify,
+    simplify_with, smooth, split_into_grid,
 };
 pub use offset::{Cap, Join, offset_path, outline_stroke, stroke_region};
-pub use pathfinder::{FaceMerger, PathfinderOp, Region, Shape, merge_regions, pathfinder, region_at, regions};
+pub use pathfinder::{FaceMerger, PathfinderOp, Region, Shape, merge_regions, pathfinder, pathfinder_with, region_at, regions};
 pub use planar::{BuilderArrangement, SHAPE_BUILDER_MAX_SEGMENTS, cut_out, encloses_area, interior_point, live_paint, shape_builder};
 
 /// Errors from fallible operations.

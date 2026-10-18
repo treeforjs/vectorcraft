@@ -105,7 +105,9 @@ pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     {
         run(app, ui, &op, &l);
     }
-    menu_item(ui, tl!("Pathfinder Options…"), false, false);
+    if menu_item(ui, tl!("Pathfinder Options…"), true, false) {
+        app.run("ui.pathfinderOptions", json!({})).ok();
+    }
     ui.separator();
     let compound = compound_selected(app);
     if menu_item(ui, tl!("Make Compound Shape"), selection_len(app) >= 2 && !compound, false) {

@@ -383,3 +383,29 @@ fn artboard_options_lists_name_then_width_and_height() {
     let at = |s: &str| text.find(s).unwrap_or_else(|| panic!("{s} in {text}"));
     assert!(at("Name") < at("Width") && at("Width") < at("Height"), "{text}");
 }
+
+#[test]
+fn pathfinder_options_edits_the_preferences() {
+    let mut app = app();
+    app.run("ui.pathfinderOptions", json!({})).unwrap();
+    let d = app.ui.dialog.as_ref().unwrap();
+    assert_eq!(d.kind, pathfinder_options::KIND);
+    assert_eq!((d.f64("precision", 0.0), d.bool("removeRedundantPoints"), d.bool("removeUnpainted")), (0.01, true, false));
+    frame(&mut app, Default::default());
+    if let Some(d) = app.ui.dialog.as_mut() {
+        d.fields.insert("precision".into(), json!(0.25));
+        d.fields.insert("removeUnpainted".into(), json!(true));
+    }
+    confirm(&mut app).unwrap();
+    assert!(app.ui.dialog.is_none());
+    let o = app.session.prefs.pathfinder;
+    assert_eq!((o.precision, o.remove_redundant_points, o.remove_unpainted), (0.25, true, true));
+    // An out-of-range precision keeps the dialog open with the error and changes nothing.
+    app.run("ui.pathfinderOptions", json!({})).unwrap();
+    if let Some(d) = app.ui.dialog.as_mut() {
+        d.fields.insert("precision".into(), json!(500));
+    }
+    assert!(confirm(&mut app).is_err());
+    assert!(app.ui.dialog.is_some());
+    assert_eq!(app.session.prefs.pathfinder.precision, 0.25);
+}

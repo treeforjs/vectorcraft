@@ -1897,11 +1897,11 @@ title = "Pathfinder Options (precision, remove redundant points)"
 area = "E"
 tier = "P2"
 milestone = "M6"
-status = "partial"
-commands = ["object.pathfinder.unite"]
+status = "shipped"
+commands = ["object.pathfinder.options", "ui.pathfinderOptions"]
 tools = []
-evidence = ["crates/engine/src/tests_pathops.rs::unite_two_rects"]
-notes = "Precision is fixed; Pathfinder Options dialog pending"
+evidence = ["crates/engine/src/tests_pathops.rs::pathfinder_options_are_kept_with_the_preferences_and_validated", "crates/engine/src/tests_pathops.rs::pathfinder_precision_option_drops_slivers", "crates/engine/src/tests_pathops.rs::divide_drops_unpainted_faces_when_the_option_is_on", "crates/ui-egui/src/dialogs/tests.rs::pathfinder_options_edits_the_preferences"]
+notes = "Pathfinder panel menu → Pathfinder Options: Precision (0.001–10 pt, default 0.01), Remove Redundant Points (stacked anchors merge) and Divide and Outline Will Remove Unpainted Artwork, with Defaults; kept with the preferences"
 
 [[feature]]
 id = "path.shape-builder"

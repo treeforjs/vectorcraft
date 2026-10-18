@@ -4146,3 +4146,13 @@ axis	Both	Entrambi
 	Enable Guides for 9-Slice Scaling	Attiva guide per ridimensionamento a 9 sezioni
 	Corners keep their size when instances are scaled; the edges and centre stretch.	Gli angoli mantengono le dimensioni quando le istanze vengono ridimensionate; i bordi e il centro si allungano.
 @msg	no symbol `{name}`	nessun simbolo `{name}`
+	Pathfinder Options	Opzioni elaborazione tracciati
+	Precision:	Precisione:
+	How closely results follow the exact shapes; smaller is more precise.	Quanto fedelmente i risultati seguono le forme esatte; un valore minore è più preciso.
+	Remove Redundant Points	Rimuovi punti ridondanti
+	Divide and Outline Will Remove Unpainted Artwork	Dividi e Contorno rimuovono le illustrazioni non colorate
+	Defaults	Predefinite
+@msg	precision must be a number of points	la precisione deve essere un numero di punti
+@msg	precision must be between {_1} and {_2} pt	la precisione deve essere compresa tra {_1} e {_2} pt
+@msg	{k} must be true or false	{k} deve essere true o false
+@msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: tutte le facce sono senza colore (vedi Opzioni elaborazione tracciati)
