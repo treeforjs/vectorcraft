@@ -154,6 +154,48 @@ impl Track {
         let (p, t) = self.frame(s);
         p + normal(t) * d
     }
+
+    /// [`Track::map`] with the offset mitred around corners, so art doesn't fold over itself:
+    /// within reach of a corner, arc length slides by the mitre shear (fading to nothing two shears
+    /// away), the inside of the turn skipping what would overlap and the outside running on past
+    /// the corner along its own segment to meet the other side at the mitre point.
+    pub fn map_mitred(&self, s: f64, d: f64) -> Point {
+        let l = self.len();
+        let corners = self.corner_positions();
+        let wrap = |u: f64| if self.closed && l > 0.0 { (u + l / 2.0).rem_euclid(l) - l / 2.0 } else { u };
+        let Some((i, sc, u)) = corners.iter().map(|&(i, sc)| (i, sc, wrap(s - sc))).min_by(|a, b| a.2.abs().total_cmp(&b.2.abs())) else {
+            return self.map(s, d);
+        };
+        let (a, b) = self.in_out(i);
+        let denom = 1.0 + a.dot(b);
+        if denom <= 0.05 {
+            // Nearly reversing: no useful mitre.
+            return self.map(s, d);
+        }
+        let shear = d * (a.x * b.y - a.y * b.x) / denom;
+        // Reach: twice the shear (so the slide stays monotonic), within the neighbouring corners
+        // or ends.
+        let mut room = f64::INFINITY;
+        for &(_, other) in corners.iter().filter(|c| c.0 != i) {
+            room = room.min(wrap(other - sc).abs() / 2.0);
+        }
+        if !self.closed {
+            room = room.min(sc).min(l - sc);
+        }
+        let reach = (2.0 * shear.abs()).min(room);
+        if reach <= shear.abs() || u.abs() >= reach {
+            return self.map(s, d);
+        }
+        let w = 1.0 - u.abs() / reach;
+        let v = self.verts.get(i).copied().unwrap_or_default();
+        if u < 0.0 {
+            let t = u - shear * w;
+            if t <= 0.0 { self.map(sc + t, d) } else { v + a * t + normal(a) * d }
+        } else {
+            let t = u + shear * w;
+            if t >= 0.0 { self.map(sc + t, d) } else { v + b * t + normal(b) * d }
+        }
+    }
 }
 
 /// Flatten `bp` into tracks (one per subpath) with `tol` accuracy.

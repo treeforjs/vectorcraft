@@ -4077,11 +4077,11 @@ title = "Art brushes and options"
 area = "J"
 tier = "P1"
 milestone = "M10"
-status = "partial"
+status = "shipped"
 commands = ["brush.new", "brush.options", "ui.brushOptions"]
 tools = []
-evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection", "crates/ui-egui/src/dialogs/brush_options.rs::art_and_pattern_options_apply_and_strokes_keep_drawing", "crates/brush/src/tests.rs::art_width_follows_pen_pressure", "crates/brush/src/tests.rs::art_width_random_is_one_width_per_stroke_within_the_variation"]
-notes = "Art brushes draw; Art Brush Options dialog edits width (fixed, random or pen pressure with a variation), scale (proportional, stretch, between guides), direction, flips and colorization; overlap options pending"
+evidence = ["crates/engine/src/tests_brushsym.rs::new_brushes_from_params_and_selection", "crates/ui-egui/src/dialogs/brush_options.rs::art_and_pattern_options_apply_and_strokes_keep_drawing", "crates/brush/src/tests.rs::art_width_follows_pen_pressure", "crates/brush/src/tests.rs::art_width_random_is_one_width_per_stroke_within_the_variation", "crates/brush/src/tests.rs::art_overlap_adjust_mitres_corners_instead_of_folding"]
+notes = "Art brushes draw; Art Brush Options dialog edits width (fixed, random or pen pressure with a variation), scale (proportional, stretch, between guides), direction, flips, overlap (do not adjust, or adjust corners and folds: the art is mitred around corners) and colorization"
 
 [[feature]]
 id = "brush.bristle"

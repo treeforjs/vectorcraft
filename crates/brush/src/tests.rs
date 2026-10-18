@@ -620,3 +620,72 @@ fn pattern_random_scale_is_one_scale_per_stroke() {
     let saved: PatternBrush = serde_json::from_str(r#"{"scale":80.0}"#).unwrap();
     assert_eq!((saved.scale_mode, saved.scale_variation), (Variation::Fixed, 0.0));
 }
+
+fn overlap_art(overlap: ArtOverlap) -> Brush {
+    Brush {
+        name: "o".into(),
+        kind: BrushKind::Art(ArtBrush { art: rect_art(100.0, 10.0), overlap, colorization: Colorization::None, ..Default::default() }),
+    }
+}
+
+/// An L turning from +x to +y at (100, 0): the left normal (+y) is the inside of the turn.
+fn ell() -> BezPath {
+    let mut bp = line(0.0, 0.0, 100.0, 0.0);
+    bp.line_to((100.0, 100.0));
+    bp
+}
+
+#[test]
+fn art_overlap_adjust_mitres_corners_instead_of_folding() {
+    let points = |o| {
+        let mut pts = vec![];
+        for n in stroke_pieces(&overlap_art(o), &ell(), &stroke(1.0)) {
+            all_points(&n, &mut pts);
+        }
+        pts
+    };
+    let fold = points(ArtOverlap::Fold);
+    let adjust = points(ArtOverlap::Adjust);
+    // Folding: the inside edge of the first leg runs on to the corner, past the mitre at (95, 5)…
+    assert!(fold.iter().any(|p| p.x > 97.0 && near(p.y, 5.0, 0.01)), "the art folds over itself");
+    // …and the outside leaves a gap where the mitre (105, −5) would be.
+    assert!(!fold.iter().any(|p| p.distance(Point::new(105.0, -5.0)) < 1.0));
+    // Adjusting: the inside stops at the mitre point and the outside reaches it.
+    assert!(!adjust.iter().any(|p| p.x > 95.5 && p.y > 0.5 && p.y < 99.0 && p.x < 99.0), "no art inside the corner past the mitre");
+    assert!(adjust.iter().any(|p| p.distance(Point::new(95.0, 5.0)) < 0.5), "the inside meets at the mitre");
+    assert!(adjust.iter().any(|p| p.distance(Point::new(105.0, -5.0)) < 0.5), "the outside fills the corner");
+    // Away from the corner nothing changes.
+    let far = |pts: &[Point]| pts.iter().filter(|p| p.x < 50.0).map(|p| (p.x * 1e6).round() as i64 + (p.y * 1e3).round() as i64).sum::<i64>();
+    assert_eq!(far(&fold), far(&adjust));
+    // Straight paths draw the same either way, and the option round-trips through serde.
+    let a = stroke_pieces(&overlap_art(ArtOverlap::Fold), &line(0.0, 0.0, 100.0, 0.0), &stroke(1.0));
+    let b = stroke_pieces(&overlap_art(ArtOverlap::Adjust), &line(0.0, 0.0, 100.0, 0.0), &stroke(1.0));
+    assert_eq!(bounds(&a), bounds(&b));
+    let json = serde_json::to_value(overlap_art(ArtOverlap::Adjust)).unwrap();
+    assert!(json.to_string().contains("\"overlap\":\"adjust\""), "{json}");
+    let back: Brush = serde_json::from_value(json).unwrap();
+    assert_eq!(back, overlap_art(ArtOverlap::Adjust));
+}
+
+#[test]
+fn art_overlap_adjust_survives_hairpins_and_tiny_legs() {
+    // A hairpin (no usable mitre), a closed square, and legs shorter than the art is wide.
+    let mut hairpin = line(0.0, 0.0, 100.0, 0.0);
+    hairpin.line_to((0.0, 0.5));
+    let mut square = line(0.0, 0.0, 50.0, 0.0);
+    square.line_to((50.0, 50.0));
+    square.line_to((0.0, 50.0));
+    square.close_path();
+    let mut zigzag = line(0.0, 0.0, 2.0, 0.0);
+    for i in 1..40 {
+        zigzag.line_to((2.0 * i as f64 + 2.0, if i % 2 == 0 { 0.0 } else { 2.0 }));
+    }
+    for p in [hairpin, square, zigzag] {
+        let out = stroke_pieces(&overlap_art(ArtOverlap::Adjust), &p, &stroke(1.0));
+        let mut pts = vec![];
+        for n in &out {
+            all_points(n, &mut pts);
+        }
+        assert!(!pts.is_empty() && pts.iter().all(|p| p.x.is_finite() && p.y.is_finite()));
+    }
+}

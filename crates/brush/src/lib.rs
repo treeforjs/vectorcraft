@@ -265,6 +265,19 @@ pub struct ArtBrush {
     pub flip_along: bool,
     pub flip_across: bool,
     pub colorization: Colorization,
+    /// What the art does where the path turns sharply.
+    pub overlap: ArtOverlap,
+}
+
+/// Art brush Overlap: let the art fold over itself at sharp corners, or adjust it so it doesn't.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ArtOverlap {
+    /// The art follows each segment's own direction and overlaps on the inside of a corner.
+    #[default]
+    Fold,
+    /// Mitre the art around each corner: the inside skips the overlap, the outside fills the gap.
+    Adjust,
 }
 
 impl ArtBrush {
@@ -284,6 +297,7 @@ impl Default for ArtBrush {
             flip_along: false,
             flip_across: false,
             colorization: Colorization::Tints,
+            overlap: ArtOverlap::Fold,
         }
     }
 }
