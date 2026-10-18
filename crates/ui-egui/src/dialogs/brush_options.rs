@@ -16,7 +16,7 @@
 //! heaviest), `…Min`, `…Max`; `rotationRelativeTo` (`page` | `path`). Art: `width` (%) with
 //! `widthMode` (`fixed` | `random` | `pressure`) and `widthVariation` (%),
 //! `direction` (`leftToRight`…), `scale` (`proportional` | `stretch` | `betweenGuides`),
-//! `guideStart`, `guideEnd` (% of the art's length), `flipAlong`, `flipAcross`. Pattern: `scale` (%)
+//! `guideStart`, `guideEnd` (% of the art's length), `flipAlong`, `flipAcross`, `overlap` (`fold` | `adjust`). Pattern: `scale` (%)
 //! with `scaleMode` and `scaleVariation` (%), `spacing` (%), `fit` (`stretch` | `addSpace` | `approximate`), `autoCorner` (`none` | `centered`
 //! | `between` | `sliced` | `overlap`, for corners without a corner tile), `flipAlong`, `flipAcross`.
 //! Scatter, Art and Pattern: `colorization` (`none` | `tints` | `tintsAndShades` | `hueShift`) and
@@ -25,7 +25,7 @@
 use egui::{Color32, Sense, Stroke, pos2, vec2};
 use serde_json::{Map, Value, json};
 use vectorcraft_brush::{
-    ArtBrush, ArtScale, AutoCorner, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternBrush, PatternFit, Variation,
+    ArtBrush, ArtOverlap, ArtScale, AutoCorner, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternBrush, PatternFit, Variation,
 };
 use vectorcraft_doc::color::Color;
 
@@ -91,6 +91,8 @@ const ART_SCALES: [(&str, &str); 3] =
     [("proportional", "Scale Proportionately"), ("stretch", "Stretch to Fit Stroke Length"), ("betweenGuides", "Stretch Between Guides")];
 
 const FITS: [(&str, &str); 3] = [("stretch", "Stretch to Fit"), ("addSpace", "Add Space to Fit"), ("approximate", "Approximate Path")];
+const OVERLAPS: [(&str, &str); 2] = [("fold", "Do Not Adjust"), ("adjust", "Adjust Corners and Folds")];
+
 const AUTO_CORNERS: [(&str, &str); 5] =
     [("none", "None"), ("centered", "Centered"), ("between", "Between"), ("sliced", "Sliced"), ("overlap", "Overlap")];
 
@@ -173,6 +175,7 @@ pub fn open(app: &mut VectorcraftApp, name: Option<&str>) -> Result<Value, Strin
             f.insert("guideEnd".into(), json!(end * 100.0));
             f.insert("flipAlong".into(), json!(a.flip_along));
             f.insert("flipAcross".into(), json!(a.flip_across));
+            f.insert("overlap".into(), serde_json::to_value(a.overlap).unwrap_or_default());
             colorization_fields(&mut f, &a.colorization);
         }
         BrushKind::Pattern(p) => {
@@ -276,6 +279,7 @@ fn params(d: &Dialog) -> Value {
                 _ => ArtScale::Stretch,
             };
             let direction: Direction = serde_json::from_value(json!(d.str("direction"))).unwrap_or_default();
+            let overlap: ArtOverlap = serde_json::from_value(json!(d.str("overlap"))).unwrap_or_default();
             json!({
                 "width": clamped(d, "width", ArtBrush::WIDTH_RANGE),
                 "width_mode": Variation::parse(&d.str(&mode_key("width"))).unwrap_or_default().id(),
@@ -284,6 +288,7 @@ fn params(d: &Dialog) -> Value {
                 "scale": serde_json::to_value(scale).unwrap_or_default(),
                 "flip_along": d.bool("flipAlong"),
                 "flip_across": d.bool("flipAcross"),
+                "overlap": serde_json::to_value(overlap).unwrap_or_default(),
                 "colorization": serde_json::to_value(colorization(d)).unwrap_or_default(),
             })
         }
@@ -400,6 +405,7 @@ fn art_body(ui: &mut egui::Ui, d: &mut Dialog) {
     }
     form::choice(ui, d, "direction", tl!("Direction:"), (LABEL_W, 160.0), &DIRECTIONS);
     flips(ui, d);
+    form::choice(ui, d, "overlap", tl!("Overlap:"), (LABEL_W, 200.0), &OVERLAPS);
     colorization_body(ui, d);
     ui.add_space(8.0);
     stroke_preview(ui, "art", preview_def(d), vec2(STROKE_W, 64.0));
@@ -650,12 +656,12 @@ mod tests {
         let mut app = app();
         app.run("ui.brushOptions", json!({"name": "Arrow"})).unwrap();
         let text = shown(&mut app);
-        for label in ["Art Brush Options", "Width:", "Brush Scale:", "Direction:", "Flip Along", "Flip Across", "Colorization:"] {
+        for label in ["Art Brush Options", "Width:", "Brush Scale:", "Direction:", "Flip Along", "Flip Across", "Overlap:", "Colorization:"] {
             assert!(text.contains(label), "{label} in {text}");
         }
         set(
             &mut app,
-            json!({"width": 5000, "widthMode": "pressure", "widthVariation": 30, "scale": "betweenGuides", "guideStart": 80, "guideEnd": 20, "direction": "bottomToTop", "flipAcross": true, "colorization": "tints"}),
+            json!({"width": 5000, "widthMode": "pressure", "widthVariation": 30, "scale": "betweenGuides", "guideStart": 80, "guideEnd": 20, "direction": "bottomToTop", "flipAcross": true, "overlap": "adjust", "colorization": "tints"}),
         );
         assert!(shown(&mut app).contains("Guides:"));
         super::super::confirm(&mut app).unwrap();
@@ -664,6 +670,7 @@ mod tests {
         assert_eq!((def["width_mode"].clone(), def["width_variation"].clone()), (json!("pressure"), json!(30.0)));
         assert_eq!(def["scale"], json!({"mode": "betweenGuides", "start": 0.2, "end": 0.8}));
         assert_eq!(def["colorization"], json!({"method": "tints"}));
+        assert_eq!(def["overlap"], json!("adjust"));
 
         app.run("ui.brushOptions", json!({"name": "Chain"})).unwrap();
         let text = shown(&mut app);

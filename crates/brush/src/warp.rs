@@ -10,7 +10,7 @@ use vectorcraft_doc::{Node, NodeKind, PressureProfile, StrokeLayer};
 use vectorcraft_geom::{Affine, BezPath, PathData, PathEl, Point, Rect, SubPath, Vec2};
 
 use crate::track::{Rng, Track, normal, seed_of, tracks};
-use crate::{ArtBrush, ArtScale, AutoCorner, Direction, PatternBrush, PatternFit, Scatter, Variation, tolerance};
+use crate::{ArtBrush, ArtOverlap, ArtScale, AutoCorner, Direction, PatternBrush, PatternFit, Scatter, Variation, tolerance};
 
 /// Longest mapped segment (points in document space).
 const MAX_SEG: f64 = 1.5;
@@ -151,11 +151,20 @@ fn bend(t: &Track, art: &Node, b: Rect, along: AlongMap, cross: f64) -> Option<N
 
 /// [`bend`] with the cross scale `cross * across(s)` varying along the track (`across` in 0..=1).
 fn bend_varying(t: &Track, art: &Node, b: Rect, along: AlongMap, across: &dyn Fn(f64) -> f64, cross: f64) -> Option<Node> {
+    bend_with(t, art, b, along, across, cross, ArtOverlap::Fold)
+}
+
+/// [`bend_varying`] that mitres the art around corners when `overlap` is Adjust.
+fn bend_with(t: &Track, art: &Node, b: Rect, along: AlongMap, across: &dyn Fn(f64) -> f64, cross: f64, overlap: ArtOverlap) -> Option<Node> {
     let cy = b.center().y;
     let x0 = b.x0;
     let f = move |p: Point| {
         let s = along.at(p.x - x0);
-        t.map(s, (p.y - cy) * cross * across(s))
+        let d = (p.y - cy) * cross * across(s);
+        match overlap {
+            ArtOverlap::Fold => t.map(s, d),
+            ArtOverlap::Adjust => t.map_mitred(s, d),
+        }
     };
     let scale = along.max_scale().max(cross.abs()).max(1e-6);
     let flat_tol = tolerance(b.height().max(b.width()) * scale) / scale;
@@ -209,7 +218,7 @@ pub(crate) fn art(a: &ArtBrush, bp: &BezPath, weight: f64, stroke: &StrokeLayer,
                 1.0
             }
         };
-        if let Some(n) = bend_varying(&t, &art, b, along, &across, cross) {
+        if let Some(n) = bend_with(&t, &art, b, along, &across, cross, a.overlap) {
             out.push(n);
         }
     }
