@@ -476,6 +476,9 @@ pub struct Node {
     /// Editable Shaper composition; the original art is retained in its source child.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shaper: Option<Box<crate::shaper::ShaperSpec>>,
+    /// Live compound shape; the operands are retained in its first child.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub compound: Option<Box<crate::compound::CompoundShape>>,
     pub kind: NodeKind,
     /// The [`crate::GraphicStyle::id`] last applied to this object. It stays linked while it keeps
     /// that style's look: editing its appearance or transparency breaks the link.
@@ -541,6 +544,7 @@ impl Node {
             wrap: None,
             graph: None,
             shaper: None,
+            compound: None,
             kind,
             graphic_style: None,
             attrs: None,
@@ -622,6 +626,10 @@ impl Node {
     }
     pub fn is_container(&self) -> bool {
         self.children().is_some()
+    }
+    /// A Shaper group or live compound shape: its first child keeps the invisible source art.
+    pub fn retains_sources(&self) -> bool {
+        self.shaper.is_some() || self.compound.is_some()
     }
     /// Full opacity, Normal blending, no isolation, knockout or opacity mask (the Layers panel
     /// fills an object's target circle otherwise).
@@ -712,7 +720,7 @@ impl Node {
             }
             NodeKind::Layer { children, .. } | NodeKind::Group { children, .. } | NodeKind::Compound { children, .. } => children
                 .iter()
-                .skip(usize::from(self.shaper.is_some()))
+                .skip(usize::from(self.retains_sources()))
                 .filter(|c| c.visible || !matches!(self.kind, NodeKind::Layer { .. }))
                 .fold(None, |acc, c| vectorcraft_geom::union_opt(acc, c.geometric_bounds())),
             NodeKind::Text(t) => self.projected(t.bounds()),
@@ -746,7 +754,7 @@ impl Node {
                 let o = self.appearance.outset();
                 children
                     .iter()
-                    .skip(usize::from(self.shaper.is_some()))
+                    .skip(usize::from(self.retains_sources()))
                     .fold(None, |acc, c| vectorcraft_geom::union_opt(acc, c.visual_bounds()))
                     .map(|b| b.inflate(o, o))
             }
@@ -975,7 +983,7 @@ impl Node {
                 }
             }
             NodeKind::Group { children, .. } | NodeKind::Layer { children, .. } => {
-                for c in children.iter().skip(usize::from(self.shaper.is_some())).filter(|c| c.visible) {
+                for c in children.iter().skip(usize::from(self.retains_sources())).filter(|c| c.visible) {
                     c.push_clip_shapes(text, out);
                 }
             }

@@ -416,7 +416,11 @@ impl Tool for SelectionTool {
 
     fn overlays(&self, cx: &ToolContext) -> Vec<Overlay> {
         let mut o = pathtype::overlays(cx);
-        if let Some(source) = cx.isolation.and_then(|id| cx.doc.node(id)).filter(|n| n.name.as_deref() == Some(vectorcraft_doc::shaper::SOURCES)) {
+        if let Some(source) = cx
+            .isolation
+            .and_then(|id| cx.doc.node(id))
+            .filter(|n| matches!(n.name.as_deref(), Some(vectorcraft_doc::shaper::SOURCES | vectorcraft_doc::compound::OPERANDS)))
+        {
             for n in source.children().into_iter().flatten() {
                 if let Some(path) = n.path_data() {
                     o.push(Overlay::Path { path: path.to_bezpath(), color: [0x80, 0x80, 0x80], width: 1.0, dashed: true });

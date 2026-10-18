@@ -836,7 +836,9 @@
 	Expand Panels	Expandir Painéis
 	Expand Repeat	Expandir Repetição
 	Expand Shape	Expandir Forma
-	Expand applies to compound shapes (Alt-click a shape mode) — on the roadmap	Expandir se aplica a formas compostas (Alt-clique em um modo de forma) — no roadmap
+	Expand applies to compound shapes (Alt-click a shape mode)	Expandir se aplica a formas compostas (Alt-clique em um modo de forma)
+	Alt-click: make a live compound shape	Alt-clique: criar uma forma composta dinâmica
+	Keep the compound shape's result as an ordinary path	Manter o resultado da forma composta como um caminho comum
 	Expand:	Expandir:
 	Expand…	Expandir…
 	Export	Exportar
@@ -1275,6 +1277,7 @@
 	Make Clipping Mask	Criar Máscara de Recorte
 	Make Compound Path	Criar Caminho Composto
 	Make Compound Shape	Criar Forma Composta
+	Set Shape Mode	Definir modo de forma
 	Make Guides	Criar Guias
 	Make Mask	Criar Máscara
 	Make Opacity Mask	Criar Máscara de Opacidade

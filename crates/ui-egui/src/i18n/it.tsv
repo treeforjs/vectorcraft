@@ -1025,7 +1025,9 @@
 	Exit Isolation Mode	Esci dalla modalità isolamento
 	Expand	Espandi
 	Expand Appearance	Espandi aspetto
-	Expand applies to compound shapes (Alt-click a shape mode) — on the roadmap	Espandi si applica alle forme composte (Alt+clic su un metodo forma) — in programma
+	Expand applies to compound shapes (Alt-click a shape mode)	Espandi si applica alle forme composte (Alt+clic su un metodo forma)
+	Alt-click: make a live compound shape	Alt+clic: crea una forma composta dinamica
+	Keep the compound shape's result as an ordinary path	Mantieni il risultato della forma composta come un tracciato normale
 	Expand Brush Strokes	Espandi tracce pennello
 	Expand Compound Shape	Espandi forma composta
 	Expand Gradient Mesh	Espandi trama sfumatura
@@ -1566,6 +1568,8 @@
 	Make and Expand	Crea ed espandi
 	Make Clipping Mask	Crea maschera di ritaglio
 	Make Compound Shape	Crea forma composta
+	Set Shape Mode	Imposta metodo forma
+@msg	Compound Shape: these objects have too many anchor points	Forma composta: questi oggetti hanno troppi punti di ancoraggio
 	Make Envelope	Crea involucro
 	Make Guides	Crea guide
 	Make Mask	Crea maschera

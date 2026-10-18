@@ -1885,11 +1885,11 @@ title = "Compound shapes (Alt+shape modes, Expand)"
 area = "E"
 tier = "P1"
 milestone = "M6"
-status = "partial"
-commands = ["object.pathfinder.unite"]
+status = "shipped"
+commands = ["object.pathfinder.unite", "object.compoundShape.make", "object.compoundShape.setMode", "object.compoundShape.release", "object.compoundShape.expand"]
 tools = []
-evidence = ["crates/engine/src/tests_pathops.rs::unite_two_rects"]
-notes = "Shape modes apply destructively; live compound shapes (Alt+shape mode, Expand) pending"
+evidence = ["crates/engine/src/tests_pathops.rs::unite_two_rects", "crates/engine/src/tests_compound.rs::each_mode_combines_the_operands_and_keeps_them_editable", "crates/engine/src/tests_compound.rs::editing_an_operand_reshapes_the_result_and_modes_can_change", "crates/engine/src/tests_compound.rs::release_and_expand"]
+notes = "Shape mode buttons apply destructively; Alt-click makes a live compound shape whose operands stay editable (per-operand Add/Subtract/Intersect/Exclude, nesting), with Release and Expand in the panel and its menu"
 
 [[feature]]
 id = "path.pathfinder-options"

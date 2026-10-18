@@ -1025,7 +1025,9 @@
 	Exit Isolation Mode	Salir del modo de aislamiento
 	Expand	Expandir
 	Expand Appearance	Expandir apariencia
-	Expand applies to compound shapes (Alt-click a shape mode) — on the roadmap	Expandir se aplica a formas compuestas (Alt+clic en un modo de forma): en la hoja de ruta
+	Expand applies to compound shapes (Alt-click a shape mode)	Expandir se aplica a formas compuestas (Alt+clic en un modo de forma)
+	Alt-click: make a live compound shape	Alt+clic: crear una forma compuesta dinámica
+	Keep the compound shape's result as an ordinary path	Conservar el resultado de la forma compuesta como un trazado normal
 	Expand Brush Strokes	Expandir trazos de pincel
 	Expand Compound Shape	Expandir forma compuesta
 	Expand Gradient Mesh	Expandir malla de degradado
@@ -1566,6 +1568,8 @@
 	Make and Expand	Crear y expandir
 	Make Clipping Mask	Crear máscara de recorte
 	Make Compound Shape	Crear forma compuesta
+	Set Shape Mode	Definir modo de forma
+@msg	Compound Shape: these objects have too many anchor points	Forma compuesta: estos objetos tienen demasiados puntos de ancla
 	Make Envelope	Crear envolvente
 	Make Guides	Crear guías
 	Make Mask	Crear máscara
