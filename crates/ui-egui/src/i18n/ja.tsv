@@ -4133,3 +4133,8 @@ theme	Appearance	外観
 @msg	too many actions in this set	このセットのアクションが多すぎます
 @msg	too many steps in this action	このアクションのステップが多すぎます
 @msg	unknown command `{id}`	不明なコマンド `{id}`
+	Symbol Options…	シンボルオプション…
+	Symbol Options	シンボルオプション
+	Enable Guides for 9-Slice Scaling	9 分割の拡大・縮小のためのガイドを有効にする
+	Corners keep their size when instances are scaled; the edges and centre stretch.	インスタンスを拡大・縮小しても角のサイズは変わらず、辺と中央が伸縮します。
+@msg	no symbol `{name}`	シンボル `{name}` が見つかりません

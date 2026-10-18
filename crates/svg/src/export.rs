@@ -1346,7 +1346,10 @@ impl Writer<'_> {
                 }
                 let id = self.id_attr(n);
                 let a = self.attrs(&css::transparency(n));
-                if let Some(def) = self.symbol_use(sym, n, *xf) {
+                // A 9-slice instance draws art of its own size, so it can't share the symbol.
+                let shown = doc.symbol_art_for(n).unwrap_or_else(|| sym.art.clone());
+                let shared = Arc::ptr_eq(&shown, &sym.art);
+                if shared && let Some(def) = self.symbol_use(sym, n, *xf) {
                     let m = self.xf * *xf;
                     let tr = if m == Affine::IDENTITY { String::new() } else { format!(" transform=\"{}\"", self.matrix(m)) };
                     self.line(&format!("<use{id} xlink:href=\"#{def}\"{tr}{a}/>"));
@@ -1354,7 +1357,7 @@ impl Writer<'_> {
                 }
                 // An instance of its own: the (stained) art moved by the instance, its pattern
                 // paints and unlinked masks left in place as on the canvas.
-                let mut art = vectorcraft_brush::instance_art(&sym.art, n);
+                let mut art = vectorcraft_brush::instance_art(&shown, n);
                 let moved = self.instance_xf * *xf;
                 if moved.determinant().abs() > 1e-12 {
                     pin_to_page(&mut art, moved.inverse());

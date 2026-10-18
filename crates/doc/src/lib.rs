@@ -21,6 +21,7 @@ pub mod links;
 pub mod live;
 pub mod marks;
 pub mod metadata;
+pub mod nine_slice;
 pub mod node;
 pub mod orient;
 pub mod overprint;
@@ -508,6 +509,9 @@ impl GraphicStyle {
 pub struct Symbol {
     pub name: String,
     pub art: Arc<Node>,
+    /// 9-slice scaling guides (Symbol Options › Enable Guides for 9-Slice Scaling).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slice: Option<nine_slice::NineSlice>,
 }
 
 /// Encoded image bytes (PNG/JPEG/WebP…) shared by image objects.

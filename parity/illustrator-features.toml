@@ -4197,11 +4197,11 @@ title = "9-slice scaling for symbols"
 area = "J"
 tier = "P3"
 milestone = "M10"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["symbol.options", "ui.symbolOptions"]
 tools = []
-evidence = []
-notes = "9-slice scaling pending"
+evidence = ["crates/engine/src/tests_nineslice.rs::corners_keep_their_size_when_an_instance_is_stretched", "crates/engine/src/tests_nineslice.rs::rotated_instances_slice_along_their_own_axes"]
+notes = "Symbol Options turns 9-slice guides on and sets them numerically; instances keep their corners on the canvas and in every export and expand. Guides are not dragged on the canvas in symbol editing mode yet"
 
 [[feature]]
 id = "pattern.make"

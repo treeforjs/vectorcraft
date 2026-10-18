@@ -186,6 +186,9 @@ pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
             app.run(cmd, params).ok();
         }
     }
+    if menu_item(ui, tl!("Symbol Options…"), sel.is_some(), false) {
+        app.run("ui.symbolOptions", json!({"name": sel})).ok();
+    }
     ui.separator();
     let list: bool = pstate(ui.ctx(), "sym-list");
     if menu_item(ui, tl!("Thumbnail View"), true, !list) {

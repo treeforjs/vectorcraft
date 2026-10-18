@@ -304,11 +304,11 @@ impl<'a> Scene<'a> {
             }
             NodeKind::Text(t) => self.text(n, t),
             NodeKind::Image(im) => self.image(im),
-            NodeKind::SymbolInstance { symbol, xf } => {
-                if let Some(sym) = self.doc.symbols.iter().find(|s| &s.name == symbol)
+            NodeKind::SymbolInstance { xf, .. } => {
+                if let Some(sym) = self.doc.symbol_art_for(n)
                     && self.nest < MAX_NEST
                 {
-                    let mut art = (*sym.art).clone();
+                    let mut art = (*sym).clone();
                     art.transform(*xf, false);
                     self.nest += 1;
                     self.node(&art, true);

@@ -402,9 +402,7 @@ impl Renderer {
             return art.clone();
         }
         let symbol = match &a.kind {
-            NodeKind::SymbolInstance { symbol, .. } => {
-                doc.symbols.iter().find(|s| s.name == *symbol).map(|s| crate::brush_fx::instance_art(&s.art, a))
-            }
+            NodeKind::SymbolInstance { .. } => doc.symbol_art_for(a).map(|s| crate::brush_fx::instance_art(&s, a)),
             _ => None,
         };
         let container = is_container(a);

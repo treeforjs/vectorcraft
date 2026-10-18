@@ -80,6 +80,7 @@ pub mod spot_colors;
 pub(crate) mod svg_options;
 pub mod swatch_conflict;
 pub mod swatch_options;
+pub mod symbol_options;
 mod text_export;
 pub mod text_import;
 mod tiff_bmp_tga;
@@ -219,6 +220,7 @@ registry! {
     Workspaces: ["newWorkspace", "manageWorkspaces"] => DialogSpec::window(crate::workspaces::show, |app, _| crate::workspaces::confirm(app)),
     FindFont: ["findFont"] => DialogSpec::window(crate::find_font::show, |app, _| crate::find_font::confirm(app)),
     SwatchOptions: [swatch_options::KIND] => swatch_options::SPEC,
+    SymbolOptions: [symbol_options::KIND] => symbol_options::SPEC,
     Confirm: [confirm::KIND] => confirm::SPEC,
     Message: [confirm::MESSAGE] => confirm::MESSAGE_SPEC,
     NewSwatch: [new_swatch::KIND] => new_swatch::SPEC,

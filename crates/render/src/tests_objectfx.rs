@@ -70,7 +70,7 @@ fn symbol_doc(effects: Vec<Effect>) -> Document {
         shapes::rectangle(Rect::new(-10.0, -10.0, 10.0, 10.0)),
         Appearance::basic(Paint::solid(Color::BLACK), Paint::None, 0.0),
     );
-    d.symbols.push(Symbol { name: "Square".into(), art: Arc::new(art) });
+    d.symbols.push(Symbol { name: "Square".into(), art: Arc::new(art), slice: None });
     let mut n = Node::new(NodeId(0), NodeKind::SymbolInstance { symbol: "Square".into(), xf: Affine::translate((50.0, 50.0)) });
     n.appearance.effects = effects;
     doc_with(d, n)

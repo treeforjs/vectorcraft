@@ -580,7 +580,7 @@ impl<'d, 'a> Build<'d, 'a> {
         let made = art.map(|art| {
             let label = self.d.blocks.get(name).map_or(name, |b| b.name.as_str());
             let symbol = unique(label, |n| self.doc.symbols.iter().any(|s| s.name == n));
-            self.doc.symbols.push(Symbol { name: symbol.clone(), art: Arc::new(art) });
+            self.doc.symbols.push(Symbol { name: symbol.clone(), art: Arc::new(art), slice: None });
             symbol
         });
         self.symbols.insert(key, made.clone());

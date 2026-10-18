@@ -3558,3 +3558,8 @@ axis	Both	兩者
 @msg	too many actions in this set	此動作集中的動作過多
 @msg	too many steps in this action	此動作的步驟過多
 @msg	unknown command `{id}`	未知指令 `{id}`
+	Symbol Options…	符號選項…
+	Symbol Options	符號選項
+	Enable Guides for 9-Slice Scaling	啟用 9 格切片縮放的參考線
+	Corners keep their size when instances are scaled; the edges and centre stretch.	縮放實例時角保持大小，邊緣和中心會拉伸。
+@msg	no symbol `{name}`	沒有符號 `{name}`

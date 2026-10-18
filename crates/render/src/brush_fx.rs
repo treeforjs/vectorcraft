@@ -174,7 +174,7 @@ mod tests {
             shapes::rectangle(Rect::new(-10.0, -10.0, 10.0, 10.0)),
             Appearance::basic(Paint::solid(Color::BLACK), Paint::None, 0.0),
         );
-        d.symbols.push(vectorcraft_doc::Symbol { name: "S".into(), art: std::sync::Arc::new(art) });
+        d.symbols.push(vectorcraft_doc::Symbol { name: "S".into(), art: std::sync::Arc::new(art), slice: None });
         let id = d.alloc_id();
         let mut inst = Node::new(id, vectorcraft_doc::NodeKind::SymbolInstance { symbol: "S".into(), xf: Affine::translate((50.0, 50.0)) });
         inst.appearance.set_fill(Paint::solid(Color::rgb(1.0, 0.0, 0.0)));

@@ -475,7 +475,7 @@ fn expand_node(d: &mut Document, id: NodeId, brushes: &[vectorcraft_brush::Brush
             } else {
                 // Type, images, symbol instances, live objects: through their outlines.
                 let symbol = match &n.kind {
-                    NodeKind::SymbolInstance { symbol, .. } => d.symbols.iter().find(|s| s.name == *symbol).map(|s| s.art.clone()),
+                    NodeKind::SymbolInstance { .. } => d.symbol_art_for(&n),
                     _ => None,
                 };
                 effects::expand_outlined(&v, symbol.as_deref()).map(|mut m| {

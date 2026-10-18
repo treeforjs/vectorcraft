@@ -60,6 +60,9 @@ fn resources_key(doc: &Document, n: &Node) -> u64 {
             && let Some(s) = doc.symbols.iter().find(|s| s.name == *symbol)
         {
             (Arc::as_ptr(&s.art) as usize).hash(&mut h);
+            if let Some(g) = &s.slice {
+                [g.left, g.top, g.right, g.bottom].map(f64::to_bits).hash(&mut h);
+            }
         }
         for i in &c.appearance.items {
             if let vectorcraft_color::Paint::Pattern { pattern, .. } = i.paint()

@@ -95,7 +95,7 @@ fn bake_node(d: &mut Document, n: &Node) -> Option<Node> {
     // Type, images, symbol instances and live objects: reshaped through their outlines.
     if needs_outline(n) && (has_geometry(&n.appearance.effects) || n.projection().is_some()) {
         let symbol = match &n.kind {
-            NodeKind::SymbolInstance { symbol, .. } => d.symbols.iter().find(|s| s.name == *symbol).map(|s| s.art.clone()),
+            NodeKind::SymbolInstance { .. } => d.symbol_art_for(n),
             _ => None,
         };
         let m = reshape(n, symbol.as_deref())?;
