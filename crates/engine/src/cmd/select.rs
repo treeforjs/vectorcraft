@@ -239,15 +239,18 @@ fn inverse(s: &mut Session, _: &Value) -> Result<Value> {
     ok()
 }
 
+/// Next Object Above (`dir` 1) / Below (-1): the nearest sibling above or below the selected
+/// object (the topmost of several for Above, the bottommost for Below) that is shown and
+/// unlocked. At the top or bottom of the stack the selection stays.
 fn step(s: &mut Session, dir: i64) -> Result<Value> {
     let st = s.doc()?;
-    let Some(cur) = st.selection.objects.first().copied() else { return ok() };
-    let Some((par, idx, n)) = st.doc.position(cur) else { return ok() };
-    let j = idx as i64 + dir;
-    if j < 0 || j >= n as i64 {
-        return ok();
-    }
-    let Some(id) = st.doc.children(par).and_then(|c| c.get(j as usize)).map(|n| n.id) else { return ok() };
+    let positions: Vec<_> = st.selection.objects.iter().filter_map(|id| st.doc.position(*id)).collect();
+    let pick = if dir > 0 { positions.iter().max_by_key(|p| p.1) } else { positions.iter().min_by_key(|p| p.1) };
+    let Some(&(par, idx, _)) = pick else { return ok() };
+    let Some(siblings) = st.doc.children(par) else { return ok() };
+    let selectable = |n: &&std::sync::Arc<Node>| n.visible && !n.locked;
+    let found = if dir > 0 { siblings.iter().skip(idx.saturating_add(1)).find(selectable) } else { siblings.iter().take(idx).rev().find(selectable) };
+    let Some(id) = found.map(|n| n.id) else { return ok() };
     s.select(|_, sel| sel.set([id]))?;
     ok()
 }
