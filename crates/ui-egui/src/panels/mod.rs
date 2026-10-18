@@ -152,6 +152,7 @@ pub fn panel_menu_items(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) -> bool
         "pathfinder" => pathfinder::menu(app, ui),
         "transform" => transform::menu(app, ui),
         "history" => history::menu(app, ui),
+        "actions" => actions::menu(app, ui),
         "info" => info::menu(app, ui),
         "separations" => separations::menu(app, ui),
         "artboards" => artboards::menu(app, ui),

@@ -4086,3 +4086,41 @@ axis	Both	Обидві
 	Overlap	Накладання
 	Variable Font	Варіативний шрифт
 	Return the axes to the font style's own settings	Повернути осям значення накреслення
+	Delete Action	Видалити операцію
+	Duplicate Action	Дублювати операцію
+	Insert Menu Item	Вставити пункт меню
+	Insert Menu Item…	Вставити пункт меню…
+	Insert Stop	Вставити зупинку
+	Insert Stop…	Вставити зупинку…
+	List Actions	Список операцій
+	New Action	Нова операція
+	New Action…	Нова операція…
+	New Set	Новий набір
+	New Set…	Новий набір…
+	Play Action	Виконати операцію
+	Rename Action	Перейменувати операцію
+	Reset Actions	Скинути операції
+	Start Recording	Почати запис
+	Toggle Item On/Off	Увімкнути/вимкнути елемент
+	Create New Action	Створити нову операцію
+	Menu Item:	Пункт меню:
+	Paused: Play continues	Пауза: «Виконати» продовжить
+	Play	Виконати
+	Record Stop	Записати зупинку
+	Set {n}	Набір {n}
+	Stop: {message}	Зупинка: {message}
+	Type a menu command's name, e.g. Select All	Введіть назву команди меню, наприклад «Виділити все»
+	{name} copy	{name} копія
+@msg	already recording	запис уже триває
+@msg	missing action	не вказано операцію
+@msg	missing command	не вказано команду
+@msg	missing enabled	не вказано enabled
+@msg	missing step	не вказано крок
+@msg	missing to	не вказано to
+@msg	no menu command `{command}`	немає команди меню `{command}`
+@msg	no such set	немає такого набору
+@msg	no such step	немає такого кроку
+@msg	too many action sets	забагато наборів операцій
+@msg	too many actions in this set	забагато операцій у наборі
+@msg	too many steps in this action	забагато кроків в операції
+@msg	unknown command `{id}`	невідома команда `{id}`

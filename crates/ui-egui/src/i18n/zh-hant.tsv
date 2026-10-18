@@ -3520,3 +3520,41 @@ axis	Both	兩者
 	Overlap	重疊
 	Variable Font	可變字體
 	Return the axes to the font style's own settings	將軸恢復為字體樣式本身的設定
+	Delete Action	刪除動作
+	Duplicate Action	複製動作
+	Insert Menu Item	插入選單項目
+	Insert Menu Item…	插入選單項目…
+	Insert Stop	插入停止
+	Insert Stop…	插入停止…
+	List Actions	列出動作
+	New Action	新增動作
+	New Action…	新增動作…
+	New Set	新增動作集
+	New Set…	新增動作集…
+	Play Action	播放動作
+	Rename Action	重新命名動作
+	Reset Actions	重設動作
+	Start Recording	開始記錄
+	Toggle Item On/Off	切換項目開/關
+	Create New Action	建立新動作
+	Menu Item:	選單項目：
+	Paused: Play continues	已暫停：播放可繼續
+	Play	播放
+	Record Stop	記錄停止
+	Set {n}	動作集 {n}
+	Stop: {message}	停止：{message}
+	Type a menu command's name, e.g. Select All	輸入選單指令名稱，例如「全選」
+	{name} copy	{name} 拷貝
+@msg	already recording	已在記錄
+@msg	missing action	未指定動作
+@msg	missing command	未指定指令
+@msg	missing enabled	未指定 enabled
+@msg	missing step	未指定步驟
+@msg	missing to	未指定 to
+@msg	no menu command `{command}`	沒有選單指令 `{command}`
+@msg	no such set	沒有此動作集
+@msg	no such step	沒有此步驟
+@msg	too many action sets	動作集過多
+@msg	too many actions in this set	此動作集中的動作過多
+@msg	too many steps in this action	此動作的步驟過多
+@msg	unknown command `{id}`	未知指令 `{id}`

@@ -297,9 +297,12 @@ pub struct UiState {
     /// Recorded actions (Actions panel), persisted with the UI preferences.
     #[serde(default = "crate::panels::actions::default_sets")]
     pub action_sets: Vec<crate::panels::actions::ActionSet>,
-    /// Recording in progress: (set index, action name, journal length when recording started).
+    /// Recording in progress (Actions panel).
     #[serde(skip)]
-    pub recording: Option<(usize, String, usize)>,
+    pub recording: Option<crate::panels::actions::Recording>,
+    /// Action playback paused by a stop or a dialog: Play continues there.
+    #[serde(skip)]
+    pub action_resume: Option<crate::panels::actions::Resume>,
     /// Keyboard shortcut overrides: command id or `tool:<id>` → chord ("" = none).
     #[serde(default)]
     pub shortcut_overrides: std::collections::BTreeMap<String, String>,
@@ -516,6 +519,7 @@ impl Default for UiState {
             about: false,
             action_sets: crate::panels::actions::default_sets(),
             recording: None,
+            action_resume: None,
             shortcut_overrides: Default::default(),
             shortcut_set: default_shortcut_set(),
             workspace: default_workspace(),

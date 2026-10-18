@@ -4103,3 +4103,41 @@ axis	Both	Ambos
 	Overlap	Superpuesta
 	Variable Font	Fuente variable
 	Return the axes to the font style's own settings	Devolver los ejes a los valores propios del estilo de fuente
+	Delete Action	Eliminar acción
+	Duplicate Action	Duplicar acción
+	Insert Menu Item	Insertar elemento de menú
+	Insert Menu Item…	Insertar elemento de menú…
+	Insert Stop	Insertar parada
+	Insert Stop…	Insertar parada…
+	List Actions	Listar acciones
+	New Action	Nueva acción
+	New Action…	Nueva acción…
+	New Set	Nuevo conjunto
+	New Set…	Nuevo conjunto…
+	Play Action	Reproducir acción
+	Rename Action	Cambiar nombre de acción
+	Reset Actions	Restaurar acciones
+	Start Recording	Iniciar grabación
+	Toggle Item On/Off	Activar/desactivar elemento
+	Create New Action	Crear nueva acción
+	Menu Item:	Elemento de menú:
+	Paused: Play continues	En pausa: Reproducir continúa
+	Play	Reproducir
+	Record Stop	Grabar parada
+	Set {n}	Conjunto {n}
+	Stop: {message}	Parada: {message}
+	Type a menu command's name, e.g. Select All	Escribe el nombre de un comando de menú, p. ej., Seleccionar todo
+	{name} copy	{name} copia
+@msg	already recording	ya se está grabando
+@msg	missing action	falta la acción
+@msg	missing command	falta el comando
+@msg	missing enabled	falta enabled
+@msg	missing step	falta el paso
+@msg	missing to	falta to
+@msg	no menu command `{command}`	no hay ningún comando de menú `{command}`
+@msg	no such set	no existe ese conjunto
+@msg	no such step	no existe ese paso
+@msg	too many action sets	demasiados conjuntos de acciones
+@msg	too many actions in this set	demasiadas acciones en este conjunto
+@msg	too many steps in this action	demasiados pasos en esta acción
+@msg	unknown command `{id}`	comando desconocido `{id}`

@@ -4095,3 +4095,41 @@ theme	Appearance	外観
 	Overlap	重ね
 	Variable Font	バリアブルフォント
 	Return the axes to the font style's own settings	軸をフォントスタイル本来の設定に戻す
+	Delete Action	アクションを削除
+	Duplicate Action	アクションを複製
+	Insert Menu Item	メニュー項目を挿入
+	Insert Menu Item…	メニュー項目を挿入…
+	Insert Stop	中止を挿入
+	Insert Stop…	中止を挿入…
+	List Actions	アクションを一覧表示
+	New Action	新規アクション
+	New Action…	新規アクション…
+	New Set	新規セット
+	New Set…	新規セット…
+	Play Action	アクションを再生
+	Rename Action	アクション名を変更
+	Reset Actions	アクションを初期化
+	Start Recording	記録開始
+	Toggle Item On/Off	項目のオン/オフを切り替え
+	Create New Action	新規アクションを作成
+	Menu Item:	メニュー項目:
+	Paused: Play continues	一時停止中: 再生で続行
+	Play	再生
+	Record Stop	中止を記録
+	Set {n}	セット {n}
+	Stop: {message}	中止: {message}
+	Type a menu command's name, e.g. Select All	メニューコマンド名を入力 (例: すべてを選択)
+	{name} copy	{name} のコピー
+@msg	already recording	すでに記録中です
+@msg	missing action	アクションがありません
+@msg	missing command	コマンドがありません
+@msg	missing enabled	enabled がありません
+@msg	missing step	ステップがありません
+@msg	missing to	to がありません
+@msg	no menu command `{command}`	メニューコマンド `{command}` はありません
+@msg	no such set	そのセットはありません
+@msg	no such step	そのステップはありません
+@msg	too many action sets	アクションセットが多すぎます
+@msg	too many actions in this set	このセットのアクションが多すぎます
+@msg	too many steps in this action	このアクションのステップが多すぎます
+@msg	unknown command `{id}`	不明なコマンド `{id}`

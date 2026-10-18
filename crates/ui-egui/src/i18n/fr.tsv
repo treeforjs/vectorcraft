@@ -4114,3 +4114,41 @@ axis	Both	Les deux
 	Overlap	Superposé
 	Variable Font	Police variable
 	Return the axes to the font style's own settings	Rétablir les axes du style de police
+	Delete Action	Supprimer l’action
+	Duplicate Action	Dupliquer l’action
+	Insert Menu Item	Insérer un élément de menu
+	Insert Menu Item…	Insérer un élément de menu…
+	Insert Stop	Insérer un arrêt
+	Insert Stop…	Insérer un arrêt…
+	List Actions	Lister les actions
+	New Action	Nouvelle action
+	New Action…	Nouvelle action…
+	New Set	Nouveau jeu
+	New Set…	Nouveau jeu…
+	Play Action	Exécuter l’action
+	Rename Action	Renommer l’action
+	Reset Actions	Réinitialiser les actions
+	Start Recording	Démarrer l’enregistrement
+	Toggle Item On/Off	Activer/désactiver l’élément
+	Create New Action	Créer une action
+	Menu Item:	Élément de menu :
+	Paused: Play continues	En pause : Exécuter reprend
+	Play	Exécuter
+	Record Stop	Enregistrer un arrêt
+	Set {n}	Jeu {n}
+	Stop: {message}	Arrêt : {message}
+	Type a menu command's name, e.g. Select All	Saisissez le nom d’une commande de menu, par ex. Tout sélectionner
+	{name} copy	{name} copie
+@msg	already recording	enregistrement déjà en cours
+@msg	missing action	action manquante
+@msg	missing command	commande manquante
+@msg	missing enabled	enabled manquant
+@msg	missing step	étape manquante
+@msg	missing to	to manquant
+@msg	no menu command `{command}`	aucune commande de menu `{command}`
+@msg	no such set	jeu introuvable
+@msg	no such step	étape introuvable
+@msg	too many action sets	trop de jeux d’actions
+@msg	too many actions in this set	trop d’actions dans ce jeu
+@msg	too many steps in this action	trop d’étapes dans cette action
+@msg	unknown command `{id}`	commande inconnue `{id}`
