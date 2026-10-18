@@ -722,7 +722,7 @@ fn isolate(s: &mut Session, p: &Value) -> Result<Value> {
     if st.doc.node(id).is_none_or(|n| !n.is_container()) {
         return Err(bad("object.isolate", "only groups and layers can be isolated"));
     }
-    let isolation = st.doc.node(id).filter(|n| n.shaper.is_some()).and_then(|n| n.children()).and_then(|c| c.first()).map_or(id, |n| n.id);
+    let isolation = st.doc.node(id).filter(|n| n.retains_sources()).and_then(|n| n.children()).and_then(|c| c.first()).map_or(id, |n| n.id);
     st.isolation = Some(isolation);
     st.selection.clear();
     st.revision += 1;
@@ -733,7 +733,7 @@ fn exit_isolation(s: &mut Session, _: &Value) -> Result<Value> {
     let st = s.doc_mut()?;
     if let Some(i) = st.isolation.take() {
         super::distortcmds::finish_edit_text(st, i);
-        let target = st.doc.parent_of(i).filter(|p| st.doc.node(*p).is_some_and(|n| n.shaper.is_some())).unwrap_or(i);
+        let target = st.doc.parent_of(i).filter(|p| st.doc.node(*p).is_some_and(|n| n.retains_sources())).unwrap_or(i);
         st.selection.set([target]);
     }
     st.revision += 1;

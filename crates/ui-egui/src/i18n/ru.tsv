@@ -1023,7 +1023,9 @@
 	Exit Isolation Mode	Выйти из режима изоляции
 	Expand	Разобрать
 	Expand Appearance	Разобрать оформление
-	Expand applies to compound shapes (Alt-click a shape mode) — on the roadmap	«Разобрать» применяется к составным фигурам (Alt+щелчок по режиму фигуры) — в плане развития
+	Expand applies to compound shapes (Alt-click a shape mode)	«Разобрать» применяется к составным фигурам (Alt+щелчок по режиму фигуры)
+	Alt-click: make a live compound shape	Alt+щелчок: создать динамическую составную фигуру
+	Keep the compound shape's result as an ordinary path	Оставить результат составной фигуры обычным контуром
 	Expand Brush Strokes	Разобрать мазки кисти
 	Expand Compound Shape	Разобрать составную фигуру
 	Expand Gradient Mesh	Разобрать градиентную сетку
@@ -1564,6 +1566,8 @@
 	Make and Expand	Создать и разобрать
 	Make Clipping Mask	Создать маску обрезки
 	Make Compound Shape	Создать составную фигуру
+	Set Shape Mode	Задать режим фигуры
+@msg	Compound Shape: these objects have too many anchor points	Составная фигура: у этих объектов слишком много опорных точек
 	Make Envelope	Создать оболочку
 	Make Guides	Создать направляющие
 	Make Mask	Создать маску

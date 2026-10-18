@@ -9,6 +9,7 @@ pub mod clipboard;
 mod colorcmds;
 pub mod colormgmt;
 pub mod colortheme;
+pub(crate) mod compound;
 mod create;
 mod css;
 mod cut;
@@ -239,6 +240,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(panelcmds::specs());
         v.extend(buildcmds::specs());
         v.extend(shaper::specs());
+        v.extend(compound::specs());
         v.extend(brushsym::specs());
         v.extend(patterncmds::specs());
         v.extend(prefscmds::specs());

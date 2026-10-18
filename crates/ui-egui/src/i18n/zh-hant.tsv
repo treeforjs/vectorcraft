@@ -1025,7 +1025,9 @@
 	Exit Isolation Mode	結束隔離模式
 	Expand	展開
 	Expand Appearance	展開外觀
-	Expand applies to compound shapes (Alt-click a shape mode) — on the roadmap	展開適用於複合形狀 (按住 Alt 按一下形狀模式)，已列入開發計畫
+	Expand applies to compound shapes (Alt-click a shape mode)	展開適用於複合形狀 (按住 Alt 按一下形狀模式)
+	Alt-click: make a live compound shape	Alt+按一下：建立即時複合形狀
+	Keep the compound shape's result as an ordinary path	將複合形狀的結果保留為一般路徑
 	Expand Brush Strokes	展開筆刷筆畫
 	Expand Compound Shape	展開複合形狀
 	Expand Gradient Mesh	展開漸層網格
@@ -1567,6 +1569,8 @@
 	Make and Expand	製作並展開
 	Make Clipping Mask	製作剪裁遮色片
 	Make Compound Shape	製作複合形狀
+	Set Shape Mode	設定形狀模式
+@msg	Compound Shape: these objects have too many anchor points	複合形狀：這些物件的錨點過多
 	Make Envelope	製作封套
 	Make Guides	製作參考線
 	Make Mask	製作遮色片

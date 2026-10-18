@@ -1025,7 +1025,9 @@
 	Exit Isolation Mode	Quitter le mode Isolation
 	Expand	Décomposer
 	Expand Appearance	Décomposer l’aspect
-	Expand applies to compound shapes (Alt-click a shape mode) — on the roadmap	Décomposer s’applique aux formes composées (Alt+clic sur un mode de forme) — prévu dans la feuille de route
+	Expand applies to compound shapes (Alt-click a shape mode)	Décomposer s’applique aux formes composées (Alt+clic sur un mode de forme)
+	Alt-click: make a live compound shape	Alt+clic : créer une forme composée dynamique
+	Keep the compound shape's result as an ordinary path	Conserver le résultat de la forme composée comme un tracé ordinaire
 	Expand Brush Strokes	Décomposer les contours de forme
 	Expand Compound Shape	Décomposer la forme composée
 	Expand Gradient Mesh	Décomposer le filet de dégradé
@@ -1565,6 +1567,8 @@
 	Make and Expand	Créer et décomposer
 	Make Clipping Mask	Créer un masque d’écrêtage
 	Make Compound Shape	Créer une forme transparente
+	Set Shape Mode	Définir le mode de forme
+@msg	Compound Shape: these objects have too many anchor points	Forme composée : ces objets ont trop de points d’ancrage
 	Make Envelope	Créer une enveloppe
 	Make Guides	Créer des repères
 	Make Mask	Créer un masque

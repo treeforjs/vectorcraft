@@ -1005,7 +1005,9 @@
 	Exit Isolation Mode	退出隔离模式
 	Expand	扩展
 	Expand Appearance	扩展外观
-	Expand applies to compound shapes (Alt-click a shape mode) — on the roadmap	扩展仅适用于复合形状 (Alt+单击形状模式)——已在路线图中
+	Expand applies to compound shapes (Alt-click a shape mode)	扩展仅适用于复合形状 (Alt+单击形状模式)
+	Alt-click: make a live compound shape	Alt+单击：创建实时复合形状
+	Keep the compound shape's result as an ordinary path	将复合形状的结果保留为普通路径
 	Expand Brush Strokes	扩展画笔描边
 	Expand Compound Shape	扩展复合形状
 	Expand Gradient Mesh	扩展渐变网格
@@ -1531,6 +1533,8 @@
 	Make and Expand	创建并扩展
 	Make Clipping Mask	制作剪切蒙版
 	Make Compound Shape	创建复合形状
+	Set Shape Mode	设置形状模式
+@msg	Compound Shape: these objects have too many anchor points	复合形状：这些对象的锚点过多
 	Make Envelope	制作封套
 	Make Guides	创建参考线
 	Make Mask	创建蒙版

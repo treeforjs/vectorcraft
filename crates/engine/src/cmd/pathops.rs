@@ -250,7 +250,8 @@ fn leaves(n: &Node, out: &mut Vec<Node>) {
         NodeKind::Path { guide: true, .. } | NodeKind::Path { clipping: true, .. } => {}
         NodeKind::Path { .. } | NodeKind::Compound { .. } | NodeKind::Text(_) => out.push(n.clone()),
         NodeKind::Group { children, .. } | NodeKind::Layer { children, .. } => {
-            for c in children {
+            // Shaper groups and compound shapes stand for what they draw, not their sources.
+            for c in children.iter().skip(usize::from(n.retains_sources())) {
                 leaves(c, out);
             }
         }

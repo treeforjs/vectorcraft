@@ -1193,7 +1193,9 @@ impl Session {
         let before_sel = st.selection.clone();
         let doc = Arc::make_mut(&mut st.doc);
         let result = match f(doc, &mut st.selection) {
-            Ok(v) => match cmd::shaper::refresh(&before, Arc::make_mut(&mut st.doc)) {
+            Ok(v) => match cmd::shaper::refresh(&before, Arc::make_mut(&mut st.doc))
+                .and_then(|()| cmd::compound::refresh(&before, Arc::make_mut(&mut st.doc)))
+            {
                 Err(e) => Err(e),
                 Ok(()) => {
                     // Inline graphics in text follow their symbols.
@@ -1430,6 +1432,8 @@ mod tests_colorguidelib;
 mod tests_colormgmt;
 #[cfg(test)]
 mod tests_colorthemes;
+#[cfg(test)]
+mod tests_compound;
 #[cfg(test)]
 mod tests_containers;
 #[cfg(test)]
