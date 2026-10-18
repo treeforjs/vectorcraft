@@ -2917,11 +2917,11 @@ title = "Effect › Blur › Smart Blur"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "partial"
+status = "shipped"
 commands = ["effect.apply"]
 tools = []
-evidence = ["crates/ui-egui/src/dialogs/tests.rs::raster_filter_dialogs_preview_and_apply", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance"]
-notes = "Normal mode only; Edge Only and Overlay Edge pending"
+evidence = ["crates/ui-egui/src/dialogs/tests.rs::raster_filter_dialogs_preview_and_apply", "crates/ui-egui/src/canvas.rs::dropping_the_appearance_thumbnail_on_art_copies_the_appearance", "crates/effects/src/pixel/tests.rs::smart_blur_edge_modes_draw_the_steps_in_white"]
+notes = "Normal, Edge Only and Overlay Edge modes, with radius, threshold and quality"
 
 [[feature]]
 id = "fx.ps-sharpen-unsharp-mask"

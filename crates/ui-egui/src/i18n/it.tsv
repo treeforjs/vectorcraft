@@ -4156,3 +4156,5 @@ axis	Both	Entrambi
 @msg	precision must be between {_1} and {_2} pt	la precisione deve essere compresa tra {_1} e {_2} pt
 @msg	{k} must be true or false	{k} deve essere true o false
 @msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: tutte le facce sono senza colore (vedi Opzioni elaborazione tracciati)
+	Edge Only	Solo bordi
+	Overlay Edge	Sovrapponi bordi

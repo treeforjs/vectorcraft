@@ -310,8 +310,8 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             "blur.smart",
             "Smart Blur…",
             BLUR,
-            "{radius: pt 0.1..100 (3), threshold: levels 0.1..100 (25; only colours closer than this blur together, so edges stay sharp), quality: \"low\"|\"medium\"|\"high\" (\"medium\"; 5, 7 or 9 samples across)} (Normal mode)",
-            json!({"radius": 3.0, "threshold": 25.0, "quality": "medium"}),
+            "{radius: pt 0.1..100 (3), threshold: levels 0.1..100 (25; only colours closer than this blur together, so edges stay sharp), quality: \"low\"|\"medium\"|\"high\" (\"medium\"; 5, 7 or 9 samples across), mode: \"normal\"|\"edgeOnly\"|\"overlayEdge\" (\"normal\"; the edge modes draw the steps past the threshold in white, on black or over the blurred image)}",
+            json!({"radius": 3.0, "threshold": 25.0, "quality": "medium", "mode": "normal"}),
         ),
         r(
             "sharpen.unsharpMask",

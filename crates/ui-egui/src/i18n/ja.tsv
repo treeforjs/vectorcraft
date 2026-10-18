@@ -4148,3 +4148,5 @@ theme	Appearance	外観
 @msg	precision must be between {_1} and {_2} pt	精度は {_1}〜{_2} pt の範囲で指定してください
 @msg	{k} must be true or false	{k} は true または false で指定してください
 @msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: すべての面に塗りがありません (パスファインダーオプションを参照)
+	Edge Only	エッジのみ
+	Overlay Edge	エッジを重ねる
