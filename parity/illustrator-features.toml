@@ -1097,11 +1097,11 @@ title = "Next Object Above / Below"
 area = "C"
 tier = "P1"
 milestone = "M1"
-status = "partial"
+status = "shipped"
 commands = ["select.nextAbove", "select.nextBelow"]
 tools = []
-evidence = []
-notes = "no test cited yet"
+evidence = ["crates/engine/src/tests_nextobject.rs::next_object_above_and_below_step_through_the_stack", "crates/engine/src/tests_nextobject.rs::next_object_skips_hidden_and_locked_objects_and_starts_from_the_selections_edge"]
+notes = "Steps to the nearest shown, unlocked sibling above the topmost or below the bottommost selected object; stays at the ends"
 
 [[feature]]
 id = "select.same"

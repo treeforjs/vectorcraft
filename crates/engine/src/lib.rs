@@ -1523,6 +1523,8 @@ mod tests_newart;
 #[cfg(test)]
 mod tests_newdoc;
 #[cfg(test)]
+mod tests_nextobject;
+#[cfg(test)]
 mod tests_objexpand;
 #[cfg(test)]
 mod tests_opacitymask;
