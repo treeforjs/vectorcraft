@@ -4829,11 +4829,11 @@ title = "Undo/redo with history panel"
 area = "O"
 tier = "P0"
 milestone = "M14"
-status = "partial"
-commands = ["edit.undo", "edit.redo"]
+status = "shipped"
+commands = ["edit.undo", "edit.redo", "edit.history", "edit.goToState", "edit.clearHistory"]
 tools = []
-evidence = ["crates/ui-egui/src/tests_font_menu.rs::preview_changes_the_text_live_and_only_a_choice_is_a_step", "crates/ui-egui/src/touch.rs::two_and_three_finger_taps"]
-notes = "Unlimited undo/redo; a History panel is beyond the reference app and not built"
+evidence = ["crates/ui-egui/src/tests_font_menu.rs::preview_changes_the_text_live_and_only_a_choice_is_a_step", "crates/ui-egui/src/touch.rs::two_and_three_finger_taps", "crates/engine/src/tests_historystate.rs::history_lists_states_and_go_to_state_jumps_both_ways", "crates/engine/src/tests_historystate.rs::clear_history_keeps_the_document"]
+notes = "Unlimited undo/redo; the History panel lists every state (later ones dimmed as redo steps), jumps to one in a single step and clears the history from its menu (beyond the reference app)"
 
 [[feature]]
 id = "ui.home-screen"
