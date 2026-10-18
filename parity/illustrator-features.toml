@@ -3761,11 +3761,11 @@ title = "Check Spelling and Edit Custom Dictionary"
 area = "I"
 tier = "P1"
 milestone = "M7"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["type.checkSpelling", "type.spelling.change", "type.spelling.changeAll", "type.spelling.dictionary", "type.spelling.options", "ui.checkSpelling", "ui.customDictionary"]
 tools = []
-evidence = []
-notes = "Check Spelling needs an openly licensed dictionary; pending"
+evidence = ["crates/text/src/spell.rs::misspellings_repeats_and_lowercase_starts_are_found", "crates/text/src/spell.rs::suggestions_are_close_and_keep_the_case", "crates/engine/src/tests_spelling.rs::check_spelling_finds_words_and_changes_them", "crates/engine/src/tests_spelling.rs::change_all_replaces_whole_words_everywhere", "crates/ui-egui/src/dialogs/tests.rs::check_spelling_steps_through_the_problems"]
+notes = "US English (public-domain Moby word list plus inflections); finds misspelled and repeated words and lowercase sentence starts, with Ignore/Ignore All/Change/Change All/Add and Find/Ignore options; custom dictionary kept with the preferences. Auto Spell Check (underlines while typing) not yet"
 
 [[feature]]
 id = "type.change-case"

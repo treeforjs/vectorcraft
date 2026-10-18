@@ -4158,3 +4158,28 @@ axis	Both	Ambos
 @msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: todas las caras están sin pintar (consulte Opciones de buscatrazos)
 	Edge Only	Solo bordes
 	Overlay Edge	Superponer bordes
+# Check Spelling and Edit Custom Dictionary
+	Change to:	Cambiar a:
+	Check Spelling	Revisar ortografía
+	Edit Custom Dictionary	Editar diccionario personalizado
+	Find:	Buscar:
+	Ignore All	Omitir todo
+	Ignore:	Omitir:
+	No spelling problems found.	No se han encontrado problemas de ortografía.
+	No suggestions	Sin sugerencias
+	No words yet	Aún no hay palabras
+	Not Found in Dictionary:	No está en el diccionario:
+	Repeated Word:	Palabra repetida:
+	Uncapitalized Start of Sentence:	Inicio de frase en minúscula:
+	Word:	Palabra:
+	Check Spelling Options	Opciones de Revisar ortografía
+	Repeated Words	Palabras repetidas
+	Uncapitalized Start of Sentence	Inicio de frase en minúscula
+	Words That Are All Uppercase	Palabras en mayúsculas
+	Roman Numerals	Números romanos
+	Words with Numbers	Palabras con números
+@msg	nothing left to check	no queda nada por revisar
+@msg	unknown action	acción desconocida
+@msg	word list: bad header	lista de palabras: encabezado incorrecto
+@msg	word list: bad prefix	lista de palabras: prefijo incorrecto
+@msg	word list: truncated	lista de palabras: truncada

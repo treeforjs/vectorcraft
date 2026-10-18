@@ -15,6 +15,8 @@ kurbo = { workspace = true }
 skrifa = { workspace = true }
 harfrust = { workspace = true }
 log = { workspace = true }
+flate2 = { workspace = true }
+serde = { workspace = true }
 # Font subsets for embedding (SVG @font-face); MIT OR Apache-2.0, already used by the PDF writer
 # (which turns on `variable-fonts` too: named instances of variable fonts are instanced).
 subsetter = { version = "0.2", default-features = false, features = ["variable-fonts"] }

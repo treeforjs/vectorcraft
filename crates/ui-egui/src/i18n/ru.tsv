@@ -4156,3 +4156,28 @@ axis	Both	Оба
 @msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: все области не окрашены (см. «Параметры обработки контуров»)
 	Edge Only	Только края
 	Overlay Edge	Наложение краёв
+# Check Spelling and Edit Custom Dictionary
+	Change to:	Заменить на:
+	Check Spelling	Проверка орфографии
+	Edit Custom Dictionary	Изменить пользовательский словарь
+	Find:	Найти:
+	Ignore All	Пропустить все
+	Ignore:	Пропускать:
+	No spelling problems found.	Орфографических ошибок не найдено.
+	No suggestions	Нет вариантов
+	No words yet	Слов пока нет
+	Not Found in Dictionary:	Нет в словаре:
+	Repeated Word:	Повтор слова:
+	Uncapitalized Start of Sentence:	Предложение со строчной буквы:
+	Word:	Слово:
+	Check Spelling Options	Параметры проверки орфографии
+	Repeated Words	Повторяющиеся слова
+	Uncapitalized Start of Sentence	Предложение со строчной буквы
+	Words That Are All Uppercase	Слова из одних прописных
+	Roman Numerals	Римские цифры
+	Words with Numbers	Слова с цифрами
+@msg	nothing left to check	проверять больше нечего
+@msg	unknown action	неизвестное действие
+@msg	word list: bad header	список слов: неверный заголовок
+@msg	word list: bad prefix	список слов: неверный префикс
+@msg	word list: truncated	список слов: обрезан

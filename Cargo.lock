@@ -4697,9 +4697,11 @@ dependencies = [
 name = "vectorcraft-text"
 version = "0.8.0"
 dependencies = [
+ "flate2",
  "harfrust 0.13.3",
  "kurbo 0.13.1",
  "log",
+ "serde",
  "skrifa 0.47.0",
  "subsetter",
  "unicode-bidi",

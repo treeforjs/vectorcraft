@@ -4150,3 +4150,28 @@ theme	Appearance	外観
 @msg	{label}: every face is unpainted (see Pathfinder Options)	{label}: すべての面に塗りがありません (パスファインダーオプションを参照)
 	Edge Only	エッジのみ
 	Overlay Edge	エッジを重ねる
+# Check Spelling and Edit Custom Dictionary
+	Change to:	置換後:
+	Check Spelling	スペルチェック
+	Edit Custom Dictionary	ユーザー辞書を編集
+	Find:	検索:
+	Ignore All	すべて無視
+	Ignore:	無視:
+	No spelling problems found.	スペルの問題は見つかりませんでした。
+	No suggestions	候補なし
+	No words yet	単語はまだありません
+	Not Found in Dictionary:	辞書にありません:
+	Repeated Word:	繰り返された単語:
+	Uncapitalized Start of Sentence:	小文字で始まる文:
+	Word:	単語:
+	Check Spelling Options	スペルチェックのオプション
+	Repeated Words	繰り返された単語
+	Uncapitalized Start of Sentence	小文字で始まる文
+	Words That Are All Uppercase	すべて大文字の単語
+	Roman Numerals	ローマ数字
+	Words with Numbers	数字を含む単語
+@msg	nothing left to check	チェックする項目は残っていません
+@msg	unknown action	不明な操作です
+@msg	word list: bad header	単語リスト: ヘッダーが正しくありません
+@msg	word list: bad prefix	単語リスト: プレフィックスが正しくありません
+@msg	word list: truncated	単語リスト: 途中で切れています

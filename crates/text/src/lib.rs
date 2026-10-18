@@ -18,6 +18,7 @@ mod fontdb;
 pub mod hyphen;
 mod layout;
 mod shape;
+pub mod spell;
 #[cfg(not(target_arch = "wasm32"))]
 mod suitcase;
 #[cfg(any(test, feature = "test-fonts"))]

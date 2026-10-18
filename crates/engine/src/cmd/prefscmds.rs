@@ -359,6 +359,10 @@ pub fn spec(key: &str) -> Option<&'static PrefSpec> {
 /// without a category resets them.
 pub const PREF_GROUPS: &[&str] = &["eyedropper", "perspectiveWidget", "pathfinder"];
 
+/// Prefs fields kept with the preferences but set by their own commands, not `prefs.set`, and
+/// left alone by `prefs.reset` (the custom dictionary is the user's words, not a setting).
+pub const PREF_KEPT: &[&str] = &["spelling"];
+
 /// Validate a value for preference group `key` against `current`.
 fn validate_group(key: &str, current: &Value, v: &Value) -> std::result::Result<Value, String> {
     match key {
