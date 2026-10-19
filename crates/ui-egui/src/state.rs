@@ -286,6 +286,13 @@ pub struct UiState {
     pub status: String,
     pub palette_open: bool,
     pub palette_query: String,
+    /// The highlighted row of the command palette (arrow keys move it, Enter runs it).
+    #[serde(default)]
+    pub palette_selected: usize,
+    /// What was last run from the command palette, most recent first (palette keys: a command
+    /// id, `tool:<id>` or `panel:<id>`): listed first while nothing is typed.
+    #[serde(default)]
+    pub palette_recent: Vec<String>,
     /// Screen mode: 0 normal, 1 full screen with menu, 2 full screen, 3 presentation. Not saved:
     /// the app always starts in Normal Screen Mode, with its menus and panels (#472: a saved
     /// Presentation Mode came back on restart with no way out).
@@ -467,6 +474,8 @@ impl UiState {
         self.dialog = None;
         self.flyout = None;
         self.palette_open = false;
+        self.palette_selected = 0;
+        self.palette_recent.truncate(crate::palette::MAX_RECENT);
         self.status.clear();
         self.about = false;
         self.open_panel = None;
@@ -514,6 +523,8 @@ impl Default for UiState {
             status: String::new(),
             palette_open: false,
             palette_query: String::new(),
+            palette_selected: 0,
+            palette_recent: vec![],
             screen_mode: 0,
             draw_mode: 0,
             about: false,

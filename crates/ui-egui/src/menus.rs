@@ -162,7 +162,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("file.documentSetup", "Document Setup…", "Cmd+Alt+P", "{}"),
     ("file.newDialog", "New…", "Cmd+N", "{} opens the New Document dialog"),
     ("app.home", "Home", "", "{} shows the Home screen (new file presets, Open) over the open documents; choosing a document tab returns to it"),
-    ("edit.preferences", "Preferences…", "Cmd+K", "{category?} open Preferences (engine: prefs.get / prefs.set / prefs.list)"),
+    ("edit.preferences", "Preferences…", "Cmd+,", "{category?} open Preferences (engine: prefs.get / prefs.set / prefs.list)"),
     ("edit.keyboardShortcuts", "Keyboard Shortcuts…", "Cmd+Alt+Shift+K", "{}"),
     ("shortcuts.set", "Set Keyboard Shortcut", "", "{id: command id or tool:<id>, shortcut: \"Cmd+Shift+K\" | \"\" (none) | null (default), force?}"),
     ("shortcuts.list", "List Keyboard Shortcuts", "", "{query?} → [{id, label, group, shortcut, default, overridden}]"),
@@ -369,7 +369,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "{} opens the Save PDF dialog; with params = document.exportPdf options written to path (asked when missing; viewAfterSaving opens the file) → {path, bytes, warnings}",
     ),
     ("help.about", "About VectorCraft", "", "{}"),
-    ("help.commandPalette", "Search Commands…", "Cmd+Shift+/", "{}"),
+    ("help.commandPalette", "Search Commands…", "Cmd+K", "{} open (or close) the command palette (Cmd+Shift+/ opens it too)"),
     ("app.quit", "Quit VectorCraft", "Cmd+Q", "{}"),
     (
         "ui.swatchOptions",
@@ -1336,8 +1336,11 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             Ok(Value::Null)
         }
         "help.commandPalette" => {
-            app.ui.palette_open = !app.ui.palette_open;
-            app.ui.palette_query.clear();
+            if app.ui.palette_open {
+                app.ui.palette_open = false;
+            } else {
+                crate::palette::open(app);
+            }
             Ok(Value::Null)
         }
         // Closing asks Save / Don't Save / Cancel for modified documents first (`unsaved`).
@@ -1787,6 +1790,12 @@ pub fn display_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
 
 /// Menu slots that are left out while they have nothing to show (unused saved views, recent files,
 /// User Defined swatch and graphic style libraries).
+/// A placeholder slot (a recent file or font, a saved view or selection, a user library), not a
+/// command people search for.
+pub(crate) fn is_slot(id: &str) -> bool {
+    hidden_when_disabled(id) || id.starts_with("type.recentFont")
+}
+
 fn hidden_when_disabled(id: &str) -> bool {
     id.starts_with("view.goto")
         || saved_selection_slot(id).is_some()
@@ -2116,6 +2125,33 @@ fn selected_image(app: &VectorcraftApp, keep: impl Fn(&vectorcraft_doc::ImageObj
     app.session.active().is_some_and(|st| {
         st.selection.objects.iter().any(|id| st.doc.node(*id).is_some_and(|n| matches!(&n.kind, vectorcraft_doc::NodeKind::Image(im) if keep(im))))
     })
+}
+
+/// What the menu tree depends on: the shortcuts and workspaces (their generation), the
+/// installed plug-ins and the installed fonts. Its labels are English (translated as drawn), so
+/// the language isn't part of it.
+fn menu_tree_key() -> (u64, u64, u64) {
+    (
+        crate::shortcut_editor::GENERATION.load(std::sync::atomic::Ordering::Relaxed),
+        plugin_revision(),
+        vectorcraft_text::FontDb::global().generation(),
+    )
+}
+
+/// [`menu_tree`], built again only when what it lists changed (the menu bar draws every frame;
+/// building the ~640 items each time was its biggest cost).
+pub fn shared_menu_tree(ctx: &egui::Context) -> std::sync::Arc<Vec<(&'static str, Vec<Item>)>> {
+    type Cached = ((u64, u64, u64), std::sync::Arc<Vec<(&'static str, Vec<Item>)>>);
+    let key = menu_tree_key();
+    let id = egui::Id::new("menu-tree");
+    if let Some((k, v)) = ctx.data(|d| d.get_temp::<Cached>(id))
+        && k == key
+    {
+        return v;
+    }
+    let built = std::sync::Arc::new(menu_tree());
+    ctx.data_mut(|d| d.insert_temp::<Cached>(id, (key, built.clone())));
+    built
 }
 
 pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
@@ -2938,7 +2974,7 @@ pub fn menu_bar(app: &mut VectorcraftApp, ui: &mut egui::Ui) -> f32 {
         ctx.data_mut(|d| d.insert_temp::<Field>(field_key, field));
     }
     let mut clicked: Option<(String, Value)> = None;
-    let tree = menu_tree();
+    let tree = shared_menu_tree(&ctx);
     let (end, open) = egui::MenuBar::new()
         .ui(ui, |ui| {
             let mut titles = Vec::with_capacity(tree.len());

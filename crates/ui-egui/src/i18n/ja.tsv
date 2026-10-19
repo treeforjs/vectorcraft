@@ -2448,7 +2448,6 @@
 	Screens	スクリーン
 	Search All	すべてを検索
 	Search commands and tools	コマンドとツールを検索
-	Search commands and tools…	コマンドとツールを検索…
 	Secondary	セカンダリ
 	Select All Art on Layer	レイヤー上のすべてのアートを選択
 	Select All Assets	すべてのアセットを選択
@@ -4227,3 +4226,12 @@ theme	Appearance	外観
 	User Brush Library 10	ユーザーブラシライブラリ 10
 @msg	no symbol `{n}`	シンボル `{n}` が見つかりません
 @msg	not a symbol library (format `{_1}`)	シンボルライブラリではありません (形式: `{_1}`)
+	Recently used	最近使用した項目
+	Popular	よく使う項目
+	No matches for “{query}”	「{query}」に一致する項目はありません
+	Try a plainer word, such as “color”, “text”, “group” or “undo”.	語句を減らすか、より簡単な言葉で試してください。
+	Open or create a document first	先にドキュメントを開くか作成してください
+	Select something first	先に何かを選択してください
+	Not available right now	現在は使用できません
+	↑↓ move · Enter runs · Esc closes	↑↓ 移動 · Enter 実行 · Esc 閉じる
+	Type what you want to do…	やりたいことを入力…

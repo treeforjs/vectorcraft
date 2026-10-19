@@ -74,6 +74,7 @@ pub(crate) fn all_shortcuts() -> Vec<(KeyboardShortcut, &'static str, serde_json
         }
     }
     settings_chord(&mut v, cfg!(target_os = "macos"));
+    palette_chord(&mut v);
     // Most specific (most modifiers) first so Cmd+Shift+Z isn't eaten by Cmd+Z.
     v.sort_by_key(|(sc, ..)| {
         std::cmp::Reverse(sc.modifiers.shift as u8 + sc.modifiers.alt as u8 + sc.modifiers.command as u8 + sc.modifiers.ctrl as u8)
@@ -81,13 +82,24 @@ pub(crate) fn all_shortcuts() -> Vec<(KeyboardShortcut, &'static str, serde_json
     v
 }
 
-/// On a Mac, Cmd+, opens Settings as in every Mac app (#663), beside Preferences' own shortcut,
-/// unless a command or a user's shortcut already took it.
+/// On a Mac, Cmd+, opens Settings as in every Mac app (#663), also when Preferences was given
+/// another shortcut, unless a command or a user's shortcut already took it.
 fn settings_chord(v: &mut Vec<(KeyboardShortcut, &'static str, serde_json::Value)>, mac: bool) {
     if let Some(sc) = parse("Cmd+,").filter(|sc| mac && !v.iter().any(|(s, ..)| s == sc)) {
         v.push((sc, "edit.preferences", json!({})));
     }
 }
+
+/// Cmd+Shift+/ opened the command palette before ⌘K did, and still does, unless a command or a
+/// user's shortcut took it.
+fn palette_chord(v: &mut Vec<(KeyboardShortcut, &'static str, serde_json::Value)>) {
+    if let Some(sc) = parse(LEGACY_PALETTE).filter(|sc| !v.iter().any(|(s, ..)| s == sc)) {
+        v.push((sc, "help.commandPalette", json!({})));
+    }
+}
+
+/// The palette's shortcut before ⌘K.
+const LEGACY_PALETTE: &str = "Cmd+Shift+/";
 
 /// Consume a press of `sc`. A `=` chord also takes [`Key::Plus`], which is how `+` arrives from
 /// the numpad and from layouts where it has its own key (Shift+`=` arrives as either; extra Shift
@@ -219,6 +231,13 @@ pub fn handle(app: &mut VectorcraftApp, ctx: &egui::Context) {
         if ctx.input(|i| i.key_pressed(Key::Escape)) {
             app.ui.dialog = None;
             app.ui.palette_open = false;
+        }
+        // The palette's own shortcut closes it again.
+        if app.ui.palette_open && app.ui.dialog.is_none() {
+            let chords = [crate::menus::shortcut_of("help.commandPalette"), Some(LEGACY_PALETTE)];
+            if chords.into_iter().flatten().filter_map(parse).any(|sc| ctx.input_mut(|i| consume(i, &sc))) {
+                app.ui.palette_open = false;
+            }
         }
         return;
     }
@@ -685,7 +704,7 @@ mod tests {
         assert_eq!(order(&app), [b, a], "Bring to Front");
         frame(&mut app, vec![press(Key::OpenCurlyBracket, cmd_shift)]);
         assert_eq!(order(&app), [a, b], "Send to Back");
-        // Cmd+Shift+/ arrives as Cmd+Shift+`?`: Search Commands.
+        // Cmd+Shift+/ arrives as Cmd+Shift+`?`: Search Commands (its shortcut before ⌘K).
         frame(&mut app, vec![press(Key::Questionmark, cmd_shift)]);
         assert!(app.ui.palette_open, "Search Commands");
         app.ui.palette_open = false;
