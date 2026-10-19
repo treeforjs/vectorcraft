@@ -3600,3 +3600,10 @@ axis	Both	兩者
 @msg	word list: bad header	單字表: 檔頭錯誤
 @msg	word list: bad prefix	單字表: 前綴錯誤
 @msg	word list: truncated	單字表: 已截斷
+	Import SVG Filter…	匯入 SVG 濾鏡…
+	Delete SVG Filter	刪除 SVG 濾鏡
+	Filter	濾鏡
+	Filter XML	濾鏡 XML
+	This isn't an SVG <filter> element.	這不是 SVG <filter> 元素。
+@msg	Import SVG Filter… can't pick a file in the browser yet	在瀏覽器中，「匯入 SVG 濾鏡…」還無法選擇檔案
+@msg	Imported {n} SVG filter(s)	已匯入 {n} 個 SVG 濾鏡

@@ -191,6 +191,28 @@ fn raster_filter_dialogs_preview_and_apply() {
 }
 
 #[test]
+fn svg_filter_dialog_draws_the_documents_filters_and_applies_one() {
+    let mut app = app();
+    let id = app.run("shape.rectangle", json!({"x": 10, "y": 10, "width": 50, "height": 50})).unwrap()["id"].as_u64().unwrap();
+    let svg = r#"<svg xmlns="http://www.w3.org/2000/svg"><filter id="mine"><feGaussianBlur stdDeviation="2"/></filter></svg>"#;
+    app.run("effect.svgFilters.import", json!({"data": svg})).unwrap();
+    app.run("select.all", json!({})).unwrap();
+    app.run("effect.dialog", json!({"effect": "svg.filter"})).unwrap();
+    frame(&mut app, Default::default());
+    let d = app.ui.dialog.as_mut().unwrap();
+    assert_eq!(d.str("name"), vectorcraft_effects::svgfilter::PRESETS[0].0, "opens on the first filter");
+    // Picking the document's own filter fills the name and the XML.
+    d.fields.insert("name".into(), json!("mine"));
+    d.fields.insert("filter".into(), json!(r#"<filter id="mine"><feGaussianBlur stdDeviation="2"/></filter>"#));
+    frame(&mut app, Default::default());
+    confirm(&mut app).unwrap();
+    let n = app.session.doc().unwrap().doc.node(vectorcraft_doc::NodeId(id)).unwrap().clone();
+    assert_eq!(n.appearance.effects.len(), 1);
+    assert_eq!(n.appearance.effects[0].params["name"], json!("mine"));
+    assert!(n.appearance.effects[0].params["filter"].as_str().unwrap().contains("feGaussianBlur"));
+}
+
+#[test]
 fn effect_dialog_applies_to_its_appearance_item() {
     let mut app = app();
     let id = app.run("shape.rectangle", json!({"x": 10, "y": 10, "width": 50, "height": 50})).unwrap()["id"].as_u64().unwrap();

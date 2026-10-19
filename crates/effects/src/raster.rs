@@ -6,9 +6,10 @@ use vectorcraft_doc::color::{BlendMode, Color};
 
 use vectorcraft_geom::Rect;
 
-use crate::merged_params;
 use crate::pixel::{self, PixelFx};
+use crate::svgfilter::SvgFilter;
 use crate::util::*;
+use crate::{SVG_FILTER, merged_params};
 
 /// A painted effect, in document units. `blur` is Illustrator's blur distance; the renderer uses
 /// a Gaussian with σ = blur / 2 (so the visible spread is about 1.5 × blur).
@@ -45,6 +46,8 @@ pub enum RasterFx {
     },
     /// A Photoshop-style filter over the object's pixels (Radial Blur, Unsharp Mask…).
     Pixel(PixelFx),
+    /// Effect › SVG Filters: an SVG filter over the object's pixels.
+    Svg(SvgFilter),
 }
 
 impl RasterFx {
@@ -68,6 +71,7 @@ impl RasterFx {
             RasterFx::InnerGlow { .. } | RasterFx::Feather { .. } => 0.0,
             RasterFx::GaussianBlur { radius } => 1.5 * radius,
             RasterFx::Pixel(p) => p.outset(bounds),
+            RasterFx::Svg(f) => f.outset(bounds),
         }
     }
 }
@@ -127,6 +131,7 @@ pub fn raster_effects(effects: &[Effect]) -> Vec<RasterFx> {
                 },
                 "stylize.feather" => RasterFx::Feather { radius: num(&p, "radius", 5.0).clamp(0.0, 1000.0) },
                 "blur.gaussian" => RasterFx::GaussianBlur { radius: num(&p, "radius", 5.0).clamp(0.0, 1000.0) },
+                SVG_FILTER => RasterFx::Svg(SvgFilter::parse(&p)?),
                 id => RasterFx::Pixel(pixel::parse(id, &p)?),
             })
         })

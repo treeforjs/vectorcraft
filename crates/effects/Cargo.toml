@@ -16,6 +16,10 @@ vectorcraft-text = { workspace = true }
 vectorcraft-plugins = { workspace = true }
 kurbo = { workspace = true }
 serde_json = { workspace = true }
+usvg = { workspace = true }
+resvg = { workspace = true }
+# Hands the object's pixels to the SVG filter as an image (MIT OR Apache-2.0).
+png = "0.18"
 
 [dev-dependencies]
 vectorcraft-color = { workspace = true }

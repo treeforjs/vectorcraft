@@ -30,6 +30,26 @@ pub(super) fn blends(xml: &roxmltree::Document) -> HashMap<String, String> {
         .collect()
 }
 
+/// The SVG filters of the file as written (each read on its own), by id: a filter that isn't one
+/// of the effects becomes an SVG Filters effect.
+pub(super) fn sources(svg: &str, xml: &roxmltree::Document) -> HashMap<String, String> {
+    xml.descendants()
+        .filter(|n| n.tag_name().name() == "filter")
+        .filter_map(|n| {
+            let text = svg.get(n.range())?;
+            Some((n.attribute("id")?.to_string(), vectorcraft_effects::svgfilter::with_namespaces(text, n)))
+        })
+        .take(10_000)
+        .collect()
+}
+
+/// An SVG Filters effect running `xml` (`None` when it doesn't read as a filter).
+pub(super) fn svg_filter(id: &str, xml: &str) -> Option<Effect> {
+    vectorcraft_effects::svgfilter::SvgFilter::new(xml)?;
+    let params = json!({ "name": id, "filter": xml });
+    Some(Effect { id: vectorcraft_effects::SVG_FILTER.into(), params, visible: true })
+}
+
 /// The object's alpha, blurred (σ), moved and maybe inverted.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 struct Shape {

@@ -131,6 +131,7 @@ fn body(app: &mut VectorcraftApp, ui: &mut egui::Ui, d: &mut Dialog) -> bool {
     let changed = match vectorcraft_plugins::effect::installed(&id) {
         Some(plugin) => form::schema_fields(ui, d, &plugin.manifest().params),
         None if vectorcraft_effects::is_adjustment(&id) => adjust_fields(ui, d),
+        None if id == vectorcraft_effects::SVG_FILTER => svg_filter_fields(app, ui, d),
         None => {
             let doc = vectorcraft_effects::effect_info(&id).map(|e| e.params).unwrap_or_default();
             let unit = app.session.general_unit();
@@ -329,6 +330,46 @@ fn adjust_fields(ui: &mut egui::Ui, d: &mut Dialog) -> bool {
         if d.fields.contains_key(key) {
             form::check(ui, d, key, label);
         }
+    }
+    let params = form::params(d);
+    let changed = d.fields.get(form::PREVIEWED) != Some(&params);
+    d.fields.insert(form::PREVIEWED.into(), params);
+    changed
+}
+
+/// Apply SVG Filter: pick one of the filters (VectorCraft's, then the document's), name it and
+/// edit its `<filter>` element; Import… adds the filters of an SVG file to the document's.
+fn svg_filter_fields(app: &mut VectorcraftApp, ui: &mut egui::Ui, d: &mut Dialog) -> bool {
+    const LABEL_W: f32 = 84.0;
+    let own: Vec<(String, String)> =
+        app.session.active().map(|st| st.doc.svg_filters.iter().map(|f| (f.name.clone(), f.filter.clone())).collect()).unwrap_or_default();
+    let filters: Vec<(String, String)> =
+        vectorcraft_effects::svgfilter::PRESETS.iter().map(|(n, x)| (n.to_string(), x.to_string())).chain(own).collect();
+    let xml = d.str("filter");
+    let shown = filters.iter().find(|(_, x)| x.trim() == xml.trim()).map_or_else(|| tl!("Custom").to_string(), |(n, _)| n.clone());
+    let names: Vec<&str> = filters.iter().map(|(n, _)| n.as_str()).collect();
+    widgets::label_row(ui, tl!("Filter"), LABEL_W, |ui| {
+        ui.horizontal(|ui| {
+            if let Some((name, xml)) = widgets::dropdown_names(ui, "svgFilter.pick", &shown, &names, 200.0).and_then(|i| filters.get(i)) {
+                d.fields.insert("name".into(), json!(name));
+                d.fields.insert("filter".into(), json!(xml));
+            }
+            if widgets::flat_button(ui, tl!("Import…"), 0.0).clicked()
+                && let Err(e) = crate::io::import_svg_filter(app, None)
+                && e != "cancelled"
+            {
+                app.status(e);
+            }
+        });
+    });
+    widgets::label_row(ui, tl!("Name"), LABEL_W, |ui| {
+        form::text(ui, d, "name", 200.0);
+    });
+    widgets::label_row(ui, tl!("Filter XML"), LABEL_W, |ui| {
+        form::text_area(ui, d, "filter", 360.0, 8);
+    });
+    if vectorcraft_effects::svgfilter::SvgFilter::new(&d.str("filter")).is_none() {
+        form::caption(ui, tl!("This isn't an SVG <filter> element."));
     }
     let params = form::params(d);
     let changed = d.fields.get(form::PREVIEWED) != Some(&params);

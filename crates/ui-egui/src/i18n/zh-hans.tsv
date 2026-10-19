@@ -3817,3 +3817,10 @@ axis	Both	两者
 @msg	word list: bad header	单词表: 文件头错误
 @msg	word list: bad prefix	单词表: 前缀错误
 @msg	word list: truncated	单词表: 已截断
+	Import SVG Filter…	导入 SVG 滤镜…
+	Delete SVG Filter	删除 SVG 滤镜
+	Filter	滤镜
+	Filter XML	滤镜 XML
+	This isn't an SVG <filter> element.	这不是 SVG <filter> 元素。
+@msg	Import SVG Filter… can't pick a file in the browser yet	在浏览器中，“导入 SVG 滤镜…”还无法选择文件
+@msg	Imported {n} SVG filter(s)	已导入 {n} 个 SVG 滤镜

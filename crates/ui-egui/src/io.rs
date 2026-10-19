@@ -90,6 +90,20 @@ pub fn install_plugin(app: &mut VectorcraftApp, path: Option<String>) -> Result<
     Ok(r)
 }
 
+/// Effect › SVG Filters › Import SVG Filter…: adds the filters of the SVG file at `path`, else a
+/// picked one, to the document's (effect.svgFilters.import).
+pub fn import_svg_filter(app: &mut VectorcraftApp, path: Option<String>) -> Result<Value, String> {
+    let path = match path {
+        Some(p) => p,
+        None if app.services.open_async.is_some() => return Err("Import SVG Filter… can't pick a file in the browser yet".into()),
+        None => pick_open(app, &FilePick { filters: vec![("SVG", &["svg"])], ..Default::default() })?,
+    };
+    let r = app.run("effect.svgFilters.import", json!({ "path": path }))?;
+    let n = r["imported"].as_array().map_or(0, Vec::len);
+    app.status(format!("Imported {n} SVG filter(s)"));
+    Ok(r)
+}
+
 /// File → Open…
 pub fn open_dialog(app: &mut VectorcraftApp) -> Result<(), String> {
     if let Some(f) = app.services.open_async.as_mut() {

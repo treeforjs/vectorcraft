@@ -42,6 +42,7 @@ mod raster;
 mod reshape;
 pub mod stroke;
 mod stylize;
+pub mod svgfilter;
 mod three_d;
 mod util;
 mod warp;
@@ -164,6 +165,7 @@ const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
 const THREE_D: &[&str] = &["Effect", "3D and Materials"];
+const SVG_FILTERS: &[&str] = &["Effect", "SVG Filters"];
 
 /// The warp styles in Illustrator's Style menu order: (id suffix, label).
 pub const WARP_STYLES: [(&str, &str); 15] = [
@@ -698,6 +700,13 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
             "{} desaturates colours too strong for a broadcast television signal, keeping their hue and brightness",
             json!({}),
         ),
+        r(
+            SVG_FILTER,
+            "Apply SVG Filter…",
+            SVG_FILTERS,
+            "{filter: \"<filter>…</filter>\" (an SVG filter element; lengths in points, a bounding-box region of the object's painted bounds; at most 256 KB), name: string (what the Appearance panel calls it)} runs the SVG filter primitives over the object's pixels",
+            json!({"name": svgfilter::PRESETS[0].0, "filter": svgfilter::PRESETS[0].1}),
+        ),
     ];
     v.extend([
         g(
@@ -895,7 +904,11 @@ pub fn scale_effect(e: &mut Effect, s: f64) {
 pub fn is_raster(id: &str) -> bool {
     matches!(id, "stylize.dropShadow" | "stylize.innerGlow" | "stylize.outerGlow" | "stylize.feather" | "blur.gaussian")
         || PIXEL_EFFECTS.contains(&id)
+        || id == SVG_FILTER
 }
+
+/// Effect › SVG Filters › Apply SVG Filter: `{name, filter}` (see [`svgfilter`]).
+pub const SVG_FILTER: &str = "svg.filter";
 
 /// Does `id` change geometry? (Crop Marks and the 3D effects draw art of their own instead,
 /// [`crop_marks_art`], [`three_d_art`]; colour

@@ -63,6 +63,7 @@ pub(crate) fn import(svg: &str, opts: &ImportOptions) -> Result<(Document, Vec<S
         uses: found.uses,
         symbols: HashMap::new(),
         blends: fx::blends(&xml),
+        filter_sources: fx::sources(svg, &xml),
         files,
         non_scaling: found.non_scaling,
         data: found.data,
@@ -273,6 +274,8 @@ struct Importer {
     symbols: HashMap<String, SymbolMade>,
     /// Blend modes of the shadows and glows our export wrote, by filter id ([`fx::blends`]).
     blends: HashMap<String, String>,
+    /// The `<filter>` elements as written, by id ([`fx::sources`]).
+    filter_sources: HashMap<String, String>,
     /// The files `<image>` elements link to.
     files: files::Files,
     /// Ids of the shapes whose strokes don't scale ([`vector_effect`]).
@@ -884,8 +887,21 @@ impl Importer {
         let effects = match g.filters() {
             [] => vec![],
             filters => fx::effects(filters, ts, &self.blends).unwrap_or_else(|| {
-                self.warn(format!("filter on {label} ignored"));
-                vec![]
+                // Filters that aren't shadows, glows or blurs run as SVG Filters effects.
+                let kept: Option<Vec<vectorcraft_doc::Effect>> =
+                    filters.iter().map(|f| self.filter_sources.get(f.id()).and_then(|xml| fx::svg_filter(f.id(), xml))).collect();
+                match kept {
+                    Some(kept) => {
+                        if (ts.determinant().abs().sqrt() - 1.0).abs() > 0.01 {
+                            self.warn(format!("the SVG filter on {label} keeps its lengths in points, not the file's units"));
+                        }
+                        kept
+                    }
+                    None => {
+                        self.warn(format!("filter on {label} ignored"));
+                        vec![]
+                    }
+                }
             }),
         };
         let mut children = match text {

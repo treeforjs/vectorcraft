@@ -784,6 +784,12 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "{path?: a .wasm file} install a WebAssembly plug-in (plugin.install); without a path pick one (the web opens the browser's file picker; File › Open of a .wasm installs it too)",
     ),
     (
+        "ui.importSvgFilter",
+        "Import SVG Filter…",
+        "",
+        "{path?: an .svg file} add the file's SVG filters to the document's (effect.svgFilters.import), for Apply SVG Filter…; without a path pick one",
+    ),
+    (
         "ui.perspectiveGridDialog",
         "Define Perspective Grid…",
         "",
@@ -1447,6 +1453,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         "ui.printPresetDialog" => crate::dialogs::print::open_preset(app, p),
         "plugin.dialog" => crate::dialogs::plugin::open(app, p),
         "ui.installPlugin" => io::install_plugin(app, s("path")),
+        "ui.importSvgFilter" => io::import_svg_filter(app, s("path")),
         "ui.perspectiveGridDialog" => crate::dialogs::perspective_grid::open(app),
         "ui.perspectivePresetsDialog" => {
             crate::dialogs::perspective_presets::open(app, s("selected").as_deref());
@@ -3439,6 +3446,9 @@ fn effect_menu() -> Vec<Item> {
             continue;
         }
         let mut items = items_at(&["Effect", sub_name]);
+        if sub_name == "SVG Filters" {
+            items.push(c("Import SVG Filter…", "ui.importSvgFilter"));
+        }
         if sub_name == "3D and Materials" && items.len() == 3 {
             // Extrude & Bevel, Revolve, Rotate; Inflate and Materials are still to come.
             items.insert(2, todo("Inflate…"));
@@ -3447,7 +3457,6 @@ fn effect_menu() -> Vec<Item> {
         if items.is_empty() {
             let placeholder = match sub_name {
                 "3D and Materials" => vec![todo("Extrude & Bevel…"), todo("Revolve…"), todo("Inflate…"), todo("Rotate…"), todo("Materials…")],
-                "SVG Filters" => vec![todo("Apply SVG Filter…")],
                 _ => continue,
             };
             out.push(sub(sub_name, placeholder));

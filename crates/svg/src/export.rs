@@ -1490,8 +1490,8 @@ impl Writer<'_> {
     }
 
     /// Raster effects (drop shadow, glows, Gaussian blur, feather) as SVG filters: one `<g filter>`
-    /// per effect, the first effect innermost (the reference app's stacking order). Photoshop-style
-    /// filters have no SVG equivalent: they are left out with a warning (exports from the app turn
+    /// per effect, the first effect innermost (the reference app's stacking order). SVG Filters
+    /// effects are written as they are. Photoshop-style filters have no SVG equivalent: they are left out with a warning (exports from the app turn
     /// such objects into images first).
     fn filtered(&mut self, n: &Node) {
         let mut inner = n.clone();
@@ -1522,6 +1522,15 @@ impl Writer<'_> {
                 continue;
             }
             let fid = self.fresh_id("filter");
+            // An SVG filter goes out as written, its region resolved against the object's bounds.
+            if let RasterFx::Svg(svg) = f {
+                let b = bounds.map(|b| self.xf.transform_rect_bbox(b)).unwrap_or_default();
+                self.def(1, &svg.resolved(&fid, b));
+                self.line(&format!("<g filter=\"url(#{fid})\">"));
+                self.depth += 1;
+                opened += 1;
+                continue;
+            }
             let region_attr = match region {
                 Some(r) => format!(
                     " filterUnits=\"userSpaceOnUse\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"",
@@ -1569,7 +1578,7 @@ impl Writer<'_> {
                     sd(*radius)
                 ),
                 RasterFx::GaussianBlur { radius } => format!("<feGaussianBlur in=\"SourceGraphic\" stdDeviation=\"{}\"/>", sd(*radius)),
-                RasterFx::Pixel(_) => continue,
+                RasterFx::Pixel(_) | RasterFx::Svg(_) => continue,
             };
             // Filters composite normally: a shadow's or glow's other blend mode is recorded for import.
             let mode = match f {
