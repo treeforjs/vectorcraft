@@ -170,8 +170,10 @@ VectorCraft exposes everything a person can do to AI agents and scripts, through
   (`--connect 127.0.0.1:7979`) or an in-process headless engine (`--headless`).
 - **Control channel.** `vectorcraft --control 7979` accepts newline-delimited JSON-RPC on
   localhost: execute commands, inspect UI state, take screenshots.
-- **CLI.** `vectorcraft-cli run` converts and batch-edits files headlessly; `bench` times one
-  file and `perf` checks the performance budgets.
+- **CLI.** `vectorcraft-cli run` and `script` batch-edit files headlessly (or, with `script
+  --connect`, in the running app); `convert --to pdf *.svg` converts many files in parallel;
+  `commands` and `describe` list and document every command; `app` sends one command to the
+  running app; `bench` times one file and `perf` checks the performance budgets.
 
 To register the MCP server with an MCP client, build the CLI and add the server command to your
 agent's MCP configuration (the JSON shape most clients use):

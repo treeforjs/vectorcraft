@@ -590,6 +590,43 @@ reference that names no value fails the step, so a command never runs with one l
 vectorcraft-cli run --cmd file.new --params '{"width":600,"height":200}'   --cmd text.create --params '{"x":10,"y":60,"text":"plain and bold words","size":30}'   --cmd text.setRangeStyle --params '{"id":"$1.id","start":10,"end":14,"style":"Bold"}'
 ```
 
+### Scripts
+
+`script` runs a file of steps (or stdin with `-`) in one session: a JSON array, or one step per line with `#` or `//`
+comment lines. A step is `{"command": ID, "params": {…}}` (`id` works for `command`, as in `command_batch`) or just
+`"ID"`, and `$N.path` references work as in `run`. It prints one JSON report (`completed`, `failed`, `results`,
+`saved`, `exported`) and exits non-zero when a step failed. It stops at the first failure unless `--keep-going`, and
+`--save` / `--export` write only when every step succeeded, so a broken script never overwrites a good file.
+`--connect ADDR` (or just a port) runs the same script in the app started with `vectorcraft --control PORT`:
+
+```sh
+cat > poster.jsonl <<'JSON'
+# a filled star on a square artboard
+{"command": "file.new", "params": {"width": 400, "height": 400}}
+{"command": "shape.star", "params": {"cx": 200, "cy": 200, "radius1": 160, "radius2": 70}}
+{"command": "paint.setFill", "params": {"color": "#ff8800", "ids": ["$1.id"]}}
+JSON
+vectorcraft-cli script poster.jsonl --save poster.vectorcraft --export poster.svg --export poster.png --scale 2
+vectorcraft-cli script poster.jsonl --connect 7979      # the same, live in the app
+```
+
+### Other subcommands
+
+```sh
+vectorcraft-cli commands star                      # only commands whose id, label, menu or params mention it
+vectorcraft-cli describe shape.star                # one command: label, menu, shortcut, params
+vectorcraft-cli run --cmd 'shape.star={"cx":50,"cy":50,"radius1":40,"radius2":20}' --export s.svg  # ID=JSON
+vectorcraft-cli convert --to pdf --out-dir pdfs --jobs 4 art/*.svg   # many files, in parallel
+vectorcraft-cli app object.group                   # one command in the running app (127.0.0.1:7979)
+vectorcraft-cli app --connect 7979 --method ui.screenshot '{"path":"/tmp/shot.png"}'
+```
+
+`convert --to FMT` takes `convert`'s other options too. Each file opens in its own session, `--jobs` at a time
+(default: one per CPU), and is written next to its input or in `--out-dir`. It prints one JSON line per file as it
+finishes (`in`, `out`, `ok`, `result` or `error`); a file that fails doesn't stop the others, and the exit status is
+non-zero if any failed. Two inputs that would write the same file (`logo.svg` and `logo.ai` to `logo.pdf`) stop the run
+before anything is written, as does an output that would replace its input.
+
 ## Transparency and opacity masks
 
 Transparency and opacity-mask commands take `ids` (or `id`), so they need no selection. Opacity is a percentage
