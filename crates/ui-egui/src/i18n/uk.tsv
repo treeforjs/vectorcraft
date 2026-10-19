@@ -450,7 +450,6 @@
 	Brush Options…	Параметри пензля…
 	Brush Strokes	Мазки пензля
 	Brushes	Пензлі
-	Built-in Libraries	Вбудовані бібліотеки
 	Built-in presets are read-only: New… starts an editable copy.	Вбудовані набори доступні лише для читання: «Створити…» створює копію, що редагується.
 	Built-in presets don't change: New makes a copy you can edit.	Вбудовані набори не змінюються: Створити робить копію, яку можна редагувати.
 	Built-in presets don't change: New… starts an editable copy.	Вбудовані набори не змінюються: «Створити…» створює копію, що редагується.
@@ -2875,7 +2874,29 @@
 	Show all open documents	Показати всі відкриті документи
 	Symbol Instance	Екземпляр символу
 	Symbol Libraries	Бібліотеки символів
-	Symbol Libraries (on the roadmap)	Бібліотеки символів (у плані розвитку)
+	Add to Symbols	Додати до символів
+	Badges and Labels	Значки та ярлики
+	Basic Shapes	Базові фігури
+	Direction Signs	Покажчики напрямку
+	Interface Glyphs	Гліфи інтерфейсу
+	Map Markers	Позначки на мапі
+	Outdoors	На природі
+	Save Symbol Library…	Зберегти бібліотеку символів…
+	Save Symbol Library	Зберегти бібліотеку символів
+	Symbol Library	Бібліотека символів
+	User Symbol Library 1	Користувацька бібліотека символів 1
+	User Symbol Library 2	Користувацька бібліотека символів 2
+	User Symbol Library 3	Користувацька бібліотека символів 3
+	User Symbol Library 4	Користувацька бібліотека символів 4
+	User Symbol Library 5	Користувацька бібліотека символів 5
+	User Symbol Library 6	Користувацька бібліотека символів 6
+	User Symbol Library 7	Користувацька бібліотека символів 7
+	User Symbol Library 8	Користувацька бібліотека символів 8
+	User Symbol Library 9	Користувацька бібліотека символів 9
+	User Symbol Library 10	Користувацька бібліотека символів 10
+	Open Symbol Library	Відкрити бібліотеку символів
+	Selected Symbols Only	Тільки вибрані символи
+	Symbol Libraries Menu	Меню "Бібліотеки символів"
 	Symbol Screener Tool	Інструмент «Прозорість символів»
 	Symbol Scruncher Tool	Інструмент «Стиск символів»
 	Symbol Shifter Tool	Інструмент «Зсув символів»
@@ -4195,3 +4216,5 @@ axis	Both	Обидві
 	User Brush Library 8	Користувацька бібліотека пензлів 8
 	User Brush Library 9	Користувацька бібліотека пензлів 9
 	User Brush Library 10	Користувацька бібліотека пензлів 10
+@msg	no symbol `{n}`	немає символу `{n}`
+@msg	not a symbol library (format `{_1}`)	не є бібліотекою символів (формат `{_1}`)

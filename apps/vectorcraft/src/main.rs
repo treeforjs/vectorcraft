@@ -494,13 +494,15 @@ fn main() -> std::process::ExitCode {
                     #[cfg(windows)]
                     set_taskbar_icon(w);
                 }
-                // User Defined swatch, graphic style and brush libraries live next to the preferences.
+                // User Defined swatch, graphic style, brush and symbol libraries live next to the preferences.
                 let swatches = prefs_path().and_then(|p| Some(p.parent()?.join("Swatches").to_string_lossy().to_string()));
                 app.session.swatch_libraries.set_user_dir(swatches);
                 let styles = prefs_path().and_then(|p| Some(p.parent()?.join("Graphic Styles").to_string_lossy().to_string()));
                 app.session.style_libraries.set_user_dir(styles);
                 let brushes = prefs_path().and_then(|p| Some(p.parent()?.join("Brushes").to_string_lossy().to_string()));
                 app.session.brush_libraries.set_user_dir(brushes);
+                let symbols = prefs_path().and_then(|p| Some(p.parent()?.join("Symbols").to_string_lossy().to_string()));
+                app.session.symbol_libraries.set_user_dir(symbols);
                 // So do the Libraries panel's libraries; runs without preferences (agents' test
                 // runs) keep theirs for the session only, never touching the user's.
                 if prefs_enabled() {

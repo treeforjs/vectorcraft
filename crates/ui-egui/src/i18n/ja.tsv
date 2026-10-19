@@ -723,7 +723,6 @@
 	Tabs	タブ
 	Variables	変数
 	Brush Libraries	ブラシライブラリ
-	Built-in Libraries	内蔵ライブラリ
 	User Defined	ユーザー定義
 	Other Library…	その他のライブラリ…
 	Graphic Style Libraries	グラフィックスタイルライブラリ
@@ -753,6 +752,29 @@
 	Radial Glows	円形グロー
 	Save Swatch Library…	スウォッチライブラリを保存…
 	Symbol Libraries	シンボルライブラリ
+	Add to Symbols	シンボルに追加
+	Badges and Labels	バッジとラベル
+	Basic Shapes	基本シェイプ
+	Direction Signs	方向標識
+	Interface Glyphs	インターフェイスグリフ
+	Map Markers	地図マーカー
+	Outdoors	アウトドア
+	Save Symbol Library…	シンボルライブラリを保存…
+	Save Symbol Library	シンボルライブラリを保存
+	Symbol Library	シンボルライブラリ
+	User Symbol Library 1	ユーザーシンボルライブラリ 1
+	User Symbol Library 2	ユーザーシンボルライブラリ 2
+	User Symbol Library 3	ユーザーシンボルライブラリ 3
+	User Symbol Library 4	ユーザーシンボルライブラリ 4
+	User Symbol Library 5	ユーザーシンボルライブラリ 5
+	User Symbol Library 6	ユーザーシンボルライブラリ 6
+	User Symbol Library 7	ユーザーシンボルライブラリ 7
+	User Symbol Library 8	ユーザーシンボルライブラリ 8
+	User Symbol Library 9	ユーザーシンボルライブラリ 9
+	User Symbol Library 10	ユーザーシンボルライブラリ 10
+	Open Symbol Library	シンボルライブラリを開く
+	Selected Symbols Only	選択したシンボルのみ
+	Symbol Libraries Menu	シンボルライブラリメニュー
 	Help	ヘルプ
 	VectorCraft on GitHub	GitHub の VectorCraft
 	Search Commands…	コマンドを検索…
@@ -2655,7 +2677,6 @@
 	Use Library Item	ライブラリ項目を使用
 	Graphic	グラフィック
 	Show all open documents	開いているすべてのドキュメントを表示
-	Symbol Libraries (on the roadmap)	シンボルライブラリ (今後対応予定)
 	Symbol Screener Tool	シンボルスクリーナーツール
 	Symbol Scruncher Tool	シンボルスクランチャーツール
 	Symbol Shifter Tool	シンボルシフターツール
@@ -4204,3 +4225,5 @@ theme	Appearance	外観
 	User Brush Library 8	ユーザーブラシライブラリ 8
 	User Brush Library 9	ユーザーブラシライブラリ 9
 	User Brush Library 10	ユーザーブラシライブラリ 10
+@msg	no symbol `{n}`	シンボル `{n}` が見つかりません
+@msg	not a symbol library (format `{_1}`)	シンボルライブラリではありません (形式: `{_1}`)

@@ -170,6 +170,16 @@ Defined libraries are `window.userGraphicStyleLibrary1`…`10` in Window → Gra
 user library folder, `selectedOnly` with `names`); `ui.dialog.confirm` runs `graphicStyle.saveLibrary` (to a file it
 asks for a path and suggests `name` with `.vcstyles` as the file name; the web downloads the file under that name).
 
+Symbol libraries open there too: `window.symbolLibrary {library}` (`library_panel: {kind: "symbols", id}`; `library:
+null` closes it), also from the Symbols panel's library button. Clicking a symbol there runs `symbol.addFromLibrary
+{library, name}`, which adds it (with the symbols, patterns, swatches, images and brushes its art uses) in one undo
+step and makes it the current symbol; Shift/Cmd-clicks select symbols for Add to Symbols.
+`window.symbolLibrary.other {path?}` loads a `.vcsymbols` file (or another document's symbols) and opens it there;
+opening a `.vcsymbols` file with `app.open` does the same. The User Defined libraries are
+`window.userSymbolLibrary1`…`10` in Window → Symbol Libraries. `ui.saveSymbolLibrary {names?}` opens the
+`saveSymbolLibrary` dialog (fields `name`, `user`, `selectedOnly` with `names`); `ui.dialog.confirm` runs
+`symbol.saveLibrary`.
+
 Tile Edge Color: Object → Pattern → Tile Edge Color… (`ui.tileEdgeColor`) opens the `tileEdgeColor` dialog (field
 `color`: `#rrggbb` or a preset name such as "Light Blue"); `ui.dialog.confirm` sets the preference
 `patternTileEdgeColor` (`prefs.set`), the colour pattern editing mode draws the tile edge and the swatch bounds in.

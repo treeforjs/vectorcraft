@@ -74,6 +74,7 @@ pub mod stylelib;
 mod svgfilters;
 mod swatch;
 pub mod swatchlib;
+pub mod symbollib;
 pub(crate) mod tabs;
 mod textedit;
 pub mod textstyles;
@@ -257,6 +258,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(flatten::specs());
         v.extend(stylelib::specs());
         v.extend(brushlib::specs());
+        v.extend(symbollib::specs());
         v.extend(library::specs());
         v.extend(expand::specs());
         v.extend(attributes::specs());

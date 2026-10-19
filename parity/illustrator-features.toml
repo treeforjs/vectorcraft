@@ -4173,11 +4173,11 @@ title = "Symbol libraries"
 area = "J"
 tier = "P2"
 milestone = "M10"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["symbol.libraries", "symbol.library", "symbol.addFromLibrary", "symbol.saveLibrary", "symbol.loadLibrary"]
 tools = []
-evidence = []
-notes = "Bundled symbol libraries pending"
+evidence = ["crates/engine/src/tests_symbollib.rs::builtin_libraries_are_listed_and_every_symbol_places_visibly", "crates/engine/src/tests_symbollib.rs::add_from_library_is_one_undo_step_and_numbers_names_taken_by_other_art", "crates/engine/src/tests_symbollib.rs::save_and_load_round_trip_with_the_resources_the_art_uses", "crates/engine/src/tests_symbollib.rs::user_libraries_and_other_documents_symbols", "crates/ui-egui/src/panels/tests_symbol_libraries.rs::the_library_panel_shows_thumbnails_and_clicking_a_symbol_adds_it"]
+notes = ""
 
 [[feature]]
 id = "symbol.edit"

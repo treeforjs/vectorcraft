@@ -343,7 +343,6 @@
 	Brush Options…	Opções de Pincel…
 	Brush Strokes	Traços de Pincel
 	Brushes	Pincéis
-	Built-in Libraries	Bibliotecas Integradas
 	Built-in presets are read-only: New… starts an editable copy.	Predefinidos integrados são somente leitura: Novo… inicia uma cópia editável.
 	Built-in presets don't change: New makes a copy you can edit.	Predefinidos integrados não mudam: Novo cria uma cópia que você pode editar.
 	Built-in presets don't change: New… starts an editable copy.	Predefinidos integrados não mudam: Novo… inicia uma cópia editável.
@@ -2353,7 +2352,28 @@
 	Switch workspace	Trocar espaço de trabalho
 	Symbol Instance	Instância de Símbolo
 	Symbol Libraries	Bibliotecas de Símbolos
-	Symbol Libraries (on the roadmap)	Bibliotecas de Símbolos (no roadmap)
+	Add to Symbols	Adicionar aos Símbolos
+	Badges and Labels	Emblemas e Rótulos
+	Basic Shapes	Formas Básicas
+	Direction Signs	Placas de Direção
+	Interface Glyphs	Glifos de Interface
+	Map Markers	Marcadores de Mapa
+	Outdoors	Ao Ar Livre
+	Save Symbol Library…	Salvar Biblioteca de Símbolos…
+	Save Symbol Library	Salvar Biblioteca de Símbolos
+	Symbol Library	Biblioteca de Símbolos
+	User Symbol Library 1	Biblioteca de Símbolos do Usuário 1
+	User Symbol Library 2	Biblioteca de Símbolos do Usuário 2
+	User Symbol Library 3	Biblioteca de Símbolos do Usuário 3
+	User Symbol Library 4	Biblioteca de Símbolos do Usuário 4
+	User Symbol Library 5	Biblioteca de Símbolos do Usuário 5
+	User Symbol Library 6	Biblioteca de Símbolos do Usuário 6
+	User Symbol Library 7	Biblioteca de Símbolos do Usuário 7
+	User Symbol Library 8	Biblioteca de Símbolos do Usuário 8
+	User Symbol Library 9	Biblioteca de Símbolos do Usuário 9
+	User Symbol Library 10	Biblioteca de Símbolos do Usuário 10
+	Open Symbol Library	Abrir Biblioteca de Símbolos
+	Selected Symbols Only	Somente Símbolos Selecionados
 	Symbol Screener Tool	Ferramenta Peneira de Símbolos
 	Symbol Scruncher Tool	Ferramenta Amontoar Símbolos
 	Symbol Shifter Tool	Ferramenta Deslocador de Símbolos

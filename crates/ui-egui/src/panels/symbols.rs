@@ -1,19 +1,28 @@
 //! Symbols panel: the document's symbols as rendered thumbnails or a list. Click selects a symbol
-//! (it becomes the Symbol Sprayer's current symbol); double-click places an instance.
+//! (it becomes the Symbol Sprayer's current symbol); double-click places an instance. Symbol
+//! libraries open in the library panel ([`SymbolLibraries`]).
 
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::sync::Arc;
 
-use egui::{Sense, Stroke, StrokeKind, Ui, vec2};
+use egui::{Rect, Sense, Stroke, StrokeKind, Ui, vec2};
 use serde_json::{Value, json};
-use vectorcraft_doc::{Document, Node, NodeKind};
+use vectorcraft_doc::symbol_libs::SYMBOL_LIBRARIES;
+use vectorcraft_doc::{Document, Node, NodeKind, SymbolLibrary};
+use vectorcraft_engine::cmd::swatchlib::LibraryInfo;
+use vectorcraft_engine::cmd::symbollib;
 
+use super::library_panel::{self, LibraryKind, LibraryRef, Row};
 use super::{pstate, set_pstate};
 use crate::VectorcraftApp;
+use crate::menus::Item;
 use crate::theme::Tokens;
 use crate::widgets::{self, PanelDrag, menu_item};
 
-/// A thumbnail of symbol `name` (an instance at its natural size), cached by the art's identity.
+/// A thumbnail of symbol `name` of `doc` (a document's, or a library's: an instance at its natural
+/// size, with the symbols, patterns and images its art uses), cached by the art's identity, so a
+/// thumbnail is rendered once, not every frame.
 fn thumb(ui: &Ui, doc: &Document, name: &str, size: f32) -> Option<egui::TextureHandle> {
     thread_local! {
         static RENDERER: RefCell<vectorcraft_render::Renderer> = RefCell::new(vectorcraft_render::Renderer::new());
@@ -32,7 +41,10 @@ fn thumb(ui: &Ui, doc: &Document, name: &str, size: f32) -> Option<egui::Texture
         .and_then(|v| Some((v.get(0)?.as_f64()?, v.get(1)?.as_f64()?)))
         .unwrap_or((20.0, 20.0));
     let mut d = Document::new(w.max(1.0), h.max(1.0));
-    d.symbols.push(sym.clone());
+    // Nested symbols, patterns and images draw too (the lists share their art).
+    d.symbols = doc.symbols.clone();
+    d.patterns = doc.patterns.clone();
+    d.images = doc.images.clone();
     let id = d.alloc_id();
     let xf = vectorcraft_geom::Affine::scale_non_uniform(w / 20.0, h / 20.0);
     let l = d.layers[0].id;
@@ -146,7 +158,12 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let has_sel = app.session.active().is_some_and(|d| !d.selection.is_empty());
     let inst = has_instances_selected(app);
     widgets::bottom_bar(ui, |ui| {
-        widgets::icon_button_enabled(ui, "library", tl!("Symbol Libraries (on the roadmap)"), false, false, 24.0);
+        let open = app.ui.library_panel.as_ref().is_some_and(|o| o.kind == SymbolLibraries::KIND);
+        let lr = widgets::icon_button(ui, "library", SymbolLibraries::MENU, open, 24.0);
+        egui::Popup::menu(&lr).show(|ui| {
+            ui.set_min_width(200.0);
+            library_panel::library_menu::<SymbolLibraries>(app, ui);
+        });
         if widgets::icon_button_enabled(ui, "dc-place-symbol", tl!("Place Symbol Instance"), false, sel.is_some(), 24.0).clicked() {
             app.run("symbol.place", json!({})).ok();
         }
@@ -197,6 +214,151 @@ pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     if menu_item(ui, tl!("List View"), true, list) {
         set_pstate(ui.ctx(), "sym-list", true);
     }
+    ui.separator();
+    ui.menu_button(tl!("Open Symbol Library"), |ui| library_panel::library_menu::<SymbolLibraries>(app, ui));
+    if menu_item(ui, tl!("Save Symbol Library…"), app.session.active().is_some(), false) {
+        run(app, "ui.saveSymbolLibrary", json!({ "names": sel.into_iter().collect::<Vec<_>>() }));
+    }
+}
+
+fn run(app: &mut VectorcraftApp, cmd: &str, params: Value) {
+    if let Err(e) = app.run(cmd, params) {
+        app.status(e);
+    }
+}
+
+// ---------- libraries ----------
+
+/// A symbol of a library as the library panel shows it.
+pub(crate) struct LibSymbol {
+    lib: Arc<SymbolLibrary>,
+    index: usize,
+}
+
+impl LibSymbol {
+    fn name(&self) -> &str {
+        self.lib.doc.symbols.get(self.index).map_or("", |s| s.name.as_str())
+    }
+}
+
+/// Symbol libraries in the library panel (engine: `symbol.libraries`, `symbol.addFromLibrary`…).
+pub(crate) struct SymbolLibraries;
+
+impl LibraryKind for SymbolLibraries {
+    const KIND: &'static str = "symbols";
+    const OPEN: &'static str = "window.symbolLibrary";
+    const MENU: &'static str = "Symbol Libraries Menu";
+    const ADD: &'static str = "Add to Symbols";
+    /// Symbols need room to show their art.
+    const VIEW: super::swatches::View = super::swatches::View::LargeThumb;
+    type Lib = Arc<Vec<LibSymbol>>;
+    type Item = LibSymbol;
+
+    fn list(app: &VectorcraftApp) -> Vec<LibraryRef> {
+        let libs = symbollib::libraries(&app.session).into_iter();
+        libs.map(|l| LibraryRef { submenu: library_panel::submenu(l.category), id: l.id, name: l.name }).collect()
+    }
+    fn get(app: &VectorcraftApp, id: &str) -> Option<(String, Self::Lib)> {
+        let (info, lib) = symbollib::library(&app.session, id)?;
+        let items = (0..lib.len()).map(|index| LibSymbol { lib: lib.clone(), index }).collect();
+        Some((info.name, Arc::new(items)))
+    }
+    fn rows<'a>(lib: &'a Self::Lib, query: &str) -> Vec<Row<'a, LibSymbol>> {
+        let found = |n: &str| query.is_empty() || n.to_lowercase().contains(query);
+        lib.iter().filter(|s| found(s.name())).map(|s| Row { name: s.name(), item: Some(s) }).collect()
+    }
+    /// The symbol's art on white (rendered once per library symbol and size).
+    fn draw(_: &VectorcraftApp, ui: &Ui, r: Rect, s: &LibSymbol, selected: bool, hovered: bool) {
+        chip(ui, &s.lib.doc, r, s.name());
+        let t = Tokens::get(ui.ctx());
+        let (width, color) = if selected {
+            (2.0, t.accent)
+        } else if hovered {
+            (1.0, t.text)
+        } else {
+            (1.0, t.border)
+        };
+        ui.painter().rect_stroke(r, 0.0, Stroke::new(width, color), StrokeKind::Inside);
+    }
+    fn row_icons(_: &Ui, _: Rect, _: &LibSymbol) {}
+    fn describe(s: &LibSymbol) -> String {
+        s.lib.size(s.name()).map_or_else(String::new, |(w, h)| format!("{w:.0} × {h:.0} pt"))
+    }
+    /// Adds the symbol to the document's Symbols (it becomes the current symbol).
+    fn click(app: &mut VectorcraftApp, _: &Ui, id: &str, name: &str) {
+        run(app, "symbol.addFromLibrary", json!({"library": id, "name": name}));
+    }
+    fn add(app: &mut VectorcraftApp, id: &str, names: Vec<String>) {
+        run(app, "symbol.addFromLibrary", json!({"library": id, "names": names}));
+    }
+    fn menu_tail(app: &mut VectorcraftApp, ui: &mut Ui) {
+        ui.separator();
+        if menu_item(ui, tl!("Other Library…"), true, false)
+            && let Err(e) = other_library(app, None)
+        {
+            app.status(e);
+        }
+        if menu_item(ui, tl!("Save Symbol Library…"), app.session.active().is_some(), false) {
+            let names: Vec<String> = current(app).into_iter().collect();
+            run(app, "ui.saveSymbolLibrary", json!({ "names": names }));
+        }
+    }
+}
+
+/// `window.symbolLibrary {library}`: open a symbol library in the library panel (`library` null
+/// closes it).
+pub(crate) fn open_library(app: &mut VectorcraftApp, p: &Value) -> Result<Value, String> {
+    library_panel::open_command::<SymbolLibraries>(app, p, "symbol.libraries", |app, key| {
+        symbollib::library(&app.session, key).map(|(info, lib)| (info.id, info.name, lib.len()))
+    })
+}
+
+/// `symbol.loadLibrary` params, then open the library in the panel.
+pub(crate) fn load_library(app: &mut VectorcraftApp, params: Value) -> Result<Value, String> {
+    let r = app.run("symbol.loadLibrary", params)?;
+    open_library(app, &json!({ "library": r["library"] }))
+}
+
+/// Other Library…: load the library (or document) at `path`, else one picked in an open dialog.
+pub(crate) fn other_library(app: &mut VectorcraftApp, path: Option<String>) -> Result<Value, String> {
+    match library_panel::pick_library_file(app, path)? {
+        Some(path) => load_library(app, json!({ "path": path })),
+        None => Ok(Value::Null),
+    }
+}
+
+/// The id prefix of the Window → Symbol Libraries → User Defined slots.
+pub(crate) const USER_SLOT: &str = "window.userSymbolLibrary";
+
+/// The User Defined library slot `id` (`window.userSymbolLibrary3`) stands for.
+pub(crate) fn user_library(app: &VectorcraftApp, id: &str) -> Option<LibraryInfo> {
+    library_panel::user_slot(id, USER_SLOT, symbollib::libraries(&app.session))
+}
+
+/// Window → Symbol Libraries.
+pub(crate) fn window_menu() -> Vec<Item> {
+    const SLOTS: [&str; 10] = [
+        "window.userSymbolLibrary1",
+        "window.userSymbolLibrary2",
+        "window.userSymbolLibrary3",
+        "window.userSymbolLibrary4",
+        "window.userSymbolLibrary5",
+        "window.userSymbolLibrary6",
+        "window.userSymbolLibrary7",
+        "window.userSymbolLibrary8",
+        "window.userSymbolLibrary9",
+        "window.userSymbolLibrary10",
+    ];
+    let open = |b: &'static vectorcraft_doc::symbol_libs::BuiltinSymbolLibrary| Item::Cmd(b.name, SymbolLibraries::OPEN, json!({ "library": b.id }));
+    let mut items: Vec<Item> = SYMBOL_LIBRARIES.iter().map(open).collect();
+    items.extend([
+        Item::Sep,
+        Item::Sub("User Defined", SLOTS.iter().map(|id| Item::Cmd("User Library", id, Value::Null)).collect()),
+        Item::Sep,
+        Item::Cmd("Other Library…", "window.symbolLibrary.other", Value::Null),
+        Item::Cmd("Save Symbol Library…", "ui.saveSymbolLibrary", Value::Null),
+    ]);
+    items
 }
 
 #[cfg(test)]

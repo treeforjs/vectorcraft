@@ -456,7 +456,6 @@
 	Brush Options…	Opzioni pennello…
 	Brush Strokes	Pennellate
 	Brushes	Pennelli
-	Built-in Libraries	Librerie integrate
 	Built-in presets are read-only: New… starts an editable copy.	I preset integrati sono di sola lettura: Nuovo… crea una copia modificabile.
 	Built-in presets don't change: New makes a copy you can edit.	I preset integrati non cambiano: Nuovo crea una copia che puoi modificare.
 	Built-in presets don't change: New… starts an editable copy.	I preset integrati non cambiano: Nuovo… crea una copia modificabile.
@@ -2883,7 +2882,29 @@
 	Show all open documents	Mostra tutti i documenti aperti
 	Symbol Instance	Istanza di simbolo
 	Symbol Libraries	Librerie simboli
-	Symbol Libraries (on the roadmap)	Librerie simboli (in programma)
+	Add to Symbols	Aggiungi ai simboli
+	Badges and Labels	Distintivi ed etichette
+	Basic Shapes	Forme di base
+	Direction Signs	Segnali di direzione
+	Interface Glyphs	Glifi di interfaccia
+	Map Markers	Indicatori di mappa
+	Outdoors	All’aperto
+	Save Symbol Library…	Salva libreria simboli…
+	Save Symbol Library	Salva libreria simboli
+	Symbol Library	Libreria simboli
+	User Symbol Library 1	Libreria simboli utente 1
+	User Symbol Library 2	Libreria simboli utente 2
+	User Symbol Library 3	Libreria simboli utente 3
+	User Symbol Library 4	Libreria simboli utente 4
+	User Symbol Library 5	Libreria simboli utente 5
+	User Symbol Library 6	Libreria simboli utente 6
+	User Symbol Library 7	Libreria simboli utente 7
+	User Symbol Library 8	Libreria simboli utente 8
+	User Symbol Library 9	Libreria simboli utente 9
+	User Symbol Library 10	Libreria simboli utente 10
+	Open Symbol Library	Apri libreria simboli
+	Selected Symbols Only	Solo simboli selezionati
+	Symbol Libraries Menu	Menu Librerie simboli
 	Symbol Screener Tool	Strumento Trasparenza simboli
 	Symbol Scruncher Tool	Strumento Addensamento simboli
 	Symbol Shifter Tool	Strumento Spostamento simboli
@@ -4212,3 +4233,5 @@ axis	Both	Entrambi
 	User Brush Library 8	Libreria pennelli utente 8
 	User Brush Library 9	Libreria pennelli utente 9
 	User Brush Library 10	Libreria pennelli utente 10
+@msg	no symbol `{n}`	nessun simbolo `{n}`
+@msg	not a symbol library (format `{_1}`)	non è una libreria di simboli (formato `{_1}`)

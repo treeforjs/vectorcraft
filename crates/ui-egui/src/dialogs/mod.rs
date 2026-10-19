@@ -77,6 +77,7 @@ pub(crate) mod save_options;
 mod save_pdf;
 pub mod save_style_library;
 pub mod save_swatch_library;
+pub mod save_symbol_library;
 mod shapes;
 pub mod slices;
 pub mod spot_colors;
@@ -242,6 +243,7 @@ registry! {
     FlattenerPresets: [flattener_presets::KIND] => flattener_presets::SPEC,
     SaveStyleLibrary: [save_style_library::KIND] => save_style_library::SPEC,
     SaveBrushLibrary: [save_brush_library::KIND] => save_brush_library::SPEC,
+    SaveSymbolLibrary: [save_symbol_library::KIND] => save_symbol_library::SPEC,
     Expand: [expand::KIND] => expand::SPEC,
     SpotColors: [spot_colors::KIND] => spot_colors::SPEC,
     TransformEach: [transform_each::KIND] => transform_each::SPEC,

@@ -39,6 +39,13 @@ pub fn open_bytes(app: &mut VectorcraftApp, name: &str, bytes: &[u8], path: Opti
         app.status(format!("Imported {what}: {}", names.join(", ")));
         return Ok(Value::Null);
     }
+    if ext == vectorcraft_doc::symbol_libs::SYMBOLS_EXT {
+        let p = match path {
+            Some(path) => serde_json::json!({ "path": path }),
+            None => serde_json::json!({"name": name, "data": String::from_utf8_lossy(bytes)}),
+        };
+        return crate::panels::symbols::load_library(app, p).map(|_| Value::Null);
+    }
     let swatches = vectorcraft_engine::cmd::swatchlib::LIBRARY_EXTS.contains(&ext.as_str());
     let brushes = ext == vectorcraft_brush::libs::BRUSHES_EXT;
     if swatches || brushes || ext == vectorcraft_doc::style_libs::STYLES_EXT {

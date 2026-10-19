@@ -456,7 +456,6 @@
 	Brush Options…	Opciones de pincel…
 	Brush Strokes	Trazos de pincel
 	Brushes	Pinceles
-	Built-in Libraries	Bibliotecas integradas
 	Built-in presets are read-only: New… starts an editable copy.	Los preajustes integrados son de solo lectura: Nuevo… crea una copia editable.
 	Built-in presets don't change: New makes a copy you can edit.	Los preajustes integrados no cambian: Nuevo crea una copia que puedes editar.
 	Built-in presets don't change: New… starts an editable copy.	Los preajustes integrados no cambian: Nuevo… crea una copia editable.
@@ -2883,7 +2882,29 @@
 	Show all open documents	Mostrar todos los documentos abiertos
 	Symbol Instance	Instancia de símbolo
 	Symbol Libraries	Bibliotecas de símbolos
-	Symbol Libraries (on the roadmap)	Bibliotecas de símbolos (en la hoja de ruta)
+	Add to Symbols	Agregar a símbolos
+	Badges and Labels	Insignias y etiquetas
+	Basic Shapes	Formas básicas
+	Direction Signs	Señales de dirección
+	Interface Glyphs	Glifos de interfaz
+	Map Markers	Marcadores de mapa
+	Outdoors	Aire libre
+	Save Symbol Library…	Guardar biblioteca de símbolos…
+	Save Symbol Library	Guardar biblioteca de símbolos
+	Symbol Library	Biblioteca de símbolos
+	User Symbol Library 1	Biblioteca de símbolos del usuario 1
+	User Symbol Library 2	Biblioteca de símbolos del usuario 2
+	User Symbol Library 3	Biblioteca de símbolos del usuario 3
+	User Symbol Library 4	Biblioteca de símbolos del usuario 4
+	User Symbol Library 5	Biblioteca de símbolos del usuario 5
+	User Symbol Library 6	Biblioteca de símbolos del usuario 6
+	User Symbol Library 7	Biblioteca de símbolos del usuario 7
+	User Symbol Library 8	Biblioteca de símbolos del usuario 8
+	User Symbol Library 9	Biblioteca de símbolos del usuario 9
+	User Symbol Library 10	Biblioteca de símbolos del usuario 10
+	Open Symbol Library	Abrir biblioteca de símbolos
+	Selected Symbols Only	Solo símbolos seleccionados
+	Symbol Libraries Menu	Menú Bibliotecas de símbolos
 	Symbol Screener Tool	Herramienta Transparencia de símbolos
 	Symbol Scruncher Tool	Herramienta Concentración de símbolos
 	Symbol Shifter Tool	Herramienta Desplazamiento de símbolos
@@ -4212,3 +4233,5 @@ axis	Both	Ambos
 	User Brush Library 8	Biblioteca de pinceles del usuario 8
 	User Brush Library 9	Biblioteca de pinceles del usuario 9
 	User Brush Library 10	Biblioteca de pinceles del usuario 10
+@msg	no symbol `{n}`	no existe el símbolo `{n}`
+@msg	not a symbol library (format `{_1}`)	no es una biblioteca de símbolos (formato `{_1}`)
