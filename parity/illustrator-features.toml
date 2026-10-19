@@ -237,11 +237,11 @@ title = "PDF security (passwords and permissions) on export"
 area = "A"
 tier = "P2"
 milestone = "M4"
-status = "planned"
+status = "shipped"
 commands = ["document.exportPdf"]
 tools = []
-evidence = []
-notes = "PDF import reads secured files; export does not encrypt yet"
+evidence = ["crates/pdf/src/tests_encrypt.rs::every_level_opens_only_with_a_password", "crates/pdf/src/tests_encrypt.rs::permission_bits_follow_the_options", "crates/engine/src/cmd/fileio/tests_pdfsecurity.rs::export_with_passwords_writes_a_pdf_that_only_its_passwords_open", "crates/ui-egui/src/dialogs/save_pdf.rs::the_security_section_takes_passwords_that_presets_drop"]
+notes = "Save Adobe PDF › Security: open and permissions passwords, printing, changes, copying and accessibility permissions; RC4/AES-128/AES-256 by compatibility level"
 
 [[feature]]
 id = "file.eps-import"
