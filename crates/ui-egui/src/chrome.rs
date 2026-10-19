@@ -600,15 +600,7 @@ fn hint_for(tool: &str) -> Option<&'static [(&'static str, bool)]> {
             ("Esc", true),
             (" to finish", false),
         ],
-        "type" => &[
-            ("Click", true),
-            (" to create point type  |  ", false),
-            ("Drag", true),
-            (" to create area type  |  ", false),
-            ("Esc", true),
-            (" to exit editing", false),
-        ],
-        "rectangle" | "roundedRectangle" | "ellipse" | "polygon" | "star" => &[
+        "rectangle" | "roundedRectangle" | "ellipse" | "arc" | "rectangularGrid" | "polarGrid" => &[
             ("Drag", true),
             (" to draw  |  ", false),
             ("Shift+Drag", true),
@@ -721,6 +713,223 @@ fn hint_for(tool: &str) -> Option<&'static [(&'static str, bool)]> {
             ("Alt+Click", true),
             (" to set spacing and orientation", false),
         ],
+        "polygon" | "star" => &[
+            ("Drag", true),
+            (" to draw  |  ", false),
+            ("Shift+Drag", true),
+            (" to keep it upright  |  ", false),
+            ("↑ ↓", true),
+            (" while dragging for more or fewer corners  |  ", false),
+            ("Click", true),
+            (" for exact size", false),
+        ],
+        "lineSegment" => &[
+            ("Drag", true),
+            (" to draw  |  ", false),
+            ("Shift+Drag", true),
+            (" to keep to 45° angles  |  ", false),
+            ("Alt+Drag", true),
+            (" from center  |  ", false),
+            ("Click", true),
+            (" for exact size", false),
+        ],
+        "spiral" => &[("Drag", true), (" from the center to draw  |  ", false), ("Click", true), (" for exact size", false)],
+        "flare" => &[
+            ("Drag", true),
+            (" from the center to size the glow, then click where the rings end  |  ", false),
+            ("↑ ↓", true),
+            (" while dragging to add or remove rays  |  ", false),
+            ("Click", true),
+            (" for exact size", false),
+        ],
+        "groupSelection" => &[
+            ("Click", true),
+            (" an object in a group to select it  |  ", false),
+            ("Click again", true),
+            (" to add the group around it  |  ", false),
+            ("Shift+Click", true),
+            (" to add", false),
+        ],
+        "magicWand" => &[
+            ("Click", true),
+            (" an object to select all with a similar color  |  ", false),
+            ("Shift+Click", true),
+            (" to add to the selection  |  ", false),
+            ("Alt+Click", true),
+            (" to remove from the selection", false),
+        ],
+        "lasso" => &[
+            ("Drag", true),
+            (" around points or objects to select them  |  ", false),
+            ("Shift+Drag", true),
+            (" to add to the selection  |  ", false),
+            ("Alt+Drag", true),
+            (" to remove from the selection", false),
+        ],
+        "addAnchor" => &[("Click", true), (" a path to add a point  |  ", false), ("Alt+Click", true), (" to delete a point instead", false)],
+        "deleteAnchor" => &[("Click", true), (" a point to delete it  |  ", false), ("Alt+Click", true), (" to add a point instead", false)],
+        "anchorPoint" => &[
+            ("Click", true),
+            (" a smooth point to make it a corner  |  ", false),
+            ("Drag", true),
+            (" a corner point to pull out curve handles  |  ", false),
+            ("Drag a handle", true),
+            (" to move it on its own", false),
+        ],
+        "type" | "verticalType" => &[
+            ("Click", true),
+            (" to create point type  |  ", false),
+            ("Drag", true),
+            (" to create area type  |  ", false),
+            ("Esc", true),
+            (" to exit editing", false),
+        ],
+        "areaType" | "verticalAreaType" => {
+            &[("Click", true), (" a closed path to fill it with text  |  ", false), ("Esc", true), (" to exit editing", false)]
+        }
+        "typeOnPath" | "verticalTypeOnPath" => {
+            &[("Click", true), (" a path to type along it  |  ", false), ("Esc", true), (" to exit editing", false)]
+        }
+        "touchType" => &[
+            ("Click", true),
+            (" a letter to select it  |  ", false),
+            ("Drag", true),
+            (" to move  |  ", false),
+            ("Drag a corner", true),
+            (" to resize or turn it", false),
+        ],
+        "paintbrush" | "pencil" => &[
+            ("Drag", true),
+            (" to draw freehand  |  ", false),
+            ("Drag from the end", true),
+            (" of a selected path to keep drawing it  |  ", false),
+            ("Alt", true),
+            (" while dragging to close the path", false),
+        ],
+        "blobBrush" => &[
+            ("Drag", true),
+            (" to paint a filled shape that merges with ones it touches  |  ", false),
+            ("[ ]", true),
+            (" to change the brush size", false),
+        ],
+        "eraser" => &[("Drag", true), (" over shapes to erase  |  ", false), ("[ ]", true), (" to change the brush size", false)],
+        "shaper" => &[
+            ("Scribble", true),
+            (" a rough rectangle, circle, triangle or line to get a clean shape  |  ", false),
+            ("Scribble over", true),
+            (" overlapping shapes to cut or merge them", false),
+        ],
+        "smooth" => &[("Drag", true), (" along a selected path to smooth it", false)],
+        "pathEraser" => &[("Drag", true), (" along a selected path to erase that part", false)],
+        "join" => &[("Scribble", true), (" over the gap between two open ends to join them", false)],
+        "scissors" => &[("Click", true), (" a path to cut it at that point", false)],
+        "knife" => &[("Drag", true), (" across shapes to slice them apart", false)],
+        "mirrorCut" => &[
+            ("Drag", true),
+            (" a line across an object to cut it and mirror one half  |  ", false),
+            ("Shift+Drag", true),
+            (" to keep to 45° angles  |  ", false),
+            ("Alt+Drag", true),
+            (" to keep the other side", false),
+        ],
+        "lineCut" => &[("Drag", true), (" a line across objects to cut them  |  ", false), ("Shift+Drag", true), (" to keep to 45° angles", false)],
+        "rectCut" => &[("Drag", true), (" a rectangle over objects to cut it out", false)],
+        "reshape" => &[
+            ("Drag", true),
+            (" part of a selected path to reshape it smoothly  |  ", false),
+            ("Shift+Drag", true),
+            (" to keep to 45° angles", false),
+        ],
+        "freeTransform" => &[
+            ("Drag a handle", true),
+            (" to scale  |  ", false),
+            ("Drag outside a corner", true),
+            (" to rotate  |  ", false),
+            ("Shift+Drag", true),
+            (" to constrain proportions  |  ", false),
+            ("Alt+Drag", true),
+            (" from center", false),
+        ],
+        "shapeBuilder" => &[
+            ("Drag", true),
+            (" across shapes to merge them  |  ", false),
+            ("Click", true),
+            (" an area to make it a shape  |  ", false),
+            ("Alt+Click", true),
+            (" or drag to remove areas", false),
+        ],
+        "livePaintBucket" => &[("Click", true), (" an area to fill it  |  ", false), ("Shift+Click", true), (" an edge to paint its stroke", false)],
+        "livePaintSelection" => &[
+            ("Click", true),
+            (" an area to select it  |  ", false),
+            ("Shift+Click", true),
+            (" to add to the selection  |  ", false),
+            ("Alt+Click", true),
+            (" to select an edge instead", false),
+        ],
+        "perspectiveGrid" => &[
+            ("Drag", true),
+            (" the grid's handles to adjust its planes and horizon  |  ", false),
+            ("Shift+Drag", true),
+            (" to snap to whole cells", false),
+        ],
+        "mesh" => &[
+            ("Click", true),
+            (" a shape to add a mesh point  |  ", false),
+            ("Drag", true),
+            (" a point to move it  |  ", false),
+            ("Alt+Click", true),
+            (" a point to delete it", false),
+        ],
+        "measure" => &[("Drag", true), (" to measure a distance and angle  |  ", false), ("Shift+Drag", true), (" to keep to 45° angles", false)],
+        "symbolSprayer" => &[
+            ("Drag", true),
+            (" to spray copies of the symbol  |  ", false),
+            ("Alt+Drag", true),
+            (" to remove copies  |  ", false),
+            ("[ ]", true),
+            (" to change the brush size", false),
+        ],
+        "symbolShifter" => &[("Drag", true), (" over sprayed symbols to push them  |  ", false), ("[ ]", true), (" to change the brush size", false)],
+        "symbolScruncher" => &[("Drag", true), (" to pull symbols together  |  ", false), ("Alt+Drag", true), (" to spread them out", false)],
+        "symbolSizer" => &[("Drag", true), (" to make symbols bigger  |  ", false), ("Alt+Drag", true), (" to make them smaller", false)],
+        "symbolSpinner" => &[("Drag", true), (" the way symbols should turn  |  ", false), ("[ ]", true), (" to change the brush size", false)],
+        "symbolStainer" => {
+            &[("Drag", true), (" to tint symbols with the fill color  |  ", false), ("Alt+Drag", true), (" to remove the tint", false)]
+        }
+        "symbolScreener" => {
+            &[("Drag", true), (" to make symbols more see-through  |  ", false), ("Alt+Drag", true), (" to make them more solid", false)]
+        }
+        "symbolStyler" => &[("Drag", true), (" to apply the selected graphic style  |  ", false), ("Alt+Drag", true), (" to remove it", false)],
+        "columnGraph" | "stackedColumnGraph" | "barGraph" | "stackedBarGraph" | "lineGraph" | "areaGraph" | "scatterGraph" | "pieGraph"
+        | "radarGraph" => &[
+            ("Drag", true),
+            (" to set the chart's size, then type its data  |  ", false),
+            ("Shift+Drag", true),
+            (" for a square  |  ", false),
+            ("Alt+Drag", true),
+            (" from center  |  ", false),
+            ("Click", true),
+            (" for exact size", false),
+        ],
+        "slice" => &[("Drag", true), (" a rectangle around the part to export as its own image", false)],
+        "sliceSelection" => &[
+            ("Click", true),
+            (" a slice to select it  |  ", false),
+            ("Drag", true),
+            (" to move  |  ", false),
+            ("Shift+Click", true),
+            (" to add  |  ", false),
+            ("Double-click", true),
+            (" for its options", false),
+        ],
+        "rotateView" => &[("Drag", true), (" to turn the view (the art stays as it is)", false)],
+        "printTiling" => &[
+            ("Drag", true),
+            (" to move where the printed pages fall  |  ", false),
+            ("Double-click", true),
+            (" the tool's button to put them back", false),
+        ],
         _ => return None,
     })
 }
@@ -731,20 +940,78 @@ fn hint_for(tool: &str) -> Option<&'static [(&'static str, bool)]> {
 /// can insist a complete language covers them.
 pub fn hint_strings() -> Vec<&'static str> {
     let mut v = Vec::new();
-    for tool in vectorcraft_tools::catalog::all_tools().map(|t| t.id).chain([ANIMATED_ZOOM_HINT]) {
-        for &(text, bold) in hint_for(tool).unwrap_or(&[]) {
-            let text = if bold { text.rsplit_once('+').map_or(text, |(_, k)| k) } else { text };
-            if !text.is_empty() && !text.chars().all(|c| c.is_ascii_digit()) && !v.contains(&text) {
-                v.push(text);
-            }
+    let tools = vectorcraft_tools::catalog::all_tools().map(|t| t.id).chain([ANIMATED_ZOOM_HINT]);
+    let fixed = tools.flat_map(|tool| hint_for(tool).unwrap_or(&[]).iter().copied());
+    // The first-step hints' bold parts are command and tool ids, which become their keys.
+    let first = START_HINT.iter().chain(EMPTY_PAGE_HINT).copied().filter(|(_, bold)| !bold);
+    for (text, bold) in fixed.chain(first) {
+        let text = if bold { text.rsplit_once('+').map_or(text, |(_, k)| k) } else { text };
+        // Keys written as symbols or digits ("5", "[ ]", "↑ ↓") and the tool keys of the
+        // first-step hints aren't words to translate.
+        let word = text.chars().any(|c| c.is_alphabetic()) && !(bold && text.chars().count() == 1);
+        if !text.is_empty() && word && !v.contains(&text) {
+            v.push(text);
         }
     }
     v
 }
 
+/// The hint with no document open: how to start one. The bold keys are the commands' shortcuts
+/// (`FILE_NEW`/`FILE_OPEN`, put in by [`first_step`]).
+const START_HINT: &[(&str, bool)] =
+    &[("To start, press ", false), (FILE_NEW, true), (" for a new document  |  ", false), (FILE_OPEN, true), (" to open one", false)];
+/// The Selection tool's hint on an empty page: a first thing to draw. The bold keys are the tools'
+/// (put in by [`first_step`]).
+const EMPTY_PAGE_HINT: &[(&str, bool)] = &[
+    ("Pick a shape tool (", false),
+    ("rectangle", true),
+    (") and drag on the page to draw  |  ", false),
+    ("pen", true),
+    (" draws with the Pen  |  ", false),
+    ("type", true),
+    (" adds text", false),
+];
+const FILE_NEW: &str = "file.newDialog";
+const FILE_OPEN: &str = "file.open";
+
+/// What the hint bar says before there is anything to work on: with no document open, how to
+/// start one; with the Selection tool on an empty page, what to draw first. `None` otherwise.
+fn first_step(app: &VectorcraftApp) -> Option<Vec<(&'static str, bool)>> {
+    /// What names a bold part's key: a command's shortcut or a tool's.
+    type KeyOf = fn(&str) -> Option<&'static str>;
+    let (hint, keyed): (&[(&'static str, bool)], KeyOf) = match app.session.active() {
+        None => (START_HINT, menus::shortcut_of),
+        Some(st) if app.session.tool_id() == "selection" && st.doc.layers.iter().all(|l| l.children().is_none_or(|c| c.is_empty())) => {
+            (EMPTY_PAGE_HINT, crate::shortcut_editor::tool_shortcut)
+        }
+        Some(_) => return None,
+    };
+    let mut out = Vec::with_capacity(hint.len());
+    for &(text, bold) in hint {
+        if !bold {
+            out.push((text, false));
+            continue;
+        }
+        // A command or tool the user left without a shortcut drops out with the text after it.
+        match keyed(text) {
+            Some(key) => out.push((key, true)),
+            None => {
+                out.pop();
+                return Some(out).filter(|o| !o.is_empty());
+            }
+        }
+    }
+    Some(out)
+}
+
 fn hint_segments(tool: &str) -> Vec<(Cow<'static, str>, bool)> {
+    hint_segments_of(hint_for(tool))
+}
+
+/// `segments` as the hint bar shows them; `None`: the pointer to Search Commands.
+fn hint_segments_of(segments: Option<&[(&'static str, bool)]>) -> Vec<(Cow<'static, str>, bool)> {
     let search;
-    let segments = match hint_for(tool) {
+    let segments = match segments {
         Some(s) => s,
         None => {
             search = match menus::shortcut_of("help.commandPalette") {
@@ -789,7 +1056,11 @@ pub fn hint_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
                 let tool = app.session.tool_id();
                 // The Zoom tool's drag zooms to an area, or with Animated Zoom zooms as it goes.
                 let hint = if tool == "zoom" && crate::canvas::animated_zoom(&app.session.prefs) { ANIMATED_ZOOM_HINT } else { tool };
-                for (txt, bold) in hint_segments(hint) {
+                let segments = match first_step(app) {
+                    Some(first) => hint_segments_of(Some(&first)),
+                    None => hint_segments(hint),
+                };
+                for (txt, bold) in segments {
                     let font = if bold { theme::semibold(12.5) } else { egui::FontId::proportional(12.5) };
                     job.append(&txt, 0.0, egui::TextFormat { font_id: font, color: if bold { t.text_strong } else { t.text }, ..Default::default() });
                 }
@@ -828,10 +1099,49 @@ mod tests {
         assert!(text("rotate").contains(&pretty("Alt+Click")));
         assert!(text("eyedropper").contains(&pretty("Alt+Click")));
         assert!(text("perspectiveSelection").contains(&pretty("Alt+Drag")) && text("perspectiveSelection").contains("perpendicular"));
-        assert!(text("paintbrush").contains(&pretty("Cmd+K")), "the Search Commands shortcut");
+        // A tool with no hint of its own (Crop Image) points to Search Commands.
+        assert!(text("cropImage").contains(&pretty("Cmd+K")), "the Search Commands shortcut");
         if !cfg!(target_os = "macos") {
-            assert!(text("zoom").contains("Alt+Click") && text("paintbrush").contains("Ctrl+K"));
+            assert!(text("zoom").contains("Alt+Click") && text("cropImage").contains("Ctrl+K"));
         }
+    }
+
+    /// Every tool has a how-to hint of its own (not the pointer to Search Commands).
+    #[test]
+    fn every_tool_has_a_hint() {
+        for t in vectorcraft_tools::catalog::all_tools() {
+            let hint = super::hint_for(t.id).unwrap_or_else(|| panic!("{} has no hint", t.id));
+            assert!(hint.iter().any(|(_, bold)| *bold) && hint.iter().any(|(s, bold)| !bold && s.trim().len() > 3), "{}", t.id);
+        }
+        // Modifier keys are in the hints of the tools that take them.
+        let has = |tool: &str, key: &str| super::hint_for(tool).unwrap().iter().any(|(s, bold)| *bold && s.starts_with(key));
+        for (tool, key) in [("lasso", "Alt+"), ("magicWand", "Shift+"), ("lineSegment", "Shift+"), ("shapeBuilder", "Alt+"), ("mirrorCut", "Alt+")] {
+            assert!(has(tool, key), "{tool}: {key}");
+        }
+    }
+
+    /// Before there is anything to work on, the hint bar gives a first step: with no document,
+    /// how to start one; with the Selection tool on an empty page, what to draw.
+    #[test]
+    fn the_hint_bar_gives_a_first_step() {
+        let text = |app: &crate::VectorcraftApp| match super::first_step(app) {
+            Some(s) => super::hint_segments_of(Some(&s)).into_iter().map(|(s, _)| s).collect::<String>(),
+            None => String::new(),
+        };
+        let pretty = crate::menus::pretty_shortcut;
+        let mut app = crate::VectorcraftApp::new(Session::new(), Default::default());
+        let start = text(&app);
+        assert!(start.contains("for a new document") && start.contains(&pretty("Cmd+N")), "{start}");
+        assert!(!start.contains("Click the object"), "{start}");
+        app.run("file.new", json!({"width": 100, "height": 100})).unwrap();
+        let empty = text(&app);
+        assert!(empty.contains("Pick a shape tool (M)") && empty.contains(" draws with the Pen"), "{empty}");
+        // Another tool shows its own hint; so does the Selection tool once there is art.
+        app.select_tool("pen");
+        assert!(super::first_step(&app).is_none());
+        app.select_tool("selection");
+        app.run("shape.rectangle", json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap();
+        assert!(super::first_step(&app).is_none());
     }
 
     /// A document tab's × sits where the platform puts it (#673): after the title on Windows,
@@ -953,6 +1263,8 @@ mod tests {
             }
         }
         let mut app = crate::VectorcraftApp::new(Session::new(), Default::default());
+        // A document open: with none, the hint bar says how to start one.
+        app.run("file.new", json!({"width": 100, "height": 100})).unwrap();
         app.select_tool("zoom");
         let ctx = egui::Context::default();
         crate::theme::install_fonts(&ctx);

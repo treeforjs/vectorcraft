@@ -4254,3 +4254,196 @@ axis	Both	Les deux
 	Not available right now	Indisponible pour le moment
 	↑↓ move · Enter runs · Esc closes	↑↓ déplacer · Entrée exécute · Échap ferme
 	Type what you want to do…	Tapez ce que vous voulez faire…
+# Starter toolbar, tool descriptions and hints (UX5).
+	 a closed path to fill it with text  |  	 sur un tracé fermé pour le remplir de texte  |  
+	 a corner point to pull out curve handles  |  	 un point d’angle pour en tirer des poignées de courbe  |  
+	 a letter to select it  |  	 sur une lettre pour la sélectionner  |  
+	 a line across an object to cut it and mirror one half  |  	 une ligne à travers un objet pour le couper et refléter une moitié  |  
+	 a line across objects to cut them  |  	 une ligne à travers des objets pour les couper  |  
+	 a path to add a point  |  	 sur un tracé pour ajouter un point  |  
+	 a path to cut it at that point	 sur un tracé pour le couper à cet endroit
+	 a path to type along it  |  	 sur un tracé pour écrire le long de celui-ci  |  
+	 a point to delete it	 sur un point pour le supprimer
+	 a point to delete it  |  	 sur un point pour le supprimer  |  
+	 a point to move it  |  	 un point pour le déplacer  |  
+	 a rectangle around the part to export as its own image	 un rectangle autour de la partie à exporter comme image distincte
+	 a rectangle over objects to cut it out	 un rectangle sur des objets pour le découper
+	 a rough rectangle, circle, triangle or line to get a clean shape  |  	 un rectangle, un cercle, un triangle ou une ligne approximatifs pour obtenir une forme nette  |  
+	 a shape to add a mesh point  |  	 sur une forme pour ajouter un point de filet  |  
+	 a slice to select it  |  	 sur une tranche pour la sélectionner  |  
+	 a smooth point to make it a corner  |  	 sur un point lisse pour en faire un angle  |  
+	 across shapes to merge them  |  	 sur les formes pour les fusionner  |  
+	 across shapes to slice them apart	 sur les formes pour les trancher
+	 adds text	 ajoute du texte
+	 along a selected path to erase that part	 le long d’un tracé sélectionné pour en effacer cette partie
+	 along a selected path to smooth it	 le long d’un tracé sélectionné pour le lisser
+	 an area to fill it  |  	 sur une zone pour la remplir  |  
+	 an area to make it a shape  |  	 sur une zone pour en faire une forme  |  
+	 an area to select it  |  	 sur une zone pour la sélectionner  |  
+	 an edge to paint its stroke	 sur un bord pour peindre son contour
+	 an object in a group to select it  |  	 sur un objet d’un groupe pour le sélectionner  |  
+	 an object to select all with a similar color  |  	 sur un objet pour sélectionner tous ceux de couleur proche  |  
+	 around points or objects to select them  |  	 autour de points ou d’objets pour les sélectionner  |  
+	 draws with the Pen  |  	 dessine à la plume  |  
+	 for a new document  |  	 pour un nouveau document  |  
+	 for a square  |  	 pour un carré  |  
+	 for its options	 pour ses options
+	 from center	 depuis le centre
+	 from the center to draw  |  	 depuis le centre pour dessiner  |  
+	 from the center to size the glow, then click where the rings end  |  	 depuis le centre pour régler le halo, puis cliquez là où finissent les anneaux  |  
+	 of a selected path to keep drawing it  |  	 d’un tracé sélectionné pour le prolonger  |  
+	 or drag to remove areas	 ou faites glisser pour retirer des zones
+	 over shapes to erase  |  	 sur les formes pour effacer  |  
+	 over sprayed symbols to push them  |  	 sur les symboles pulvérisés pour les pousser  |  
+	 over the gap between two open ends to join them	 sur l’espace entre deux extrémités ouvertes pour les joindre
+	 overlapping shapes to cut or merge them	 des formes qui se chevauchent pour les découper ou les fusionner
+	 part of a selected path to reshape it smoothly  |  	 une partie d’un tracé sélectionné pour le remodeler en douceur  |  
+	 the grid's handles to adjust its planes and horizon  |  	 les poignées de la grille pour régler ses plans et son horizon  |  
+	 the tool's button to put them back	 le bouton de l’outil pour les remettre en place
+	 the way symbols should turn  |  	 dans le sens où les symboles doivent tourner  |  
+	 to add  |  	 pour ajouter  |  
+	 to add a point instead	 pour ajouter un point à la place
+	 to add the group around it  |  	 pour ajouter le groupe qui le contient  |  
+	 to add to the selection  |  	 pour ajouter à la sélection  |  
+	 to apply the selected graphic style  |  	 pour appliquer le style graphique sélectionné  |  
+	 to change the brush size	 pour changer la taille du pinceau
+	 to delete a point instead	 pour supprimer un point à la place
+	 to draw freehand  |  	 pour dessiner à main levée  |  
+	 to keep it upright  |  	 pour le garder droit  |  
+	 to keep the other side	 pour garder l’autre côté
+	 to keep to 45° angles	 pour rester à des angles de 45°
+	 to keep to 45° angles  |  	 pour rester à des angles de 45°  |  
+	 to make symbols bigger  |  	 pour agrandir les symboles  |  
+	 to make symbols more see-through  |  	 pour rendre les symboles plus transparents  |  
+	 to make them more solid	 pour les rendre plus opaques
+	 to make them smaller	 pour les rapetisser
+	 to measure a distance and angle  |  	 pour mesurer une distance et un angle  |  
+	 to move it on its own	 pour la déplacer seule
+	 to move where the printed pages fall  |  	 pour déplacer l’emplacement des pages imprimées  |  
+	 to open one	 pour en ouvrir un
+	 to paint a filled shape that merges with ones it touches  |  	 pour peindre une forme pleine qui fusionne avec celles qu’elle touche  |  
+	 to pull symbols together  |  	 pour rapprocher les symboles  |  
+	 to remove copies  |  	 pour retirer des copies  |  
+	 to remove from the selection	 pour retirer de la sélection
+	 to remove it	 pour le retirer
+	 to remove the tint	 pour retirer la teinte
+	 to resize or turn it	 pour la redimensionner ou la faire pivoter
+	 to rotate  |  	 pour faire pivoter  |  
+	 to scale  |  	 pour mettre à l’échelle  |  
+	 to select an edge instead	 pour sélectionner un bord à la place
+	 to set the chart's size, then type its data  |  	 pour fixer la taille du graphique, puis saisir ses données  |  
+	 to snap to whole cells	 pour s’aligner sur des cellules entières
+	 to spray copies of the symbol  |  	 pour pulvériser des copies du symbole  |  
+	 to spread them out	 pour les écarter
+	 to tint symbols with the fill color  |  	 pour teinter les symboles avec la couleur de fond  |  
+	 to turn the view (the art stays as it is)	 pour faire pivoter la vue (l’illustration ne change pas)
+	 while dragging for more or fewer corners  |  	 pendant le glissement pour plus ou moins de coins  |  
+	 while dragging to add or remove rays  |  	 pendant le glissement pour ajouter ou retirer des rayons  |  
+	 while dragging to close the path	 pendant le glissement pour fermer le tracé
+	) and drag on the page to draw  |  	) et faites glisser sur la page pour dessiner  |  
+	Click again	Cliquez à nouveau
+	Drag a corner	Faites glisser un coin
+	Drag from the end	Faites glisser depuis l’extrémité
+	Drag outside a corner	Faites glisser hors d’un coin
+	Scribble	Griffonnez
+	Scribble over	Griffonnez sur
+	Pick a shape tool (	Choisissez un outil de forme (
+	To start, press 	Pour commencer, appuyez sur 
+	Starter	Débutant
+	Basic	De base
+	All Tools…	Tous les outils…
+	Toolbar Layout	Disposition de la barre d’outils
+	More Tools	Plus d’outils
+	Every tool, grouped by task. Pick one to use it.	Tous les outils, groupés par tâche. Choisissez-en un pour l’utiliser.
+	Click the arrow for more tools like this one.	Cliquez sur la flèche pour d’autres outils de ce type.
+	Pick, move and resize whole objects.	Sélectionnez, déplacez et redimensionnez des objets entiers.
+	Pick single points and path segments to reshape them.	Sélectionnez des points et segments isolés pour les remodeler.
+	Pick one object inside a group, then the group around it.	Sélectionnez un objet dans un groupe, puis le groupe qui le contient.
+	Select every object with a similar color or stroke.	Sélectionnez tous les objets de couleur ou de contour proches.
+	Draw around points or objects to select them.	Dessinez autour de points ou d’objets pour les sélectionner.
+	Draw precise curves: click for corners, drag for curves.	Dessinez des courbes précises : cliquez pour un angle, faites glisser pour une courbe.
+	Click a path to add a point to it.	Cliquez sur un tracé pour y ajouter un point.
+	Click a point on a path to remove it.	Cliquez sur un point d’un tracé pour le supprimer.
+	Turn a point into a sharp corner or a smooth curve.	Transformez un point en angle vif ou en courbe lisse.
+	Draw smooth curves by clicking where the path should pass.	Dessinez des courbes lisses en cliquant là où le tracé doit passer.
+	Add text: click for a line, drag for a text box.	Ajoutez du texte : cliquez pour une ligne, faites glisser pour un bloc de texte.
+	Fill a shape with flowing text.	Remplissez une forme avec du texte qui s’y écoule.
+	Make text follow a line or curve.	Faites suivre au texte une ligne ou une courbe.
+	Add text that runs top to bottom.	Ajoutez du texte qui va de haut en bas.
+	Fill a shape with text that runs top to bottom.	Remplissez une forme de texte qui va de haut en bas.
+	Make top-to-bottom text follow a path.	Faites suivre un tracé à du texte vertical.
+	Move, turn and resize single letters.	Déplacez, faites pivoter et redimensionnez des lettres isolées.
+	Draw straight lines.	Dessinez des lignes droites.
+	Draw curved arcs.	Dessinez des arcs.
+	Draw spirals.	Dessinez des spirales.
+	Draw a grid of rows and columns.	Dessinez une grille de lignes et de colonnes.
+	Draw a target of circles and spokes.	Dessinez une cible de cercles et de rayons.
+	Draw rectangles and squares.	Dessinez des rectangles et des carrés.
+	Draw rectangles with rounded corners.	Dessinez des rectangles aux coins arrondis.
+	Draw ovals and circles.	Dessinez des ovales et des cercles.
+	Draw shapes with equal sides, like triangles and hexagons.	Dessinez des formes à côtés égaux, comme des triangles et des hexagones.
+	Draw stars.	Dessinez des étoiles.
+	Draw a lens flare with a glow, rings and rays.	Dessinez un halo avec lueur, anneaux et rayons.
+	Paint freehand strokes with a brush.	Peignez des traits à main levée au pinceau.
+	Paint filled shapes that merge where they overlap.	Peignez des formes pleines qui fusionnent là où elles se chevauchent.
+	Scribble a rough shape and get a clean one.	Griffonnez une forme approximative et obtenez une forme nette.
+	Draw freehand lines that smooth themselves.	Dessinez à main levée des lignes qui se lissent d’elles-mêmes.
+	Drag along a path to smooth out bumps.	Faites glisser le long d’un tracé pour en lisser les bosses.
+	Drag along a path to erase part of it.	Faites glisser le long d’un tracé pour en effacer une partie.
+	Scribble over two open ends to join them.	Griffonnez sur deux extrémités ouvertes pour les joindre.
+	Rub out parts of shapes.	Effacez des parties de formes.
+	Cut a path in two at the point you click.	Coupez un tracé en deux à l’endroit du clic.
+	Slice shapes apart along a freehand line.	Tranchez des formes le long d’une ligne à main levée.
+	Cut an object along a line and mirror one half.	Coupez un objet le long d’une ligne et reflétez une moitié.
+	Cut objects along a straight line.	Coupez des objets le long d’une ligne droite.
+	Cut a rectangle out of objects.	Découpez un rectangle dans des objets.
+	Turn objects around a point.	Faites pivoter des objets autour d’un point.
+	Flip objects like a mirror.	Retournez des objets comme dans un miroir.
+	Make objects bigger or smaller.	Agrandissez ou réduisez des objets.
+	Slant objects sideways.	Inclinez des objets sur le côté.
+	Drag part of a path to reshape it smoothly.	Faites glisser une partie d’un tracé pour le remodeler en douceur.
+	Make a stroke thicker or thinner at points along it.	Rendez un contour plus épais ou plus fin à certains points.
+	Push paths around like soft clay.	Poussez les tracés comme de l’argile molle.
+	Swirl paths into twists.	Faites tourbillonner les tracés.
+	Pull paths in toward the brush.	Resserrez les tracés vers le pinceau.
+	Puff paths out from the brush.	Gonflez les tracés depuis le pinceau.
+	Add curved bumps along outlines.	Ajoutez des festons le long des contours.
+	Add spikes along outlines.	Ajoutez des pointes le long des contours.
+	Add wrinkles along outlines.	Ajoutez des fronces le long des contours.
+	Move, scale, rotate, slant and distort in one tool.	Déplacez, mettez à l’échelle, faites pivoter, inclinez et déformez avec un seul outil.
+	Pin points on art and drag them to bend it.	Épinglez des points sur l’illustration et faites-les glisser pour la plier.
+	Merge or remove overlapping parts of shapes.	Fusionnez ou retirez les parties de formes qui se chevauchent.
+	Fill the areas between overlapping lines with color.	Remplissez de couleur les zones entre des lignes qui se croisent.
+	Select the areas and edges of Live Paint art.	Sélectionnez les zones et bords de la peinture dynamique.
+	Show a grid for drawing in 3D perspective.	Affichez une grille pour dessiner en perspective 3D.
+	Move and place objects on the perspective grid.	Déplacez et placez des objets sur la grille de perspective.
+	Add color points inside a shape for soft color blends.	Ajoutez des points de couleur dans une forme pour des fondus doux.
+	Set where a color gradient starts and ends.	Définissez où un dégradé commence et se termine.
+	Copy the color and style of one object onto another.	Copiez la couleur et le style d’un objet sur un autre.
+	Measure distances and angles.	Mesurez des distances et des angles.
+	Make the in-between steps from one object to another.	Créez les étapes intermédiaires d’un objet à un autre.
+	Spray copies of a symbol onto the page.	Pulvérisez des copies d’un symbole sur la page.
+	Push sprayed symbols around.	Poussez les symboles pulvérisés.
+	Pull sprayed symbols together or spread them out.	Rapprochez ou écartez les symboles pulvérisés.
+	Make sprayed symbols bigger or smaller.	Agrandissez ou réduisez les symboles pulvérisés.
+	Turn sprayed symbols.	Faites pivoter les symboles pulvérisés.
+	Tint sprayed symbols with the fill color.	Teintez les symboles pulvérisés avec la couleur de fond.
+	Make sprayed symbols more or less see-through.	Rendez les symboles pulvérisés plus ou moins transparents.
+	Apply the selected graphic style to sprayed symbols.	Appliquez le style graphique sélectionné aux symboles pulvérisés.
+	Make a chart with vertical bars.	Créez un graphique à barres verticales.
+	Make a chart with stacked vertical bars.	Créez un graphique à barres verticales empilées.
+	Make a chart with horizontal bars.	Créez un graphique à barres horizontales.
+	Make a chart with stacked horizontal bars.	Créez un graphique à barres horizontales empilées.
+	Make a chart with lines through points.	Créez un graphique de lignes reliant des points.
+	Make a chart with filled areas.	Créez un graphique à aires remplies.
+	Make a chart of dots.	Créez un graphique de points.
+	Make a pie chart.	Créez un graphique en secteurs.
+	Make a radar (spider) chart.	Créez un graphique radar.
+	Add, move and resize pages.	Ajoutez, déplacez et redimensionnez des pages.
+	Mark parts of the art to export as separate images.	Marquez des parties de l’illustration à exporter comme images distinctes.
+	Pick and adjust slices.	Sélectionnez et ajustez des tranches.
+	Drag to move around the page. Hold Space with any tool.	Faites glisser pour vous déplacer dans la page. Maintenez Espace avec n’importe quel outil.
+	Turn the view without turning the art.	Faites pivoter la vue sans faire pivoter l’illustration.
+	Move where the printed pages fall on the art.	Déplacez l’emplacement des pages imprimées sur l’illustration.
+	Zoom in and out of the page.	Zoomez en avant et en arrière sur la page.
+@msg	layout must be starter, basic or advanced, not {v}	la disposition doit être starter, basic ou advanced, pas {v}

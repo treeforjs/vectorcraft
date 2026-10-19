@@ -231,6 +231,18 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ),
     ("window.toolbarAdvanced", "Toolbar: Advanced / Basic", "", "{}"),
     (
+        "window.toolbarLayout",
+        "Toolbar Layout",
+        "",
+        "{layout?: \"starter\" | \"basic\" | \"advanced\"} show the Starter toolbar (ten everyday tools and More Tools, the default), the categorized Basic one or every tool group (Advanced); omitted, returns the current layout → {layout}",
+    ),
+    (
+        "window.allTools",
+        "All Tools…",
+        "",
+        "{} open the All Tools drawer: every tool under a heading for its task, as the Starter toolbar's More Tools and Edit Toolbar do",
+    ),
+    (
         "window.floatTools",
         "Float Tool Group",
         "",
@@ -1217,6 +1229,20 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             json!(on)
         }),
         "window.toolbarAdvanced" => flag(&mut app.ui.toolbar_advanced),
+        "window.toolbarLayout" => match p.get("layout") {
+            None | Some(Value::Null) => Ok(json!({ "layout": crate::toolbar::Layout::of(&app.ui).id() })),
+            Some(v) => match v.as_str().and_then(crate::toolbar::Layout::parse) {
+                Some(l) => {
+                    l.apply(&mut app.ui);
+                    Ok(json!({ "layout": l.id() }))
+                }
+                None => Err(format!("layout must be starter, basic or advanced, not {v}")),
+            },
+        },
+        "window.allTools" => {
+            app.ui.dialog = Some(crate::state::Dialog::new("allTools", json!({})));
+            Ok(Value::Null)
+        }
         "window.floatTools" => {
             let floating = match opt_bool(p, "floating") {
                 Ok(on) => on,
@@ -1616,6 +1642,9 @@ pub fn checked(app: &VectorcraftApp, id: &str, p: &Value) -> Option<bool> {
         "window.control" => app.ui.control_bar,
         "window.toolbar" => app.ui.toolbar,
         "window.toolbarAdvanced" => app.ui.toolbar_advanced,
+        "window.toolbarLayout" => {
+            p.get("layout").and_then(Value::as_str).and_then(crate::toolbar::Layout::parse) == Some(crate::toolbar::Layout::of(&app.ui))
+        }
         "window.toolbarColumns" => app.ui.toolbar_double,
         "window.floatTools" => {
             let tool = p.get("tool").and_then(Value::as_str).unwrap_or("");
@@ -2732,7 +2761,17 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Control", "window.control"),
                 c("Contextual Task Bar", "window.taskBar"),
                 c("Tools", "window.toolbar"),
-                sub("Toolbars", vec![c("Advanced", "window.toolbarAdvanced"), c("Double Column", "window.toolbarColumns")]),
+                sub(
+                    "Toolbars",
+                    vec![
+                        cp("Starter", "window.toolbarLayout", json!({"layout": "starter"})),
+                        cp("Basic", "window.toolbarLayout", json!({"layout": "basic"})),
+                        c("Advanced", "window.toolbarAdvanced"),
+                        Sep,
+                        c("Double Column", "window.toolbarColumns"),
+                        c("All Tools…", "window.allTools"),
+                    ],
+                ),
                 Sep,
                 panel("Actions", "actions"),
                 panel("Align", "align"),
@@ -3722,7 +3761,8 @@ pub fn menu_strings() -> std::collections::BTreeSet<String> {
     }
     out.extend(crate::state::all_panels().map(|(_, label)| label.to_string()));
     out.extend(vectorcraft_tools::catalog::all_tools().map(|t| t.label.to_string()));
-    out.extend(crate::toolbar::BASIC.iter().map(|c| c.0.to_string()));
+    out.extend(crate::toolbar::BASIC.iter().chain(crate::toolbar::STARTER).map(|c| c.0.to_string()));
+    out.extend(vectorcraft_tools::catalog::all_tools().map(|t| t.about.to_string()));
     out.extend(vectorcraft_color::BlendMode::ALL.iter().map(|m| m.label().to_string()));
     out.extend(vectorcraft_effects::effect_catalog().iter().map(|e| e.label.to_string()));
     out.extend(vectorcraft_engine::cmd::prefscmds::PREF_CATEGORIES.iter().map(|c| c.to_string()));

@@ -1,7 +1,14 @@
-//! The Tools panel. Default: Illustrator 2026's categorized single-column toolbar (Select, Shapes,
-//! Draw, Modify, Type, Navigate, Color). Window → Toolbars → Advanced shows every tool group; the
-//! double arrow at the top (or Window → Toolbars → Double Column, `window.toolbarColumns`) lays the
-//! tools out in one or two columns.
+//! The Tools panel, in one of three layouts (Window → Toolbars, `window.toolbarLayout`):
+//! - Starter (the default for new users): ten everyday tools under Select, Draw, Edit and View,
+//!   then More Tools, which opens the All Tools drawer.
+//! - Basic: the categorized single-column toolbar (Select, Shapes, Draw, Modify, Type, Navigate,
+//!   Color).
+//! - Advanced: every tool group.
+//!
+//! A button whose group holds more tools shows an arrow at its right edge: clicking the arrow (or
+//! a right-click or long press anywhere on the button) opens the group's flyout. Tooltips give the
+//! tool's name, its key and a line on what it does. The double arrow at the top (or Window →
+//! Toolbars → Double Column, `window.toolbarColumns`) lays the tools out in one or two columns.
 //! Bottom: fill/stroke proxy, colour/gradient/none, drawing modes, screen mode, Edit Toolbar.
 
 use egui::{Color32, CornerRadius, Sense, Stroke, Ui, pos2, vec2};
@@ -62,29 +69,183 @@ pub const BASIC: &[(&str, &[&[&str]])] = &[
     ("Color", &[&["gradient", "mesh"], &["eyedropper", "measure"]]),
 ];
 
+/// The Starter toolbar: ten slots of everyday tools in plain groups, then More Tools. Each slot is
+/// a flyout group (first = default): Select; Edit points; Shapes; Pen; Pencil and Brush; Text;
+/// Eraser and Scissors; Eyedropper; Hand; Zoom.
+pub const STARTER: &[(&str, &[&[&str]])] = &[
+    ("Select", &[&["selection"], &["directSelection", "groupSelection"]]),
+    (
+        "Draw",
+        &[
+            &["rectangle", "ellipse", "polygon", "star", "lineSegment"],
+            &["pen", "curvature", "addAnchor", "deleteAnchor", "anchorPoint"],
+            &["pencil", "paintbrush", "blobBrush", "smooth"],
+            &["type", "areaType", "typeOnPath"],
+        ],
+    ),
+    ("Edit", &[&["eraser", "scissors", "knife"], &["eyedropper"]]),
+    ("View", &[&["hand"], &["zoom"]]),
+];
+
+/// Which tools the toolbar shows (Window → Toolbars, `window.toolbarLayout`).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Layout {
+    Starter,
+    Basic,
+    Advanced,
+}
+
+impl Layout {
+    pub const ALL: [Layout; 3] = [Layout::Starter, Layout::Basic, Layout::Advanced];
+
+    pub fn id(self) -> &'static str {
+        match self {
+            Layout::Starter => "starter",
+            Layout::Basic => "basic",
+            Layout::Advanced => "advanced",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Layout> {
+        Layout::ALL.into_iter().find(|l| l.id().eq_ignore_ascii_case(s))
+    }
+
+    pub fn of(ui: &crate::state::UiState) -> Layout {
+        if ui.toolbar_advanced {
+            Layout::Advanced
+        } else if ui.toolbar_starter {
+            Layout::Starter
+        } else {
+            Layout::Basic
+        }
+    }
+
+    /// Show this layout. Advanced leaves the Starter/Basic choice alone, so turning Advanced off
+    /// goes back to it.
+    pub fn apply(self, ui: &mut crate::state::UiState) {
+        ui.toolbar_advanced = self == Layout::Advanced;
+        if self != Layout::Advanced {
+            ui.toolbar_starter = self == Layout::Starter;
+        }
+    }
+}
+
+/// A toolbar slot: the category label of a category's first slot, and the slot's tool ids.
+type Slot = (Option<&'static str>, Vec<&'static str>);
+
+/// The slots of `layout`, built once (the toolbar draws them every frame).
+pub(crate) fn layout_slots(layout: Layout) -> &'static [Slot] {
+    use std::sync::OnceLock;
+    static STARTER_SLOTS: OnceLock<Vec<Slot>> = OnceLock::new();
+    static BASIC_SLOTS: OnceLock<Vec<Slot>> = OnceLock::new();
+    static ADVANCED_SLOTS: OnceLock<Vec<Slot>> = OnceLock::new();
+    let categorized = |cats: &[(&'static str, &[&[&'static str]])]| -> Vec<Slot> {
+        cats.iter().flat_map(|(cat, ss)| ss.iter().enumerate().map(move |(i, s)| (if i == 0 { Some(*cat) } else { None }, s.to_vec()))).collect()
+    };
+    match layout {
+        Layout::Starter => STARTER_SLOTS.get_or_init(|| categorized(STARTER)),
+        Layout::Basic => BASIC_SLOTS.get_or_init(|| categorized(BASIC)),
+        Layout::Advanced => ADVANCED_SLOTS.get_or_init(|| TOOL_GROUPS.iter().map(|g| (None, g.iter().map(|t| t.id).collect())).collect()),
+    }
+}
+
+/// A tool's name as the toolbar shows it: its label without the word "Tool" ("Pen", not "Pen
+/// Tool"), in the interface language.
+pub(crate) fn tool_name(t: &ToolInfo) -> String {
+    strip_tool_word(tl!(t.label))
+}
+
+/// `label` without the word for "tool" that the catalogs put before or after a tool's name
+/// ("Pen Tool", "Outil Plume", "Инструмент «Перо»", "ペンツール"); a label that is only that word
+/// stays as it is.
+fn strip_tool_word(label: &str) -> String {
+    const SUFFIXES: &[&str] = &[" Tool", "ツール", "工具"];
+    const PREFIXES: &[&str] = &["Herramienta ", "Outil ", "Strumento ", "Ferramenta ", "Nástroj ", "Инструмент ", "Інструмент "];
+    let mut name = label.trim();
+    for s in SUFFIXES {
+        name = name.strip_suffix(s).unwrap_or(name);
+    }
+    for p in PREFIXES {
+        name = name.strip_prefix(p).unwrap_or(name);
+    }
+    let name = name.trim().trim_start_matches('«').trim_end_matches('»').trim();
+    if name.is_empty() {
+        return label.to_string();
+    }
+    // A Romance-language name that followed "Outil" may start lower-case ("Outil texte"): the
+    // name alone starts with a capital.
+    let mut chars = name.chars();
+    match chars.next() {
+        Some(c) if c.is_lowercase() => c.to_uppercase().chain(chars).collect(),
+        _ => name.to_string(),
+    }
+}
+
+/// A tool's tooltip as one string: "Name (key)" and the line on what it does.
 pub(crate) fn tip(t: &ToolInfo) -> String {
-    match crate::shortcut_editor::tool_shortcut(t.id) {
-        Some(s) => format!("{} ({})", tl!(t.label), s),
-        None => tl!(t.label).to_string(),
+    let name = tool_name(t);
+    let head = match crate::shortcut_editor::tool_shortcut(t.id) {
+        Some(s) => format!("{name} ({s})"),
+        None => name,
+    };
+    format!("{head}\n{}", tl!(t.about))
+}
+
+/// A tool's tooltip: its name and key in bold, then what it does; `more` adds how to open the
+/// rest of its group.
+fn tip_ui(ui: &mut Ui, t: &ToolInfo, more: bool) {
+    let tok = Tokens::get(ui.ctx());
+    ui.set_max_width(260.0);
+    let name = tool_name(t);
+    let head = match crate::shortcut_editor::tool_shortcut(t.id) {
+        Some(s) => format!("{name}  ({s})"),
+        None => name,
+    };
+    ui.label(egui::RichText::new(head).size(12.5).strong().color(tok.text_strong));
+    ui.label(egui::RichText::new(tl!(t.about)).size(12.0).color(tok.text));
+    if more {
+        ui.label(egui::RichText::new(tl!("Click the arrow for more tools like this one.")).size(11.0).color(tok.text_dim));
     }
 }
 
 /// Slots of the current layout: (category label for the first slot of a category, tool ids).
-fn slots(app: &VectorcraftApp) -> Vec<(Option<&'static str>, Vec<&'static str>)> {
-    if app.ui.toolbar_advanced {
-        TOOL_GROUPS.iter().map(|g| (None, g.iter().map(|t| t.id).collect())).collect()
-    } else {
-        BASIC.iter().flat_map(|(cat, ss)| ss.iter().enumerate().map(move |(i, s)| (if i == 0 { Some(*cat) } else { None }, s.to_vec()))).collect()
-    }
+fn slots(app: &VectorcraftApp) -> &'static [Slot] {
+    layout_slots(Layout::of(&app.ui))
 }
 
 /// Remember the tool shown in the slot that contains `id`.
 pub fn remember(app: &mut VectorcraftApp, id: &str) {
     for (_, s) in slots(app) {
-        if s.contains(&id) {
-            app.ui.slot_tool.insert(s[0].to_string(), id.to_string());
+        if s.contains(&id)
+            && let Some(first) = s.first()
+        {
+            app.ui.slot_tool.insert(first.to_string(), id.to_string());
         }
     }
+}
+
+/// Fit a category label in `width` points: smaller type for a long word, then cut with "…".
+fn fit_label(ui: &Ui, label: &str, width: f32, color: Color32) -> std::sync::Arc<egui::Galley> {
+    let layout = |text: String, size: f32| ui.painter().layout_no_wrap(text, egui::FontId::proportional(size), color);
+    let mut size = 11.0;
+    loop {
+        let g = layout(label.to_string(), size);
+        if g.size().x <= width || size <= 8.5 {
+            if g.size().x <= width {
+                return g;
+            }
+            break;
+        }
+        size -= 0.5;
+    }
+    let chars: Vec<char> = label.chars().collect();
+    for n in (1..chars.len()).rev() {
+        let g = layout(format!("{}…", chars.iter().take(n).collect::<String>()), size);
+        if g.size().x <= width {
+            return g;
+        }
+    }
+    layout(label.to_string(), size)
 }
 
 pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -174,12 +335,16 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
                 let (r, _) = ui.allocate_exact_size(vec2(ui.available_width(), 9.0), Sense::hover());
                 ui.painter().line_segment([r.center() - vec2(6.0, 0.0), r.center() + vec2(6.0, 0.0)], egui::Stroke::new(1.0, t.divider));
             } else if let Some(cat) = all[i].0 {
-                let (r, _) = ui.allocate_exact_size(vec2(ui.available_width(), 18.0), Sense::hover());
-                // A long name is cut to its first four characters in the single column.
+                let (r, resp) = ui.allocate_exact_size(vec2(ui.available_width(), 18.0), Sense::hover());
+                // A long name gets smaller type to fit the column, and only then is cut short
+                // (with its full name on hover).
                 let cat = tl!(cat);
-                let label =
-                    if cols == 1 && cat.chars().count() > 6 { format!("{}...", cat.chars().take(4).collect::<String>()) } else { cat.to_string() };
-                ui.painter().text(r.center() + vec2(0.0, 2.0), egui::Align2::CENTER_CENTER, label, egui::FontId::proportional(11.0), t.text);
+                let g = fit_label(ui, cat, r.width() - 4.0, t.text);
+                let cut = !g.text().eq(cat);
+                ui.painter().galley(r.center() + vec2(0.0, 2.0) - g.size() / 2.0, g, t.text);
+                if cut {
+                    resp.on_hover_text(cat);
+                }
             }
             // One row = `cols` slots (a category label always starts a new row).
             let mut row = vec![i];
@@ -194,13 +359,16 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
                     ui.add_space(2.0);
                 }
                 for &k in &row {
-                    let slot = &all[k].1;
+                    let Some((_, slot)) = all.get(k) else { continue };
+                    let Some(&first) = slot.first() else { continue };
+                    // The active tool, else the one last used from this slot (if this layout's
+                    // slot holds it: the layouts share first tools), else the slot's first.
                     let shown_id = if slot.contains(&active) {
-                        active.to_string()
+                        active
                     } else {
-                        app.ui.slot_tool.get(slot[0]).cloned().unwrap_or_else(|| slot[0].to_string())
+                        app.ui.slot_tool.get(first).map(String::as_str).filter(|id| slot.contains(id)).unwrap_or(first)
                     };
-                    let Some(shown) = tool_info(&shown_id).or_else(|| tool_info(slot[0])) else { continue };
+                    let Some(shown) = tool_info(shown_id).or_else(|| tool_info(first)) else { continue };
                     let is_active = slot.contains(&active);
                     let (rect, resp) = ui.allocate_exact_size(vec2(36.0, PITCH - 1.0), Sense::click_and_drag());
                     let well = egui::Rect::from_center_size(rect.center(), vec2(35.5, 27.5));
@@ -212,14 +380,24 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
                     let ir = egui::Rect::from_center_size(rect.center(), vec2(18.0, 18.0));
                     icons::paint(ui, icons::tool_icon(shown.icon), ir, if is_active { t.text_strong } else { t.icon });
                     if slot.len() > 1 {
-                        let c = rect.center() + vec2(12.5, 10.0);
-                        ui.painter().add(egui::Shape::convex_polygon(vec![c, c + vec2(-3.5, 0.0), c + vec2(0.0, -3.5)], t.icon, Stroke::NONE));
+                        // The arrow that opens the group's flyout, at the button's right edge.
+                        let arrow = arrow_zone(rect);
+                        let over = resp.hovered() && ui.input(|inp| inp.pointer.hover_pos()).is_some_and(|p| arrow.contains(p));
+                        if over {
+                            ui.painter().rect_filled(arrow.shrink2(vec2(0.0, 2.0)), CornerRadius::same(1), t.hover);
+                        }
+                        let c = pos2(arrow.center().x - 1.0, rect.center().y);
+                        ui.painter().add(egui::Shape::convex_polygon(
+                            vec![c + vec2(-1.5, -3.5), c + vec2(2.5, 0.0), c + vec2(-1.5, 3.5)],
+                            if over || is_active { t.text_strong } else { t.icon },
+                            Stroke::NONE,
+                        ));
                     }
                     let press = if slot.len() > 1 { flyout_press(ui, &resp, rect) } else { None };
                     let alt = ui.input(|inp| inp.modifiers.alt);
                     if press.is_some() {
-                        if is_floating(app, slot[0]) {
-                            raise = Some(slot[0]);
+                        if is_floating(app, first) {
+                            raise = Some(first);
                         } else {
                             open_flyout = Some((slot.clone(), rect));
                         }
@@ -230,17 +408,21 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
                         // Releasing the long press that opened the flyout leaves it open.
                     } else if resp.clicked() && alt && slot.len() > 1 {
                         let idx = slot.iter().position(|x| *x == shown.id).unwrap_or(0);
-                        app.select_tool(slot[(idx + 1) % slot.len()]);
+                        app.select_tool(slot.get((idx + 1) % slot.len()).copied().unwrap_or(first));
                     } else if resp.double_clicked() {
                         app.select_tool(shown.id);
                         app.run("tool.options", json!({ "tool": shown.id })).ok();
                     } else if resp.clicked() {
                         app.select_tool(shown.id);
                     }
-                    resp.on_hover_text(tip(shown));
+                    let more = slot.len() > 1;
+                    resp.on_hover_ui(|ui| tip_ui(ui, shown, more));
                 }
             });
             i += row.len();
+        }
+        if Layout::of(&app.ui) == Layout::Starter {
+            more_tools_button(app, ui, &t);
         }
         if let Some(key) = raise {
             raise_floating(ui.ctx(), key);
@@ -262,9 +444,44 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
 enum FlyoutPress {
     /// A right press (it opens at once, before the release).
     Secondary,
-    /// A primary press on the corner triangle, or one held [`LONG_PRESS`] seconds: its release
+    /// A primary press on the arrow, or one held [`LONG_PRESS`] seconds: its release
     /// mustn't pick the button's tool.
     Primary,
+}
+
+/// The strip down a group button's right edge, right of its icon, where its arrow is: a press
+/// there opens the flyout at once.
+fn arrow_zone(rect: egui::Rect) -> egui::Rect {
+    egui::Rect::from_min_max(pos2(rect.center().x + 10.0, rect.top()), rect.max)
+}
+
+/// More Tools, under the Starter toolbar's tools: opens the All Tools drawer.
+fn more_tools_button(app: &mut VectorcraftApp, ui: &mut Ui, t: &Tokens) {
+    ui.add_space(4.0);
+    let w = ui.available_width();
+    let (r, resp) = ui.allocate_exact_size(vec2(w, 40.0), Sense::click());
+    let well = egui::Rect::from_center_size(r.center(), vec2(40.0_f32.min(w - 2.0), 38.0));
+    let open = app.ui.dialog.as_ref().is_some_and(|d| d.kind == "allTools");
+    if open {
+        ui.painter().rect_filled(well, CornerRadius::same(3), t.tool_active);
+    } else if resp.hovered() {
+        ui.painter().rect_filled(well, CornerRadius::same(3), t.hover);
+    }
+    ui.painter().rect_stroke(well, CornerRadius::same(3), Stroke::new(1.0, t.divider), egui::StrokeKind::Inside);
+    let color = if resp.hovered() || open { t.text_strong } else { t.icon };
+    icons::paint(ui, "layout-grid", egui::Rect::from_center_size(well.center() - vec2(0.0, 7.0), vec2(14.0, 14.0)), color);
+    let g = fit_label(ui, tl!("More"), well.width() - 4.0, color);
+    ui.painter().galley(pos2(well.center().x - g.size().x / 2.0, well.bottom() - 4.0 - g.size().y), g, color);
+    let resp = resp.on_hover_ui(|ui| {
+        ui.set_max_width(260.0);
+        ui.label(egui::RichText::new(tl!("More Tools")).size(12.5).strong().color(t.text_strong));
+        ui.label(egui::RichText::new(tl!("Every tool, grouped by task. Pick one to use it.")).size(12.0).color(t.text));
+    });
+    if resp.clicked()
+        && let Err(e) = app.run("window.allTools", json!({}))
+    {
+        app.ui.status = e;
+    }
 }
 
 /// Whether this frame's pointer state on a tool button opens its group's flyout. A primary press
@@ -277,10 +494,8 @@ fn flyout_press(ui: &Ui, resp: &egui::Response, rect: egui::Rect) -> Option<Flyo
     if !resp.is_pointer_button_down_on() || !ui.input(|inp| inp.pointer.primary_down()) {
         return None;
     }
-    // The triangle's corner: the bottom-right third of the button.
-    let corner = egui::Rect::from_min_max(rect.center() + vec2(6.0, 4.0), rect.max);
     let (origin, held) = ui.input(|inp| (inp.pointer.press_origin(), inp.pointer.press_start_time().map(|s| inp.time - s)));
-    if origin.is_some_and(|p| corner.contains(p)) {
+    if origin.is_some_and(|p| arrow_zone(rect).contains(p)) {
         return Some(FlyoutPress::Primary);
     }
     let held = held.unwrap_or(0.0);
@@ -450,7 +665,7 @@ fn bottom_controls(app: &mut VectorcraftApp, ui: &mut Ui, t: &Tokens) {
             app.run("view.screenMode", json!({})).ok();
         }
         if widgets::icon_button(ui, "ellipsis", "Edit Toolbar", false, 26.0).clicked() {
-            app.ui.dialog = Some(crate::state::Dialog::new("allTools", json!({})));
+            app.run("window.allTools", json!({})).ok();
         }
     });
     let _ = t;
@@ -464,7 +679,7 @@ const FLOAT_AT: [f32; 2] = [90.0, 100.0];
 /// it back in the toolbar, or toggle (`floating` omitted), as a flyout's tear-off bar and the
 /// strip's × do (`window.floatTools`). Returns the new state.
 pub fn float_group(app: &mut VectorcraftApp, tool: &str, floating: Option<bool>) -> Result<bool, String> {
-    let Some((_, group)) = slots(app).into_iter().find(|(_, s)| s.len() > 1 && s.contains(&tool)) else {
+    let Some((_, group)) = slots(app).iter().find(|(_, s)| s.len() > 1 && s.contains(&tool)) else {
         return Err(format!("{tool} isn't in a toolbar group of several tools"));
     };
     let key = group.first().copied().unwrap_or_default();
@@ -560,6 +775,7 @@ fn flyout_body(ui: &mut Ui, t: &Tokens, active: &str, tools: &[String], floating
 /// One row per tool: icon, name and shortcut, with a dot by the active tool. Returns the tool clicked.
 fn tool_rows(ui: &mut Ui, t: &Tokens, active: &str, tools: &[String]) -> Option<&'static str> {
     let mut chosen = None;
+    let mut hovered: Option<&'static ToolInfo> = None;
     let w = 250.0;
     for id in tools {
         let Some(tool) = tool_info(id) else { continue };
@@ -574,7 +790,7 @@ fn tool_rows(ui: &mut Ui, t: &Tokens, active: &str, tools: &[String]) -> Option<
         let ir = egui::Rect::from_min_size(r.min + vec2(24.0, 6.0), vec2(18.0, 18.0));
         icons::paint(ui, icons::tool_icon(tool.icon), ir, t.icon);
         let color = if is_active { t.flyout_active } else { t.text_strong };
-        ui.painter().text(r.left_center() + vec2(52.0, 0.0), egui::Align2::LEFT_CENTER, tl!(tool.label), egui::FontId::proportional(13.0), color);
+        ui.painter().text(r.left_center() + vec2(52.0, 0.0), egui::Align2::LEFT_CENTER, tool_name(tool), egui::FontId::proportional(13.0), color);
         if let Some(sc) = crate::shortcut_editor::tool_shortcut(tool.id) {
             ui.painter().text(
                 r.right_center() - vec2(18.0, 0.0),
@@ -584,9 +800,21 @@ fn tool_rows(ui: &mut Ui, t: &Tokens, active: &str, tools: &[String]) -> Option<
                 color,
             );
         }
+        if resp.hovered() || (hovered.is_none() && is_active) {
+            hovered = Some(tool);
+        }
         if resp.clicked() {
             chosen = Some(tool.id);
         }
+    }
+    // Under the rows, what the hovered (else the active, else the first) tool does: a tooltip
+    // would cover the rows below the pointer.
+    let shown = hovered.or_else(|| tools.first().and_then(|id| tool_info(id)));
+    let (r, _) = ui.allocate_exact_size(vec2(w, 26.0), Sense::hover());
+    ui.painter().line_segment([r.left_top() + vec2(8.0, 0.0), r.right_top() - vec2(8.0, 0.0)], Stroke::new(1.0, t.divider));
+    if let Some(tool) = shown {
+        let g = fit_label(ui, tl!(tool.about), w - 20.0, t.text_dim);
+        ui.painter().galley(pos2(r.left() + 12.0, r.center().y - g.size().y / 2.0), g, t.text_dim);
     }
     chosen
 }
@@ -616,7 +844,7 @@ fn tool_strip(ui: &mut Ui, t: &Tokens, active: &str, tools: &[String]) -> Option
         }
         let ir = egui::Rect::from_center_size(r.center(), vec2(18.0, 18.0));
         icons::paint(ui, icons::tool_icon(tool.icon), ir, if active == tool.id { t.text_strong } else { t.icon });
-        if resp.on_hover_text(tip(tool)).clicked() {
+        if resp.on_hover_ui(|ui| tip_ui(ui, tool, false)).clicked() {
             chosen = Some(tool.id);
         }
     }
@@ -761,6 +989,151 @@ pub(crate) mod tests {
 
     use super::*;
 
+    /// An app showing the Basic toolbar (the layout most of these tests lay out).
+    fn basic_app() -> VectorcraftApp {
+        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        Layout::Basic.apply(&mut app.ui);
+        app
+    }
+
+    /// A new user starts with the Starter toolbar; a settings file saved before it existed keeps
+    /// its Basic or Advanced toolbar.
+    #[test]
+    fn new_users_start_with_the_starter_toolbar_and_old_settings_keep_theirs() {
+        let fresh = crate::state::UiState::default();
+        assert_eq!(Layout::of(&fresh), Layout::Starter);
+        let mut saved = serde_json::to_value(&fresh).unwrap();
+        let obj = saved.as_object_mut().unwrap();
+        obj.remove("toolbar_starter");
+        let old: crate::state::UiState = serde_json::from_value(saved.clone()).unwrap();
+        assert_eq!(Layout::of(&old), Layout::Basic, "a file from before the Starter toolbar");
+        saved["toolbar_advanced"] = json!(true);
+        let old: crate::state::UiState = serde_json::from_value(saved).unwrap();
+        assert_eq!(Layout::of(&old), Layout::Advanced);
+        // The choice round-trips.
+        let mut ui = crate::state::UiState::default();
+        Layout::Basic.apply(&mut ui);
+        let back: crate::state::UiState = serde_json::from_value(serde_json::to_value(&ui).unwrap()).unwrap();
+        assert_eq!(Layout::of(&back), Layout::Basic);
+    }
+
+    /// The Starter toolbar: ten slots in four plain groups, each tool in one slot, More Tools
+    /// under them; the fill and stroke proxy stays in view in a 900 pt window.
+    #[test]
+    fn the_starter_toolbar_holds_ten_everyday_slots_and_more_tools() {
+        let slots = layout_slots(Layout::Starter);
+        assert_eq!(slots.len(), 10);
+        assert_eq!(slots.iter().filter(|(c, _)| c.is_some()).count(), 4);
+        let firsts: Vec<&str> = slots.iter().map(|(_, s)| s[0]).collect();
+        assert_eq!(firsts, ["selection", "directSelection", "rectangle", "pen", "pencil", "type", "eraser", "eyedropper", "hand", "zoom"]);
+        let shapes = &slots[2].1;
+        assert!(["rectangle", "ellipse", "polygon", "star", "lineSegment"].iter().all(|t| shapes.contains(t)));
+        let mut all: Vec<&str> = slots.iter().flat_map(|(_, s)| s.iter().copied()).collect();
+        let n = all.len();
+        all.sort_unstable();
+        all.dedup();
+        assert_eq!(all.len(), n, "a tool in one slot only");
+        assert!(all.iter().all(|id| tool_info(id).is_some()));
+        // Built once: the same slots every frame.
+        assert!(std::ptr::eq(layout_slots(Layout::Starter), slots));
+
+        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        app.run("file.new", json!({"width": 300, "height": 300})).unwrap();
+        let ctx = egui::Context::default();
+        // The window's toolbar is about 760 pt tall at 900 pt (bars above and below it).
+        let buttons = frame_in(&mut app, &ctx, 0.0, vec![], 760.0);
+        assert_eq!(buttons.len(), 10);
+        // The Color / Gradient / None chips under the fill and stroke proxy.
+        let chips = widget_rects(&ctx, vec2(7.5, 7.5));
+        let chip = chips.first().expect("the fill and stroke controls");
+        assert!(chip.bottom() < 760.0, "fill/stroke in view: {chip:?}");
+        // More Tools opens the All Tools drawer.
+        let more = ctx.viewport(|vp| {
+            let mut r: Vec<egui::Rect> =
+                vp.prev_pass.widgets.layers().flat_map(|(_, w)| w.iter()).map(|w| w.rect).filter(|r| r.height() == 40.0).collect();
+            r.sort_by(|a, b| a.top().total_cmp(&b.top()));
+            r.first().copied()
+        });
+        let more = more.expect("More Tools");
+        assert!(more.top() > buttons[9].bottom());
+        click_in(&mut app, &ctx, 1.0, more.center(), PointerButton::Primary, 760.0);
+        assert_eq!(app.ui.dialog.as_ref().map(|d| d.kind.as_str()), Some("allTools"));
+    }
+
+    /// Window › Toolbars › Starter / Basic / Advanced, through `window.toolbarLayout`.
+    #[test]
+    fn the_toolbar_layout_command_switches_layouts() {
+        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        assert_eq!(app.run("window.toolbarLayout", json!({})).unwrap(), json!({"layout": "starter"}));
+        app.run("window.toolbarLayout", json!({"layout": "basic"})).unwrap();
+        assert_eq!(Layout::of(&app.ui), Layout::Basic);
+        assert_eq!(crate::menus::checked(&app, "window.toolbarLayout", &json!({"layout": "basic"})), Some(true));
+        assert_eq!(crate::menus::checked(&app, "window.toolbarLayout", &json!({"layout": "starter"})), Some(false));
+        app.run("window.toolbarLayout", json!({"layout": "Advanced"})).unwrap();
+        assert!(app.ui.toolbar_advanced);
+        // Advanced off goes back to the layout before it.
+        app.run("window.toolbarAdvanced", json!({})).unwrap();
+        assert_eq!(Layout::of(&app.ui), Layout::Basic);
+        app.run("window.toolbarLayout", json!({"layout": "starter"})).unwrap();
+        assert_eq!(Layout::of(&app.ui), Layout::Starter);
+        assert!(app.run("window.toolbarLayout", json!({"layout": "huge"})).is_err());
+        assert!(app.run("window.toolbarLayout", json!({"layout": 3})).is_err());
+        app.run("window.allTools", json!({})).unwrap();
+        assert_eq!(app.ui.dialog.as_ref().map(|d| d.kind.as_str()), Some("allTools"));
+    }
+
+    /// A tool remembered in one layout's slot isn't shown in another layout's slot that doesn't
+    /// hold it (the layouts share first tools: Rectangle, Type).
+    #[test]
+    fn a_slot_shows_only_its_own_tools() {
+        let mut app = basic_app();
+        app.select_tool("spiral");
+        app.select_tool("selection");
+        assert_eq!(app.ui.slot_tool.get("rectangle").map(String::as_str), Some("spiral"));
+        Layout::Starter.apply(&mut app.ui);
+        let ctx = egui::Context::default();
+        frame(&mut app, &ctx, 0.0, vec![]);
+        let shapes = frame(&mut app, &ctx, 0.1, vec![])[2];
+        click(&mut app, &ctx, 1.0, shapes.center(), PointerButton::Primary);
+        assert_eq!(app.session.tool_id(), "rectangle");
+    }
+
+    /// The arrow at a group button's right edge opens its flyout on a plain click, as a right
+    /// click and a long press do; the rest of the button picks its tool.
+    #[test]
+    fn a_click_on_a_group_buttons_arrow_opens_its_flyout() {
+        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        app.run("file.new", json!({"width": 300, "height": 300})).unwrap();
+        let ctx = egui::Context::default();
+        let shapes = frame(&mut app, &ctx, 0.0, vec![])[2];
+        let at = pos2(arrow_zone(shapes).center().x, shapes.center().y);
+        click(&mut app, &ctx, 1.0, at, PointerButton::Primary);
+        assert!(app.ui.flyout.is_some(), "the arrow opens the flyout");
+        assert_eq!(app.session.tool_id(), "selection", "and picks no tool");
+        let tools: Vec<String> = ctx.data(|d| d.get_temp(egui::Id::new("flyout-tools"))).unwrap();
+        assert_eq!(tools, ["rectangle", "ellipse", "polygon", "star", "lineSegment"]);
+    }
+
+    /// Tool names drop the word for "tool" in each language; the tooltip has the name, the key and
+    /// what the tool does.
+    #[test]
+    fn tool_names_and_tooltips() {
+        assert_eq!(strip_tool_word("Pen Tool"), "Pen");
+        assert_eq!(strip_tool_word("Knife"), "Knife");
+        assert_eq!(strip_tool_word("Outil Plume"), "Plume");
+        assert_eq!(strip_tool_word("Herramienta Texto en trazado"), "Texto en trazado");
+        assert_eq!(strip_tool_word("Инструмент «Перо»"), "Перо");
+        assert_eq!(strip_tool_word("ペンツール"), "ペン");
+        assert_eq!(strip_tool_word("钢笔工具"), "钢笔");
+        assert_eq!(strip_tool_word("Tool"), "Tool");
+        let pen = tool_info("pen").unwrap();
+        let tip = tip(pen);
+        assert!(tip.starts_with("Pen (P)\n") && tip.ends_with("click for corners, drag for curves."), "{tip}");
+        for t in vectorcraft_tools::catalog::all_tools() {
+            assert!(!tool_name(t).is_empty() && !tool_name(t).ends_with(" Tool"), "{}", t.id);
+        }
+    }
+
     /// One headless frame of the toolbar; returns the tool buttons' rects, top to bottom.
     fn frame(app: &mut VectorcraftApp, ctx: &egui::Context, time: f64, events: Vec<Event>) -> Vec<egui::Rect> {
         frame_in(app, ctx, time, events, 1200.0)
@@ -795,7 +1168,7 @@ pub(crate) mod tests {
 
     #[test]
     fn the_toolbar_scrolls_in_a_short_window() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         app.run("file.new", json!({"width": 300, "height": 300})).unwrap();
         let ctx = egui::Context::default();
         // 500 pt: even two columns don't fit, so Edit Toolbar (the last button) starts below the window.
@@ -824,7 +1197,7 @@ pub(crate) mod tests {
 
     #[test]
     fn double_clicking_a_tool_button_opens_its_options() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         app.run("file.new", json!({"width": 300, "height": 300})).unwrap();
         let ctx = egui::Context::default();
         let buttons = frame(&mut app, &ctx, 0.0, vec![]);
@@ -848,7 +1221,7 @@ pub(crate) mod tests {
 
     #[test]
     fn double_clicking_the_hand_zoom_and_transform_tools() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         app.run("file.new", json!({"width": 300, "height": 200})).unwrap();
         app.canvas_rect = Some(egui::Rect::from_min_size(Pos2::ZERO, vec2(660.0, 460.0)));
         app.run("view.setZoom", json!({"zoom": 333, "center": [10, 10]})).unwrap();
@@ -876,7 +1249,7 @@ pub(crate) mod tests {
 
     #[test]
     fn double_clicking_a_selection_tool_opens_the_move_dialog() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         app.run("file.new", json!({"width": 300, "height": 200})).unwrap();
         let ctx = egui::Context::default();
         // The Selection tool's button is the first one.
@@ -903,7 +1276,7 @@ pub(crate) mod tests {
 
     #[test]
     fn right_clicking_a_tool_group_opens_its_flyout() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         app.run("file.new", json!({"width": 300, "height": 300})).unwrap();
         let ctx = egui::Context::default();
         let buttons = frame(&mut app, &ctx, 0.0, vec![]);
@@ -948,7 +1321,7 @@ pub(crate) mod tests {
     #[test]
     fn a_held_press_asks_for_the_frame_that_opens_the_flyout() {
         // egui draws only on input: a still press must schedule the frame where it becomes long.
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let ctx = egui::Context::default();
         let at = shapes_button(&mut app, &ctx).center();
         let p = Event::PointerButton { pos: at, button: PointerButton::Primary, pressed: true, modifiers: Default::default() };
@@ -965,7 +1338,7 @@ pub(crate) mod tests {
 
     #[test]
     fn pressing_the_corner_triangle_opens_the_flyout_at_once() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let ctx = egui::Context::default();
         let button = shapes_button(&mut app, &ctx);
         let at = button.right_bottom() - vec2(4.0, 4.0);
@@ -985,7 +1358,7 @@ pub(crate) mod tests {
 
     #[test]
     fn the_flyout_opens_on_the_right_press_even_when_its_tool_is_active() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let ctx = egui::Context::default();
         let at = shapes_button(&mut app, &ctx).center();
         app.select_tool("rectangle");
@@ -1013,7 +1386,7 @@ pub(crate) mod tests {
     #[test]
     fn type_button_long_press_selects_vertical_type_in_both_layouts() {
         for advanced in [false, true] {
-            let mut app = VectorcraftApp::new(Session::new(), Default::default());
+            let mut app = basic_app();
             app.ui.toolbar_advanced = advanced;
             let all = slots(&app);
             let index = all.iter().position(|(_, tools)| tools.contains(&"type")).unwrap();
@@ -1075,7 +1448,7 @@ pub(crate) mod tests {
 
     #[test]
     fn the_double_arrow_toggles_one_and_two_columns_in_a_short_window() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let ctx = egui::Context::default();
         // 700 pt: too short for the single column, which scrolls instead of turning into two.
         assert_eq!(columns(&frame_in(&mut app, &ctx, 0.0, vec![], 700.0)), 1);
@@ -1088,7 +1461,7 @@ pub(crate) mod tests {
 
     #[test]
     fn the_columns_command_toggles_or_sets_the_toolbar_columns() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let ctx = egui::Context::default();
         assert_eq!(app.run("window.toolbarColumns", json!({})).unwrap(), json!(true));
         assert_eq!(columns(&frame_in(&mut app, &ctx, 0.0, vec![], 700.0)), 2);
@@ -1104,7 +1477,7 @@ pub(crate) mod tests {
 
     #[test]
     fn a_flyout_dragged_by_its_bar_floats_until_its_close_box_puts_it_back() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let ctx = egui::Context::default();
         let at = shapes_button(&mut app, &ctx).center();
         click(&mut app, &ctx, 1.0, at, PointerButton::Secondary);
@@ -1149,7 +1522,7 @@ pub(crate) mod tests {
 
     #[test]
     fn a_click_on_a_flyouts_bar_tears_it_off() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let ctx = egui::Context::default();
         let at = shapes_button(&mut app, &ctx).center();
         click(&mut app, &ctx, 1.0, at, PointerButton::Secondary);
@@ -1166,7 +1539,7 @@ pub(crate) mod tests {
 
     #[test]
     fn releasing_a_long_press_over_the_flyouts_bar_tears_it_off() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let ctx = egui::Context::default();
         let at = shapes_button(&mut app, &ctx).center();
         let b = |pos, pressed| Event::PointerButton { pos, button: PointerButton::Primary, pressed, modifiers: Default::default() };
@@ -1183,7 +1556,7 @@ pub(crate) mod tests {
 
     #[test]
     fn window_float_tools_floats_and_puts_back_a_group() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let check = |app: &VectorcraftApp| crate::menus::checked(app, "window.floatTools", &json!({"tool": "star"}));
         assert_eq!(app.run("window.floatTools", json!({"tool": "star"})).unwrap(), json!(true));
         let [f] = app.ui.floating_flyouts.as_slice() else { panic!("one strip: {:?}", app.ui.floating_flyouts) };
@@ -1207,7 +1580,7 @@ pub(crate) mod tests {
 
     #[test]
     fn workspaces_keep_floating_flyouts_and_reset_puts_them_back() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         app.run("window.floatTools", json!({"tool": "pen"})).unwrap();
         app.run("window.workspace.new", json!({"name": "Strips"})).unwrap();
         app.run("window.workspace", json!({"name": "Essentials"})).unwrap();
@@ -1233,7 +1606,7 @@ pub(crate) mod tests {
 
     #[test]
     fn floating_flyouts_survive_saved_preferences_and_stay_on_screen() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         app.ui.floating_flyouts.push(crate::state::FloatingFlyout { tools: vec!["pen".into(), "addAnchor".into()], pos: [5000.0, 10.0] });
         let saved = serde_json::to_value(&app.ui).unwrap();
         let back: crate::state::UiState = serde_json::from_value(saved.clone()).unwrap();
@@ -1265,7 +1638,7 @@ pub(crate) mod tests {
                 _ => {}
             }
         }
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let ctx = egui::Context::default();
         crate::theme::install_fonts(&ctx);
         let draw = |app: &mut VectorcraftApp| {
@@ -1318,7 +1691,7 @@ pub(crate) mod tests {
 
     #[test]
     fn a_floating_flyouts_buttons_have_tool_tips_when_tool_tips_are_on() {
-        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        let mut app = basic_app();
         let tools: Vec<String> = ["rectangle", "roundedRectangle", "star"].map(String::from).to_vec();
         app.ui.floating_flyouts.push(crate::state::FloatingFlyout { tools, pos: [150.0, 600.0] });
         let ctx = egui::Context::default();
@@ -1326,7 +1699,8 @@ pub(crate) mod tests {
         frame(&mut app, &ctx, 1.0, vec![]);
         let strip = ctx.memory(|m| m.area_rect(floating_area("rectangle"))).unwrap();
         let star = pos2(strip.left() + STRIP_BUTTON.x * 2.5, strip.center().y);
-        let tip = tl!("Star Tool").to_string();
+        // The tooltip's line on what the tool does.
+        let tip = tl!(tool_info("star").unwrap().about).to_string();
         assert!(hovered_texts(&mut app, &ctx, 10.0, star).contains(&tip), "on by default");
         app.session.prefs.show_tool_tips = false;
         assert!(!hovered_texts(&mut app, &ctx, 20.0, star).contains(&tip), "off: no tool tip");

@@ -4226,3 +4226,196 @@ axis	Both	Обидві
 	Not available right now	Зараз недоступно
 	↑↓ move · Enter runs · Esc closes	↑↓ вибір · Enter — виконати · Esc — закрити
 	Type what you want to do…	Введіть, що хочете зробити…
+# Starter toolbar, tool descriptions and hints (UX5).
+	 a closed path to fill it with text  |  	 по замкненому контуру, щоб заповнити його текстом  |  
+	 a corner point to pull out curve handles  |  	 кутову точку, щоб витягнути маркери кривої  |  
+	 a letter to select it  |  	 по літері, щоб виділити її  |  
+	 a line across an object to cut it and mirror one half  |  	 лінію через об’єкт, щоб розрізати його та віддзеркалити половину  |  
+	 a line across objects to cut them  |  	 лінію через об’єкти, щоб розрізати їх  |  
+	 a path to add a point  |  	 по контуру, щоб додати точку  |  
+	 a path to cut it at that point	 по контуру, щоб розрізати його в цій точці
+	 a path to type along it  |  	 по контуру, щоб писати вздовж нього  |  
+	 a point to delete it	 по точці, щоб видалити її
+	 a point to delete it  |  	 по точці, щоб видалити її  |  
+	 a point to move it  |  	 точку, щоб перемістити її  |  
+	 a rectangle around the part to export as its own image	 прямокутник навколо частини, яку треба експортувати окремим зображенням
+	 a rectangle over objects to cut it out	 прямокутник поверх об’єктів, щоб вирізати його
+	 a rough rectangle, circle, triangle or line to get a clean shape  |  	 приблизний прямокутник, коло, трикутник або лінію, щоб отримати рівну фігуру  |  
+	 a shape to add a mesh point  |  	 по фігурі, щоб додати точку сітки  |  
+	 a slice to select it  |  	 по фрагменту, щоб виділити його  |  
+	 a smooth point to make it a corner  |  	 по гладкій точці, щоб зробити її кутовою  |  
+	 across shapes to merge them  |  	 через фігури, щоб об’єднати їх  |  
+	 across shapes to slice them apart	 через фігури, щоб розрізати їх на частини
+	 adds text	 додає текст
+	 along a selected path to erase that part	 вздовж виділеного контуру, щоб стерти цю частину
+	 along a selected path to smooth it	 вздовж виділеного контуру, щоб згладити його
+	 an area to fill it  |  	 по області, щоб залити її  |  
+	 an area to make it a shape  |  	 по області, щоб зробити її фігурою  |  
+	 an area to select it  |  	 по області, щоб виділити її  |  
+	 an edge to paint its stroke	 по краю, щоб зафарбувати його обведення
+	 an object in a group to select it  |  	 по об’єкту в групі, щоб виділити його  |  
+	 an object to select all with a similar color  |  	 по об’єкту, щоб виділити всі об’єкти схожого кольору  |  
+	 around points or objects to select them  |  	 навколо точок або об’єктів, щоб виділити їх  |  
+	 draws with the Pen  |  	 малює пером  |  
+	 for a new document  |  	 — новий документ  |  
+	 for a square  |  	 для квадрата  |  
+	 for its options	 для його параметрів
+	 from center	 від центру
+	 from the center to draw  |  	 від центру, щоб намалювати  |  
+	 from the center to size the glow, then click where the rings end  |  	 від центру, щоб задати розмір сяйва, потім клацніть там, де закінчуються кільця  |  
+	 of a selected path to keep drawing it  |  	 виділеного контуру, щоб продовжити його  |  
+	 or drag to remove areas	 або перетягніть, щоб видалити області
+	 over shapes to erase  |  	 по фігурах, щоб стерти  |  
+	 over sprayed symbols to push them  |  	 по розпилених символах, щоб зсунути їх  |  
+	 over the gap between two open ends to join them	 по проміжку між двома відкритими кінцями, щоб з’єднати їх
+	 overlapping shapes to cut or merge them	 фігури, що перекриваються, щоб вирізати або об’єднати їх
+	 part of a selected path to reshape it smoothly  |  	 частину виділеного контуру, щоб плавно змінити його форму  |  
+	 the grid's handles to adjust its planes and horizon  |  	 маркери сітки, щоб налаштувати її площини та горизонт  |  
+	 the tool's button to put them back	 по кнопці інструмента, щоб повернути їх на місце
+	 the way symbols should turn  |  	 у бік, куди мають повернутися символи  |  
+	 to add  |  	 для додавання  |  
+	 to add a point instead	 щоб натомість додати точку
+	 to add the group around it  |  	 щоб додати групу навколо нього  |  
+	 to add to the selection  |  	 щоб додати до виділення  |  
+	 to apply the selected graphic style  |  	 щоб застосувати вибраний графічний стиль  |  
+	 to change the brush size	 щоб змінити розмір пензля
+	 to delete a point instead	 щоб натомість видалити точку
+	 to draw freehand  |  	 щоб малювати від руки  |  
+	 to keep it upright  |  	 щоб тримати фігуру рівно  |  
+	 to keep the other side	 щоб залишити інший бік
+	 to keep to 45° angles	 щоб тримати кути кратними 45°
+	 to keep to 45° angles  |  	 щоб тримати кути кратними 45°  |  
+	 to make symbols bigger  |  	 щоб збільшити символи  |  
+	 to make symbols more see-through  |  	 щоб зробити символи прозорішими  |  
+	 to make them more solid	 щоб зробити їх щільнішими
+	 to make them smaller	 щоб зменшити їх
+	 to measure a distance and angle  |  	 щоб виміряти відстань і кут  |  
+	 to move it on its own	 щоб рухати його окремо
+	 to move where the printed pages fall  |  	 щоб зсунути друковані сторінки  |  
+	 to open one	 — відкрити документ
+	 to paint a filled shape that merges with ones it touches  |  	 щоб малювати залиту фігуру, що зливається з тими, яких торкається  |  
+	 to pull symbols together  |  	 щоб стягнути символи разом  |  
+	 to remove copies  |  	 щоб прибрати копії  |  
+	 to remove from the selection	 щоб прибрати з виділення
+	 to remove it	 щоб прибрати його
+	 to remove the tint	 щоб прибрати відтінок
+	 to resize or turn it	 щоб змінити розмір або повернути
+	 to rotate  |  	 для повороту  |  
+	 to scale  |  	 для масштабування  |  
+	 to select an edge instead	 щоб натомість виділити край
+	 to set the chart's size, then type its data  |  	 щоб задати розмір діаграми, потім ввести її дані  |  
+	 to snap to whole cells	 щоб прив’язати до цілих клітинок
+	 to spray copies of the symbol  |  	 щоб розпилити копії символу  |  
+	 to spread them out	 щоб розсунути їх
+	 to tint symbols with the fill color  |  	 щоб тонувати символи кольором заливки  |  
+	 to turn the view (the art stays as it is)	 щоб повернути вигляд (сам малюнок не змінюється)
+	 while dragging for more or fewer corners  |  	 під час перетягування — більше або менше кутів  |  
+	 while dragging to add or remove rays  |  	 під час перетягування, щоб додати або прибрати промені  |  
+	 while dragging to close the path	 під час перетягування, щоб замкнути контур
+	) and drag on the page to draw  |  	) і перетягніть по сторінці, щоб намалювати  |  
+	Click again	Клацніть ще раз
+	Drag a corner	Перетягніть кут
+	Drag from the end	Перетягніть від кінця
+	Drag outside a corner	Перетягніть за кутом
+	Scribble	Намалюйте
+	Scribble over	Закресліть
+	Pick a shape tool (	Виберіть інструмент фігур (
+	To start, press 	Для початку натисніть 
+	Starter	Початкова
+	Basic	Базова
+	All Tools…	Усі інструменти…
+	Toolbar Layout	Вигляд панелі інструментів
+	More Tools	Інші інструменти
+	Every tool, grouped by task. Pick one to use it.	Усі інструменти за завданнями. Виберіть потрібний.
+	Click the arrow for more tools like this one.	Клацніть стрілку, щоб побачити схожі інструменти.
+	Pick, move and resize whole objects.	Виділяйте, переміщуйте та масштабуйте об’єкти цілком.
+	Pick single points and path segments to reshape them.	Виділяйте окремі точки й сегменти, щоб змінювати форму.
+	Pick one object inside a group, then the group around it.	Виділяйте об’єкт усередині групи, потім саму групу.
+	Select every object with a similar color or stroke.	Виділяйте всі об’єкти схожого кольору або обведення.
+	Draw around points or objects to select them.	Обведіть точки або об’єкти, щоб виділити їх.
+	Draw precise curves: click for corners, drag for curves.	Малюйте точні криві: клацання — кут, перетягування — крива.
+	Click a path to add a point to it.	Клацніть контур, щоб додати на нього точку.
+	Click a point on a path to remove it.	Клацніть точку на контурі, щоб видалити її.
+	Turn a point into a sharp corner or a smooth curve.	Перетворюйте точку на гострий кут або плавну криву.
+	Draw smooth curves by clicking where the path should pass.	Малюйте плавні криві, клацаючи там, де має пройти контур.
+	Add text: click for a line, drag for a text box.	Додавайте текст: клацання — рядок, перетягування — текстовий блок.
+	Fill a shape with flowing text.	Заповнюйте фігуру текстом.
+	Make text follow a line or curve.	Пишіть текст уздовж лінії або кривої.
+	Add text that runs top to bottom.	Додавайте текст, що йде згори вниз.
+	Fill a shape with text that runs top to bottom.	Заповнюйте фігуру текстом, що йде згори вниз.
+	Make top-to-bottom text follow a path.	Пишіть вертикальний текст уздовж контуру.
+	Move, turn and resize single letters.	Рухайте, повертайте та масштабуйте окремі літери.
+	Draw straight lines.	Малюйте прямі лінії.
+	Draw curved arcs.	Малюйте дуги.
+	Draw spirals.	Малюйте спіралі.
+	Draw a grid of rows and columns.	Малюйте сітку з рядків і стовпців.
+	Draw a target of circles and spokes.	Малюйте мішень із кіл і променів.
+	Draw rectangles and squares.	Малюйте прямокутники й квадрати.
+	Draw rectangles with rounded corners.	Малюйте прямокутники із заокругленими кутами.
+	Draw ovals and circles.	Малюйте овали й кола.
+	Draw shapes with equal sides, like triangles and hexagons.	Малюйте фігури з рівними сторонами: трикутники, шестикутники.
+	Draw stars.	Малюйте зірки.
+	Draw a lens flare with a glow, rings and rays.	Малюйте відблиск зі сяйвом, кільцями та променями.
+	Paint freehand strokes with a brush.	Малюйте пензлем від руки.
+	Paint filled shapes that merge where they overlap.	Малюйте залиті фігури, що зливаються при перекритті.
+	Scribble a rough shape and get a clean one.	Накидайте фігуру від руки та отримайте рівну.
+	Draw freehand lines that smooth themselves.	Малюйте від руки лінії, які згладжуються самі.
+	Drag along a path to smooth out bumps.	Ведіть уздовж контуру, щоб згладити нерівності.
+	Drag along a path to erase part of it.	Ведіть уздовж контуру, щоб стерти його частину.
+	Scribble over two open ends to join them.	Проведіть по двох відкритих кінцях, щоб з’єднати їх.
+	Rub out parts of shapes.	Стирайте частини фігур.
+	Cut a path in two at the point you click.	Розрізайте контур навпіл там, де клацнули.
+	Slice shapes apart along a freehand line.	Розрізайте фігури по лінії, намальованій від руки.
+	Cut an object along a line and mirror one half.	Розріжте об’єкт по лінії та віддзеркальте половину.
+	Cut objects along a straight line.	Розрізайте об’єкти по прямій.
+	Cut a rectangle out of objects.	Вирізайте прямокутник з об’єктів.
+	Turn objects around a point.	Повертайте об’єкти навколо точки.
+	Flip objects like a mirror.	Віддзеркалюйте об’єкти.
+	Make objects bigger or smaller.	Збільшуйте або зменшуйте об’єкти.
+	Slant objects sideways.	Нахиляйте об’єкти вбік.
+	Drag part of a path to reshape it smoothly.	Перетягніть частину контуру, щоб плавно змінити форму.
+	Make a stroke thicker or thinner at points along it.	Робіть обведення товщим або тоншим у точках уздовж нього.
+	Push paths around like soft clay.	Рухайте контури, як м’яку глину.
+	Swirl paths into twists.	Закручуйте контури у вихори.
+	Pull paths in toward the brush.	Стягуйте контури до пензля.
+	Puff paths out from the brush.	Роздувайте контури від пензля.
+	Add curved bumps along outlines.	Додавайте хвилясті виступи по контуру.
+	Add spikes along outlines.	Додавайте шипи по контуру.
+	Add wrinkles along outlines.	Додавайте зморшки по контуру.
+	Move, scale, rotate, slant and distort in one tool.	Переміщення, масштаб, поворот, нахил і викривлення в одному інструменті.
+	Pin points on art and drag them to bend it.	Закріпіть точки на малюнку й тягніть їх, щоб згинати.
+	Merge or remove overlapping parts of shapes.	Об’єднуйте або видаляйте частини фігур, що перекриваються.
+	Fill the areas between overlapping lines with color.	Заливайте кольором області між лініями, що перетинаються.
+	Select the areas and edges of Live Paint art.	Виділяйте області та краї швидкої заливки.
+	Show a grid for drawing in 3D perspective.	Показує сітку для малювання в 3D-перспективі.
+	Move and place objects on the perspective grid.	Переміщуйте та розміщуйте об’єкти на сітці перспективи.
+	Add color points inside a shape for soft color blends.	Додавайте кольорові точки всередині фігури для м’яких переходів.
+	Set where a color gradient starts and ends.	Задайте, де починається й закінчується градієнт.
+	Copy the color and style of one object onto another.	Переносьте колір і стиль одного об’єкта на інший.
+	Measure distances and angles.	Вимірюйте відстані та кути.
+	Make the in-between steps from one object to another.	Створюйте проміжні кроки від одного об’єкта до іншого.
+	Spray copies of a symbol onto the page.	Розпилюйте копії символу на сторінку.
+	Push sprayed symbols around.	Зсувайте розпилені символи.
+	Pull sprayed symbols together or spread them out.	Стягуйте або розсувайте розпилені символи.
+	Make sprayed symbols bigger or smaller.	Збільшуйте або зменшуйте розпилені символи.
+	Turn sprayed symbols.	Повертайте розпилені символи.
+	Tint sprayed symbols with the fill color.	Тонуйте розпилені символи кольором заливки.
+	Make sprayed symbols more or less see-through.	Робіть розпилені символи прозорішими або щільнішими.
+	Apply the selected graphic style to sprayed symbols.	Застосовуйте вибраний графічний стиль до розпилених символів.
+	Make a chart with vertical bars.	Створіть діаграму з вертикальними стовпцями.
+	Make a chart with stacked vertical bars.	Створіть діаграму з накопичувальними стовпцями.
+	Make a chart with horizontal bars.	Створіть діаграму з горизонтальними смугами.
+	Make a chart with stacked horizontal bars.	Створіть діаграму з накопичувальними смугами.
+	Make a chart with lines through points.	Створіть лінійну діаграму за точками.
+	Make a chart with filled areas.	Створіть діаграму із заливкою областей.
+	Make a chart of dots.	Створіть точкову діаграму.
+	Make a pie chart.	Створіть кругову діаграму.
+	Make a radar (spider) chart.	Створіть пелюсткову діаграму.
+	Add, move and resize pages.	Додавайте, переміщуйте та змінюйте розмір сторінок.
+	Mark parts of the art to export as separate images.	Позначайте частини малюнка для експорту окремими зображеннями.
+	Pick and adjust slices.	Виділяйте та налаштовуйте фрагменти.
+	Drag to move around the page. Hold Space with any tool.	Перетягуйте, щоб рухатися сторінкою. З будь-яким інструментом — утримуючи Пробіл.
+	Turn the view without turning the art.	Повертайте вигляд, не повертаючи малюнок.
+	Move where the printed pages fall on the art.	Зсувайте, де на малюнку опиняться друковані сторінки.
+	Zoom in and out of the page.	Наближайте та віддаляйте сторінку.
+@msg	layout must be starter, basic or advanced, not {v}	вигляд має бути starter, basic або advanced, а не {v}
