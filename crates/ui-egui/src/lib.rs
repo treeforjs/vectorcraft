@@ -54,6 +54,7 @@ pub mod toolbar;
 mod touch;
 mod ui_fonts;
 pub mod unsaved;
+pub mod updates;
 pub mod widgets;
 pub mod workspaces;
 
@@ -386,6 +387,8 @@ pub struct VectorcraftApp {
     /// A numeric field is being scrubbed: the document's edits meanwhile are one undo step
     /// ([`scrub::begin_frame`]).
     scrub_group: bool,
+    /// Help › Check for Updates…, the automatic check and installing on quit ([`updates`]).
+    pub updates: updates::Updates,
 }
 
 /// Seconds between two looks at the system clipboard for [`VectorcraftApp::system_paste`].
@@ -454,6 +457,7 @@ impl VectorcraftApp {
             ime_marked: None,
             ime_discard: false,
             scrub_group: false,
+            updates: Default::default(),
         }
     }
 
@@ -829,6 +833,8 @@ impl VectorcraftApp {
         self.poll_font_check(ctx);
         picks::poll(self, ctx);
         background::poll(self);
+        // Never before the first frame: the automatic check waits from here.
+        updates::frame(self, ctx);
         if !self.background.jobs.is_empty() {
             // Keep the status bar's progress moving and pick the result up when it arrives.
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
@@ -1049,6 +1055,7 @@ impl VectorcraftApp {
         panels::library_panel::show_window(self, &ctx);
         dialogs::show(self, &ctx);
         palette::show(self, &ctx);
+        updates::notice(self, &ctx);
         if self.custom_titlebar {
             titlebar::resize_zones(ui);
         }

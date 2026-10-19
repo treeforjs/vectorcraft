@@ -17,6 +17,7 @@ pub const UI_FIELDS: &[(&str, &str, &str)] = &[
     ("__smartGuides", "Smart Guides", "Smart Guides (View → Smart Guides)"),
     ("__snapToGrid", "Guides & Grid", "Snap to Grid"),
     ("__taskBar", "General", "Enable Contextual Task Bar"),
+    ("__checkUpdates", "General", "Check for updates automatically"),
 ];
 
 pub fn open(app: &mut VectorcraftApp, category: Option<&str>) {
@@ -32,6 +33,7 @@ pub fn open(app: &mut VectorcraftApp, category: Option<&str>) {
     fields.insert("__smartGuides".into(), json!(app.ui.view.smart_guides));
     fields.insert("__snapToGrid".into(), json!(app.ui.view.snap_to_grid));
     fields.insert("__taskBar".into(), json!(app.ui.task_bar));
+    fields.insert("__checkUpdates".into(), json!(app.ui.updates.enabled));
     app.ui.dialog = Some(Dialog { kind: "preferences".into(), fields });
 }
 
@@ -43,6 +45,7 @@ pub fn confirm(app: &mut VectorcraftApp) -> Result<Value, String> {
     app.ui.view.smart_guides = d.fields.get("__smartGuides").and_then(Value::as_bool).unwrap_or(app.ui.view.smart_guides);
     app.ui.view.snap_to_grid = d.fields.get("__snapToGrid").and_then(Value::as_bool).unwrap_or(app.ui.view.snap_to_grid);
     app.ui.task_bar = d.fields.get("__taskBar").and_then(Value::as_bool).unwrap_or(app.ui.task_bar);
+    app.ui.updates.enabled = d.fields.get("__checkUpdates").and_then(Value::as_bool).unwrap_or(app.ui.updates.enabled);
     app.ui.dialog = None;
     app.ui.engine_prefs = app.session.prefs.to_json();
     Ok(Value::Null)
@@ -233,6 +236,10 @@ fn category_fields(ui: &mut egui::Ui, d: &mut Dialog, cat: &str) {
     let mut first = true;
     let specs: Vec<_> = PREF_SPECS.iter().filter(|s| s.category == cat).collect();
     for (key, c, label) in UI_FIELDS {
+        // The web build doesn't update itself (the browser loads the newest version).
+        if *key == "__checkUpdates" && cfg!(target_arch = "wasm32") {
+            continue;
+        }
         if *c == cat && cat != "Smart Guides" {
             bool_row(ui, d, key, label);
         }

@@ -2792,6 +2792,25 @@
 	Artistic	Artístico
 	Outline Object	Contornar Objeto
 	Import SVG Filter…	Importar Filtro SVG…
+# Help › Check for Updates… (the Updates dialog, its notice and preference)
+	Check for Updates…	Verificar atualizações…
+	Check for updates automatically	Verificar atualizações automaticamente
+	Software Update	Atualização de software
+	VectorCraft {version} is up to date.	O VectorCraft {version} está atualizado.
+	Downloading VectorCraft {version}…	Baixando o VectorCraft {version}…
+	VectorCraft {version} is ready to install.	O VectorCraft {version} está pronto para instalar.
+	VectorCraft {version} is available.	O VectorCraft {version} está disponível.
+	You have version {version}.	Você tem a versão {version}.
+	{received} of {total} MB	{received} de {total} MB
+	It installs when you quit VectorCraft, or right away if you restart now.	Ele é instalado quando você sai do VectorCraft, ou na hora se reiniciar agora.
+	Couldn't update VectorCraft.	Não foi possível atualizar o VectorCraft.
+	Checking for updates…	Verificando atualizações…
+	Download and Install	Baixar e instalar
+	Open Release Page	Abrir a página da versão
+	Later	Mais tarde
+	Skip This Version	Pular esta versão
+	Restart Now	Reiniciar agora
+	Install When I Quit	Instalar ao sair
 	Save Brush Library…	Salvar Biblioteca de Pincéis…
 	Arrows	Setas
 	Borders	Bordas

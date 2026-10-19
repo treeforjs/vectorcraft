@@ -26,6 +26,7 @@ vectorcraft-eps = { workspace = true }
 vectorcraft-format = { workspace = true }
 egui = { workspace = true }
 craft-ui = { workspace = true }
+craft-update = { workspace = true }
 egui_extras = { workspace = true }
 image = { workspace = true }
 serde = { workspace = true }

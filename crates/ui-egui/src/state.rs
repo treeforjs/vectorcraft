@@ -395,6 +395,10 @@ pub struct UiState {
     /// The Image Trace panel's Advanced section is open (as it was last left).
     #[serde(default = "yes")]
     pub image_trace_advanced: bool,
+    /// Help › Check for Updates…: the automatic check (Preferences › General), when it last ran
+    /// and the version the person skipped.
+    #[serde(default)]
+    pub updates: craft_update::AutoCheck,
     /// The desktop window's size, position and maximized state, saved when the app quits and
     /// restored at the next launch (the desktop host reads and writes it; none on the web).
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -561,6 +565,7 @@ impl Default for UiState {
             home: None,
             layers_panel: Default::default(),
             image_trace_advanced: true,
+            updates: Default::default(),
             window: None,
         }
     }

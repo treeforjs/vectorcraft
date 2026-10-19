@@ -4220,6 +4220,29 @@ axis	Both	Les deux
 	This isn't an SVG <filter> element.	Ceci n'est pas un élément SVG <filter>.
 @msg	Import SVG Filter… can't pick a file in the browser yet	Importer un filtre SVG… ne peut pas encore choisir de fichier dans le navigateur
 @msg	Imported {n} SVG filter(s)	{n} filtre(s) SVG importé(s)
+# Help › Check for Updates… (the Updates dialog, its notice and preference)
+	Check for Updates…	Rechercher des mises à jour…
+	Check for updates automatically	Rechercher automatiquement les mises à jour
+	Software Update	Mise à jour du logiciel
+	VectorCraft {version} is up to date.	VectorCraft {version} est à jour.
+	Downloading VectorCraft {version}…	Téléchargement de VectorCraft {version}…
+	VectorCraft {version} is ready to install.	VectorCraft {version} est prêt à être installé.
+	VectorCraft {version} is available.	VectorCraft {version} est disponible.
+	You have version {version}.	Vous avez la version {version}.
+	{received} of {total} MB	{received} sur {total} Mo
+	It installs when you quit VectorCraft, or right away if you restart now.	L’installation a lieu quand vous quittez VectorCraft, ou tout de suite si vous redémarrez maintenant.
+	Couldn't update VectorCraft.	Impossible de mettre à jour VectorCraft.
+	Checking for updates…	Recherche de mises à jour…
+	Download and Install	Télécharger et installer
+	Open Release Page	Ouvrir la page de la version
+	Later	Plus tard
+	Skip This Version	Ignorer cette version
+	Restart Now	Redémarrer maintenant
+	Install When I Quit	Installer en quittant
+@msg	no update to download	aucune mise à jour à télécharger
+@msg	no update to skip	aucune mise à jour à ignorer
+@msg	no updater	aucun programme de mise à jour
+@msg	unknown action `{other}`	action inconnue `{other}`
 	Open Brush Library	Ouvrir une bibliothèque de formes
 	Save Brush Library	Enregistrer la bibliothèque de formes
 	Save Brush Library…	Enregistrer la bibliothèque de formes…

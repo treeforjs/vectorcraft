@@ -4209,6 +4209,29 @@ axis	Both	Entrambi
 	This isn't an SVG <filter> element.	Questo non è un elemento SVG <filter>.
 @msg	Import SVG Filter… can't pick a file in the browser yet	Importa filtro SVG… non può ancora scegliere un file nel browser
 @msg	Imported {n} SVG filter(s)	Importati {n} filtri SVG
+# Help › Check for Updates… (the Updates dialog, its notice and preference)
+	Check for Updates…	Verifica aggiornamenti…
+	Check for updates automatically	Verifica automaticamente gli aggiornamenti
+	Software Update	Aggiornamento software
+	VectorCraft {version} is up to date.	VectorCraft {version} è aggiornato.
+	Downloading VectorCraft {version}…	Download di VectorCraft {version}…
+	VectorCraft {version} is ready to install.	VectorCraft {version} è pronto per l’installazione.
+	VectorCraft {version} is available.	È disponibile VectorCraft {version}.
+	You have version {version}.	Hai la versione {version}.
+	{received} of {total} MB	{received} di {total} MB
+	It installs when you quit VectorCraft, or right away if you restart now.	Viene installato quando esci da VectorCraft, o subito se riavvii ora.
+	Couldn't update VectorCraft.	Impossibile aggiornare VectorCraft.
+	Checking for updates…	Verifica degli aggiornamenti…
+	Download and Install	Scarica e installa
+	Open Release Page	Apri la pagina della versione
+	Later	Più tardi
+	Skip This Version	Salta questa versione
+	Restart Now	Riavvia ora
+	Install When I Quit	Installa all’uscita
+@msg	no update to download	nessun aggiornamento da scaricare
+@msg	no update to skip	nessun aggiornamento da saltare
+@msg	no updater	nessun programma di aggiornamento
+@msg	unknown action `{other}`	azione sconosciuta `{other}`
 	Open Brush Library	Apri libreria pennelli
 	Save Brush Library	Salva libreria pennelli
 	Save Brush Library…	Salva libreria pennelli…

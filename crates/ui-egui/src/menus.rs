@@ -382,6 +382,12 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ),
     ("help.about", "About VectorCraft", "", "{}"),
     ("help.commandPalette", "Search Commands…", "Cmd+K", "{} open (or close) the command palette (Cmd+Shift+/ opens it too)"),
+    (
+        "help.checkForUpdates",
+        "Check for Updates…",
+        "",
+        "{} look for a newer VectorCraft and open the Updates dialog (dialog `updates`, fields state: idle|checking|upToDate|available|downloading|ready|failed, current, version, notes, install, reason, page, received, total, error; set action: download|skip|later|cancel|restart|installOnQuit|openPage|close and confirm) → {pending: \"updates\"}; without the updater (the web) opens the releases page → {url}",
+    ),
     ("app.quit", "Quit VectorCraft", "Cmd+Q", "{}"),
     (
         "ui.swatchOptions",
@@ -1361,6 +1367,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             app.ui.about = true;
             Ok(Value::Null)
         }
+        crate::updates::COMMAND => crate::updates::command(app),
         "help.commandPalette" => {
             if app.ui.palette_open {
                 app.ui.palette_open = false;
@@ -2834,6 +2841,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Search Commands…", "help.commandPalette"),
                 todos("VectorCraft Help…", "F1"),
                 Sep,
+                c("Check for Updates…", crate::updates::COMMAND),
                 c("About VectorCraft", "help.about"),
             ],
         ),

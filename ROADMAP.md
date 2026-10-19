@@ -98,6 +98,17 @@ grade by behaviour against `plan/illustrator/`, not by whether a menu item exist
 
 ## Shipped so far
 
+- **In-app updates (M14, 2026-10-19):** Help › Check for Updates… (`help.checkForUpdates`) opens
+  an Updates dialog over the shared `craft-update` crate: checking, up to date, a newer version
+  with its release notes (Download and Install when this copy can update itself, else why not and
+  Open Release Page; Skip This Version; Later), download progress with Cancel, then Restart Now or
+  Install When I Quit. The `.msi`, AppImage, `.deb` and `.rpm` installs update in place after the
+  download is verified against the release's signed checksum list; other installs (macOS, the
+  portable zip, Flatpak, tarballs, the web) are pointed to the release page. A daily background
+  check (Preferences › General › Check for updates automatically) starts 10 s after the first
+  frame and only ever shows a quiet notice in the corner. The release workflow signs
+  `SHA256SUMS.txt` when its key is configured (see [releasing](docs/releasing.md#in-app-updates)).
+
 - **Effect Gallery workflow (M9, 2026-10-11):** Effect › Effect Gallery adds Gaussian Blur, Feather,
   Radial Blur, Smart Blur, Unsharp Mask and Glowing Edges from the existing filter catalog. Its
   selected-object preview updates while adding, editing, reordering, hiding or deleting effects;
@@ -224,7 +235,7 @@ grade by behaviour against `plan/illustrator/`, not by whether a menu item exist
 | M11 | Artboards & views (artboard panel/tool, Trim View, middle-button pan, print tiling and the status bar's artboard navigator done; multiple windows, presentation polish) | 🟡 | 15–25 |
 | M12 | Advanced color & art (CMYK/ICC, separations, Gradient Mesh, Live Paint, Image Trace, Graphs) | 🟡 Gradient Mesh, Live Paint, Image Trace (13 presets, 18 ms/1k² image; the Flat Logo mode places edges to a fraction of a pixel, restores sharp corners, snaps lines and circles, and refuses gradients), Recolor Artwork, colour management (ICC, soft proofing, separations preview), Graphs (all 9 tools, Graph Data/Type, regenerate in place) done; graph Design/Column/Marker designs pending | 6–10 |
 | M13 | Automation (Actions ✅ record/playback, persisted; variables, scripting, batch) | 🟡 MCP connection recovery never replays an uncertain edit; variables, scripting and batch remain | 18–27 |
-| M14 | 1.0 polish (preferences, shortcut editor, workspaces, accessibility, packaging for all OSes) | 🟡 Preferences, shortcut editor (chords with Shift and a punctuation key fire as typed), workspaces, a custom title bar on Windows/Linux with a Home button, content-sized dialogs, menus that scroll when longer than the window and macOS native menu dismissal done (M14.8); an experimental, unsupported Windows 7 x64 portable OpenGL build (not verified by maintainers); Ubuntu 24.04/26.04 x86_64 install guidance, package file associations and software-rendered desktop smoke coverage; accessibility and broader Windows/Linux hardware QA pending | 18–28 |
+| M14 | 1.0 polish (preferences, shortcut editor, workspaces, accessibility, packaging for all OSes) | 🟡 Preferences, shortcut editor (chords with Shift and a punctuation key fire as typed), workspaces, a custom title bar on Windows/Linux with a Home button, content-sized dialogs, menus that scroll when longer than the window and macOS native menu dismissal done (M14.8); in-app updates (check, verified download, install on quit); an experimental, unsupported Windows 7 x64 portable OpenGL build (not verified by maintainers); Ubuntu 24.04/26.04 x86_64 install guidance, package file associations and software-rendered desktop smoke coverage; accessibility and broader Windows/Linux hardware QA pending | 18–28 |
 | — | Interaction fidelity pass (every tool's modifiers, Properties panel per context, isolation, nuance) | ⬜ | 60–90 |
 | — | Hardening at scale (big-file corpus, fuzzing, cross-platform + browser QA) | 🟡 EPS resource limits, native identifier validation, background-save recovery and Unix save privacy hardened (2026-10-11) | 50–80 |
 | | **Total to full parity** (one agent; re-derived from the [Parity estimate](#parity-estimate) table) | | **~320–500** |
