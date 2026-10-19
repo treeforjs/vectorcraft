@@ -2455,7 +2455,6 @@
 	Search	搜索
 	Search All	搜索全部
 	Search commands and tools	搜索命令和工具
-	Search commands and tools…	搜索命令和工具…
 	Search Commands…	搜索命令…
 	Secondary	次要
 	Section Symbol	章节符号
@@ -3867,3 +3866,12 @@ axis	Both	两者
 	User Brush Library 8	用户画笔库 8
 	User Brush Library 9	用户画笔库 9
 	User Brush Library 10	用户画笔库 10
+	Recently used	最近使用
+	Popular	常用
+	No matches for “{query}”	没有与“{query}”匹配的结果
+	Try a plainer word, such as “color”, “text”, “group” or “undo”.	请尝试更少或更简单的词语。
+	Open or create a document first	请先打开或新建文档
+	Select something first	请先选择对象
+	Not available right now	当前不可用
+	↑↓ move · Enter runs · Esc closes	↑↓ 移动 · Enter 运行 · Esc 关闭
+	Type what you want to do…	输入你想做的事…

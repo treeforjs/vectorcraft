@@ -2530,7 +2530,6 @@
 	Search	Rechercher
 	Search All	Rechercher partout
 	Search commands and tools	Chercher commandes et outils
-	Search commands and tools…	Chercher commandes et outils…
 	Search Commands…	Rechercher des commandes…
 	Secondary	Secondaire
 	Section Symbol	Symbole de section
@@ -4246,3 +4245,12 @@ axis	Both	Les deux
 	User Brush Library 10	Bibliothèque de formes utilisateur 10
 @msg	no symbol `{n}`	aucun symbole `{n}`
 @msg	not a symbol library (format `{_1}`)	ce n’est pas une bibliothèque de symboles (format `{_1}`)
+	Recently used	Utilisés récemment
+	Popular	Populaires
+	No matches for “{query}”	Aucun résultat pour « {query} »
+	Try a plainer word, such as “color”, “text”, “group” or “undo”.	Essayez moins de mots ou des mots plus simples.
+	Open or create a document first	Ouvrez ou créez d’abord un document
+	Select something first	Sélectionnez d’abord quelque chose
+	Not available right now	Indisponible pour le moment
+	↑↓ move · Enter runs · Esc closes	↑↓ déplacer · Entrée exécute · Échap ferme
+	Type what you want to do…	Tapez ce que vous voulez faire…

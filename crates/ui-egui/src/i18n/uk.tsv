@@ -2525,7 +2525,6 @@
 	Search	Пошук
 	Search All	Шукати скрізь
 	Search commands and tools	Пошук команд та інструментів
-	Search commands and tools…	Пошук команд та інструментів…
 	Search Commands…	Пошук команд…
 	Secondary	Вторинний
 	Section Symbol	Символ параграфа
@@ -4218,3 +4217,12 @@ axis	Both	Обидві
 	User Brush Library 10	Користувацька бібліотека пензлів 10
 @msg	no symbol `{n}`	немає символу `{n}`
 @msg	not a symbol library (format `{_1}`)	не є бібліотекою символів (формат `{_1}`)
+	Recently used	Нещодавно використані
+	Popular	Популярні
+	No matches for “{query}”	Немає збігів для «{query}»
+	Try a plainer word, such as “color”, “text”, “group” or “undo”.	Спробуйте менше слів або простіші слова.
+	Open or create a document first	Спершу відкрийте або створіть документ
+	Select something first	Спершу виділіть щось
+	Not available right now	Зараз недоступно
+	↑↓ move · Enter runs · Esc closes	↑↓ вибір · Enter — виконати · Esc — закрити
+	Type what you want to do…	Введіть, що хочете зробити…

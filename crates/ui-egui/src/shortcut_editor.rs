@@ -357,8 +357,16 @@ pub fn reset_one(overrides: &mut BTreeMap<String, String>, key: &str) {
 
 /// Overrides of a preset (both presets are the registry defaults for now).
 pub fn preset(name: &str) -> Option<BTreeMap<String, String>> {
-    PRESETS.contains(&set_name(name)).then(BTreeMap::new)
+    match set_name(name) {
+        // The set people coming from the classic vector editors know: ⌘K is Preferences there,
+        // so the command palette keeps its earlier ⇧⌘/.
+        "Classic Defaults" => Some(CLASSIC.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()),
+        n => PRESETS.contains(&n).then(BTreeMap::new),
+    }
 }
+
+/// How Classic Defaults differs from VectorCraft Defaults.
+const CLASSIC: &[(&str, &str)] = &[("edit.preferences", "Cmd+K"), ("help.commandPalette", "Cmd+Shift+/")];
 
 /// Export format: `{"format": "vectorcraft-shortcuts", "set": name, "overrides": {...}}`.
 pub fn export_json(set: &str, overrides: &BTreeMap<String, String>) -> Value {
@@ -828,7 +836,7 @@ mod tests {
     #[test]
     fn override_beats_default_and_empty_removes() {
         let mut ov = BTreeMap::new();
-        assert_eq!(effective_in(&ov, "edit.preferences").as_deref(), Some("Cmd+K"));
+        assert_eq!(effective_in(&ov, "edit.preferences").as_deref(), Some("Cmd+,"));
         ov.insert("edit.preferences".to_string(), "Cmd+Alt+Shift+9".to_string());
         assert_eq!(effective_in(&ov, "edit.preferences").as_deref(), Some("Cmd+Alt+Shift+9"));
         ov.insert("edit.preferences".to_string(), String::new());
@@ -866,20 +874,20 @@ mod tests {
     #[test]
     fn assign_detects_conflicts() {
         let mut ov = BTreeMap::new();
-        // ⌘K is Preferences.
+        // ⌘K is the command palette.
         let err = assign(&mut ov, "file.revert", Some("Cmd+K"), false).unwrap_err();
-        assert!(err.contains("Preferences"), "{err}");
+        assert!(err.contains("Search Commands"), "{err}");
         assert!(ov.is_empty());
-        assert_eq!(conflicts_with(&ov, "Cmd+K", "file.revert"), vec!["edit.preferences".to_string()]);
+        assert_eq!(conflicts_with(&ov, "Cmd+K", "file.revert"), vec!["help.commandPalette".to_string()]);
     }
 
     #[test]
     fn forced_assign_moves_the_chord() {
         let mut ov = BTreeMap::new();
         let removed = assign(&mut ov, "file.revert", Some("Cmd+K"), true).unwrap();
-        assert_eq!(removed, vec!["edit.preferences".to_string()]);
+        assert_eq!(removed, vec!["help.commandPalette".to_string()]);
         assert_eq!(effective_in(&ov, "file.revert").as_deref(), Some("Cmd+K"));
-        assert_eq!(effective_in(&ov, "edit.preferences"), None);
+        assert_eq!(effective_in(&ov, "help.commandPalette"), None);
         assert!(conflicts_with(&ov, "Cmd+K", "file.revert").is_empty());
     }
 
@@ -914,9 +922,13 @@ mod tests {
 
     #[test]
     fn presets_are_the_defaults() {
-        for p in PRESETS {
-            assert_eq!(preset(p), Some(BTreeMap::new()));
-        }
+        assert_eq!(preset("VectorCraft Defaults"), Some(BTreeMap::new()));
+        // Classic keeps ⌘K for Preferences and the palette on ⇧⌘/; every override is valid.
+        let classic = preset("Classic Defaults").unwrap();
+        assert_eq!(effective_in(&classic, "edit.preferences").as_deref(), Some("Cmd+K"));
+        assert_eq!(effective_in(&classic, "help.commandPalette").as_deref(), Some("Cmd+Shift+/"));
+        assert!(classic.iter().all(|(k, v)| default_of(k).is_some() && normalize(v).as_deref() == Some(v.as_str())));
+        assert!(conflicts_with(&classic, "Cmd+K", "edit.preferences").is_empty());
         assert!(preset("Nope").is_none());
     }
 
