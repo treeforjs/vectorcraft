@@ -245,3 +245,159 @@ fn closed_stdout_ends_quietly() {
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(out.status.success() && !err.contains("panicked"), "{:?}: {err}", out.status);
 }
+
+#[test]
+fn run_takes_params_inline() {
+    let out = Command::new(BIN)
+        .args(["run", "--cmd", r#"file.new={"width":120,"height":80}"#, "--cmd", r#"shape.ellipse={"x":10,"y":10,"width":40,"height":30}"#])
+        .args(["--cmd", r#"object.setProps={"id":"$1.id","name":"dot"}"#])
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    let lines: Vec<Value> = String::from_utf8(out.stdout).unwrap().lines().map(|l| serde_json::from_str(l).unwrap()).collect();
+    assert_eq!(lines.len(), 3);
+    assert!(lines[1]["result"]["id"].is_u64());
+    let out = Command::new(BIN).args(["run", "--cmd", "file.new=[1]"]).output().unwrap();
+    assert!(!out.status.success());
+}
+
+#[test]
+fn commands_filter_and_describe() {
+    let out = Command::new(BIN).args(["commands", "STAR"]).output().unwrap();
+    assert!(out.status.success());
+    let v: Value = serde_json::from_slice(&out.stdout).unwrap();
+    let ids: Vec<&str> = v.as_array().unwrap().iter().filter_map(|c| c["id"].as_str()).collect();
+    assert!(ids.contains(&"shape.star") && !ids.contains(&"object.group"), "{ids:?}");
+
+    let out = Command::new(BIN).args(["describe", "shape.star"]).output().unwrap();
+    assert!(out.status.success());
+    let v: Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(v["label"], "Star");
+    assert!(v["params"].as_str().unwrap().contains("radius1"));
+    assert!(v.get("enabled").is_none());
+
+    let out = Command::new(BIN).args(["describe", "shape.rect"]).output().unwrap();
+    assert!(!out.status.success());
+    assert!(String::from_utf8_lossy(&out.stderr).contains("shape.rectangle"));
+}
+
+#[test]
+fn script_runs_a_file_then_saves_and_exports() {
+    let script = tmp("star.jsonl");
+    let (saved, svg) = (tmp("script.vectorcraft"), tmp("script.svg"));
+    std::fs::write(
+        &script,
+        "# a star, filled\n{\"command\":\"file.new\",\"params\":{\"width\":200,\"height\":200}}\n\
+         {\"command\":\"shape.star\",\"params\":{\"cx\":100,\"cy\":100,\"radius1\":80,\"radius2\":35}}\n\
+         {\"command\":\"paint.setFill\",\"params\":{\"color\":\"#ff8800\",\"ids\":[\"$1.id\"]}}\n",
+    )
+    .unwrap();
+    let out = Command::new(BIN)
+        .args(["script", script.to_str().unwrap(), "--save", saved.to_str().unwrap(), "--export", svg.to_str().unwrap()])
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    let report: Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!((report["completed"].as_u64(), report["failed"].as_u64()), (Some(3), Some(0)), "{report}");
+    assert_eq!(report["saved"]["format"], "vectorcraft");
+    assert!(std::fs::read_to_string(&svg).unwrap().contains("ff8800"));
+
+    // From stdin, on the saved file: a failing step stops the script, which then writes nothing.
+    let png = tmp("script-failed.png");
+    let mut child = Command::new(BIN)
+        .args(["script", "-", "--in", saved.to_str().unwrap(), "--export", png.to_str().unwrap()])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child.stdin.take().unwrap().write_all(br#"["select.all", "nope.nothing", "object.group"]"#).unwrap();
+    let out = child.wait_with_output().unwrap();
+    assert!(!out.status.success());
+    let report: Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(report["results"].as_array().unwrap().len(), 2, "{report}");
+    assert_eq!(report["results"][1]["ok"], false);
+    assert!(!png.exists());
+
+    // --keep-going runs the rest.
+    let mut child = Command::new(BIN)
+        .args(["script", "--keep-going", "--in", saved.to_str().unwrap()])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child.stdin.take().unwrap().write_all(b"\"select.all\"\n\"nope.nothing\"\n\"object.group\"\n").unwrap();
+    let out = child.wait_with_output().unwrap();
+    assert!(!out.status.success());
+    let report: Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!((report["completed"].as_u64(), report["failed"].as_u64()), (Some(2), Some(1)), "{report}");
+}
+
+#[test]
+fn convert_many_files_at_once() {
+    let dir = tmp("batch-in");
+    std::fs::create_dir_all(&dir).unwrap();
+    let mut inputs = vec![];
+    for (i, c) in ["#ff0000", "#00ff00", "#0000ff"].iter().enumerate() {
+        let svg = dir.join(format!("art{i}.svg"));
+        std::fs::write(
+            &svg,
+            format!(r#"<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="20" height="20" fill="{c}"/></svg>"#),
+        )
+        .unwrap();
+        inputs.push(svg.to_str().unwrap().to_string());
+    }
+    let broken = dir.join("broken.svg");
+    std::fs::write(&broken, "not svg").unwrap();
+    inputs.push(broken.to_str().unwrap().to_string());
+    let out_dir = tmp("batch-out");
+    let out =
+        Command::new(BIN).args(["convert", "--to", "pdf", "--out-dir", out_dir.to_str().unwrap(), "--jobs", "2"]).args(&inputs).output().unwrap();
+    // One bad file fails the run but not the others.
+    assert!(!out.status.success());
+    let lines: Vec<Value> = String::from_utf8(out.stdout).unwrap().lines().map(|l| serde_json::from_str(l).unwrap()).collect();
+    assert_eq!(lines.len(), 4);
+    assert_eq!(lines.iter().filter(|l| l["ok"] == true).count(), 3);
+    for i in 0..3 {
+        assert!(std::fs::read(out_dir.join(format!("art{i}.pdf"))).unwrap().starts_with(b"%PDF"));
+    }
+
+    // Two inputs that would write the same file stop the run before it starts.
+    let twin = tmp("batch-twin");
+    std::fs::create_dir_all(&twin).unwrap();
+    let other = twin.join("art0.svg");
+    std::fs::copy(&inputs[0], &other).unwrap();
+    let out =
+        Command::new(BIN).args(["convert", "--to", "png", "-d", out_dir.to_str().unwrap(), &inputs[0], other.to_str().unwrap()]).output().unwrap();
+    assert!(!out.status.success());
+    assert!(String::from_utf8_lossy(&out.stderr).contains("both be written"));
+    assert!(!out_dir.join("art0.png").exists());
+}
+
+/// `app` speaks the control protocol: one JSON request line, one reply line.
+#[test]
+fn app_sends_one_request_to_the_running_app() {
+    use std::io::{BufRead, BufReader};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port().to_string();
+    let server = std::thread::spawn(move || {
+        let mut requests = vec![];
+        for _ in 0..2 {
+            let (s, _) = listener.accept().unwrap();
+            let mut line = String::new();
+            BufReader::new(s.try_clone().unwrap()).read_line(&mut line).unwrap();
+            let req: Value = serde_json::from_str(&line).unwrap();
+            writeln!(&s, "{}", json!({"id": req["id"], "ok": true, "result": {"echo": req["method"]}})).unwrap();
+            requests.push(req);
+        }
+        requests
+    });
+    let out = Command::new(BIN).args(["app", "--connect", &port, "shape.star", r#"{"cx":1,"cy":2,"radius1":3,"radius2":1}"#]).output().unwrap();
+    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    assert_eq!(serde_json::from_slice::<Value>(&out.stdout).unwrap()["echo"], "engine.execute");
+    let out = Command::new(BIN).args(["app", "--connect", &port, "--method", "ui.screenshot", r#"{"path":"/tmp/x.png"}"#]).output().unwrap();
+    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    let requests = server.join().unwrap();
+    assert_eq!(requests[0]["params"], json!({"command": "shape.star", "params": {"cx":1,"cy":2,"radius1":3,"radius2":1}}));
+    assert_eq!((&requests[1]["method"], &requests[1]["params"]["path"]), (&json!("ui.screenshot"), &json!("/tmp/x.png")));
+}

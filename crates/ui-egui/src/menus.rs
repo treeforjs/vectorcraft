@@ -43,10 +43,6 @@ fn todos(label: &'static str, sc: &'static str) -> Item {
 fn sub(label: &'static str, items: Vec<Item>) -> Item {
     Item::Sub(label, items)
 }
-/// Window → … Libraries until the code-generated libraries land (disabled entries).
-fn library_placeholders() -> Vec<Item> {
-    vec![todo("Built-in Libraries"), todo("User Defined"), Sep, todo("Other Library…")]
-}
 use Item::Sep;
 
 /// UI-level commands: (id, label, shortcut, params doc).
@@ -166,7 +162,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("file.documentSetup", "Document Setup…", "Cmd+Alt+P", "{}"),
     ("file.newDialog", "New…", "Cmd+N", "{} opens the New Document dialog"),
     ("app.home", "Home", "", "{} shows the Home screen (new file presets, Open) over the open documents; choosing a document tab returns to it"),
-    ("edit.preferences", "Preferences…", "Cmd+K", "{category?} open Preferences (engine: prefs.get / prefs.set / prefs.list)"),
+    ("edit.preferences", "Preferences…", "Cmd+,", "{category?} open Preferences (engine: prefs.get / prefs.set / prefs.list)"),
     ("edit.keyboardShortcuts", "Keyboard Shortcuts…", "Cmd+Alt+Shift+K", "{}"),
     ("shortcuts.set", "Set Keyboard Shortcut", "", "{id: command id or tool:<id>, shortcut: \"Cmd+Shift+K\" | \"\" (none) | null (default), force?}"),
     ("shortcuts.list", "List Keyboard Shortcuts", "", "{query?} → [{id, label, group, shortcut, default, overridden}]"),
@@ -373,7 +369,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "{} opens the Save PDF dialog; with params = document.exportPdf options written to path (asked when missing; viewAfterSaving opens the file) → {path, bytes, warnings}",
     ),
     ("help.about", "About VectorCraft", "", "{}"),
-    ("help.commandPalette", "Search Commands…", "Cmd+Shift+/", "{}"),
+    ("help.commandPalette", "Search Commands…", "Cmd+K", "{} open (or close) the command palette (Cmd+Shift+/ opens it too)"),
     (
         crate::updates::COMMAND,
         "Check for Updates…",
@@ -580,6 +576,62 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("window.userGraphicStyleLibrary8", "User Graphic Style Library 8", "", "{} open the 8. User Defined graphic style library"),
     ("window.userGraphicStyleLibrary9", "User Graphic Style Library 9", "", "{} open the 9. User Defined graphic style library"),
     ("window.userGraphicStyleLibrary10", "User Graphic Style Library 10", "", "{} open the 10. User Defined graphic style library"),
+    (
+        "window.brushLibrary",
+        "Brush Library",
+        "",
+        "{library: id or name (see brush.libraries) | null (close)} open the read-only library panel on a brush library (UI state `library_panel`, kind brushes); clicking a brush there runs brush.addFromLibrary with apply (applied to the selected paths, else made the current brush) → {open, name, count}",
+    ),
+    (
+        "window.brushLibrary.other",
+        "Other Library…",
+        "",
+        "{path?} (default: pick a file) load a .vcbrushes library, or another document's brushes (engine: brush.loadLibrary), and open it in the library panel",
+    ),
+    (
+        "ui.saveBrushLibrary",
+        "Save Brush Library…",
+        "",
+        "{names?: [brush names] (default: the selected paths' brushes)} open Save Brush Library (dialog `saveBrushLibrary`: name, user: save to the user library folder, selectedOnly); OK runs brush.saveLibrary",
+    ),
+    ("window.userBrushLibrary1", "User Brush Library 1", "", "{} open the 1. User Defined brush library (brush.libraries, category user)"),
+    ("window.userBrushLibrary2", "User Brush Library 2", "", "{} open the 2. User Defined brush library"),
+    ("window.userBrushLibrary3", "User Brush Library 3", "", "{} open the 3. User Defined brush library"),
+    ("window.userBrushLibrary4", "User Brush Library 4", "", "{} open the 4. User Defined brush library"),
+    ("window.userBrushLibrary5", "User Brush Library 5", "", "{} open the 5. User Defined brush library"),
+    ("window.userBrushLibrary6", "User Brush Library 6", "", "{} open the 6. User Defined brush library"),
+    ("window.userBrushLibrary7", "User Brush Library 7", "", "{} open the 7. User Defined brush library"),
+    ("window.userBrushLibrary8", "User Brush Library 8", "", "{} open the 8. User Defined brush library"),
+    ("window.userBrushLibrary9", "User Brush Library 9", "", "{} open the 9. User Defined brush library"),
+    ("window.userBrushLibrary10", "User Brush Library 10", "", "{} open the 10. User Defined brush library"),
+    (
+        "window.symbolLibrary",
+        "Symbol Library",
+        "",
+        "{library: id or name (see symbol.libraries) | null (close)} open the read-only library panel on a symbol library (UI state `library_panel`, kind symbols); clicking a symbol there runs symbol.addFromLibrary (it becomes the current symbol) → {open, name, count}",
+    ),
+    (
+        "window.symbolLibrary.other",
+        "Other Library…",
+        "",
+        "{path?} (default: pick a file) load a .vcsymbols library, or another document's symbols (engine: symbol.loadLibrary), and open it in the library panel",
+    ),
+    (
+        "ui.saveSymbolLibrary",
+        "Save Symbol Library…",
+        "",
+        "{names?: [the symbol selected in the Symbols panel]} open Save Symbol Library (dialog `saveSymbolLibrary`: name, user: save to the user library folder, selectedOnly); OK runs symbol.saveLibrary",
+    ),
+    ("window.userSymbolLibrary1", "User Symbol Library 1", "", "{} open the 1. User Defined symbol library (symbol.libraries, category user)"),
+    ("window.userSymbolLibrary2", "User Symbol Library 2", "", "{} open the 2. User Defined symbol library"),
+    ("window.userSymbolLibrary3", "User Symbol Library 3", "", "{} open the 3. User Defined symbol library"),
+    ("window.userSymbolLibrary4", "User Symbol Library 4", "", "{} open the 4. User Defined symbol library"),
+    ("window.userSymbolLibrary5", "User Symbol Library 5", "", "{} open the 5. User Defined symbol library"),
+    ("window.userSymbolLibrary6", "User Symbol Library 6", "", "{} open the 6. User Defined symbol library"),
+    ("window.userSymbolLibrary7", "User Symbol Library 7", "", "{} open the 7. User Defined symbol library"),
+    ("window.userSymbolLibrary8", "User Symbol Library 8", "", "{} open the 8. User Defined symbol library"),
+    ("window.userSymbolLibrary9", "User Symbol Library 9", "", "{} open the 9. User Defined symbol library"),
+    ("window.userSymbolLibrary10", "User Symbol Library 10", "", "{} open the 10. User Defined symbol library"),
     (
         "ui.expandDialog",
         "Expand…",
@@ -1291,8 +1343,11 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         }
         crate::updates::COMMAND => crate::updates::command(app),
         "help.commandPalette" => {
-            app.ui.palette_open = !app.ui.palette_open;
-            app.ui.palette_query.clear();
+            if app.ui.palette_open {
+                app.ui.palette_open = false;
+            } else {
+                crate::palette::open(app);
+            }
             Ok(Value::Null)
         }
         // Closing asks Save / Don't Save / Cancel for modified documents first (`unsaved`).
@@ -1376,6 +1431,27 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         }
         id if id.starts_with(crate::panels::graphic_styles::USER_SLOT) => match crate::panels::graphic_styles::user_library(app, id) {
             Some(l) => crate::panels::graphic_styles::open_library(app, &json!({ "library": l.id })),
+            None => Err("no such user library".into()),
+        },
+        "window.brushLibrary" => crate::panels::brushes::open_library(app, p),
+        "window.brushLibrary.other" => crate::panels::brushes::other_library(app, s("path")),
+        "ui.saveBrushLibrary" => {
+            let names = p.get("names").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect());
+            let names = names.unwrap_or_else(|| crate::panels::brushes::selected_brush(app).into_iter().collect());
+            crate::dialogs::save_brush_library::open(app, names)
+        }
+        id if id.starts_with(crate::panels::brushes::USER_SLOT) => match crate::panels::brushes::user_library(app, id) {
+            Some(l) => crate::panels::brushes::open_library(app, &json!({ "library": l.id })),
+            None => Err("no such user library".into()),
+        },
+        "window.symbolLibrary" => crate::panels::symbols::open_library(app, p),
+        "window.symbolLibrary.other" => crate::panels::symbols::other_library(app, s("path")),
+        "ui.saveSymbolLibrary" => {
+            let names = p.get("names").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect());
+            crate::dialogs::save_symbol_library::open(app, names.unwrap_or_default())
+        }
+        id if id.starts_with(crate::panels::symbols::USER_SLOT) => match crate::panels::symbols::user_library(app, id) {
+            Some(l) => crate::panels::symbols::open_library(app, &json!({ "library": l.id })),
             None => Err("no such user library".into()),
         },
         "ui.expandDialog" => crate::dialogs::expand::open(app),
@@ -1647,6 +1723,12 @@ pub fn dynamic_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
         id if id.starts_with(crate::panels::graphic_styles::USER_SLOT) => {
             crate::panels::graphic_styles::user_library(app, id).map_or_else(|| "—".into(), |l| l.name)
         }
+        id if id.starts_with(crate::panels::brushes::USER_SLOT) => {
+            crate::panels::brushes::user_library(app, id).map_or_else(|| "—".into(), |l| l.name)
+        }
+        id if id.starts_with(crate::panels::symbols::USER_SLOT) => {
+            crate::panels::symbols::user_library(app, id).map_or_else(|| "—".into(), |l| l.name)
+        }
         id if id.starts_with(crate::dialogs::perspective_presets::SLOT) => {
             crate::dialogs::perspective_presets::slot_preset(app, id).unwrap_or_else(|| "—".into())
         }
@@ -1662,12 +1744,14 @@ pub fn dynamic_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
 /// plug-in? Such names are shown as they are, never translated (a workspace the user calls
 /// "Layers" stays "Layers").
 fn shows_a_name(id: &str, label: &str) -> bool {
-    const SLOTS: [&str; 6] = [
+    const SLOTS: [&str; 8] = [
         "file.openRecent",
         "view.goto",
         "type.recentFont",
         crate::panels::swatches::USER_SLOT,
         crate::panels::graphic_styles::USER_SLOT,
+        crate::panels::brushes::USER_SLOT,
+        crate::panels::symbols::USER_SLOT,
         crate::dialogs::perspective_presets::SLOT,
     ];
     SLOTS.iter().any(|s| id.starts_with(s))
@@ -1713,12 +1797,20 @@ pub fn display_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
 
 /// Menu slots that are left out while they have nothing to show (unused saved views, recent files,
 /// User Defined swatch and graphic style libraries).
+/// A placeholder slot (a recent file or font, a saved view or selection, a user library), not a
+/// command people search for.
+pub(crate) fn is_slot(id: &str) -> bool {
+    hidden_when_disabled(id) || id.starts_with("type.recentFont")
+}
+
 fn hidden_when_disabled(id: &str) -> bool {
     id.starts_with("view.goto")
         || saved_selection_slot(id).is_some()
         || id.starts_with("file.openRecent")
         || id.starts_with(crate::panels::swatches::USER_SLOT)
         || id.starts_with(crate::panels::graphic_styles::USER_SLOT)
+        || id.starts_with(crate::panels::brushes::USER_SLOT)
+        || id.starts_with(crate::panels::symbols::USER_SLOT)
         || id.starts_with(crate::dialogs::perspective_presets::SLOT)
 }
 
@@ -2002,6 +2094,10 @@ pub fn enabled(app: &VectorcraftApp, id: &str) -> bool {
         "ui.flattenTransparencyDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "ui.saveGraphicStyleLibrary" => app.session.active().is_some(),
         id if id.starts_with(crate::panels::graphic_styles::USER_SLOT) => crate::panels::graphic_styles::user_library(app, id).is_some(),
+        "ui.saveBrushLibrary" => app.session.active().is_some(),
+        id if id.starts_with(crate::panels::brushes::USER_SLOT) => crate::panels::brushes::user_library(app, id).is_some(),
+        "ui.saveSymbolLibrary" => app.session.active().is_some(),
+        id if id.starts_with(crate::panels::symbols::USER_SLOT) => crate::panels::symbols::user_library(app, id).is_some(),
         "ui.expandDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "ui.spotColors" => app.session.active().is_some(),
         "ui.menuDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
@@ -2036,6 +2132,33 @@ fn selected_image(app: &VectorcraftApp, keep: impl Fn(&vectorcraft_doc::ImageObj
     app.session.active().is_some_and(|st| {
         st.selection.objects.iter().any(|id| st.doc.node(*id).is_some_and(|n| matches!(&n.kind, vectorcraft_doc::NodeKind::Image(im) if keep(im))))
     })
+}
+
+/// What the menu tree depends on: the shortcuts and workspaces (their generation), the
+/// installed plug-ins and the installed fonts. Its labels are English (translated as drawn), so
+/// the language isn't part of it.
+fn menu_tree_key() -> (u64, u64, u64) {
+    (
+        crate::shortcut_editor::GENERATION.load(std::sync::atomic::Ordering::Relaxed),
+        plugin_revision(),
+        vectorcraft_text::FontDb::global().generation(),
+    )
+}
+
+/// [`menu_tree`], built again only when what it lists changed (the menu bar draws every frame;
+/// building the ~640 items each time was its biggest cost).
+pub fn shared_menu_tree(ctx: &egui::Context) -> std::sync::Arc<Vec<(&'static str, Vec<Item>)>> {
+    type Cached = ((u64, u64, u64), std::sync::Arc<Vec<(&'static str, Vec<Item>)>>);
+    let key = menu_tree_key();
+    let id = egui::Id::new("menu-tree");
+    if let Some((k, v)) = ctx.data(|d| d.get_temp::<Cached>(id))
+        && k == key
+    {
+        return v;
+    }
+    let built = std::sync::Arc::new(menu_tree());
+    ctx.data_mut(|d| d.insert_temp::<Cached>(id, (key, built.clone())));
+    built
 }
 
 pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
@@ -2665,10 +2788,10 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 ),
                 todo("Variables"),
                 Sep,
-                sub("Brush Libraries", library_placeholders()),
+                sub("Brush Libraries", crate::panels::brushes::window_menu()),
                 sub("Graphic Style Libraries", crate::panels::graphic_styles::window_menu()),
                 sub("Swatch Libraries", crate::panels::swatches::window_menu()),
-                sub("Symbol Libraries", library_placeholders()),
+                sub("Symbol Libraries", crate::panels::symbols::window_menu()),
             ],
         ),
         (
@@ -2859,7 +2982,7 @@ pub fn menu_bar(app: &mut VectorcraftApp, ui: &mut egui::Ui) -> f32 {
         ctx.data_mut(|d| d.insert_temp::<Field>(field_key, field));
     }
     let mut clicked: Option<(String, Value)> = None;
-    let tree = menu_tree();
+    let tree = shared_menu_tree(&ctx);
     let (end, open) = egui::MenuBar::new()
         .ui(ui, |ui| {
             let mut titles = Vec::with_capacity(tree.len());

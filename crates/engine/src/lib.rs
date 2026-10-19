@@ -839,6 +839,10 @@ pub struct Session {
     pub(crate) freeform_point: Option<(usize, cmd::gradient::StopOwner)>,
     /// User Defined and loaded graphic style libraries (Window → Graphic Style Libraries); not saved.
     pub style_libraries: cmd::stylelib::Libraries,
+    /// User Defined and loaded brush libraries (Window → Brush Libraries); not saved.
+    pub brush_libraries: cmd::brushlib::Libraries,
+    /// User Defined and loaded symbol libraries (Window → Symbol Libraries); not saved.
+    pub symbol_libraries: cmd::symbollib::Libraries,
     /// The Libraries panel's libraries of graphics, colours and text styles (`library.*`).
     pub libraries: cmd::library::Libraries,
     /// URLs recently given in the Attributes panel (`attributes.set {url}`), newest first; not saved.
@@ -920,6 +924,8 @@ impl Session {
             swatch_libraries: Default::default(),
             freeform_point: None,
             style_libraries: Default::default(),
+            brush_libraries: Default::default(),
+            symbol_libraries: Default::default(),
             libraries: Default::default(),
             recent_urls: vec![],
             ui_language: None,
@@ -1415,6 +1421,8 @@ mod tests_blendopts;
 #[cfg(test)]
 mod tests_blendspine;
 #[cfg(test)]
+mod tests_brushlib;
+#[cfg(test)]
 mod tests_brushsym;
 #[cfg(test)]
 mod tests_build;
@@ -1650,6 +1658,8 @@ mod tests_swatchcmds;
 mod tests_swatches;
 #[cfg(test)]
 mod tests_swatchlib;
+#[cfg(test)]
+mod tests_symbollib;
 #[cfg(test)]
 mod tests_targeting;
 #[cfg(test)]

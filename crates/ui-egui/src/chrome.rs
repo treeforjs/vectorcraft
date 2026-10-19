@@ -12,6 +12,9 @@ use crate::theme::{self, Tokens};
 use crate::widgets;
 use crate::{VectorcraftApp, icons, menus, titlebar};
 
+/// The top bar's search box width: its placeholder and the palette's shortcut (⌘K).
+const SEARCH_W: f32 = 236.0;
+
 /// The application bar: brand mark, Home, menus, then search and the workspace switcher
 /// at the right. With [`VectorcraftApp::custom_titlebar`] it is also the window's title bar
 /// ([`titlebar`]): the caption buttons take the right end and the rest of the bar drags the window.
@@ -54,7 +57,7 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
             let ws = ui.painter().layout_no_wrap(ws_name, egui::FontId::proportional(12.0), t.text);
             let ws_w = (ws.size().x + 36.0).clamp(112.0, 190.0);
             let gap = ui.spacing().item_spacing.x;
-            let with_search = ws_w + 8.0 + gap + 200.0;
+            let with_search = ws_w + 8.0 + gap + SEARCH_W;
             let search_full = room >= with_search;
             let ws_w = if search_full { ws_w } else { ws_w.min(room - 8.0 - gap - 24.0).max(64.0) };
             let mut rui = ui.new_child(egui::UiBuilder::new().max_rect(right).layout(egui::Layout::right_to_left(egui::Align::Center)));
@@ -69,7 +72,7 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
             ui.add_space(8.0);
             // Search box → command palette.
             let open_palette = if search_full {
-                let (r, resp) = ui.allocate_exact_size(vec2(200.0, 24.0), Sense::click());
+                let (r, resp) = ui.allocate_exact_size(vec2(SEARCH_W, 24.0), Sense::click());
                 ui.painter().rect_filled(r, CornerRadius::same(12), t.input);
                 ui.painter().rect_stroke(
                     r,
@@ -78,7 +81,14 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
                     StrokeKind::Inside,
                 );
                 icons::paint(ui, "search", egui::Rect::from_center_size(r.left_center() + vec2(14.0, 0.0), vec2(13.0, 13.0)), t.text_dim);
-                ui.painter().text(
+                // The palette's shortcut (⌘K) at the right, so it is learnt from the box; the
+                // placeholder is cut short before it.
+                let key = crate::menus::shortcut_of("help.commandPalette").map(crate::menus::pretty_shortcut).unwrap_or_default();
+                let key = ui.painter().layout_no_wrap(key, egui::FontId::proportional(11.0), t.text_disabled);
+                let key_left = r.right() - 10.0 - key.size().x;
+                ui.painter().galley(egui::pos2(key_left, r.center().y - key.size().y / 2.0), key, t.text_disabled);
+                let text_clip = egui::Rect::from_min_max(r.min, egui::pos2(key_left - 6.0, r.max.y));
+                ui.painter().with_clip_rect(text_clip).text(
                     r.left_center() + vec2(26.0, 0.0),
                     egui::Align2::LEFT_CENTER,
                     tl!("Search commands and tools"),
@@ -87,11 +97,14 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
                 );
                 resp.clicked()
             } else {
-                widgets::icon_button(ui, "search", tl!("Search commands and tools"), false, 24.0).clicked()
+                let tip = match crate::menus::shortcut_of("help.commandPalette") {
+                    Some(sc) => format!("{} ({})", tl!("Search commands and tools"), crate::menus::pretty_shortcut(sc)),
+                    None => tl!("Search commands and tools").to_string(),
+                };
+                widgets::icon_button(ui, "search", &tip, false, 24.0).clicked()
             };
             if open_palette {
-                app.ui.palette_open = true;
-                app.ui.palette_query.clear();
+                crate::palette::open(app);
             }
         });
     });
@@ -815,9 +828,9 @@ mod tests {
         assert!(text("rotate").contains(&pretty("Alt+Click")));
         assert!(text("eyedropper").contains(&pretty("Alt+Click")));
         assert!(text("perspectiveSelection").contains(&pretty("Alt+Drag")) && text("perspectiveSelection").contains("perpendicular"));
-        assert!(text("paintbrush").contains(&pretty("Cmd+Shift+/")), "the Search Commands shortcut");
+        assert!(text("paintbrush").contains(&pretty("Cmd+K")), "the Search Commands shortcut");
         if !cfg!(target_os = "macos") {
-            assert!(text("zoom").contains("Alt+Click") && text("paintbrush").contains("Ctrl+Shift+/"));
+            assert!(text("zoom").contains("Alt+Click") && text("paintbrush").contains("Ctrl+K"));
         }
     }
 

@@ -447,11 +447,9 @@
 	Brush Affects:	Пензель впливає на:
 	Brush Definition	Визначення пензля
 	Brush Libraries	Бібліотеки пензлів
-	Brush Libraries (on the roadmap)	Бібліотеки пензлів (у плані розвитку)
 	Brush Options…	Параметри пензля…
 	Brush Strokes	Мазки пензля
 	Brushes	Пензлі
-	Built-in Libraries	Вбудовані бібліотеки
 	Built-in presets are read-only: New… starts an editable copy.	Вбудовані набори доступні лише для читання: «Створити…» створює копію, що редагується.
 	Built-in presets don't change: New makes a copy you can edit.	Вбудовані набори не змінюються: Створити робить копію, яку можна редагувати.
 	Built-in presets don't change: New… starts an editable copy.	Вбудовані набори не змінюються: «Створити…» створює копію, що редагується.
@@ -2527,7 +2525,6 @@
 	Search	Пошук
 	Search All	Шукати скрізь
 	Search commands and tools	Пошук команд та інструментів
-	Search commands and tools…	Пошук команд та інструментів…
 	Search Commands…	Пошук команд…
 	Secondary	Вторинний
 	Section Symbol	Символ параграфа
@@ -2876,7 +2873,29 @@
 	Show all open documents	Показати всі відкриті документи
 	Symbol Instance	Екземпляр символу
 	Symbol Libraries	Бібліотеки символів
-	Symbol Libraries (on the roadmap)	Бібліотеки символів (у плані розвитку)
+	Add to Symbols	Додати до символів
+	Badges and Labels	Значки та ярлики
+	Basic Shapes	Базові фігури
+	Direction Signs	Покажчики напрямку
+	Interface Glyphs	Гліфи інтерфейсу
+	Map Markers	Позначки на мапі
+	Outdoors	На природі
+	Save Symbol Library…	Зберегти бібліотеку символів…
+	Save Symbol Library	Зберегти бібліотеку символів
+	Symbol Library	Бібліотека символів
+	User Symbol Library 1	Користувацька бібліотека символів 1
+	User Symbol Library 2	Користувацька бібліотека символів 2
+	User Symbol Library 3	Користувацька бібліотека символів 3
+	User Symbol Library 4	Користувацька бібліотека символів 4
+	User Symbol Library 5	Користувацька бібліотека символів 5
+	User Symbol Library 6	Користувацька бібліотека символів 6
+	User Symbol Library 7	Користувацька бібліотека символів 7
+	User Symbol Library 8	Користувацька бібліотека символів 8
+	User Symbol Library 9	Користувацька бібліотека символів 9
+	User Symbol Library 10	Користувацька бібліотека символів 10
+	Open Symbol Library	Відкрити бібліотеку символів
+	Selected Symbols Only	Тільки вибрані символи
+	Symbol Libraries Menu	Меню "Бібліотеки символів"
 	Symbol Screener Tool	Інструмент «Прозорість символів»
 	Symbol Scruncher Tool	Інструмент «Стиск символів»
 	Symbol Shifter Tool	Інструмент «Зсув символів»
@@ -4196,3 +4215,37 @@ axis	Both	Обидві
 @msg	no update to skip	немає оновлення для пропуску
 @msg	no updater	засіб оновлення недоступний
 @msg	unknown action `{other}`	невідома дія `{other}`
+	Open Brush Library	Відкрити бібліотеку пензлів
+	Save Brush Library	Зберегти бібліотеку пензлів
+	Save Brush Library…	Зберегти бібліотеку пензлів…
+	Selected Brushes Only	Тільки вибрані пензлі
+	{kind} Brush	Пензель: {kind}
+	Add to Brushes	Додати до пензлів
+	Arrows	Стрілки
+	Borders	Рамки
+	Brush Library	Бібліотека пензлів
+	Decorative Scatter	Декоративні розсипи
+	Ink and Calligraphy	Туш і каліграфія
+	Paint and Pencil	Фарби й олівець
+	Brush Libraries Menu	Меню "Бібліотеки пензлів"
+	User Brush Library 1	Користувацька бібліотека пензлів 1
+	User Brush Library 2	Користувацька бібліотека пензлів 2
+	User Brush Library 3	Користувацька бібліотека пензлів 3
+	User Brush Library 4	Користувацька бібліотека пензлів 4
+	User Brush Library 5	Користувацька бібліотека пензлів 5
+	User Brush Library 6	Користувацька бібліотека пензлів 6
+	User Brush Library 7	Користувацька бібліотека пензлів 7
+	User Brush Library 8	Користувацька бібліотека пензлів 8
+	User Brush Library 9	Користувацька бібліотека пензлів 9
+	User Brush Library 10	Користувацька бібліотека пензлів 10
+@msg	no symbol `{n}`	немає символу `{n}`
+@msg	not a symbol library (format `{_1}`)	не є бібліотекою символів (формат `{_1}`)
+	Recently used	Нещодавно використані
+	Popular	Популярні
+	No matches for “{query}”	Немає збігів для «{query}»
+	Try a plainer word, such as “color”, “text”, “group” or “undo”.	Спробуйте менше слів або простіші слова.
+	Open or create a document first	Спершу відкрийте або створіть документ
+	Select something first	Спершу виділіть щось
+	Not available right now	Зараз недоступно
+	↑↓ move · Enter runs · Esc closes	↑↓ вибір · Enter — виконати · Esc — закрити
+	Type what you want to do…	Введіть, що хочете зробити…

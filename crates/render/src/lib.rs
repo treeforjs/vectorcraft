@@ -299,7 +299,7 @@ type ClipPaintEntry = (Arc<Node>, Option<Arc<Node>>, Option<Arc<Node>>);
 
 /// Reusable renderer (keeps the render context, decoded images and glyph caches between frames).
 pub struct Renderer {
-    texts: PtrMap<usize, (Arc<Node>, Arc<TextGeom>)>,
+    texts: PtrMap<usize, (Arc<Node>, Arc<TextGeom>, u64)>,
     /// The [`vectorcraft_text::FontDb::generation`] `texts` was laid out with: type lays out
     /// again when fonts are added or rescanned.
     text_fonts: u64,
@@ -519,6 +519,10 @@ impl Renderer {
         if self.shadows.len() > 256 {
             self.shadows.retain(|_, e| g - e.stamp <= 3);
         }
+        // A story's glyph geometry is large, and every edit of the text makes a new node: entries
+        // of earlier versions go after a few frames, whatever their number (typing in a long
+        // story kept every version and grew to gigabytes).
+        self.texts.retain(|_, (_, _, stamp)| g - *stamp <= 3);
         // Filtered rasters are large: only those of the last frame stay.
         self.pixel_fx.retain(|_, e| e.stamp == g);
         if !inks {
@@ -1377,16 +1381,17 @@ impl Renderer {
             self.text_fonts = fonts;
         }
         let key = Arc::as_ptr(a) as usize;
-        if let Some((node, g)) = self.texts.get(&key)
+        if let Some((node, g, stamp)) = self.texts.get_mut(&key)
             && Arc::ptr_eq(node, a)
         {
+            *stamp = self.stamp;
             return g.clone();
         }
         let g = Arc::new(text_geom(t));
         if self.texts.len() > 4096 {
             self.texts.clear();
         }
-        self.texts.insert(key, (a.clone(), g.clone()));
+        self.texts.insert(key, (a.clone(), g.clone(), self.stamp));
         g
     }
 
@@ -1856,5 +1861,7 @@ mod tests_placed_document;
 mod tests_setup;
 #[cfg(test)]
 mod tests_strokegradient;
+#[cfg(test)]
+mod tests_textcache;
 #[cfg(test)]
 mod tests_tileedge;

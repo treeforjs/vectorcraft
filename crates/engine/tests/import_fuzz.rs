@@ -804,6 +804,12 @@ fn styles(what: &str, data: &str) -> Result<(), TestCaseError> {
     })
 }
 
+fn symbols(what: &str, data: &str) -> Result<(), TestCaseError> {
+    survive_library(what, "symbol.loadLibrary", data, |s, r| {
+        let _ = no_panic(s.execute("symbol.addFromLibrary", &json!({"library": r["library"], "place": true})));
+    })
+}
+
 fn flattener_presets(what: &str, data: &str) -> Result<(), TestCaseError> {
     survive_library(what, "flattener.presets.import", data, |s, r| {
         let _ = no_panic(s.execute("select.all", &json!({})));
@@ -869,6 +875,7 @@ proptest! {
         let data = format!("{head}{s}");
         swatches("swatch library garbage", &data)?;
         styles("style library garbage", &data)?;
+        symbols("symbol library garbage", &data)?;
         flattener_presets("flattener preset garbage", &data)?;
     }
 
@@ -882,6 +889,13 @@ proptest! {
     fn mutated_style_libraries_never_panic(cut in 0usize..20_000, edits in prop::collection::vec(arb_edit(), 0..10)) {
         let text = saved("graphicStyle.saveLibrary", json!({}));
         styles("mutated style library", &mutate_text(&text, cut, &edits))?;
+    }
+
+    #[test]
+    fn mutated_symbol_libraries_never_panic(cut in 0usize..20_000, edits in prop::collection::vec(arb_edit(), 0..10)) {
+        let lib = vectorcraft_doc::symbol_libs::builtin_symbol_library("map-markers").unwrap();
+        let text = vectorcraft_engine::cmd::symbollib::write(&lib);
+        symbols("mutated symbol library", &mutate_text(&text, cut, &edits))?;
     }
 
     #[test]

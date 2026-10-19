@@ -440,11 +440,9 @@
 	Brush Affects:	画笔影响：
 	Brush Definition	画笔定义
 	Brush Libraries	画笔库
-	Brush Libraries (on the roadmap)	画笔库 (规划中)
 	Brush Options…	画笔选项…
 	Brush Strokes	画笔描边
 	Brushes	画笔
-	Built-in Libraries	内置库
 	Built-in presets are read-only: New… starts an editable copy.	内置预设为只读：“新建…”会创建可编辑的副本。
 	Built-in presets don't change: New makes a copy you can edit.	内置预设不会改变：按“新建”会生成可编辑的副本。
 	Built-in presets don't change: New… starts an editable copy.	内置预设不会变动：“新建…”会创建可编辑的副本。
@@ -2457,7 +2455,6 @@
 	Search	搜索
 	Search All	搜索全部
 	Search commands and tools	搜索命令和工具
-	Search commands and tools…	搜索命令和工具…
 	Search Commands…	搜索命令…
 	Secondary	次要
 	Section Symbol	章节符号
@@ -2801,7 +2798,29 @@
 	Show all open documents	显示所有打开的文档
 	Symbol Instance	符号实例
 	Symbol Libraries	符号库
-	Symbol Libraries (on the roadmap)	符号库 (已列入路线图)
+	Add to Symbols	添加到符号
+	Badges and Labels	徽章与标签
+	Basic Shapes	基本形状
+	Direction Signs	方向标志
+	Interface Glyphs	界面字形
+	Map Markers	地图标记
+	Outdoors	户外
+	Save Symbol Library…	保存符号库…
+	Save Symbol Library	存储符号库
+	Symbol Library	符号库
+	User Symbol Library 1	用户符号库 1
+	User Symbol Library 2	用户符号库 2
+	User Symbol Library 3	用户符号库 3
+	User Symbol Library 4	用户符号库 4
+	User Symbol Library 5	用户符号库 5
+	User Symbol Library 6	用户符号库 6
+	User Symbol Library 7	用户符号库 7
+	User Symbol Library 8	用户符号库 8
+	User Symbol Library 9	用户符号库 9
+	User Symbol Library 10	用户符号库 10
+	Open Symbol Library	打开符号库
+	Selected Symbols Only	仅限选择的符号
+	Symbol Libraries Menu	符号库菜单
 	Symbol Screener Tool	符号透明度工具
 	Symbol Scruncher Tool	符号紧缩工具
 	Symbol Shifter Tool	符号移位工具
@@ -3843,3 +3862,35 @@ axis	Both	两者
 	Skip This Version	跳过此版本
 	Restart Now	立即重新启动
 	Install When I Quit	退出时安装
+	Open Brush Library	打开画笔库
+	Save Brush Library	存储画笔库
+	Save Brush Library…	保存画笔库…
+	Selected Brushes Only	仅限选择的画笔
+	{kind} Brush	{kind}画笔
+	Add to Brushes	添加到画笔
+	Arrows	箭头
+	Borders	边框
+	Brush Library	画笔库
+	Decorative Scatter	装饰散点
+	Ink and Calligraphy	墨水与书法
+	Paint and Pencil	颜料与铅笔
+	Brush Libraries Menu	画笔库菜单
+	User Brush Library 1	用户画笔库 1
+	User Brush Library 2	用户画笔库 2
+	User Brush Library 3	用户画笔库 3
+	User Brush Library 4	用户画笔库 4
+	User Brush Library 5	用户画笔库 5
+	User Brush Library 6	用户画笔库 6
+	User Brush Library 7	用户画笔库 7
+	User Brush Library 8	用户画笔库 8
+	User Brush Library 9	用户画笔库 9
+	User Brush Library 10	用户画笔库 10
+	Recently used	最近使用
+	Popular	常用
+	No matches for “{query}”	没有与“{query}”匹配的结果
+	Try a plainer word, such as “color”, “text”, “group” or “undo”.	请尝试更少或更简单的词语。
+	Open or create a document first	请先打开或新建文档
+	Select something first	请先选择对象
+	Not available right now	当前不可用
+	↑↓ move · Enter runs · Esc closes	↑↓ 移动 · Enter 运行 · Esc 关闭
+	Type what you want to do…	输入你想做的事…

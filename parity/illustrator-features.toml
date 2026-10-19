@@ -180,7 +180,7 @@ milestone = "M4"
 status = "partial"
 commands = ["file.open"]
 tools = []
-evidence = ["crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog"]
+evidence = ["crates/engine/src/cmd/fileio/tests_aiimport.rs::an_illustrator_ai_file_opens_from_its_editing_data"]
 notes = "Editing data read for layers, groups, colours, gradients, transparency, images, type and artboards; effects, brushes and symbols in the editing data are not read yet"
 
 [[feature]]
@@ -237,11 +237,11 @@ title = "PDF security (passwords and permissions) on export"
 area = "A"
 tier = "P2"
 milestone = "M4"
-status = "planned"
+status = "shipped"
 commands = ["document.exportPdf"]
 tools = []
-evidence = []
-notes = "PDF import reads secured files; export does not encrypt yet"
+evidence = ["crates/pdf/src/tests_encrypt.rs::every_level_opens_only_with_a_password", "crates/pdf/src/tests_encrypt.rs::permission_bits_follow_the_options", "crates/engine/src/cmd/fileio/tests_pdfsecurity.rs::export_with_passwords_writes_a_pdf_that_only_its_passwords_open", "crates/ui-egui/src/dialogs/save_pdf.rs::the_security_section_takes_passwords_that_presets_drop"]
+notes = "Save Adobe PDF › Security: open and permissions passwords, printing, changes, copying and accessibility permissions; RC4/AES-128/AES-256 by compatibility level"
 
 [[feature]]
 id = "file.eps-import"
@@ -397,7 +397,7 @@ status = "planned"
 commands = ["file.place"]
 tools = []
 evidence = []
-notes = "PSD places flattened; layers as objects pending"
+notes = "PSD can be exported but not read yet; placing PSD (flattened or with layers) is pending"
 
 [[feature]]
 id = "file.gif-bmp-tga"
@@ -600,7 +600,7 @@ milestone = "M4"
 status = "partial"
 commands = ["file.open"]
 tools = []
-evidence = ["crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog"]
+evidence = ["crates/ui-egui/src/tests_place.rs::a_drop_with_a_position_places_on_the_canvas_and_opens_off_it", "crates/ui-egui/src/io.rs::a_file_the_user_cant_open_is_reported_in_a_dialog"]
 notes = "Desktop drops carry no pointer position (winit 0.30); dragging art out to other apps is not supported"
 
 [[feature]]
@@ -856,7 +856,7 @@ milestone = "M11"
 status = "partial"
 commands = ["view.snapToPoint"]
 tools = []
-evidence = []
+evidence = ["crates/engine/src/tests_prefs.rs::snap_to_point_lands_a_dragged_selection_on_anchors"]
 notes = "Snap to Point done; Snap to Glyph pending (type.snap-to-glyph)"
 
 [[feature]]
@@ -917,7 +917,7 @@ status = "planned"
 commands = []
 tools = []
 evidence = []
-notes = "Live Paint gap detection exists in options; the view toggle is pending"
+notes = "No Live Paint gap detection yet; Gap Options and the view toggle are pending"
 
 [[feature]]
 id = "view.new-view"
@@ -937,11 +937,11 @@ title = "New Window and multiple windows per document"
 area = "B"
 tier = "P2"
 milestone = "M11"
-status = "partial"
+status = "planned"
 commands = ["window.newWindow"]
 tools = []
 evidence = ["crates/ui-egui/src/tests_nativemenu.rs::the_window_menu_has_the_system_items"]
-notes = "New Window exists; several windows on one document with Arrange are pending"
+notes = "Window › New Window is listed but disabled; several windows on one document with Arrange are pending"
 
 [[feature]]
 id = "view.arrange-windows"
@@ -3957,7 +3957,7 @@ status = "partial"
 commands = ["text.setFormat"]
 tools = []
 evidence = ["crates/ui-egui/src/panels/paragraph.rs::alignment_buttons_show_the_resolved_alignment_and_direction_sets_it"]
-notes = "Kinsoku, tate-chu-yoko and burasagari done; ruby, mojikumi, warichu pending"
+notes = "Kinsoku, tate-chu-yoko, burasagari, mojikumi None and Line-end Half done; ruby, warichu and the full Mojikumi sets pending"
 
 [[feature]]
 id = "type.fill-placeholder"
@@ -4013,11 +4013,11 @@ title = "Export text"
 area = "I"
 tier = "P3"
 milestone = "M7"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["document.export", "file.exportAs"]
 tools = []
-evidence = []
-notes = "Export as text pending (clipboard text export exists)"
+evidence = ["crates/engine/src/cmd/fileio/tests_text.rs::text_export_writes_the_stories_in_stacking_order", "crates/ui-egui/src/dialogs/tests_raster_formats.rs::text_export_options_write_the_stories"]
+notes = "Export As › Text Format (.txt): every story in stacking order, with platform line endings and encoding options"
 
 [[feature]]
 id = "type.type-object-selection"
@@ -4113,11 +4113,11 @@ title = "Brush libraries (bundled, open, save)"
 area = "J"
 tier = "P2"
 milestone = "M10"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["brush.libraries", "brush.library", "brush.addFromLibrary", "brush.saveLibrary", "brush.loadLibrary", "window.brushLibrary", "window.brushLibrary.other", "ui.saveBrushLibrary"]
 tools = []
-evidence = []
-notes = "Bundled brush libraries (original, generated in code) pending"
+evidence = ["crates/engine/src/tests_brushlib.rs::list_and_get_every_builtin_library", "crates/engine/src/tests_brushlib.rs::save_and_load_round_trip_and_user_libraries", "crates/ui-egui/src/panels/tests_brush_libraries.rs::clicking_a_library_brush_adds_and_applies_it_in_one_step"]
+notes = "Five original built-in libraries generated in code (Arrows, Borders, Decorative Scatter, Ink and Calligraphy, Paint and Pencil); .vcbrushes files, User Defined and Other Library…"
 
 [[feature]]
 id = "brush.image-brush"
@@ -4173,11 +4173,11 @@ title = "Symbol libraries"
 area = "J"
 tier = "P2"
 milestone = "M10"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["symbol.libraries", "symbol.library", "symbol.addFromLibrary", "symbol.saveLibrary", "symbol.loadLibrary"]
 tools = []
-evidence = []
-notes = "Bundled symbol libraries pending"
+evidence = ["crates/engine/src/tests_symbollib.rs::builtin_libraries_are_listed_and_every_symbol_places_visibly", "crates/engine/src/tests_symbollib.rs::add_from_library_is_one_undo_step_and_numbers_names_taken_by_other_art", "crates/engine/src/tests_symbollib.rs::save_and_load_round_trip_with_the_resources_the_art_uses", "crates/engine/src/tests_symbollib.rs::user_libraries_and_other_documents_symbols", "crates/ui-egui/src/panels/tests_symbol_libraries.rs::the_library_panel_shows_thumbnails_and_clicking_a_symbol_adds_it"]
+notes = ""
 
 [[feature]]
 id = "symbol.edit"
@@ -4485,7 +4485,7 @@ status = "partial"
 commands = ["image.info"]
 tools = []
 evidence = ["crates/engine/src/tests_place.rs::replace_keeps_the_transform_and_the_stacking_place"]
-notes = "Image info reported; resample and colour conversion of placed images pending"
+notes = "Image info reported; placed images convert colour with edit.colors.* (includeImages); resampling pending"
 
 [[feature]]
 id = "image.edit-original"
@@ -4548,8 +4548,8 @@ milestone = "M13"
 status = "partial"
 commands = []
 tools = []
-evidence = []
-notes = "Every command is scriptable over MCP, the CLI and the control channel; an in-app script runtime pending"
+evidence = ["apps/vectorcraft-cli/tests/cli.rs::script_runs_a_file_then_saves_and_exports"]
+notes = "Every command is scriptable over MCP, the control channel and the CLI (`vectorcraft-cli script` runs a file of steps, headless or in the app); an in-app script runtime pending"
 
 [[feature]]
 id = "auto.graph-data"
@@ -4880,7 +4880,7 @@ milestone = "M14"
 status = "partial"
 commands = []
 tools = []
-evidence = []
+evidence = ["crates/ui-egui/src/canvas.rs::two_finger_tap_undoes_and_three_finger_tap_redoes", "crates/ui-egui/src/canvas.rs::two_fingers_dragged_together_pan_the_canvas", "crates/ui-egui/src/touch.rs::two_and_three_finger_taps"]
 notes = "Two- and three-finger taps and two-finger pan; a touch workspace pending"
 
 [[feature]]

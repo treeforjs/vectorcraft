@@ -723,7 +723,6 @@
 	Tabs	タブ
 	Variables	変数
 	Brush Libraries	ブラシライブラリ
-	Built-in Libraries	内蔵ライブラリ
 	User Defined	ユーザー定義
 	Other Library…	その他のライブラリ…
 	Graphic Style Libraries	グラフィックスタイルライブラリ
@@ -753,6 +752,29 @@
 	Radial Glows	円形グロー
 	Save Swatch Library…	スウォッチライブラリを保存…
 	Symbol Libraries	シンボルライブラリ
+	Add to Symbols	シンボルに追加
+	Badges and Labels	バッジとラベル
+	Basic Shapes	基本シェイプ
+	Direction Signs	方向標識
+	Interface Glyphs	インターフェイスグリフ
+	Map Markers	地図マーカー
+	Outdoors	アウトドア
+	Save Symbol Library…	シンボルライブラリを保存…
+	Save Symbol Library	シンボルライブラリを保存
+	Symbol Library	シンボルライブラリ
+	User Symbol Library 1	ユーザーシンボルライブラリ 1
+	User Symbol Library 2	ユーザーシンボルライブラリ 2
+	User Symbol Library 3	ユーザーシンボルライブラリ 3
+	User Symbol Library 4	ユーザーシンボルライブラリ 4
+	User Symbol Library 5	ユーザーシンボルライブラリ 5
+	User Symbol Library 6	ユーザーシンボルライブラリ 6
+	User Symbol Library 7	ユーザーシンボルライブラリ 7
+	User Symbol Library 8	ユーザーシンボルライブラリ 8
+	User Symbol Library 9	ユーザーシンボルライブラリ 9
+	User Symbol Library 10	ユーザーシンボルライブラリ 10
+	Open Symbol Library	シンボルライブラリを開く
+	Selected Symbols Only	選択したシンボルのみ
+	Symbol Libraries Menu	シンボルライブラリメニュー
 	Help	ヘルプ
 	VectorCraft on GitHub	GitHub の VectorCraft
 	Search Commands…	コマンドを検索…
@@ -1015,7 +1037,6 @@
 	Browser	ブラウザー
 	Brush Affects:	ブラシの影響:
 	Brush Definition	ブラシの定義
-	Brush Libraries (on the roadmap)	ブラシライブラリ (今後対応予定)
 	Brush Options…	ブラシオプション…
 	Built-in presets are read-only: New… starts an editable copy.	組み込みのプリセットは読み取り専用です。「新規…」で編集可能なコピーを作成できます。
 	Built-in presets don't change: New makes a copy you can edit.	組み込みのプリセットは変更できません。「新規」で編集可能なコピーを作成します。
@@ -2427,7 +2448,6 @@
 	Screens	スクリーン
 	Search All	すべてを検索
 	Search commands and tools	コマンドとツールを検索
-	Search commands and tools…	コマンドとツールを検索…
 	Secondary	セカンダリ
 	Select All Art on Layer	レイヤー上のすべてのアートを選択
 	Select All Assets	すべてのアセットを選択
@@ -2656,7 +2676,6 @@
 	Use Library Item	ライブラリ項目を使用
 	Graphic	グラフィック
 	Show all open documents	開いているすべてのドキュメントを表示
-	Symbol Libraries (on the roadmap)	シンボルライブラリ (今後対応予定)
 	Symbol Screener Tool	シンボルスクリーナーツール
 	Symbol Scruncher Tool	シンボルスクランチャーツール
 	Symbol Shifter Tool	シンボルシフターツール
@@ -4205,3 +4224,37 @@ theme	Appearance	外観
 @msg	no update to skip	スキップできるアップデートはありません
 @msg	no updater	アップデーターがありません
 @msg	unknown action `{other}`	不明な操作です: `{other}`
+	Open Brush Library	ブラシライブラリを開く
+	Save Brush Library	ブラシライブラリを保存
+	Save Brush Library…	ブラシライブラリを保存…
+	Selected Brushes Only	選択したブラシのみ
+	{kind} Brush	{kind}ブラシ
+	Add to Brushes	ブラシに追加
+	Arrows	矢印
+	Borders	ボーダー
+	Brush Library	ブラシライブラリ
+	Decorative Scatter	装飾散布
+	Ink and Calligraphy	インクとカリグラフィ
+	Paint and Pencil	絵の具と鉛筆
+	Brush Libraries Menu	ブラシライブラリメニュー
+	User Brush Library 1	ユーザーブラシライブラリ 1
+	User Brush Library 2	ユーザーブラシライブラリ 2
+	User Brush Library 3	ユーザーブラシライブラリ 3
+	User Brush Library 4	ユーザーブラシライブラリ 4
+	User Brush Library 5	ユーザーブラシライブラリ 5
+	User Brush Library 6	ユーザーブラシライブラリ 6
+	User Brush Library 7	ユーザーブラシライブラリ 7
+	User Brush Library 8	ユーザーブラシライブラリ 8
+	User Brush Library 9	ユーザーブラシライブラリ 9
+	User Brush Library 10	ユーザーブラシライブラリ 10
+@msg	no symbol `{n}`	シンボル `{n}` が見つかりません
+@msg	not a symbol library (format `{_1}`)	シンボルライブラリではありません (形式: `{_1}`)
+	Recently used	最近使用した項目
+	Popular	よく使う項目
+	No matches for “{query}”	「{query}」に一致する項目はありません
+	Try a plainer word, such as “color”, “text”, “group” or “undo”.	語句を減らすか、より簡単な言葉で試してください。
+	Open or create a document first	先にドキュメントを開くか作成してください
+	Select something first	先に何かを選択してください
+	Not available right now	現在は使用できません
+	↑↓ move · Enter runs · Esc closes	↑↓ 移動 · Enter 実行 · Esc 閉じる
+	Type what you want to do…	やりたいことを入力…

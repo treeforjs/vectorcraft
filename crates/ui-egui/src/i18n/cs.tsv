@@ -566,7 +566,6 @@
 	Tabs	Tabulátory
 	Variables	Proměnné
 	Brush Libraries	Knihovny štětců
-	Built-in Libraries	Vestavěné knihovny
 	User Defined	Uživatelské
 	Other Library…	Jiná knihovna…
 	Graphic Style Libraries	Knihovny grafických stylů
@@ -596,6 +595,13 @@
 	Radial Glows	Kruhové záře
 	Save Swatch Library…	Uložit knihovnu vzorníku…
 	Symbol Libraries	Knihovny symbolů
+	Badges and Labels	Odznaky a štítky
+	Basic Shapes	Základní tvary
+	Direction Signs	Směrové značky
+	Interface Glyphs	Glyfy rozhraní
+	Map Markers	Mapové značky
+	Outdoors	Příroda
+	Save Symbol Library…	Uložit knihovnu symbolů…
 	Help	Nápověda
 	VectorCraft on GitHub	VectorCraft na GitHubu
 	Search Commands…	Hledat příkazy…
@@ -738,3 +744,18 @@
 	Restart Now	Restartovat nyní
 	Install When I Quit	Nainstalovat při ukončení
 	Cancel	Zrušit
+	Save Brush Library…	Uložit knihovnu štětců…
+	Arrows	Šipky
+	Borders	Okraje
+	Decorative Scatter	Dekorativní rozptyl
+	Ink and Calligraphy	Inkoust a kaligrafie
+	Paint and Pencil	Barvy a tužka
+	Recently used	Naposledy použité
+	Popular	Oblíbené
+	No matches for “{query}”	Nic neodpovídá „{query}“
+	Try a plainer word, such as “color”, “text”, “group” or “undo”.	Zkuste méně slov nebo jednodušší slovo.
+	Open or create a document first	Nejprve otevřete nebo vytvořte dokument
+	Select something first	Nejprve něco vyberte
+	Not available right now	Teď není k dispozici
+	↑↓ move · Enter runs · Esc closes	↑↓ posun · Enter spustí · Esc zavře
+	Type what you want to do…	Napište, co chcete udělat…

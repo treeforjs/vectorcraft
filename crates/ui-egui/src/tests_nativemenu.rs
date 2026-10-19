@@ -103,7 +103,7 @@ fn vectorcraft_gets_a_mac_app_menu() {
     assert_eq!(bar.menu(MenuRole::Help).map(|m| m.title.as_str()), Some("Help"));
 }
 
-/// Settings ▸ lists the Preferences dialog's own pages, General… with ⌘K, and each opens the
+/// Settings ▸ lists the Preferences dialog's own pages, General… with ⌘, and each opens the
 /// dialog on its page.
 #[test]
 fn settings_lists_every_preferences_page() {
@@ -111,7 +111,7 @@ fn settings_lists_every_preferences_page() {
     let bar = bar(&app);
     let pages = items(submenu(&bar.menus[0].children, "Settings"));
     assert_eq!(pages.len(), PREF_CATEGORIES.len());
-    assert_eq!((pages[0].label.as_str(), pages[0].shortcut), ("General…", Some("Cmd+K")));
+    assert_eq!((pages[0].label.as_str(), pages[0].shortcut), ("General…", Some("Cmd+,")));
     assert!(pages[1..].iter().all(|it| it.shortcut.is_none()));
     for (it, page) in pages.iter().zip(PREF_CATEGORIES) {
         assert_eq!((it.command, &it.params, it.label.clone()), (Some("edit.preferences"), &json!({"category": page}), format!("{page}…")));

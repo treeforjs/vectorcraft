@@ -39,15 +39,29 @@ pub fn open_bytes(app: &mut VectorcraftApp, name: &str, bytes: &[u8], path: Opti
         app.status(format!("Imported {what}: {}", names.join(", ")));
         return Ok(Value::Null);
     }
+    if ext == vectorcraft_doc::symbol_libs::SYMBOLS_EXT {
+        let p = match path {
+            Some(path) => serde_json::json!({ "path": path }),
+            None => serde_json::json!({"name": name, "data": String::from_utf8_lossy(bytes)}),
+        };
+        return crate::panels::symbols::load_library(app, p).map(|_| Value::Null);
+    }
     let swatches = vectorcraft_engine::cmd::swatchlib::LIBRARY_EXTS.contains(&ext.as_str());
-    if swatches || ext == vectorcraft_doc::style_libs::STYLES_EXT {
+    let brushes = ext == vectorcraft_brush::libs::BRUSHES_EXT;
+    if swatches || brushes || ext == vectorcraft_doc::style_libs::STYLES_EXT {
         let p = match path {
             Some(path) => serde_json::json!({ "path": path }),
             // `.ase` swatch libraries are binary.
             None if swatches => serde_json::json!({"name": name, "dataBase64": vectorcraft_format::base64_encode(bytes)}),
             None => serde_json::json!({"name": name, "data": String::from_utf8_lossy(bytes)}),
         };
-        let load = if swatches { crate::panels::swatches::load_library } else { crate::panels::graphic_styles::load_library };
+        let load = if swatches {
+            crate::panels::swatches::load_library
+        } else if brushes {
+            crate::panels::brushes::load_library
+        } else {
+            crate::panels::graphic_styles::load_library
+        };
         return load(app, p).map(|_| Value::Null);
     }
     // A PDF with several pages or a password asks first (the Import PDF dialog), and so does a

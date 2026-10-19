@@ -2,9 +2,13 @@
 //!
 //! ```text
 //! vectorcraft-cli mcp [--connect 127.0.0.1:7979 | --headless]
-//! vectorcraft-cli run [--in FILE] [--cmd id [--params '{json}']]... [--export out.svg]... [--scale 2]
-//! vectorcraft-cli commands
+//! vectorcraft-cli run [--in FILE] [--cmd id[=JSON] [--params '{json}']]... [--export out.svg]... [--scale 2]
+//! vectorcraft-cli script [FILE|-] [--in FILE] [--connect ADDR] [--save OUT] [--export OUT]... [--keep-going]
+//! vectorcraft-cli app [--connect ADDR] (COMMAND [JSON] | --method METHOD [JSON])
+//! vectorcraft-cli commands [FILTER]
+//! vectorcraft-cli describe ID
 //! vectorcraft-cli convert IN OUT [--scale 2] [--artboard 0 | --range 1-3,5] [--outline-text] [--replace-lossy]
+//! vectorcraft-cli convert --to FMT [--out-dir DIR] [--jobs N] [options] IN...
 //! vectorcraft-cli info FILE
 //! vectorcraft-cli bench FILE [--size 2880x1800] [--iters 5]
 //! vectorcraft-cli perf [--paths 50000]
@@ -44,6 +48,7 @@ mod perf;
 /// The desktop app's settings folder, shared: exports and MCP read the same Fonts folder.
 #[path = "../../vectorcraft/src/prefs_dir.rs"]
 mod prefs_dir;
+mod script;
 /// The desktop app's DirectWrite font lister, shared: exports and MCP find the same fonts.
 #[cfg(all(windows, not(target_vendor = "win7")))]
 #[path = "../../vectorcraft/src/system_fonts.rs"]
@@ -70,13 +75,30 @@ USAGE:
       Run the MCP server on stdio. Default: connect to a running app at 127.0.0.1:7979
       (vectorcraft --control 7979), falling back to a headless in-process session.
 
-  vectorcraft-cli run [--in FILE] [--cmd ID [--params JSON]]... [--export FILE]... [--scale N]
+  vectorcraft-cli run [--in FILE] [--cmd ID[=JSON] [--params JSON]]... [--export FILE]... [--scale N]
       Headless batch: open FILE (any readable format) or start a new document, run commands in
       order, export each FILE in the format its extension picks (see Writable formats). Prints one
-      JSON result per step.
+      JSON result per step. A parameter string \"$N.path\" takes a value from step N's result.
 
-  vectorcraft-cli commands
-      Print the command catalogue as JSON.
+  vectorcraft-cli script [FILE|-] [--in FILE] [--connect ADDR] [--save OUT] [--export OUT]... [--scale N] [--keep-going]
+      Run a script of commands (FILE, or stdin): a JSON array of steps, or one step per line
+      (# comments allowed). A step is {\"command\": ID, \"params\": {...}} or \"ID\"; \"$N.path\"
+      references work as in run. Headless by default; --connect ADDR (or a port) runs it in the
+      app started with `vectorcraft --control PORT`. --save and --export happen only when every
+      step succeeded. Prints a JSON report; exits non-zero if a step failed. --keep-going runs
+      the remaining steps after a failure.
+
+  vectorcraft-cli app [--connect ADDR] COMMAND [JSON]
+  vectorcraft-cli app [--connect ADDR] --method METHOD [JSON]
+      Run one command, or one control-channel method (ui.screenshot, document.inspect, ...), in
+      the running app (default 127.0.0.1:7979) and print its result.
+
+  vectorcraft-cli commands [FILTER]
+      Print the command catalogue as JSON; with FILTER, only commands whose id, label, menu or
+      parameters contain it.
+
+  vectorcraft-cli describe ID
+      Print one command: label, menu path, shortcut and parameters.
 
   vectorcraft-cli convert IN OUT [--scale N] [--artboard I | --range R] [--outline-text] [--replace-lossy]
       Open IN (any readable format) and export OUT in the format its extension picks (see Writable
@@ -86,6 +108,12 @@ USAGE:
       SVG's data-* attributes; --outline-text writes SVG text as paths. OUT may not be IN when reading
       IN left things out (hidden text, art or layers it could not read; the notes say which) unless
       --replace-lossy is given.
+
+  vectorcraft-cli convert --to FMT [--out-dir DIR] [--jobs N] [options] IN...
+      Convert many files to FMT (an extension such as pdf, svg, png), each next to its input or
+      in DIR, N at a time (default: one per CPU). Takes the options above. Prints one JSON line
+      per file as it finishes; a file that fails does not stop the others, and the exit status
+      is non-zero if any failed.
 
   vectorcraft-cli info FILE
       Print a JSON summary: the import warnings (what didn't come in as it was, such as an EPS
@@ -118,7 +146,13 @@ fn main() -> ExitCode {
     let r = match args.first().map(String::as_str) {
         Some("mcp") => mcp(&args[1..]),
         Some("run") => run(&args[1..]),
-        Some("commands") => commands(),
+        Some("commands") => commands(args.get(1).map(String::as_str)),
+        Some("describe") => script::describe(args.get(1)).map(|v| outln!("{}", serde_json::to_string_pretty(&v).unwrap_or_default())),
+        Some("script") => script::script(&args[1..]).and_then(|(report, failed)| {
+            outln!("{}", serde_json::to_string_pretty(&report).unwrap_or_default());
+            if failed { Err("a script step failed (see `results`)".into()) } else { Ok(()) }
+        }),
+        Some("app") => script::app(&args[1..]).map(|v| outln!("{}", serde_json::to_string_pretty(&v).unwrap_or_default())),
         Some("convert") => convert(&args[1..]),
         Some("info") => info(&args[1..]),
         Some("bench") => bench(&args[1..]),
@@ -176,36 +210,51 @@ fn mcp(args: &[String]) -> Result<(), String> {
     Server::new(backend).serve(stdin.lock(), stdout.lock()).map_err(|e| e.to_string())
 }
 
-fn commands() -> Result<(), String> {
-    let mut h = Headless::new();
-    let v = h.call("engine.commands", json!({}))?;
-    outln!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
+fn commands(filter: Option<&str>) -> Result<(), String> {
+    let mut all = script::catalogue()?;
+    if let Some(f) = filter {
+        all = script::filter_commands(all, f);
+    }
+    outln!("{}", serde_json::to_string_pretty(&all).unwrap_or_default());
     Ok(())
 }
 
 fn convert(args: &[String]) -> Result<(), String> {
     let mut files = vec![];
-    let (mut scale, mut artboard, mut range, mut outline_text, mut replace_lossy) = (1.0f64, None::<u64>, None::<String>, false, false);
+    let mut o = script::ConvertOpts { scale: 1.0, artboard: None, range: None, outline_text: false, replace_lossy: false };
+    let (mut to, mut out_dir, mut jobs) = (None::<String>, None::<String>, None::<usize>);
     let mut it = args.iter();
     while let Some(a) = it.next() {
         match a.as_str() {
-            "--scale" | "-s" => scale = it.next().and_then(|v| v.parse().ok()).ok_or("--scale needs a number")?,
-            "--artboard" | "-a" => artboard = Some(it.next().and_then(|v| v.parse().ok()).ok_or("--artboard needs an index")?),
-            "--range" | "-r" => range = Some(it.next().cloned().ok_or("--range needs artboards such as 1-3,5")?),
-            "--outline-text" => outline_text = true,
-            "--replace-lossy" => replace_lossy = true,
+            "--scale" | "-s" => o.scale = it.next().and_then(|v| v.parse().ok()).ok_or("--scale needs a number")?,
+            "--artboard" | "-a" => o.artboard = Some(it.next().and_then(|v| v.parse().ok()).ok_or("--artboard needs an index")?),
+            "--range" | "-r" => o.range = Some(it.next().cloned().ok_or("--range needs artboards such as 1-3,5")?),
+            "--outline-text" => o.outline_text = true,
+            "--replace-lossy" => o.replace_lossy = true,
+            "--to" | "-t" => to = Some(it.next().cloned().ok_or("--to needs a format such as pdf")?),
+            "--out-dir" | "-d" => out_dir = Some(it.next().cloned().ok_or("--out-dir needs a folder")?),
+            "--jobs" | "-j" => jobs = Some(it.next().and_then(|v| v.parse().ok()).filter(|n| *n > 0).ok_or("--jobs needs a positive number")?),
             f => files.push(f.to_string()),
         }
     }
-    let [input, output] = <[String; 2]>::try_from(files).map_err(|_| "convert needs IN and OUT")?;
-    let mut h = Headless::new();
-    h.call("app.open", json!({"path": input})).map_err(|e| format!("open {input}: {e}"))?;
-    // A conversion keeps hidden layers and objects, written hidden, where the format can (SVG,
-    // PSD).
-    let params = json!({"path": output, "scale": scale, "artboard": artboard, "range": range, "outlineText": outline_text, "hiddenLayers": true, "acknowledgeLoss": replace_lossy});
-    let r = h.call("engine.execute", json!({"command": "document.export", "params": params})).map_err(|e| format!("export {output}: {e}"))?;
-    outln!("{r}");
-    Ok(())
+    let Some(ext) = to else {
+        if out_dir.is_some() || jobs.is_some() {
+            return Err("--out-dir and --jobs go with --to FMT".into());
+        }
+        let [input, output] = <[String; 2]>::try_from(files).map_err(|_| "convert needs IN and OUT (or --to FMT and any number of IN)")?;
+        let r = script::convert_one(&input, &output, &o)?;
+        outln!("{r}");
+        return Ok(());
+    };
+    if files.is_empty() {
+        return Err("convert --to needs at least one input file".into());
+    }
+    if let Some(d) = &out_dir {
+        std::fs::create_dir_all(d).map_err(|e| format!("{d}: {e}"))?;
+    }
+    let jobs = jobs.unwrap_or_else(|| std::thread::available_parallelism().map_or(1, usize::from));
+    let failed = script::convert_many(&files, &ext, out_dir.as_deref(), jobs, &o, &|v| outln!("{v}"))?;
+    if failed > 0 { Err(format!("{failed} of {} files failed to convert", files.len())) } else { Ok(()) }
 }
 
 fn info(args: &[String]) -> Result<(), String> {
@@ -230,6 +279,15 @@ enum Step {
     Export(String),
 }
 
+/// A command's parameters: a JSON object.
+fn cmd_params(raw: &str) -> Result<Value, String> {
+    let p: Value = serde_json::from_str(raw).map_err(|e| format!("--params {raw}: {e}"))?;
+    if !p.is_object() {
+        return Err(format!("--params must be a JSON object, got {raw}"));
+    }
+    Ok(p)
+}
+
 fn run(args: &[String]) -> Result<(), String> {
     let mut input: Option<String> = None;
     let mut steps: Vec<Step> = vec![];
@@ -239,13 +297,17 @@ fn run(args: &[String]) -> Result<(), String> {
         let mut val = |what: &str| it.next().cloned().ok_or_else(|| format!("{a} needs {what}"));
         match a.as_str() {
             "--in" | "-i" => input = Some(val("a file")?),
-            "--cmd" | "-c" => steps.push(Step::Cmd(val("a command id")?, json!({}))),
+            "--cmd" | "-c" => {
+                // `--cmd ID=JSON` is `--cmd ID --params JSON` in one argument.
+                let raw = val("a command id")?;
+                let (id, params) = match raw.split_once('=') {
+                    Some((id, p)) => (id.to_string(), cmd_params(p)?),
+                    None => (raw, json!({})),
+                };
+                steps.push(Step::Cmd(id, params));
+            }
             "--params" | "-p" => {
-                let raw = val("JSON")?;
-                let p: Value = serde_json::from_str(&raw).map_err(|e| format!("--params {raw}: {e}"))?;
-                if !p.is_object() {
-                    return Err(format!("--params must be a JSON object, got {raw}"));
-                }
+                let p = cmd_params(&val("JSON")?)?;
                 match steps.last_mut() {
                     Some(Step::Cmd(_, params)) => *params = p,
                     _ => return Err("--params must follow a --cmd".into()),
