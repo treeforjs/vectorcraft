@@ -1,6 +1,6 @@
 //! Selection state (objects and, for direct selection, individual anchors; ruler guides).
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 
 use serde::{Deserialize, Serialize};
 
@@ -35,6 +35,10 @@ pub struct Selection {
     pub guides: Vec<usize>,
 }
 
+/// Selections larger than this are pruned against one walk of the document instead of a tree
+/// search per object.
+const PRUNE_LOOKUPS: usize = 16;
+
 impl Selection {
     pub fn is_empty(&self) -> bool {
         self.objects.is_empty()
@@ -59,9 +63,10 @@ impl Selection {
     }
     pub fn set(&mut self, ids: impl IntoIterator<Item = NodeId>) {
         self.clear();
-        for id in ids {
-            self.add(id);
-        }
+        // Linear in the ids: Select All on a document of 10 000 objects must not compare each id
+        // with every one before it.
+        let mut seen = HashSet::new();
+        self.objects = ids.into_iter().filter(|id| seen.insert(*id)).collect();
     }
     pub fn add(&mut self, id: NodeId) {
         self.target = None;
@@ -108,8 +113,18 @@ impl Selection {
     }
     /// Drop ids that no longer exist or are no longer editable.
     pub fn prune(&mut self, doc: &Document) {
-        self.objects.retain(|id| doc.node(*id).is_some());
-        self.anchors.retain(|id, _| doc.node(*id).is_some());
+        // `Document::node` searches the tree, so a large selection checks against one walk of it.
+        if self.objects.len() + self.anchors.len() > PRUNE_LOOKUPS {
+            let mut ids = HashSet::new();
+            doc.walk(|n| {
+                ids.insert(n.id);
+            });
+            self.objects.retain(|id| ids.contains(id));
+            self.anchors.retain(|id, _| ids.contains(id));
+        } else {
+            self.objects.retain(|id| doc.node(*id).is_some());
+            self.anchors.retain(|id, _| doc.node(*id).is_some());
+        }
         if self.key.is_some_and(|k| doc.node(k).is_none()) {
             self.key = None;
         }
@@ -188,6 +203,44 @@ mod tests {
         s.set_guides([0, 1]);
         s.prune(&d);
         assert_eq!(s.guides, vec![0]);
+    }
+
+    #[test]
+    fn set_keeps_the_first_of_repeated_ids_in_order() {
+        let mut s = Selection::default();
+        s.slices.push(NodeId(9));
+        s.set([NodeId(3), NodeId(1), NodeId(3), NodeId(2), NodeId(1)]);
+        assert_eq!(s.objects, vec![NodeId(3), NodeId(1), NodeId(2)]);
+        assert!(s.slices.is_empty());
+    }
+
+    /// Small and large selections (the large one checks against one walk of the document) drop
+    /// exactly the objects and anchor entries that are gone, keeping the order.
+    #[test]
+    fn prune_drops_missing_objects_at_any_size() {
+        let mut d = Document::new(100.0, 100.0);
+        let layer = d.layers.first().map(|l| l.id);
+        let ids: Vec<NodeId> = (0..40)
+            .map(|_| {
+                let id = d.alloc_id();
+                d.insert(layer, usize::MAX, crate::Node::path(id, vectorcraft_geom::PathData::default(), Default::default())).unwrap()
+            })
+            .collect();
+        for n in [3, 40] {
+            let mut s = Selection::default();
+            let mut want = Vec::new();
+            for (i, id) in ids.iter().take(n).enumerate() {
+                let id = if i % 3 == 0 { NodeId(id.0 + 100_000) } else { *id };
+                s.objects.push(id);
+                s.anchors.insert(id, BTreeSet::new());
+                if i % 3 != 0 {
+                    want.push(id);
+                }
+            }
+            s.prune(&d);
+            assert_eq!(s.objects, want, "{n} objects");
+            assert_eq!(s.anchors.keys().copied().collect::<Vec<_>>(), want, "{n} objects");
+        }
     }
 
     #[test]
