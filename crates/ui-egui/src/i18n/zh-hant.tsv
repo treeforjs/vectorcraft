@@ -3906,3 +3906,63 @@ axis	Both	兩者
 @plural	Combined {n} object|Combined {n} objects	已組合 {n} 個物件
 @msg	no example `{name}` (examples: {_1})	沒有範例 `{name}`（範例：{_1}）
 @msg	action must be start, back, skip or end (not `{other}`)	action 必須是 start、back、skip 或 end（不是 `{other}`）
+# Quick graphics: the insert bar, quick styles and colour themes (UX5).
+	Quick Graphics	快速圖形
+	Insert Shape	插入形狀
+	Insert Text Box	插入文字方塊
+	Insert Icon	插入圖示
+	Add Text to Shape	在形狀中加入文字
+	Quick Style	快速樣式
+	Picture as PNG	PNG 圖片
+	Insert Bar	插入列
+	Add Text	加入文字
+	Copy as PNG	複製為 PNG
+	Export PNG…	轉存 PNG…
+	Export PNG	轉存 PNG
+	Accent	強調
+	Shadow	陰影
+	Alternate	輔色
+	Ocean	海洋
+	Sunset	日落
+	Forest	森林
+	Berry	莓果
+	Slate	石板
+	Citrus	柑橘
+	Theme:	主題:
+	Color theme: recolors quick-styled art	色彩主題：為快速樣式的圖稿重新上色
+	Quick styles: one-click looks in the document's colors	快速樣式：一鍵套用文件配色的外觀
+	Triangle	三角形
+	Arrow	箭頭
+	Double Arrow	雙箭頭
+	Chevron	V 形箭頭
+	Line Arrow	箭頭線
+	Speech Bubble	對話框
+	Callout	標註
+	Check	勾號
+	Heart	心形
+	Person	人物
+	Sparkles	閃光
+	Sun	太陽
+	Cloud	雲
+	Globe	地球
+	House	房屋
+	Map	地圖
+	Message	訊息
+	Monitor	螢幕
+	Chart	圖表
+	Pin	圖釘
+	Share	分享
+	Picture	圖片
+	Click to add, or drag onto the page	按一下加入，或拖到頁面上
+	Add a shape: rectangles, circles, arrows, lines, speech bubbles	加入形狀：矩形、圓形、箭頭、直線、對話框
+	Text	文字
+	Add a text box in the middle of the page	在頁面中央加入文字方塊
+	Your text here	在此輸入文字
+	Icons	圖示
+	Add an icon	加入圖示
+	Place a picture from a file	從檔案置入圖片
+	Save the selection, or the page, as a PNG file	將選取範圍或頁面儲存為 PNG 檔案
+	Copy the selection, or the page, as a picture to paste into slides and chats	將選取範圍或頁面複製為圖片，貼到投影片和聊天中
+	Copying pictures needs the desktop app: use Export PNG	複製圖片需要桌面應用程式：請使用「轉存 PNG」
+	Copied a {w} × {h} px PNG	已複製 {w} × {h} 像素的 PNG
+	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	下方的提示列會告訴你如何繪製第一個形狀。你也可以從上方的插入列加入形狀、文字、圖示和影像，或用 {key} 貼上。

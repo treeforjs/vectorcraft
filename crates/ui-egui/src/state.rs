@@ -267,6 +267,10 @@ pub struct UiState {
     /// starts under the selection at every launch.
     #[serde(skip)]
     pub task_bar_place: TaskBarPlace,
+    /// The insert bar over the canvas (Shapes, Text, Icons, Image, quick style, Copy as PNG):
+    /// part of every layout unless one hides it (`window.insertBar`).
+    #[serde(default = "yes")]
+    pub insert_bar: bool,
     /// Last tool shown in each toolbar slot (keyed by the slot's first tool id).
     #[serde(default)]
     pub slot_tool: std::collections::BTreeMap<String, String>,
@@ -527,6 +531,7 @@ impl Default for UiState {
             toolbar_starter: true,
             task_bar: true,
             task_bar_place: TaskBarPlace::default(),
+            insert_bar: true,
             slot_tool: Default::default(),
             floating_flyouts: vec![],
             floating_panels: vec![],

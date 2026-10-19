@@ -709,7 +709,8 @@ fn handle_input(app: &mut VectorcraftApp, ui: &Ui, resp: &egui::Response, rect: 
         dispatch(app, &ev, view);
         // A double-click on type switched a selection tool to the Type tool: the caret goes where
         // the type was clicked, so typing edits it at once.
-        if before != "type" && app.session.tool_id() == "type" {
+        // Type inside a shape is edited where it is, its caret at the end.
+        if before != "type" && app.session.tool_id() == "type" && !crate::insert_bar::edit_shape_text(app) {
             for kind in [PointerKind::Down, PointerKind::Up] {
                 dispatch(app, &PointerEvent { kind, ..ev }, view);
             }
@@ -1964,6 +1965,9 @@ fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
     } else if is_text {
         items.push((tl!("Create Outlines"), "type", "type.createOutlines"));
     } else if !anchors {
+        if n == 1 && first.as_ref().is_some_and(vectorcraft_tools::select::takes_text) {
+            items.push((tl!("Add Text"), "type", "quick.typeInShape"));
+        }
         items.push((tl!("Offset Path"), "square-dashed", "object.path.offsetPath"));
         items.push((tl!("Simplify"), "spline", "object.path.simplify"));
     }
@@ -1971,7 +1975,7 @@ fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
     let fill = first.as_ref().map(|f| f.appearance.fill_paint()).unwrap_or_default();
     let doc = st.uid;
     let anchor = xf.to_screen(Point::new(b.center().x, b.y1));
-    let est_w = 118.0 + items.iter().map(|(l, _, _)| l.len() as f32 * 7.2 + 44.0).sum::<f32>();
+    let est_w = 156.0 + items.iter().map(|(l, _, _)| l.len() as f32 * 7.2 + 44.0).sum::<f32>();
     // Its place under the selection, then where the handle moved it, kept on the canvas (with the
     // bar's size last frame, the estimate before it first shows).
     let under = pos2(anchor.x - est_w / 2.0, anchor.y + 28.0);
@@ -2030,6 +2034,7 @@ fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
                             run = Some((*cmd, json!({})));
                         }
                     }
+                    crate::quick_styles::task_bar_button(app, ui);
                     let (r, resp) = ui.allocate_exact_size(vec2(26.0, 30.0), Sense::click());
                     widgets::paint_chip(ui, egui::Rect::from_center_size(r.center(), vec2(16.0, 16.0)), &fill);
                     ui.painter().rect_stroke(
@@ -3581,7 +3586,8 @@ mod tests {
         app.session.execute("file.new", &json!({"width": 400, "height": 300})).unwrap();
         let mut square =
             |x: f64, y: f64| app.session.execute("shape.rectangle", &json!({"x": x, "y": y, "width": 40, "height": 40})).unwrap()["id"].clone();
-        let (a, b) = (square(120.0, 40.0), square(220.0, 150.0));
+        // Clear of the canvas edges, so neither bar is kept on it while dragged.
+        let (a, b) = (square(160.0, 40.0), square(200.0, 150.0));
         app.select_tool("selection");
         let ctx = egui::Context::default();
         let bar = || task_bar_rect(&ctx).expect("the task bar shows");

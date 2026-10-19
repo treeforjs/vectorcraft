@@ -4479,3 +4479,63 @@ axis	Both	Обидві
 @plural	Combined {n} object|Combined {n} objects	Об’єднано {n} об’єкт|Об’єднано {n} об’єкти|Об’єднано {n} об’єктів
 @msg	no example `{name}` (examples: {_1})	немає прикладу `{name}` (приклади: {_1})
 @msg	action must be start, back, skip or end (not `{other}`)	action має бути start, back, skip або end (а не `{other}`)
+# Quick graphics: the insert bar, quick styles and colour themes (UX5).
+	Quick Graphics	Швидка графіка
+	Insert Shape	Вставити фігуру
+	Insert Text Box	Вставити текстове поле
+	Insert Icon	Вставити значок
+	Add Text to Shape	Додати текст у фігуру
+	Quick Style	Швидкий стиль
+	Picture as PNG	Зображення у PNG
+	Insert Bar	Панель вставлення
+	Add Text	Додати текст
+	Copy as PNG	Копіювати як PNG
+	Export PNG…	Експорт PNG…
+	Export PNG	Експорт PNG
+	Accent	Акцент
+	Shadow	Тінь
+	Alternate	Другий колір
+	Ocean	Океан
+	Sunset	Захід сонця
+	Forest	Ліс
+	Berry	Ягоди
+	Slate	Сланець
+	Citrus	Цитрус
+	Theme:	Тема:
+	Color theme: recolors quick-styled art	Колірна тема: перефарбовує об'єкти зі швидкими стилями
+	Quick styles: one-click looks in the document's colors	Швидкі стилі: оформлення одним клацанням у кольорах документа
+	Triangle	Трикутник
+	Arrow	Стрілка
+	Double Arrow	Подвійна стрілка
+	Chevron	Шеврон
+	Line Arrow	Лінія зі стрілкою
+	Speech Bubble	Хмарка з текстом
+	Callout	Виноска
+	Check	Галочка
+	Heart	Серце
+	Person	Людина
+	Sparkles	Іскри
+	Sun	Сонце
+	Cloud	Хмара
+	Globe	Глобус
+	House	Будинок
+	Map	Мапа
+	Message	Повідомлення
+	Monitor	Монітор
+	Chart	Діаграма
+	Pin	Шпилька
+	Share	Поділитися
+	Picture	Зображення
+	Click to add, or drag onto the page	Клацніть, щоб додати, або перетягніть на сторінку
+	Add a shape: rectangles, circles, arrows, lines, speech bubbles	Додати фігуру: прямокутники, кола, стрілки, лінії, виноски
+	Text	Текст
+	Add a text box in the middle of the page	Додати текстове поле в центр сторінки
+	Your text here	Ваш текст
+	Icons	Значки
+	Add an icon	Додати значок
+	Place a picture from a file	Розмістити зображення з файлу
+	Save the selection, or the page, as a PNG file	Зберегти виділення або сторінку як файл PNG
+	Copy the selection, or the page, as a picture to paste into slides and chats	Скопіювати виділення або сторінку як зображення для вставлення в слайди й чати
+	Copying pictures needs the desktop app: use Export PNG	Для копіювання зображень потрібен настільний застосунок: скористайтеся «Експорт PNG»
+	Copied a {w} × {h} px PNG	Скопійовано PNG {w} × {h} пікс.
+	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	Рядок унизу підкаже, як намалювати першу фігуру. Також можна додати фігури, текст, значки й зображення з панелі вставлення вгорі або вставити за допомогою {key}.

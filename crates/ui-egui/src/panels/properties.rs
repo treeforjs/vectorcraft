@@ -53,6 +53,8 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         type_sections(app, ui);
         divider(ui);
     }
+    crate::quick_styles::inspector_section(app, ui);
+    divider(ui);
     appearance_section(app, ui);
     divider(ui);
     section_header(ui, tl!("Align"));

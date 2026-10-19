@@ -800,3 +800,78 @@
 @plural	Combined {n} object|Combined {n} objects	Zkombinován {n} objekt|Zkombinovány {n} objekty|Zkombinováno {n} objektů
 @msg	no example `{name}` (examples: {_1})	žádná ukázka `{name}` (ukázky: {_1})
 @msg	action must be start, back, skip or end (not `{other}`)	action musí být start, back, skip nebo end (ne `{other}`)
+# Quick graphics: the insert bar, quick styles and colour themes (UX5).
+	Quick Graphics	Rychlá grafika
+	Insert Shape	Vložit tvar
+	Insert Text Box	Vložit textové pole
+	Insert Icon	Vložit ikonu
+	Add Text to Shape	Přidat text do tvaru
+	Quick Style	Rychlý styl
+	Color Theme	Barevný motiv
+	Picture as PNG	Obrázek jako PNG
+	Insert Bar	Panel vkládání
+	Add Text	Přidat text
+	Copy as PNG	Kopírovat jako PNG
+	Export PNG…	Exportovat PNG…
+	Export PNG	Exportovat PNG
+	Solid	Plný
+	Soft	Jemný
+	Accent	Zvýraznění
+	Dashed	Čárkovaný
+	Shadow	Stín
+	Alternate	Druhá barva
+	Ocean	Oceán
+	Sunset	Západ slunce
+	Forest	Les
+	Berry	Bobule
+	Slate	Břidlice
+	Citrus	Citrus
+	Theme:	Motiv:
+	Color theme: recolors quick-styled art	Barevný motiv: přebarví grafiku s rychlými styly
+	Style	Styl
+	Quick styles: one-click looks in the document's colors	Rychlé styly: vzhled jedním kliknutím v barvách dokumentu
+	Rectangle	Obdélník
+	Rounded Rectangle	Zaoblený obdélník
+	Ellipse	Elipsa
+	Triangle	Trojúhelník
+	Diamond	Kosočtverec
+	Star	Hvězda
+	Arrow	Šipka
+	Double Arrow	Dvojitá šipka
+	Chevron	Šipka do kroku
+	Line	Čára
+	Line Arrow	Čára se šipkou
+	Speech Bubble	Bublina
+	Callout	Popisek
+	Check	Zaškrtnutí
+	Heart	Srdce
+	Person	Osoba
+	Sparkles	Jiskry
+	Sun	Slunce
+	Cloud	Mrak
+	Globe	Glóbus
+	House	Dům
+	Map	Mapa
+	Message	Zpráva
+	Monitor	Monitor
+	Search	Hledat
+	Chart	Graf
+	Pin	Špendlík
+	Share	Sdílet
+	Picture	Obrázek
+	Click to add, or drag onto the page	Klepnutím přidejte, nebo přetáhněte na stránku
+	Shapes	Tvary
+	Add a shape: rectangles, circles, arrows, lines, speech bubbles	Přidat tvar: obdélníky, kruhy, šipky, čáry, bubliny
+	Text	Text
+	Add a text box in the middle of the page	Přidat textové pole doprostřed stránky
+	Your text here	Sem napište text
+	Icons	Ikony
+	Add an icon	Přidat ikonu
+	Image	Obrázek
+	Place a picture from a file	Umístit obrázek ze souboru
+	Save the selection, or the page, as a PNG file	Uložit výběr nebo stránku jako soubor PNG
+	Copy the selection, or the page, as a picture to paste into slides and chats	Zkopírovat výběr nebo stránku jako obrázek pro vložení do prezentací a chatů
+	Copying pictures needs the desktop app: use Export PNG	Kopírování obrázků vyžaduje desktopovou aplikaci: použijte Exportovat PNG
+	Copied a {w} × {h} px PNG	Zkopírováno PNG {w} × {h} px
+	Exported {path}	Exportováno: {path}
+	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	Lišta dole radí, jak nakreslit první tvar. Tvary, text, ikony a obrázky můžete přidat také z Panelu vkládání nahoře nebo vložit pomocí {key}.

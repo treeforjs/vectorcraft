@@ -47,6 +47,20 @@ use Item::Sep;
 
 /// UI-level commands: (id, label, shortcut, params doc).
 pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
+    ("window.insertBar", "Insert Bar", "", "{show?: bool} show or hide the insert bar over the canvas (no param toggles) → shown"),
+    ("quick.typeInShape", "Add Text", "", "{id?, text?} insert.textInShape, then type in it with the Type tool → insert.textInShape's result"),
+    (
+        "quick.copyPng",
+        "Copy as PNG",
+        "",
+        "{artboard?, scale?: 2, background?} put a PNG of the selection (else the page in view; quick.png) on the system clipboard, for slides and chats → {width, height}",
+    ),
+    (
+        "quick.exportPng",
+        "Export PNG…",
+        "",
+        "{path?, artboard?, scale?: 2, background?} save a PNG of the selection (else the page in view; quick.png) → {path, width, height}",
+    ),
     (
         "app.language",
         "Interface Language",
@@ -1031,6 +1045,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         .or_else(|| crate::panels::actions::run_command(app, id, p))
         .or_else(|| crate::floating::command(app, id, p))
         .or_else(|| crate::onboarding::run_command(app, id, p))
+        .or_else(|| crate::insert_bar::run_command(app, id, p))
     {
         return Some(r);
     }

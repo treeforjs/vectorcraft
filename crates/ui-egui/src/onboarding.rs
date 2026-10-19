@@ -441,10 +441,13 @@ pub fn empty_canvas_hint(app: &VectorcraftApp, ui: &egui::Ui, rect: egui::Rect) 
     let t = Tokens::get(ui.ctx());
     let paste = crate::menus::shortcut_of("edit.paste").map(crate::menus::pretty_shortcut).unwrap_or_default();
     let title = tl!("Your page is empty");
-    let body = crate::i18n::fmt(
-        tl!("The bar below says how to draw your first shape. You can also place an image with File › Place or paste with {key}."),
-        &[("key", &paste)],
-    );
+    // With the insert bar showing, point at it rather than at File › Place (one of its items).
+    let body = if crate::insert_bar::visible(app) {
+        tl!("The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.")
+    } else {
+        tl!("The bar below says how to draw your first shape. You can also place an image with File › Place or paste with {key}.")
+    };
+    let body = crate::i18n::fmt(body, &[("key", &paste)]);
     let width = 300.0_f32.min(rect.width() - 32.0).max(80.0);
     // Proportional only: the canvas also draws in contexts without the app's named fonts.
     let title_g = painter.layout(title.to_string(), egui::FontId::proportional(14.5), t.text, width);

@@ -32,6 +32,7 @@ pub mod graphics;
 pub mod i18n;
 pub mod icon_data;
 pub mod icons;
+pub mod insert_bar;
 pub mod io;
 pub mod menus;
 pub mod native_menu;
@@ -42,6 +43,7 @@ pub mod picks;
 pub mod place;
 pub mod prefs_dialog;
 pub mod print;
+pub mod quick_styles;
 pub mod recovery;
 pub mod render_worker;
 mod scrub;
@@ -113,6 +115,8 @@ mod tests_printps;
 mod tests_printtiling;
 #[cfg(test)]
 mod tests_puppetwarp;
+#[cfg(test)]
+mod tests_quick;
 #[cfg(test)]
 mod tests_recolor;
 #[cfg(test)]
@@ -1058,6 +1062,7 @@ impl VectorcraftApp {
         egui::CentralPanel::default().frame(egui::Frame::NONE.fill(t.pasteboard)).show(ui, |ui| {
             if self.ui.screen_mode < 3 {
                 chrome::doc_tabs(self, ui);
+                insert_bar::show(self, ui);
             }
             canvas::show(self, ui);
         });
