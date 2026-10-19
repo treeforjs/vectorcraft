@@ -2011,7 +2011,6 @@
 	Percent:	Pourcentage :
 	Perceptual Scales	Échelles perceptives
 	Performance	Performances
-	Performance & Storage	Performances et stockage
 	Permissions	Autorisations
 	Permissions password:	Mot de passe des autorisations :
 	Perspective	Perspective
@@ -4470,3 +4469,41 @@ axis	Both	Les deux
 	Move where the printed pages fall on the art.	Déplacez l’emplacement des pages imprimées sur l’illustration.
 	Zoom in and out of the page.	Zoomez en avant et en arrière sur la page.
 @msg	layout must be starter, basic or advanced, not {v}	la disposition doit être starter, basic ou advanced, pas {v}
+# First steps: Home's examples, Learn the Basics, the empty page and Undo toasts.
+	Learn the Basics	Apprendre les bases
+	Open an Example	Ouvrir un exemple
+	Step {n} of {total}	Étape {n} sur {total}
+	End the tour	Terminer la visite
+	Back	Retour
+	Skip	Passer
+	Go to the next step	Aller à l’étape suivante
+	You know the basics	Vous connaissez les bases
+	Keep drawing, or open an example from Home to see what VectorCraft can do. Help › Learn the Basics starts this tour again.	Continuez à dessiner, ou ouvrez un exemple depuis l’Accueil pour voir ce que VectorCraft sait faire. Aide › Apprendre les bases relance cette visite.
+	Done · take it again	Terminé · recommencer
+	A two-minute tour	Une visite de deux minutes
+	Six short steps: draw, color, move, type, undo and search	Six étapes courtes : dessiner, colorer, déplacer, écrire, annuler et rechercher
+	Open a copy of this example	Ouvrir une copie de cet exemple
+	Your page is empty	Votre page est vide
+	The bar below says how to draw your first shape. You can also place an image with File › Place or paste with {key}.	La barre du bas indique comment dessiner votre première forme. Vous pouvez aussi importer une image avec Fichier › Importer ou coller avec {key}.
+	Show Frame Timings in the Status Bar	Afficher les durées d’image dans la barre d’état
+	Draw a rectangle	Dessiner un rectangle
+	Choose the Rectangle tool in the toolbar (or press M), then drag on the page.	Choisissez l’outil Rectangle dans la barre d’outils (ou appuyez sur M), puis faites glisser sur la page.
+	Change its fill color	Changer sa couleur de fond
+	With the shape selected, pick a new Fill color in the Properties panel on the right.	La forme étant sélectionnée, choisissez une nouvelle couleur de fond dans le panneau Propriétés, à droite.
+	Move and resize it	Le déplacer et le redimensionner
+	With the Selection tool (V), drag the shape to move it, or drag a corner handle to resize it.	Avec l’outil Sélection (V), faites glisser la forme pour la déplacer, ou faites glisser une poignée d’angle pour la redimensionner.
+	Add some text	Ajouter du texte
+	Choose the Type tool (or press T), click on the page and type a few words. Press Esc when you are done.	Choisissez l’outil Texte (ou appuyez sur T), cliquez sur la page et tapez quelques mots. Appuyez sur Échap une fois terminé.
+	Undo a step	Annuler une étape
+	Press {key} (or Edit › Undo) to take back the last change. Everything can be undone, so feel free to try things.	Appuyez sur {key} (ou Édition › Annuler) pour revenir sur la dernière modification. Tout peut être annulé : n’hésitez pas à essayer.
+	Find anything	Tout trouver
+	Press {key} and type what you want to do, such as “align” or “export”, to find any command.	Appuyez sur {key} et tapez ce que vous voulez faire, comme « aligner » ou « exporter », pour trouver n’importe quelle commande.
+@plural	Deleted {n} object|Deleted {n} objects	{n} objet supprimé|{n} objets supprimés
+@plural	Cut {n} object|Cut {n} objects	{n} objet coupé|{n} objets coupés
+@plural	Ungrouped {n} object|Ungrouped {n} objects	{n} objet dissocié|{n} objets dissociés
+@plural	Released {n} compound path|Released {n} compound paths	{n} tracé transparent libéré|{n} tracés transparents libérés
+@plural	Expanded {n} object|Expanded {n} objects	{n} objet décomposé|{n} objets décomposés
+@plural	Flattened {n} object|Flattened {n} objects	{n} objet aplati|{n} objets aplatis
+@plural	Combined {n} object|Combined {n} objects	{n} objet combiné|{n} objets combinés
+@msg	no example `{name}` (examples: {_1})	aucun exemple `{name}` (exemples : {_1})
+@msg	action must be start, back, skip or end (not `{other}`)	action doit valoir start, back, skip ou end (pas `{other}`)

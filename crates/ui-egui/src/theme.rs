@@ -246,8 +246,11 @@ fn add_craft_fonts(fonts: &mut FontDefinitions) {
 
 /// Apply tokens to egui's global style.
 pub fn apply(ctx: &egui::Context, b: Brightness) {
-    let t = Tokens::for_mode(b.mode(ctx.system_theme()));
+    let mode = b.mode(ctx.system_theme());
+    let t = Tokens::for_mode(mode);
     ctx.data_mut(|d| d.insert_temp(egui::Id::NULL, t));
+    // craft-ui's own widgets (the Undo toasts) read its tokens, under its key.
+    ctx.data_mut(|d| d.insert_temp(egui::Id::new("craft-ui-tokens"), craft_ui::Tokens::new(mode, craft_ui::Density::Compact)));
     let mut v = if t.dark { Visuals::dark() } else { Visuals::light() };
     v.panel_fill = t.panel;
     v.window_fill = t.panel;

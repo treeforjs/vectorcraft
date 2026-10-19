@@ -2095,7 +2095,6 @@
 	Pencil Tool	鉛筆ツール
 	Percent:	パーセント:
 	Performance	パフォーマンス
-	Performance & Storage	パフォーマンスとストレージ
 	Permissions	権限
 	Permissions password:	権限パスワード:
 	Perspective Grid Options	遠近グリッドオプション
@@ -4451,3 +4450,41 @@ theme	Appearance	外観
 	Move where the printed pages fall on the art.	印刷ページがアートのどこに来るかを移動します。
 	Zoom in and out of the page.	ページを拡大・縮小表示します。
 @msg	layout must be starter, basic or advanced, not {v}	レイアウトは starter、basic、advanced のいずれかです（{v} は不可）
+# First steps: Home's examples, Learn the Basics, the empty page and Undo toasts.
+	Learn the Basics	基本を学ぶ
+	Open an Example	サンプルを開く
+	Step {n} of {total}	ステップ {n}/{total}
+	End the tour	ツアーを終了
+	Back	戻る
+	Skip	スキップ
+	Go to the next step	次のステップへ進む
+	You know the basics	基本をマスターしました
+	Keep drawing, or open an example from Home to see what VectorCraft can do. Help › Learn the Basics starts this tour again.	このまま描き続けるか、ホームからサンプルを開いて VectorCraft でできることを見てみましょう。ヘルプ › 基本を学ぶ でいつでもこのツアーをやり直せます。
+	Done · take it again	完了 · もう一度
+	A two-minute tour	2 分間のツアー
+	Six short steps: draw, color, move, type, undo and search	描く、色を付ける、動かす、文字を入力する、取り消す、検索するの 6 ステップ
+	Open a copy of this example	このサンプルのコピーを開く
+	Your page is empty	ページは空です
+	The bar below says how to draw your first shape. You can also place an image with File › Place or paste with {key}.	最初の図形の描き方は下のバーに表示されます。ファイル › 配置 で画像を配置したり、{key} でペーストしたりすることもできます。
+	Show Frame Timings in the Status Bar	ステータスバーにフレーム時間を表示
+	Draw a rectangle	長方形を描く
+	Choose the Rectangle tool in the toolbar (or press M), then drag on the page.	ツールバーで長方形ツールを選び（または M キーを押し）、ページ上をドラッグします。
+	Change its fill color	塗りの色を変える
+	With the shape selected, pick a new Fill color in the Properties panel on the right.	図形を選択したまま、右側のプロパティパネルで新しい塗りの色を選びます。
+	Move and resize it	移動とサイズ変更
+	With the Selection tool (V), drag the shape to move it, or drag a corner handle to resize it.	選択ツール（V）で図形をドラッグすると移動、角のハンドルをドラッグするとサイズ変更できます。
+	Add some text	テキストを追加する
+	Choose the Type tool (or press T), click on the page and type a few words. Press Esc when you are done.	文字ツールを選び（または T キーを押し）、ページをクリックして文字を入力します。終わったら Esc キーを押します。
+	Undo a step	1 つ取り消す
+	Press {key} (or Edit › Undo) to take back the last change. Everything can be undone, so feel free to try things.	{key}（または 編集 › 取り消し）で直前の変更を取り消せます。どんな操作も取り消せるので、気軽に試してください。
+	Find anything	何でも探す
+	Press {key} and type what you want to do, such as “align” or “export”, to find any command.	{key} を押して、「整列」や「書き出し」のようにしたいことを入力すると、どのコマンドでも見つかります。
+@plural	Deleted {n} object|Deleted {n} objects	{n} 個のオブジェクトを削除しました
+@plural	Cut {n} object|Cut {n} objects	{n} 個のオブジェクトをカットしました
+@plural	Ungrouped {n} object|Ungrouped {n} objects	{n} 個のオブジェクトのグループを解除しました
+@plural	Released {n} compound path|Released {n} compound paths	{n} 個の複合パスを解除しました
+@plural	Expanded {n} object|Expanded {n} objects	{n} 個のオブジェクトを分割・拡張しました
+@plural	Flattened {n} object|Flattened {n} objects	{n} 個のオブジェクトを統合しました
+@plural	Combined {n} object|Combined {n} objects	{n} 個のオブジェクトを合成しました
+@msg	no example `{name}` (examples: {_1})	サンプル `{name}` はありません（サンプル: {_1}）
+@msg	action must be start, back, skip or end (not `{other}`)	action は start、back、skip、end のいずれかです（`{other}` ではありません）

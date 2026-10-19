@@ -336,6 +336,13 @@ pub struct UiState {
     /// Families starred in the font menus (the ★ filter shows only these).
     #[serde(default)]
     pub favorite_fonts: Vec<String>,
+    /// Help › Learn the Basics: the guided tour's step and whether it was finished once.
+    #[serde(default)]
+    pub tour: crate::onboarding::Tour,
+    /// Settings › Performance › Show Frame Timings in the Status Bar (off: a beginner never needs
+    /// "render ms · ui ms · fps").
+    #[serde(default)]
+    pub status_timings: bool,
     /// Engine preferences (Edit → Preferences), persisted alongside the UI state.
     #[serde(default)]
     pub engine_prefs: Value,
@@ -548,6 +555,8 @@ impl Default for UiState {
             recent_files: vec![],
             recent_fonts: vec![],
             favorite_fonts: vec![],
+            tour: Default::default(),
+            status_timings: false,
             engine_prefs: Value::Null,
             color_guide: Default::default(),
             library_panel: None,

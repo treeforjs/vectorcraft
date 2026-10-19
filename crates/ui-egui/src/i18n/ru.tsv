@@ -2010,7 +2010,6 @@
 	Percent:	Проценты:
 	Perceptual Scales	Перцепционные шкалы
 	Performance	Производительность
-	Performance & Storage	Производительность и хранение
 	Permissions	Разрешения
 	Permissions password:	Пароль разрешений:
 	Perspective	Перспектива
@@ -4457,3 +4456,41 @@ axis	Both	Оба
 	Move where the printed pages fall on the art.	Сдвигайте, где на рисунке окажутся печатные страницы.
 	Zoom in and out of the page.	Приближайте и отдаляйте страницу.
 @msg	layout must be starter, basic or advanced, not {v}	вид должен быть starter, basic или advanced, а не {v}
+# First steps: Home's examples, Learn the Basics, the empty page and Undo toasts.
+	Learn the Basics	Основы работы
+	Open an Example	Открыть пример
+	Step {n} of {total}	Шаг {n} из {total}
+	End the tour	Завершить обзор
+	Back	Назад
+	Skip	Пропустить
+	Go to the next step	Перейти к следующему шагу
+	You know the basics	Основы освоены
+	Keep drawing, or open an example from Home to see what VectorCraft can do. Help › Learn the Basics starts this tour again.	Продолжайте рисовать или откройте пример на главном экране, чтобы увидеть, на что способен VectorCraft. Справка › Основы работы запускает этот обзор заново.
+	Done · take it again	Готово · пройти снова
+	A two-minute tour	Обзор на две минуты
+	Six short steps: draw, color, move, type, undo and search	Шесть коротких шагов: рисование, цвет, перемещение, текст, отмена и поиск
+	Open a copy of this example	Открыть копию этого примера
+	Your page is empty	Страница пуста
+	The bar below says how to draw your first shape. You can also place an image with File › Place or paste with {key}.	Строка внизу подскажет, как нарисовать первую фигуру. Также можно поместить изображение через Файл › Поместить или вставить с помощью {key}.
+	Show Frame Timings in the Status Bar	Показывать время кадра в строке состояния
+	Draw a rectangle	Нарисуйте прямоугольник
+	Choose the Rectangle tool in the toolbar (or press M), then drag on the page.	Выберите инструмент «Прямоугольник» на панели инструментов (или нажмите M) и протяните по странице.
+	Change its fill color	Измените цвет заливки
+	With the shape selected, pick a new Fill color in the Properties panel on the right.	Выделив фигуру, выберите новый цвет заливки на панели «Свойства» справа.
+	Move and resize it	Переместите фигуру и измените размер
+	With the Selection tool (V), drag the shape to move it, or drag a corner handle to resize it.	Инструментом «Выделение» (V) перетащите фигуру, чтобы переместить её, или потяните за угловой маркер, чтобы изменить размер.
+	Add some text	Добавьте текст
+	Choose the Type tool (or press T), click on the page and type a few words. Press Esc when you are done.	Выберите инструмент «Текст» (или нажмите T), щёлкните на странице и введите несколько слов. Когда закончите, нажмите Esc.
+	Undo a step	Отмените шаг
+	Press {key} (or Edit › Undo) to take back the last change. Everything can be undone, so feel free to try things.	Нажмите {key} (или Редактирование › Отменить), чтобы отменить последнее изменение. Отменить можно всё, так что смело пробуйте.
+	Find anything	Найдите что угодно
+	Press {key} and type what you want to do, such as “align” or “export”, to find any command.	Нажмите {key} и введите, что хотите сделать, например «выровнять» или «экспорт», чтобы найти любую команду.
+@plural	Deleted {n} object|Deleted {n} objects	Удалён {n} объект|Удалено {n} объекта|Удалено {n} объектов
+@plural	Cut {n} object|Cut {n} objects	Вырезан {n} объект|Вырезано {n} объекта|Вырезано {n} объектов
+@plural	Ungrouped {n} object|Ungrouped {n} objects	Разгруппирован {n} объект|Разгруппировано {n} объекта|Разгруппировано {n} объектов
+@plural	Released {n} compound path|Released {n} compound paths	Отменён {n} составной контур|Отменено {n} составных контура|Отменено {n} составных контуров
+@plural	Expanded {n} object|Expanded {n} objects	Разобран {n} объект|Разобрано {n} объекта|Разобрано {n} объектов
+@plural	Flattened {n} object|Flattened {n} objects	Сведён {n} объект|Сведено {n} объекта|Сведено {n} объектов
+@plural	Combined {n} object|Combined {n} objects	Объединён {n} объект|Объединено {n} объекта|Объединено {n} объектов
+@msg	no example `{name}` (examples: {_1})	нет примера `{name}` (примеры: {_1})
+@msg	action must be start, back, skip or end (not `{other}`)	action должно быть start, back, skip или end (а не `{other}`)

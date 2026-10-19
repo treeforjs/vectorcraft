@@ -35,6 +35,7 @@ pub mod icons;
 pub mod io;
 pub mod menus;
 pub mod native_menu;
+pub mod onboarding;
 pub mod palette;
 pub mod panels;
 pub mod picks;
@@ -88,6 +89,8 @@ mod tests_nativemenu;
 mod tests_nativeoptions;
 #[cfg(test)]
 mod tests_numfields;
+#[cfg(test)]
+mod tests_onboarding;
 #[cfg(test)]
 mod tests_overprint;
 #[cfg(test)]
@@ -366,6 +369,8 @@ pub struct VectorcraftApp {
     clipboard_probe: Option<clipboard_probe::Probe>,
     /// File dialogs shown off the UI thread and what runs again with their answers.
     pub(crate) picks: picks::Picks,
+    /// Home's example thumbnails, the tour's watch and the Undo toasts ([`onboarding`]).
+    pub(crate) onboarding: onboarding::Runtime,
     /// The look for fonts installed or removed while the app was in the background, running
     /// ([`Self::refresh_installed_fonts`]): whether they were.
     font_check: Option<std::sync::mpsc::Receiver<bool>>,
@@ -448,6 +453,7 @@ impl VectorcraftApp {
             system_paste_at: f64::NEG_INFINITY,
             clipboard_probe: None,
             picks: picks::Picks::default(),
+            onboarding: Default::default(),
             font_check: None,
             paste_chord: Default::default(),
             background: Default::default(),
@@ -556,9 +562,14 @@ impl VectorcraftApp {
         if fileio::SaveMode::of(id).is_some() {
             io::remember_view(self);
         }
+        let before = onboarding::Before::of(self, id);
         let r = self.session.execute(id, &params).map_err(|e| e.to_string());
         if r.is_ok() && matches!(id, "edit.copy" | "edit.cut") {
             self.publish_clipboard();
+        }
+        // Delete, Cut, Ungroup, Expand, Pathfinder…: an Undo toast.
+        if let Some(b) = before.filter(|_| r.is_ok()) {
+            onboarding::after_command(self, b);
         }
         self.sync_views();
         match &r {
@@ -1053,6 +1064,9 @@ impl VectorcraftApp {
         dock::floating_panel(self, &ctx);
         floating::show(self, &ctx);
         panels::library_panel::show_window(self, &ctx);
+        onboarding::watch(self);
+        onboarding::tour_card(self, &ctx);
+        onboarding::show_toasts(self, &ctx);
         dialogs::show(self, &ctx);
         palette::show(self, &ctx);
         updates::notice(self, &ctx);

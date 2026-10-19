@@ -668,7 +668,6 @@
 	Units	Jednotky
 	Guides & Grid	Vodítka a mřížka
 	Hyphenation	Dělení slov
-	Performance & Storage	Výkon a úložiště
 	User Interface	Uživatelské rozhraní
 	Performance	Výkon
 	File Handling	Práce se soubory
@@ -762,3 +761,42 @@
 	All Tools…	Všechny nástroje…
 	Basic	Základní
 	Starter	Pro začátečníky
+# First steps: Home's examples, Learn the Basics, the empty page and Undo toasts.
+	Learn the Basics	Naučte se základy
+	Open an Example	Otevřít ukázku
+	Step {n} of {total}	Krok {n} z {total}
+	End the tour	Ukončit prohlídku
+	Back	Zpět
+	Skip	Přeskočit
+	Go to the next step	Přejít na další krok
+	Done	Hotovo
+	You know the basics	Základy znáte
+	Keep drawing, or open an example from Home to see what VectorCraft can do. Help › Learn the Basics starts this tour again.	Kreslete dál nebo otevřete ukázku z Domovské obrazovky a podívejte se, co VectorCraft umí. Nápověda › Naučte se základy spustí prohlídku znovu.
+	Done · take it again	Hotovo · projít znovu
+	A two-minute tour	Dvouminutová prohlídka
+	Six short steps: draw, color, move, type, undo and search	Šest krátkých kroků: kreslení, barva, posun, text, zpět a hledání
+	Open a copy of this example	Otevřít kopii této ukázky
+	Your page is empty	Stránka je prázdná
+	The bar below says how to draw your first shape. You can also place an image with File › Place or paste with {key}.	Lišta dole radí, jak nakreslit první tvar. Můžete také umístit obrázek přes Soubor › Umístit nebo vložit pomocí {key}.
+	Show Frame Timings in the Status Bar	Zobrazovat časy snímků ve stavovém řádku
+	Draw a rectangle	Nakreslete obdélník
+	Choose the Rectangle tool in the toolbar (or press M), then drag on the page.	Vyberte nástroj Obdélník na panelu nástrojů (nebo stiskněte M) a táhněte po stránce.
+	Change its fill color	Změňte barvu výplně
+	With the shape selected, pick a new Fill color in the Properties panel on the right.	Když je tvar vybraný, zvolte novou barvu výplně v panelu Vlastnosti vpravo.
+	Move and resize it	Přesuňte ho a změňte velikost
+	With the Selection tool (V), drag the shape to move it, or drag a corner handle to resize it.	Nástrojem Výběr (V) tvar přetáhněte, chcete-li ho přesunout, nebo táhněte za rohový úchyt a změňte jeho velikost.
+	Add some text	Přidejte text
+	Choose the Type tool (or press T), click on the page and type a few words. Press Esc when you are done.	Vyberte nástroj Text (nebo stiskněte T), klikněte na stránku a napište pár slov. Až budete hotovi, stiskněte Esc.
+	Undo a step	Vraťte krok zpět
+	Press {key} (or Edit › Undo) to take back the last change. Everything can be undone, so feel free to try things.	Stisknutím {key} (nebo Úpravy › Zpět) vrátíte poslední změnu. Vrátit jde všechno, takže klidně zkoušejte.
+	Find anything	Najděte cokoli
+	Press {key} and type what you want to do, such as “align” or “export”, to find any command.	Stiskněte {key} a napište, co chcete udělat, třeba „zarovnat“ nebo „exportovat“, a najdete jakýkoli příkaz.
+@plural	Deleted {n} object|Deleted {n} objects	Odstraněn {n} objekt|Odstraněny {n} objekty|Odstraněno {n} objektů
+@plural	Cut {n} object|Cut {n} objects	Vyjmut {n} objekt|Vyjmuty {n} objekty|Vyjmuto {n} objektů
+@plural	Ungrouped {n} object|Ungrouped {n} objects	Oddělen {n} objekt|Odděleny {n} objekty|Odděleno {n} objektů
+@plural	Released {n} compound path|Released {n} compound paths	Uvolněna {n} složená cesta|Uvolněny {n} složené cesty|Uvolněno {n} složených cest
+@plural	Expanded {n} object|Expanded {n} objects	Rozdělen {n} objekt|Rozděleny {n} objekty|Rozděleno {n} objektů
+@plural	Flattened {n} object|Flattened {n} objects	Sloučen {n} objekt|Sloučeny {n} objekty|Sloučeno {n} objektů
+@plural	Combined {n} object|Combined {n} objects	Zkombinován {n} objekt|Zkombinovány {n} objekty|Zkombinováno {n} objektů
+@msg	no example `{name}` (examples: {_1})	žádná ukázka `{name}` (ukázky: {_1})
+@msg	action must be start, back, skip or end (not `{other}`)	action musí být start, back, skip nebo end (ne `{other}`)

@@ -298,16 +298,18 @@ pub fn control_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
         });
 }
 
-/// A document tab's title: "Name* @ 66.67 % (RGB/Preview)", or while an opacity mask is edited
-/// "Name* @ 66.67 % (<Opacity Mask>/Opacity Mask)".
-fn tab_title(d: &vectorcraft_engine::DocState, zoom: f64, outline: bool) -> String {
-    let mode = if d.doc.mask_edit.is_some() {
-        format!("<{0}>/{0}", tl!("Opacity Mask"))
-    } else {
-        let color = if d.doc.color_mode == vectorcraft_doc::ColorMode::Cmyk { "CMYK" } else { "RGB" };
-        format!("{color}/{}", if outline { tl!("Outline") } else { tl!("Preview") })
-    };
-    format!("{}{} @ {} ({mode})", d.title(), if d.is_dirty() { "*" } else { "" }, zoom_label(zoom).replace('%', " %"))
+/// A document tab's title: the file name ("Name*" while modified), and "(Opacity Mask)" while an
+/// opacity mask is edited. The zoom and the colour and view modes are in the status bar
+/// ([`view_mode`]).
+fn tab_title(d: &vectorcraft_engine::DocState) -> String {
+    let dirty = if d.is_dirty() { "*" } else { "" };
+    if d.doc.mask_edit.is_some() { format!("{}{dirty} ({})", d.title(), tl!("Opacity Mask")) } else { format!("{}{dirty}", d.title()) }
+}
+
+/// The status bar's colour and view modes: "RGB/Preview", "CMYK/Outline".
+fn view_mode(d: &vectorcraft_engine::DocState, outline: bool) -> String {
+    let color = if d.doc.color_mode == vectorcraft_doc::ColorMode::Cmyk { "CMYK" } else { "RGB" };
+    format!("{color}/{}", if outline { tl!("Outline") } else { tl!("Preview") })
 }
 
 /// Whether a document tab's × comes before its title (macOS) rather than after it (Windows,
@@ -325,7 +327,7 @@ fn first_tab_shown(widths: &[f32], active: Option<usize>, room: f32) -> usize {
     first
 }
 
-/// Document tab strip: "Name* @ 66.67% (RGB/Preview)". User Interface › Large Tabs makes the tabs
+/// Document tab strip: "Name*". User Interface › Large Tabs makes the tabs
 /// taller, with larger titles. Tabs that don't fit are reached from a » button at the strip's
 /// right end, which lists every open document, and the active tab is always in view (#746).
 pub fn doc_tabs(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -344,8 +346,7 @@ pub fn doc_tabs(app: &mut VectorcraftApp, ui: &mut Ui) {
         .iter()
         .enumerate()
         .map(|(i, d)| {
-            let zoom = app.views.get(i).map(|v| v.zoom).unwrap_or(1.0);
-            let title = tab_title(d, zoom, app.ui.view.outline);
+            let title = tab_title(d);
             let color = if Some(i) == active { t.text_strong } else { t.text_dim };
             (title.clone(), ui.painter().layout_no_wrap(title, theme::semibold(title_size), color))
         })
@@ -528,15 +529,22 @@ pub fn status_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
                     })
                     .unwrap_or("");
                 ui.label(egui::RichText::new(tool).size(11.5).color(t.text_dim));
+                if let Some(d) = app.session.active() {
+                    ui.separator();
+                    ui.label(egui::RichText::new(view_mode(d, app.ui.view.outline)).size(11.5).color(t.text_dim));
+                }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.label(
-                        egui::RichText::new(format!(
-                            "render {:.1} ms · ui {:.1} ms · {:.0} fps",
-                            app.perf.render_ms, app.perf.frame_ms, app.perf.fps
-                        ))
-                        .size(10.5)
-                        .color(t.text_disabled),
-                    );
+                    // Settings › Performance › Show Frame Timings in the Status Bar (off by default).
+                    if app.ui.status_timings {
+                        ui.label(
+                            egui::RichText::new(format!(
+                                "render {:.1} ms · ui {:.1} ms · {:.0} fps",
+                                app.perf.render_ms, app.perf.frame_ms, app.perf.fps
+                            ))
+                            .size(10.5)
+                            .color(t.text_disabled),
+                        );
+                    }
                     if let Some(p) = app.hover_doc {
                         let u = app.session.general_unit();
                         ui.label(
@@ -1243,12 +1251,14 @@ mod tests {
         let mut s = Session::new();
         s.execute("file.new", &json!({"width": 100, "height": 100})).unwrap();
         s.execute("shape.rectangle", &json!({"x": 0, "y": 0, "width": 50, "height": 50})).unwrap();
-        let title = |s: &Session| super::tab_title(s.active().unwrap(), 1.0, false);
-        assert!(title(&s).ends_with("(RGB/Preview)"), "{}", title(&s));
+        let title = |s: &Session| super::tab_title(s.active().unwrap());
+        let plain = title(&s);
+        assert!(!plain.contains('@') && !plain.contains("RGB"), "just the name: {plain}");
+        assert_eq!(super::view_mode(s.active().unwrap(), false), "RGB/Preview", "the modes are in the status bar");
         s.execute("transparency.makeOpacityMask", &json!({})).unwrap();
-        assert!(title(&s).ends_with("(<Opacity Mask>/Opacity Mask)"), "{}", title(&s));
+        assert!(title(&s).ends_with(" (Opacity Mask)"), "{}", title(&s));
         s.execute("transparency.stopEditingOpacityMask", &json!({})).unwrap();
-        assert!(title(&s).ends_with("(RGB/Preview)"));
+        assert!(!title(&s).contains("Opacity Mask"));
     }
 
     /// The Zoom tool's hint follows Performance › Animated Zoom (#394): a drag zooms as it goes,

@@ -1,7 +1,11 @@
 {
   "format": "vectorcraft",
-  "version": 1,
-  "generator": "VectorCraft 0.1.0",
+  "version": 4,
+  "generator": "VectorCraft 0.8.0",
+  "preview": {
+    "mime": "image/png",
+    "data": "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"
+  },
   "document": {
     "version": 1,
     "title": "Feature Sheet",
@@ -61,15 +65,6 @@
       {
         "id": 1,
         "name": "Layer 1",
-        "visible": true,
-        "locked": false,
-        "opacity": 1.0,
-        "blend": "Normal",
-        "isolate": false,
-        "knockout": false,
-        "appearance": {
-          "items": []
-        },
         "kind": {
           "type": "layer",
           "color": {
@@ -80,12 +75,6 @@
           "children": [
             {
               "id": 2,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
               "appearance": {
                 "items": [
                   {
@@ -120,28 +109,14 @@
                         ]
                       },
                       "angle": 90.0
-                    },
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    }
                   },
                   {
                     "kind": "stroke",
                     "paint": {
                       "type": "none"
                     },
-                    "width": 1.6,
-                    "cap": "Butt",
-                    "join": "Miter",
-                    "miter_limit": 10.0,
-                    "align": "Center",
-                    "arrow_scale": [
-                      100.0,
-                      100.0
-                    ],
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    "width": 1.6
                   }
                 ]
               },
@@ -152,71 +127,34 @@
                     {
                       "anchors": [
                         {
-                          "p": {
-                            "x": 0.0,
-                            "y": 0.0
-                          },
-                          "in": {
-                            "x": 0.0,
-                            "y": 0.0
-                          },
-                          "out": {
-                            "x": 0.0,
-                            "y": 0.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            0.0,
+                            0.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 700.0,
-                            "y": 0.0
-                          },
-                          "in": {
-                            "x": 700.0,
-                            "y": 0.0
-                          },
-                          "out": {
-                            "x": 700.0,
-                            "y": 0.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            700.0,
+                            0.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 700.0,
-                            "y": 700.0
-                          },
-                          "in": {
-                            "x": 700.0,
-                            "y": 700.0
-                          },
-                          "out": {
-                            "x": 700.0,
-                            "y": 700.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            700.0,
+                            700.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 0.0,
-                            "y": 700.0
-                          },
-                          "in": {
-                            "x": 0.0,
-                            "y": 700.0
-                          },
-                          "out": {
-                            "x": 0.0,
-                            "y": 700.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            0.0,
+                            700.0
+                          ]
                         }
                       ],
                       "closed": true
                     }
                   ]
                 },
-                "rule": "NonZero",
                 "live": {
                   "shape": "rectangle",
                   "w": 700.0,
@@ -235,19 +173,11 @@
                     0.0,
                     0.0
                   ]
-                },
-                "clipping": false,
-                "guide": false
+                }
               }
             },
             {
               "id": 5,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
               "appearance": {
                 "items": [
                   {
@@ -282,28 +212,14 @@
                         ]
                       },
                       "angle": 45.0
-                    },
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    }
                   },
                   {
                     "kind": "stroke",
                     "paint": {
                       "type": "none"
                     },
-                    "width": 1.6,
-                    "cap": "Butt",
-                    "join": "Miter",
-                    "miter_limit": 10.0,
-                    "align": "Center",
-                    "arrow_scale": [
-                      100.0,
-                      100.0
-                    ],
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    "width": 1.6
                   }
                 ]
               },
@@ -314,113 +230,102 @@
                     {
                       "anchors": [
                         {
-                          "p": {
-                            "x": 150.0,
-                            "y": 330.0
-                          },
-                          "in": {
-                            "x": 150.0,
-                            "y": 440.45694996615873
-                          },
-                          "out": {
-                            "x": 150.0,
-                            "y": 232.293840051387
-                          },
+                          "p": [
+                            150.0,
+                            330.0
+                          ],
+                          "in": [
+                            150.0,
+                            440.45694996615873
+                          ],
+                          "out": [
+                            150.0,
+                            232.293840051387
+                          ],
                           "kind": "Smooth"
                         },
                         {
-                          "p": {
-                            "x": 312.6892733433536,
-                            "y": 133.47408543197392
-                          },
-                          "in": {
-                            "x": 220.06315327867412,
-                            "y": 150.95180636448865
-                          },
-                          "out": {
-                            "x": 274.30687719381785,
-                            "y": 166.48464277141173
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            312.6892733433536,
+                            133.47408543197392
+                          ],
+                          "in": [
+                            220.06315327867412,
+                            150.95180636448865
+                          ],
+                          "out": [
+                            274.30687719381785,
+                            166.48464277141173
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 250.0,
-                            "y": 270.0
-                          },
-                          "in": {
-                            "x": 250.00000000078677,
-                            "y": 215.4037337059512
-                          },
-                          "out": {
-                            "x": 250.0,
-                            "y": 369.4112549695428
-                          },
+                          "p": [
+                            250.0,
+                            270.0
+                          ],
+                          "in": [
+                            250.00000000078677,
+                            215.4037337059512
+                          ],
+                          "out": [
+                            250.0,
+                            369.4112549695428
+                          ],
                           "kind": "Smooth"
                         },
                         {
-                          "p": {
-                            "x": 430.0,
-                            "y": 450.0
-                          },
-                          "in": {
-                            "x": 330.5887450304572,
-                            "y": 450.0
-                          },
-                          "out": {
-                            "x": 466.23514166371615,
-                            "y": 450.0
-                          },
+                          "p": [
+                            430.0,
+                            450.0
+                          ],
+                          "in": [
+                            330.5887450304572,
+                            450.0
+                          ],
+                          "out": [
+                            466.23514166371615,
+                            450.0
+                          ],
                           "kind": "Smooth"
                         },
                         {
-                          "p": {
-                            "x": 528.2121192983111,
-                            "y": 420.87046343643976
-                          },
-                          "in": {
-                            "x": 499.9695559452918,
-                            "y": 439.2931132966746
-                          },
-                          "out": {
-                            "x": 495.11532951226354,
-                            "y": 485.6492044849794
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            528.2121192983111,
+                            420.87046343643976
+                          ],
+                          "in": [
+                            499.9695559452918,
+                            439.2931132966746
+                          ],
+                          "out": [
+                            495.11532951226354,
+                            485.6492044849794
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 350.0,
-                            "y": 530.0
-                          },
-                          "in": {
-                            "x": 427.73700641899256,
-                            "y": 530.0
-                          },
-                          "out": {
-                            "x": 239.54305003384127,
-                            "y": 530.0
-                          },
+                          "p": [
+                            350.0,
+                            530.0
+                          ],
+                          "in": [
+                            427.73700641899256,
+                            530.0
+                          ],
+                          "out": [
+                            239.54305003384127,
+                            530.0
+                          ],
                           "kind": "Smooth"
                         }
                       ],
                       "closed": true
                     }
                   ]
-                },
-                "rule": "NonZero",
-                "clipping": false,
-                "guide": false
+                }
               }
             },
             {
               "id": 6,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
               "appearance": {
                 "items": [
                   {
@@ -455,28 +360,14 @@
                         ]
                       },
                       "angle": 90.0
-                    },
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    }
                   },
                   {
                     "kind": "stroke",
                     "paint": {
                       "type": "none"
                     },
-                    "width": 1.6,
-                    "cap": "Butt",
-                    "join": "Miter",
-                    "miter_limit": 10.0,
-                    "align": "Center",
-                    "arrow_scale": [
-                      100.0,
-                      100.0
-                    ],
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    "width": 1.6
                   }
                 ]
               },
@@ -487,173 +378,74 @@
                     {
                       "anchors": [
                         {
-                          "p": {
-                            "x": 470.0,
-                            "y": 180.0
-                          },
-                          "in": {
-                            "x": 470.0,
-                            "y": 180.0
-                          },
-                          "out": {
-                            "x": 470.0,
-                            "y": 180.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            470.0,
+                            180.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 486.45798706418924,
-                            "y": 227.34752415750148
-                          },
-                          "in": {
-                            "x": 486.45798706418924,
-                            "y": 227.34752415750148
-                          },
-                          "out": {
-                            "x": 486.45798706418924,
-                            "y": 227.34752415750148
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            486.45798706418924,
+                            227.34752415750148
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 536.5739561406607,
-                            "y": 228.36881039375368
-                          },
-                          "in": {
-                            "x": 536.5739561406607,
-                            "y": 228.36881039375368
-                          },
-                          "out": {
-                            "x": 536.5739561406607,
-                            "y": 228.36881039375368
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            536.5739561406607,
+                            228.36881039375368
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 496.6295824562643,
-                            "y": 258.6524758424985
-                          },
-                          "in": {
-                            "x": 496.6295824562643,
-                            "y": 258.6524758424985
-                          },
-                          "out": {
-                            "x": 496.6295824562643,
-                            "y": 258.6524758424985
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            496.6295824562643,
+                            258.6524758424985
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 511.1449676604731,
-                            "y": 306.6311896062463
-                          },
-                          "in": {
-                            "x": 511.1449676604731,
-                            "y": 306.6311896062463
-                          },
-                          "out": {
-                            "x": 511.1449676604731,
-                            "y": 306.6311896062463
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            511.1449676604731,
+                            306.6311896062463
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 470.0,
-                            "y": 278.0
-                          },
-                          "in": {
-                            "x": 470.0,
-                            "y": 278.0
-                          },
-                          "out": {
-                            "x": 470.0,
-                            "y": 278.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            470.0,
+                            278.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 428.8550323395269,
-                            "y": 306.6311896062463
-                          },
-                          "in": {
-                            "x": 428.8550323395269,
-                            "y": 306.6311896062463
-                          },
-                          "out": {
-                            "x": 428.8550323395269,
-                            "y": 306.6311896062463
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            428.8550323395269,
+                            306.6311896062463
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 443.3704175437357,
-                            "y": 258.6524758424985
-                          },
-                          "in": {
-                            "x": 443.3704175437357,
-                            "y": 258.6524758424985
-                          },
-                          "out": {
-                            "x": 443.3704175437357,
-                            "y": 258.6524758424985
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            443.3704175437357,
+                            258.6524758424985
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 403.42604385933925,
-                            "y": 228.36881039375368
-                          },
-                          "in": {
-                            "x": 403.42604385933925,
-                            "y": 228.36881039375368
-                          },
-                          "out": {
-                            "x": 403.42604385933925,
-                            "y": 228.36881039375368
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            403.42604385933925,
+                            228.36881039375368
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 453.54201293581076,
-                            "y": 227.34752415750148
-                          },
-                          "in": {
-                            "x": 453.54201293581076,
-                            "y": 227.34752415750148
-                          },
-                          "out": {
-                            "x": 453.54201293581076,
-                            "y": 227.34752415750148
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            453.54201293581076,
+                            227.34752415750148
+                          ]
                         }
                       ],
                       "closed": true
                     }
                   ]
-                },
-                "rule": "NonZero",
-                "clipping": false,
-                "guide": false
+                }
               }
             },
             {
               "id": 7,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
               "appearance": {
                 "items": [
                   {
@@ -666,28 +458,14 @@
                         "g": 0.61960787,
                         "b": 0.0
                       }
-                    },
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    }
                   },
                   {
                     "kind": "stroke",
                     "paint": {
                       "type": "none"
                     },
-                    "width": 1.6,
-                    "cap": "Butt",
-                    "join": "Miter",
-                    "miter_limit": 10.0,
-                    "align": "Center",
-                    "arrow_scale": [
-                      100.0,
-                      100.0
-                    ],
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    "width": 1.6
                   }
                 ]
               },
@@ -698,173 +476,74 @@
                     {
                       "anchors": [
                         {
-                          "p": {
-                            "x": 560.0,
-                            "y": 366.0
-                          },
-                          "in": {
-                            "x": 560.0,
-                            "y": 366.0
-                          },
-                          "out": {
-                            "x": 560.0,
-                            "y": 366.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            560.0,
+                            366.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 568.2289935320946,
-                            "y": 388.6737620787507
-                          },
-                          "in": {
-                            "x": 568.2289935320946,
-                            "y": 388.6737620787507
-                          },
-                          "out": {
-                            "x": 568.2289935320946,
-                            "y": 388.6737620787507
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            568.2289935320946,
+                            388.6737620787507
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 592.3359215540352,
-                            "y": 389.4934221912518
-                          },
-                          "in": {
-                            "x": 592.3359215540352,
-                            "y": 389.4934221912518
-                          },
-                          "out": {
-                            "x": 592.3359215540352,
-                            "y": 389.4934221912518
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            592.3359215540352,
+                            389.4934221912518
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 573.3147912281321,
-                            "y": 404.3262379212493
-                          },
-                          "in": {
-                            "x": 573.3147912281321,
-                            "y": 404.3262379212493
-                          },
-                          "out": {
-                            "x": 573.3147912281321,
-                            "y": 404.3262379212493
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            573.3147912281321,
+                            404.3262379212493
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 579.9846985779441,
-                            "y": 427.5065778087482
-                          },
-                          "in": {
-                            "x": 579.9846985779441,
-                            "y": 427.5065778087482
-                          },
-                          "out": {
-                            "x": 579.9846985779441,
-                            "y": 427.5065778087482
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            579.9846985779441,
+                            427.5065778087482
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 560.0,
-                            "y": 414.0
-                          },
-                          "in": {
-                            "x": 560.0,
-                            "y": 414.0
-                          },
-                          "out": {
-                            "x": 560.0,
-                            "y": 414.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            560.0,
+                            414.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 540.0153014220559,
-                            "y": 427.5065778087482
-                          },
-                          "in": {
-                            "x": 540.0153014220559,
-                            "y": 427.5065778087482
-                          },
-                          "out": {
-                            "x": 540.0153014220559,
-                            "y": 427.5065778087482
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            540.0153014220559,
+                            427.5065778087482
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 546.6852087718679,
-                            "y": 404.3262379212493
-                          },
-                          "in": {
-                            "x": 546.6852087718679,
-                            "y": 404.3262379212493
-                          },
-                          "out": {
-                            "x": 546.6852087718679,
-                            "y": 404.3262379212493
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            546.6852087718679,
+                            404.3262379212493
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 527.6640784459648,
-                            "y": 389.4934221912518
-                          },
-                          "in": {
-                            "x": 527.6640784459648,
-                            "y": 389.4934221912518
-                          },
-                          "out": {
-                            "x": 527.6640784459648,
-                            "y": 389.4934221912518
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            527.6640784459648,
+                            389.4934221912518
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 551.7710064679054,
-                            "y": 388.6737620787507
-                          },
-                          "in": {
-                            "x": 551.7710064679054,
-                            "y": 388.6737620787507
-                          },
-                          "out": {
-                            "x": 551.7710064679054,
-                            "y": 388.6737620787507
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            551.7710064679054,
+                            388.6737620787507
+                          ]
                         }
                       ],
                       "closed": true
                     }
                   ]
-                },
-                "rule": "NonZero",
-                "clipping": false,
-                "guide": false
+                }
               }
             },
             {
               "id": 8,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
               "appearance": {
                 "items": [
                   {
@@ -877,28 +556,14 @@
                         "g": 0.7176471,
                         "b": 0.011764706
                       }
-                    },
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    }
                   },
                   {
                     "kind": "stroke",
                     "paint": {
                       "type": "none"
                     },
-                    "width": 1.6,
-                    "cap": "Butt",
-                    "join": "Miter",
-                    "miter_limit": 10.0,
-                    "align": "Center",
-                    "arrow_scale": [
-                      100.0,
-                      100.0
-                    ],
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    "width": 1.6
                   }
                 ]
               },
@@ -909,176 +574,74 @@
                     {
                       "anchors": [
                         {
-                          "p": {
-                            "x": 420.0,
-                            "y": 418.0
-                          },
-                          "in": {
-                            "x": 420.0,
-                            "y": 418.0
-                          },
-                          "out": {
-                            "x": 420.0,
-                            "y": 418.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            420.0,
+                            418.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 425.2900672706323,
-                            "y": 432.71884705062547
-                          },
-                          "in": {
-                            "x": 425.2900672706323,
-                            "y": 432.71884705062547
-                          },
-                          "out": {
-                            "x": 425.2900672706323,
-                            "y": 432.71884705062547
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            425.2900672706323,
+                            432.71884705062547
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 440.9232433584934,
-                            "y": 433.20162612375117
-                          },
-                          "in": {
-                            "x": 440.9232433584934,
-                            "y": 433.20162612375117
-                          },
-                          "out": {
-                            "x": 440.9232433584934,
-                            "y": 433.20162612375117
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            440.9232433584934,
+                            433.20162612375117
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 428.55950864665635,
-                            "y": 442.78115294937453
-                          },
-                          "in": {
-                            "x": 428.55950864665635,
-                            "y": 442.78115294937453
-                          },
-                          "out": {
-                            "x": 428.55950864665635,
-                            "y": 442.78115294937453
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            428.55950864665635,
+                            442.78115294937453
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 432.9312755504344,
-                            "y": 457.79837387624883
-                          },
-                          "in": {
-                            "x": 432.9312755504344,
-                            "y": 457.79837387624883
-                          },
-                          "out": {
-                            "x": 432.9312755504344,
-                            "y": 457.79837387624883
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            432.9312755504344,
+                            457.79837387624883
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 420.0,
-                            "y": 449.0
-                          },
-                          "in": {
-                            "x": 420.0,
-                            "y": 449.0
-                          },
-                          "out": {
-                            "x": 420.0,
-                            "y": 449.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            420.0,
+                            449.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 407.0687244495656,
-                            "y": 457.79837387624883
-                          },
-                          "in": {
-                            "x": 407.0687244495656,
-                            "y": 457.79837387624883
-                          },
-                          "out": {
-                            "x": 407.0687244495656,
-                            "y": 457.79837387624883
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            407.0687244495656,
+                            457.79837387624883
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 411.44049135334365,
-                            "y": 442.78115294937453
-                          },
-                          "in": {
-                            "x": 411.44049135334365,
-                            "y": 442.78115294937453
-                          },
-                          "out": {
-                            "x": 411.44049135334365,
-                            "y": 442.78115294937453
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            411.44049135334365,
+                            442.78115294937453
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 399.0767566415066,
-                            "y": 433.20162612375117
-                          },
-                          "in": {
-                            "x": 399.0767566415066,
-                            "y": 433.20162612375117
-                          },
-                          "out": {
-                            "x": 399.0767566415066,
-                            "y": 433.20162612375117
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            399.0767566415066,
+                            433.20162612375117
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 414.7099327293677,
-                            "y": 432.71884705062547
-                          },
-                          "in": {
-                            "x": 414.7099327293677,
-                            "y": 432.71884705062547
-                          },
-                          "out": {
-                            "x": 414.7099327293677,
-                            "y": 432.71884705062547
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            414.7099327293677,
+                            432.71884705062547
+                          ]
                         }
                       ],
                       "closed": true
                     }
                   ]
-                },
-                "rule": "NonZero",
-                "clipping": false,
-                "guide": false
+                }
               }
             },
             {
               "id": 9,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
-              "appearance": {
-                "items": []
-              },
               "kind": {
                 "type": "text",
                 "kind": {
@@ -1136,12 +699,6 @@
             },
             {
               "id": 10,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
               "appearance": {
                 "items": [
                   {
@@ -1176,28 +733,14 @@
                         ]
                       },
                       "angle": 0.0
-                    },
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    }
                   },
                   {
                     "kind": "stroke",
                     "paint": {
                       "type": "none"
                     },
-                    "width": 1.6,
-                    "cap": "Butt",
-                    "join": "Miter",
-                    "miter_limit": 10.0,
-                    "align": "Center",
-                    "arrow_scale": [
-                      100.0,
-                      100.0
-                    ],
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    "width": 1.6
                   }
                 ]
               },
@@ -1208,71 +751,34 @@
                     {
                       "anchors": [
                         {
-                          "p": {
-                            "x": 760.0,
-                            "y": 0.0
-                          },
-                          "in": {
-                            "x": 760.0,
-                            "y": 0.0
-                          },
-                          "out": {
-                            "x": 760.0,
-                            "y": 0.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            760.0,
+                            0.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 1460.0,
-                            "y": 0.0
-                          },
-                          "in": {
-                            "x": 1460.0,
-                            "y": 0.0
-                          },
-                          "out": {
-                            "x": 1460.0,
-                            "y": 0.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            1460.0,
+                            0.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 1460.0,
-                            "y": 700.0
-                          },
-                          "in": {
-                            "x": 1460.0,
-                            "y": 700.0
-                          },
-                          "out": {
-                            "x": 1460.0,
-                            "y": 700.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            1460.0,
+                            700.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 760.0,
-                            "y": 700.0
-                          },
-                          "in": {
-                            "x": 760.0,
-                            "y": 700.0
-                          },
-                          "out": {
-                            "x": 760.0,
-                            "y": 700.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            760.0,
+                            700.0
+                          ]
                         }
                       ],
                       "closed": true
                     }
                   ]
                 },
-                "rule": "NonZero",
                 "live": {
                   "shape": "rectangle",
                   "w": 700.0,
@@ -1291,22 +797,11 @@
                     760.0,
                     0.0
                   ]
-                },
-                "clipping": false,
-                "guide": false
+                }
               }
             },
             {
               "id": 11,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
-              "appearance": {
-                "items": []
-              },
               "kind": {
                 "type": "mesh",
                 "rows": 4,
@@ -2092,15 +1587,6 @@
             },
             {
               "id": 12,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
-              "appearance": {
-                "items": []
-              },
               "kind": {
                 "type": "mesh",
                 "rows": 4,
@@ -2886,15 +2372,6 @@
             },
             {
               "id": 13,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
-              "appearance": {
-                "items": []
-              },
               "kind": {
                 "type": "mesh",
                 "rows": 4,
@@ -3680,15 +3157,6 @@
             },
             {
               "id": 14,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
-              "appearance": {
-                "items": []
-              },
               "kind": {
                 "type": "text",
                 "kind": {
@@ -3746,12 +3214,6 @@
             },
             {
               "id": 15,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
               "appearance": {
                 "items": [
                   {
@@ -3786,28 +3248,14 @@
                         ]
                       },
                       "angle": 0.0
-                    },
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    }
                   },
                   {
                     "kind": "stroke",
                     "paint": {
                       "type": "none"
                     },
-                    "width": 1.6,
-                    "cap": "Butt",
-                    "join": "Miter",
-                    "miter_limit": 10.0,
-                    "align": "Center",
-                    "arrow_scale": [
-                      100.0,
-                      100.0
-                    ],
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    "width": 1.6
                   }
                 ]
               },
@@ -3818,71 +3266,34 @@
                     {
                       "anchors": [
                         {
-                          "p": {
-                            "x": 0.0,
-                            "y": 760.0
-                          },
-                          "in": {
-                            "x": 0.0,
-                            "y": 760.0
-                          },
-                          "out": {
-                            "x": 0.0,
-                            "y": 760.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            0.0,
+                            760.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 700.0,
-                            "y": 760.0
-                          },
-                          "in": {
-                            "x": 700.0,
-                            "y": 760.0
-                          },
-                          "out": {
-                            "x": 700.0,
-                            "y": 760.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            700.0,
+                            760.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 700.0,
-                            "y": 1460.0
-                          },
-                          "in": {
-                            "x": 700.0,
-                            "y": 1460.0
-                          },
-                          "out": {
-                            "x": 700.0,
-                            "y": 1460.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            700.0,
+                            1460.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 0.0,
-                            "y": 1460.0
-                          },
-                          "in": {
-                            "x": 0.0,
-                            "y": 1460.0
-                          },
-                          "out": {
-                            "x": 0.0,
-                            "y": 1460.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            0.0,
+                            1460.0
+                          ]
                         }
                       ],
                       "closed": true
                     }
                   ]
                 },
-                "rule": "NonZero",
                 "live": {
                   "shape": "rectangle",
                   "w": 700.0,
@@ -3901,22 +3312,11 @@
                     0.0,
                     760.0
                   ]
-                },
-                "clipping": false,
-                "guide": false
+                }
               }
             },
             {
               "id": 37,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
-              "appearance": {
-                "items": []
-              },
               "kind": {
                 "type": "repeat",
                 "kind": {
@@ -3934,12 +3334,6 @@
                 "source": [
                   {
                     "id": 16,
-                    "visible": true,
-                    "locked": false,
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "isolate": false,
-                    "knockout": false,
                     "appearance": {
                       "items": [
                         {
@@ -3974,28 +3368,14 @@
                               ]
                             },
                             "angle": 90.0
-                          },
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "visible": true
+                          }
                         },
                         {
                           "kind": "stroke",
                           "paint": {
                             "type": "none"
                           },
-                          "width": 1.6,
-                          "cap": "Butt",
-                          "join": "Miter",
-                          "miter_limit": 10.0,
-                          "align": "Center",
-                          "arrow_scale": [
-                            100.0,
-                            100.0
-                          ],
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "visible": true
+                          "width": 1.6
                         }
                       ]
                     },
@@ -4006,43 +3386,38 @@
                           {
                             "anchors": [
                               {
-                                "p": {
-                                  "x": 350.0,
-                                  "y": 1050.0
-                                },
-                                "in": {
-                                  "x": 305.0,
-                                  "y": 1000.0
-                                },
-                                "out": {
-                                  "x": 395.0,
-                                  "y": 1000.0
-                                },
-                                "kind": "Corner"
+                                "p": [
+                                  350.0,
+                                  1050.0
+                                ],
+                                "in": [
+                                  305.0,
+                                  1000.0
+                                ],
+                                "out": [
+                                  395.0,
+                                  1000.0
+                                ]
                               },
                               {
-                                "p": {
-                                  "x": 350.0,
-                                  "y": 860.0
-                                },
-                                "in": {
-                                  "x": 395.0,
-                                  "y": 920.0
-                                },
-                                "out": {
-                                  "x": 305.0,
-                                  "y": 920.0
-                                },
-                                "kind": "Corner"
+                                "p": [
+                                  350.0,
+                                  860.0
+                                ],
+                                "in": [
+                                  395.0,
+                                  920.0
+                                ],
+                                "out": [
+                                  305.0,
+                                  920.0
+                                ]
                               }
                             ],
                             "closed": true
                           }
                         ]
-                      },
-                      "rule": "NonZero",
-                      "clipping": false,
-                      "guide": false
+                      }
                     }
                   }
                 ]
@@ -4050,15 +3425,6 @@
             },
             {
               "id": 38,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
-              "appearance": {
-                "items": []
-              },
               "kind": {
                 "type": "repeat",
                 "kind": {
@@ -4076,12 +3442,6 @@
                 "source": [
                   {
                     "id": 18,
-                    "visible": true,
-                    "locked": false,
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "isolate": false,
-                    "knockout": false,
                     "appearance": {
                       "items": [
                         {
@@ -4094,28 +3454,14 @@
                               "g": 0.81960785,
                               "b": 0.4
                             }
-                          },
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "visible": true
+                          }
                         },
                         {
                           "kind": "stroke",
                           "paint": {
                             "type": "none"
                           },
-                          "width": 1.6,
-                          "cap": "Butt",
-                          "join": "Miter",
-                          "miter_limit": 10.0,
-                          "align": "Center",
-                          "arrow_scale": [
-                            100.0,
-                            100.0
-                          ],
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "visible": true
+                          "width": 1.6
                         }
                       ]
                     },
@@ -4126,63 +3472,63 @@
                           {
                             "anchors": [
                               {
-                                "p": {
-                                  "x": 336.0,
-                                  "y": 829.0
-                                },
-                                "in": {
-                                  "x": 336.0,
-                                  "y": 836.731986497631
-                                },
-                                "out": {
-                                  "x": 336.0,
-                                  "y": 821.268013502369
-                                },
+                                "p": [
+                                  336.0,
+                                  829.0
+                                ],
+                                "in": [
+                                  336.0,
+                                  836.731986497631
+                                ],
+                                "out": [
+                                  336.0,
+                                  821.268013502369
+                                ],
                                 "kind": "Smooth"
                               },
                               {
-                                "p": {
-                                  "x": 350.0,
-                                  "y": 815.0
-                                },
-                                "in": {
-                                  "x": 342.2680135023689,
-                                  "y": 815.0
-                                },
-                                "out": {
-                                  "x": 357.7319864976311,
-                                  "y": 815.0
-                                },
+                                "p": [
+                                  350.0,
+                                  815.0
+                                ],
+                                "in": [
+                                  342.2680135023689,
+                                  815.0
+                                ],
+                                "out": [
+                                  357.7319864976311,
+                                  815.0
+                                ],
                                 "kind": "Smooth"
                               },
                               {
-                                "p": {
-                                  "x": 364.0,
-                                  "y": 829.0
-                                },
-                                "in": {
-                                  "x": 364.0,
-                                  "y": 821.268013502369
-                                },
-                                "out": {
-                                  "x": 364.0,
-                                  "y": 836.731986497631
-                                },
+                                "p": [
+                                  364.0,
+                                  829.0
+                                ],
+                                "in": [
+                                  364.0,
+                                  821.268013502369
+                                ],
+                                "out": [
+                                  364.0,
+                                  836.731986497631
+                                ],
                                 "kind": "Smooth"
                               },
                               {
-                                "p": {
-                                  "x": 350.0,
-                                  "y": 843.0
-                                },
-                                "in": {
-                                  "x": 357.7319864976311,
-                                  "y": 843.0
-                                },
-                                "out": {
-                                  "x": 342.2680135023689,
-                                  "y": 843.0
-                                },
+                                "p": [
+                                  350.0,
+                                  843.0
+                                ],
+                                "in": [
+                                  357.7319864976311,
+                                  843.0
+                                ],
+                                "out": [
+                                  342.2680135023689,
+                                  843.0
+                                ],
                                 "kind": "Smooth"
                               }
                             ],
@@ -4190,7 +3536,6 @@
                           }
                         ]
                       },
-                      "rule": "NonZero",
                       "live": {
                         "shape": "ellipse",
                         "w": 28.0,
@@ -4207,9 +3552,7 @@
                           336.0,
                           815.0
                         ]
-                      },
-                      "clipping": false,
-                      "guide": false
+                      }
                     }
                   }
                 ]
@@ -4217,12 +3560,6 @@
             },
             {
               "id": 20,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
               "appearance": {
                 "items": [
                   {
@@ -4257,28 +3594,14 @@
                         ]
                       },
                       "angle": 0.0
-                    },
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    }
                   },
                   {
                     "kind": "stroke",
                     "paint": {
                       "type": "none"
                     },
-                    "width": 1.6,
-                    "cap": "Butt",
-                    "join": "Miter",
-                    "miter_limit": 10.0,
-                    "align": "Center",
-                    "arrow_scale": [
-                      100.0,
-                      100.0
-                    ],
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    "width": 1.6
                   }
                 ]
               },
@@ -4289,63 +3612,63 @@
                     {
                       "anchors": [
                         {
-                          "p": {
-                            "x": 314.0,
-                            "y": 1090.0
-                          },
-                          "in": {
-                            "x": 314.0,
-                            "y": 1109.8822509939087
-                          },
-                          "out": {
-                            "x": 314.0,
-                            "y": 1070.1177490060913
-                          },
+                          "p": [
+                            314.0,
+                            1090.0
+                          ],
+                          "in": [
+                            314.0,
+                            1109.8822509939087
+                          ],
+                          "out": [
+                            314.0,
+                            1070.1177490060913
+                          ],
                           "kind": "Smooth"
                         },
                         {
-                          "p": {
-                            "x": 350.0,
-                            "y": 1054.0
-                          },
-                          "in": {
-                            "x": 330.11774900609146,
-                            "y": 1054.0
-                          },
-                          "out": {
-                            "x": 369.88225099390854,
-                            "y": 1054.0
-                          },
+                          "p": [
+                            350.0,
+                            1054.0
+                          ],
+                          "in": [
+                            330.11774900609146,
+                            1054.0
+                          ],
+                          "out": [
+                            369.88225099390854,
+                            1054.0
+                          ],
                           "kind": "Smooth"
                         },
                         {
-                          "p": {
-                            "x": 386.0,
-                            "y": 1090.0
-                          },
-                          "in": {
-                            "x": 386.0,
-                            "y": 1070.1177490060913
-                          },
-                          "out": {
-                            "x": 386.0,
-                            "y": 1109.8822509939087
-                          },
+                          "p": [
+                            386.0,
+                            1090.0
+                          ],
+                          "in": [
+                            386.0,
+                            1070.1177490060913
+                          ],
+                          "out": [
+                            386.0,
+                            1109.8822509939087
+                          ],
                           "kind": "Smooth"
                         },
                         {
-                          "p": {
-                            "x": 350.0,
-                            "y": 1126.0
-                          },
-                          "in": {
-                            "x": 369.88225099390854,
-                            "y": 1126.0
-                          },
-                          "out": {
-                            "x": 330.11774900609146,
-                            "y": 1126.0
-                          },
+                          "p": [
+                            350.0,
+                            1126.0
+                          ],
+                          "in": [
+                            369.88225099390854,
+                            1126.0
+                          ],
+                          "out": [
+                            330.11774900609146,
+                            1126.0
+                          ],
                           "kind": "Smooth"
                         }
                       ],
@@ -4353,7 +3676,6 @@
                     }
                   ]
                 },
-                "rule": "NonZero",
                 "live": {
                   "shape": "ellipse",
                   "w": 72.0,
@@ -4370,22 +3692,11 @@
                     314.0,
                     1054.0
                   ]
-                },
-                "clipping": false,
-                "guide": false
+                }
               }
             },
             {
               "id": 21,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
-              "appearance": {
-                "items": []
-              },
               "kind": {
                 "type": "text",
                 "kind": {
@@ -4443,12 +3754,6 @@
             },
             {
               "id": 22,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
               "appearance": {
                 "items": [
                   {
@@ -4461,28 +3766,14 @@
                         "g": 0.972549,
                         "b": 0.9411765
                       }
-                    },
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    }
                   },
                   {
                     "kind": "stroke",
                     "paint": {
                       "type": "none"
                     },
-                    "width": 1.6,
-                    "cap": "Butt",
-                    "join": "Miter",
-                    "miter_limit": 10.0,
-                    "align": "Center",
-                    "arrow_scale": [
-                      100.0,
-                      100.0
-                    ],
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "visible": true
+                    "width": 1.6
                   }
                 ]
               },
@@ -4493,71 +3784,34 @@
                     {
                       "anchors": [
                         {
-                          "p": {
-                            "x": 760.0,
-                            "y": 760.0
-                          },
-                          "in": {
-                            "x": 760.0,
-                            "y": 760.0
-                          },
-                          "out": {
-                            "x": 760.0,
-                            "y": 760.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            760.0,
+                            760.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 1460.0,
-                            "y": 760.0
-                          },
-                          "in": {
-                            "x": 1460.0,
-                            "y": 760.0
-                          },
-                          "out": {
-                            "x": 1460.0,
-                            "y": 760.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            1460.0,
+                            760.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 1460.0,
-                            "y": 1460.0
-                          },
-                          "in": {
-                            "x": 1460.0,
-                            "y": 1460.0
-                          },
-                          "out": {
-                            "x": 1460.0,
-                            "y": 1460.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            1460.0,
+                            1460.0
+                          ]
                         },
                         {
-                          "p": {
-                            "x": 760.0,
-                            "y": 1460.0
-                          },
-                          "in": {
-                            "x": 760.0,
-                            "y": 1460.0
-                          },
-                          "out": {
-                            "x": 760.0,
-                            "y": 1460.0
-                          },
-                          "kind": "Corner"
+                          "p": [
+                            760.0,
+                            1460.0
+                          ]
                         }
                       ],
                       "closed": true
                     }
                   ]
                 },
-                "rule": "NonZero",
                 "live": {
                   "shape": "rectangle",
                   "w": 700.0,
@@ -4576,47 +3830,21 @@
                     760.0,
                     760.0
                   ]
-                },
-                "clipping": false,
-                "guide": false
+                }
               }
             },
             {
               "id": 35,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
-              "appearance": {
-                "items": []
-              },
               "kind": {
                 "type": "envelope",
                 "content": [
                   {
                     "id": 34,
-                    "visible": true,
-                    "locked": false,
-                    "opacity": 1.0,
-                    "blend": "Normal",
-                    "isolate": false,
-                    "knockout": false,
-                    "appearance": {
-                      "items": []
-                    },
                     "kind": {
                       "type": "group",
                       "children": [
                         {
                           "id": 23,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
                           "appearance": {
                             "items": [
                               {
@@ -4629,28 +3857,14 @@
                                     "g": 0.2784314,
                                     "b": 0.43529412
                                   }
-                                },
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                }
                               },
                               {
                                 "kind": "stroke",
                                 "paint": {
                                   "type": "none"
                                 },
-                                "width": 1.6,
-                                "cap": "Butt",
-                                "join": "Miter",
-                                "miter_limit": 10.0,
-                                "align": "Center",
-                                "arrow_scale": [
-                                  100.0,
-                                  100.0
-                                ],
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                "width": 1.6
                               }
                             ]
                           },
@@ -4661,71 +3875,34 @@
                                 {
                                   "anchors": [
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 930.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 930.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 930.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        930.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 930.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 930.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 930.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        930.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 966.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 966.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 966.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        966.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 966.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 966.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 966.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        966.0
+                                      ]
                                     }
                                   ],
                                   "closed": true
                                 }
                               ]
                             },
-                            "rule": "NonZero",
                             "live": {
                               "shape": "rectangle",
                               "w": 460.0,
@@ -4744,19 +3921,11 @@
                                 880.0,
                                 930.0
                               ]
-                            },
-                            "clipping": false,
-                            "guide": false
+                            }
                           }
                         },
                         {
                           "id": 24,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
                           "appearance": {
                             "items": [
                               {
@@ -4769,28 +3938,14 @@
                                     "g": 0.81960785,
                                     "b": 0.4
                                   }
-                                },
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                }
                               },
                               {
                                 "kind": "stroke",
                                 "paint": {
                                   "type": "none"
                                 },
-                                "width": 1.6,
-                                "cap": "Butt",
-                                "join": "Miter",
-                                "miter_limit": 10.0,
-                                "align": "Center",
-                                "arrow_scale": [
-                                  100.0,
-                                  100.0
-                                ],
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                "width": 1.6
                               }
                             ]
                           },
@@ -4801,71 +3956,34 @@
                                 {
                                   "anchors": [
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 966.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 966.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 966.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        966.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 966.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 966.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 966.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        966.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1002.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1002.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1002.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1002.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1002.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1002.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1002.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1002.0
+                                      ]
                                     }
                                   ],
                                   "closed": true
                                 }
                               ]
                             },
-                            "rule": "NonZero",
                             "live": {
                               "shape": "rectangle",
                               "w": 460.0,
@@ -4884,19 +4002,11 @@
                                 880.0,
                                 966.0
                               ]
-                            },
-                            "clipping": false,
-                            "guide": false
+                            }
                           }
                         },
                         {
                           "id": 25,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
                           "appearance": {
                             "items": [
                               {
@@ -4909,28 +4019,14 @@
                                     "g": 0.8392157,
                                     "b": 0.627451
                                   }
-                                },
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                }
                               },
                               {
                                 "kind": "stroke",
                                 "paint": {
                                   "type": "none"
                                 },
-                                "width": 1.6,
-                                "cap": "Butt",
-                                "join": "Miter",
-                                "miter_limit": 10.0,
-                                "align": "Center",
-                                "arrow_scale": [
-                                  100.0,
-                                  100.0
-                                ],
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                "width": 1.6
                               }
                             ]
                           },
@@ -4941,71 +4037,34 @@
                                 {
                                   "anchors": [
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1002.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1002.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1002.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1002.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1002.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1002.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1002.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1002.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1038.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1038.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1038.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1038.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1038.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1038.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1038.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1038.0
+                                      ]
                                     }
                                   ],
                                   "closed": true
                                 }
                               ]
                             },
-                            "rule": "NonZero",
                             "live": {
                               "shape": "rectangle",
                               "w": 460.0,
@@ -5024,19 +4083,11 @@
                                 880.0,
                                 1002.0
                               ]
-                            },
-                            "clipping": false,
-                            "guide": false
+                            }
                           }
                         },
                         {
                           "id": 26,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
                           "appearance": {
                             "items": [
                               {
@@ -5049,28 +4100,14 @@
                                     "g": 0.5411765,
                                     "b": 0.69803923
                                   }
-                                },
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                }
                               },
                               {
                                 "kind": "stroke",
                                 "paint": {
                                   "type": "none"
                                 },
-                                "width": 1.6,
-                                "cap": "Butt",
-                                "join": "Miter",
-                                "miter_limit": 10.0,
-                                "align": "Center",
-                                "arrow_scale": [
-                                  100.0,
-                                  100.0
-                                ],
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                "width": 1.6
                               }
                             ]
                           },
@@ -5081,71 +4118,34 @@
                                 {
                                   "anchors": [
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1038.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1038.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1038.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1038.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1038.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1038.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1038.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1038.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1074.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1074.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1074.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1074.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1074.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1074.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1074.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1074.0
+                                      ]
                                     }
                                   ],
                                   "closed": true
                                 }
                               ]
                             },
-                            "rule": "NonZero",
                             "live": {
                               "shape": "rectangle",
                               "w": 460.0,
@@ -5164,19 +4164,11 @@
                                 880.0,
                                 1038.0
                               ]
-                            },
-                            "clipping": false,
-                            "guide": false
+                            }
                           }
                         },
                         {
                           "id": 27,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
                           "appearance": {
                             "items": [
                               {
@@ -5189,28 +4181,14 @@
                                     "g": 0.23137255,
                                     "b": 0.29803923
                                   }
-                                },
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                }
                               },
                               {
                                 "kind": "stroke",
                                 "paint": {
                                   "type": "none"
                                 },
-                                "width": 1.6,
-                                "cap": "Butt",
-                                "join": "Miter",
-                                "miter_limit": 10.0,
-                                "align": "Center",
-                                "arrow_scale": [
-                                  100.0,
-                                  100.0
-                                ],
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                "width": 1.6
                               }
                             ]
                           },
@@ -5221,71 +4199,34 @@
                                 {
                                   "anchors": [
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1074.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1074.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1074.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1074.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1074.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1074.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1074.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1074.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1110.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1110.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1110.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1110.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1110.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1110.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1110.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1110.0
+                                      ]
                                     }
                                   ],
                                   "closed": true
                                 }
                               ]
                             },
-                            "rule": "NonZero",
                             "live": {
                               "shape": "rectangle",
                               "w": 460.0,
@@ -5304,19 +4245,11 @@
                                 880.0,
                                 1074.0
                               ]
-                            },
-                            "clipping": false,
-                            "guide": false
+                            }
                           }
                         },
                         {
                           "id": 28,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
                           "appearance": {
                             "items": [
                               {
@@ -5329,28 +4262,14 @@
                                     "g": 0.2784314,
                                     "b": 0.43529412
                                   }
-                                },
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                }
                               },
                               {
                                 "kind": "stroke",
                                 "paint": {
                                   "type": "none"
                                 },
-                                "width": 1.6,
-                                "cap": "Butt",
-                                "join": "Miter",
-                                "miter_limit": 10.0,
-                                "align": "Center",
-                                "arrow_scale": [
-                                  100.0,
-                                  100.0
-                                ],
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                "width": 1.6
                               }
                             ]
                           },
@@ -5361,71 +4280,34 @@
                                 {
                                   "anchors": [
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1110.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1110.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1110.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1110.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1110.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1110.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1110.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1110.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1146.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1146.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1146.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1146.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1146.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1146.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1146.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1146.0
+                                      ]
                                     }
                                   ],
                                   "closed": true
                                 }
                               ]
                             },
-                            "rule": "NonZero",
                             "live": {
                               "shape": "rectangle",
                               "w": 460.0,
@@ -5444,19 +4326,11 @@
                                 880.0,
                                 1110.0
                               ]
-                            },
-                            "clipping": false,
-                            "guide": false
+                            }
                           }
                         },
                         {
                           "id": 29,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
                           "appearance": {
                             "items": [
                               {
@@ -5469,28 +4343,14 @@
                                     "g": 0.81960785,
                                     "b": 0.4
                                   }
-                                },
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                }
                               },
                               {
                                 "kind": "stroke",
                                 "paint": {
                                   "type": "none"
                                 },
-                                "width": 1.6,
-                                "cap": "Butt",
-                                "join": "Miter",
-                                "miter_limit": 10.0,
-                                "align": "Center",
-                                "arrow_scale": [
-                                  100.0,
-                                  100.0
-                                ],
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                "width": 1.6
                               }
                             ]
                           },
@@ -5501,71 +4361,34 @@
                                 {
                                   "anchors": [
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1146.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1146.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1146.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1146.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1146.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1146.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1146.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1146.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1182.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1182.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1182.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1182.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1182.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1182.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1182.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1182.0
+                                      ]
                                     }
                                   ],
                                   "closed": true
                                 }
                               ]
                             },
-                            "rule": "NonZero",
                             "live": {
                               "shape": "rectangle",
                               "w": 460.0,
@@ -5584,19 +4407,11 @@
                                 880.0,
                                 1146.0
                               ]
-                            },
-                            "clipping": false,
-                            "guide": false
+                            }
                           }
                         },
                         {
                           "id": 30,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
                           "appearance": {
                             "items": [
                               {
@@ -5609,28 +4424,14 @@
                                     "g": 0.8392157,
                                     "b": 0.627451
                                   }
-                                },
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                }
                               },
                               {
                                 "kind": "stroke",
                                 "paint": {
                                   "type": "none"
                                 },
-                                "width": 1.6,
-                                "cap": "Butt",
-                                "join": "Miter",
-                                "miter_limit": 10.0,
-                                "align": "Center",
-                                "arrow_scale": [
-                                  100.0,
-                                  100.0
-                                ],
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                "width": 1.6
                               }
                             ]
                           },
@@ -5641,71 +4442,34 @@
                                 {
                                   "anchors": [
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1182.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1182.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1182.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1182.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1182.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1182.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1182.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1182.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1218.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1218.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1218.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1218.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1218.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1218.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1218.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1218.0
+                                      ]
                                     }
                                   ],
                                   "closed": true
                                 }
                               ]
                             },
-                            "rule": "NonZero",
                             "live": {
                               "shape": "rectangle",
                               "w": 460.0,
@@ -5724,19 +4488,11 @@
                                 880.0,
                                 1182.0
                               ]
-                            },
-                            "clipping": false,
-                            "guide": false
+                            }
                           }
                         },
                         {
                           "id": 31,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
                           "appearance": {
                             "items": [
                               {
@@ -5749,28 +4505,14 @@
                                     "g": 0.5411765,
                                     "b": 0.69803923
                                   }
-                                },
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                }
                               },
                               {
                                 "kind": "stroke",
                                 "paint": {
                                   "type": "none"
                                 },
-                                "width": 1.6,
-                                "cap": "Butt",
-                                "join": "Miter",
-                                "miter_limit": 10.0,
-                                "align": "Center",
-                                "arrow_scale": [
-                                  100.0,
-                                  100.0
-                                ],
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                "width": 1.6
                               }
                             ]
                           },
@@ -5781,71 +4523,34 @@
                                 {
                                   "anchors": [
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1218.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1218.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1218.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1218.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1218.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1218.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1218.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1218.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1254.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1254.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1254.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1254.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1254.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1254.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1254.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1254.0
+                                      ]
                                     }
                                   ],
                                   "closed": true
                                 }
                               ]
                             },
-                            "rule": "NonZero",
                             "live": {
                               "shape": "rectangle",
                               "w": 460.0,
@@ -5864,19 +4569,11 @@
                                 880.0,
                                 1218.0
                               ]
-                            },
-                            "clipping": false,
-                            "guide": false
+                            }
                           }
                         },
                         {
                           "id": 32,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
                           "appearance": {
                             "items": [
                               {
@@ -5889,28 +4586,14 @@
                                     "g": 0.23137255,
                                     "b": 0.29803923
                                   }
-                                },
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                }
                               },
                               {
                                 "kind": "stroke",
                                 "paint": {
                                   "type": "none"
                                 },
-                                "width": 1.6,
-                                "cap": "Butt",
-                                "join": "Miter",
-                                "miter_limit": 10.0,
-                                "align": "Center",
-                                "arrow_scale": [
-                                  100.0,
-                                  100.0
-                                ],
-                                "opacity": 1.0,
-                                "blend": "Normal",
-                                "visible": true
+                                "width": 1.6
                               }
                             ]
                           },
@@ -5921,71 +4604,34 @@
                                 {
                                   "anchors": [
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1254.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1254.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1254.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1254.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1254.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1254.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1254.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1254.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 1340.0,
-                                        "y": 1290.0
-                                      },
-                                      "in": {
-                                        "x": 1340.0,
-                                        "y": 1290.0
-                                      },
-                                      "out": {
-                                        "x": 1340.0,
-                                        "y": 1290.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        1340.0,
+                                        1290.0
+                                      ]
                                     },
                                     {
-                                      "p": {
-                                        "x": 880.0,
-                                        "y": 1290.0
-                                      },
-                                      "in": {
-                                        "x": 880.0,
-                                        "y": 1290.0
-                                      },
-                                      "out": {
-                                        "x": 880.0,
-                                        "y": 1290.0
-                                      },
-                                      "kind": "Corner"
+                                      "p": [
+                                        880.0,
+                                        1290.0
+                                      ]
                                     }
                                   ],
                                   "closed": true
                                 }
                               ]
                             },
-                            "rule": "NonZero",
                             "live": {
                               "shape": "rectangle",
                               "w": 460.0,
@@ -6004,22 +4650,11 @@
                                 880.0,
                                 1254.0
                               ]
-                            },
-                            "clipping": false,
-                            "guide": false
+                            }
                           }
                         },
                         {
                           "id": 33,
-                          "visible": true,
-                          "locked": false,
-                          "opacity": 1.0,
-                          "blend": "Normal",
-                          "isolate": false,
-                          "knockout": false,
-                          "appearance": {
-                            "items": []
-                          },
                           "kind": {
                             "type": "text",
                             "kind": {
@@ -6094,15 +4729,6 @@
             },
             {
               "id": 36,
-              "visible": true,
-              "locked": false,
-              "opacity": 1.0,
-              "blend": "Normal",
-              "isolate": false,
-              "knockout": false,
-              "appearance": {
-                "items": []
-              },
               "kind": {
                 "type": "text",
                 "kind": {
@@ -6969,10 +5595,7 @@
                   "g": 1.0,
                   "b": 1.0
                 }
-              },
-              "opacity": 1.0,
-              "blend": "Normal",
-              "visible": true
+              }
             },
             {
               "kind": "stroke",
@@ -6985,18 +5608,7 @@
                   "b": 0.0
                 }
               },
-              "width": 1.0,
-              "cap": "Butt",
-              "join": "Miter",
-              "miter_limit": 10.0,
-              "align": "Center",
-              "arrow_scale": [
-                100.0,
-                100.0
-              ],
-              "opacity": 1.0,
-              "blend": "Normal",
-              "visible": true
+              "width": 1.0
             }
           ]
         }
@@ -7009,10 +5621,7 @@
               "kind": "fill",
               "paint": {
                 "type": "none"
-              },
-              "opacity": 1.0,
-              "blend": "Normal",
-              "visible": true
+              }
             },
             {
               "kind": "stroke",
@@ -7025,18 +5634,7 @@
                   "b": 0.0
                 }
               },
-              "width": 1.0,
-              "cap": "Butt",
-              "join": "Miter",
-              "miter_limit": 10.0,
-              "align": "Center",
-              "arrow_scale": [
-                100.0,
-                100.0
-              ],
-              "opacity": 1.0,
-              "blend": "Normal",
-              "visible": true
+              "width": 1.0
             }
           ]
         }
@@ -7055,10 +5653,7 @@
                   "g": 0.078431375,
                   "b": 0.39215687
                 }
-              },
-              "opacity": 1.0,
-              "blend": "Normal",
-              "visible": true
+              }
             },
             {
               "kind": "stroke",
@@ -7071,18 +5666,7 @@
                   "b": 0.0
                 }
               },
-              "width": 4.0,
-              "cap": "Butt",
-              "join": "Miter",
-              "miter_limit": 10.0,
-              "align": "Center",
-              "arrow_scale": [
-                100.0,
-                100.0
-              ],
-              "opacity": 1.0,
-              "blend": "Normal",
-              "visible": true
+              "width": 4.0
             }
           ]
         }
@@ -7101,10 +5685,7 @@
                   "g": 0.6901961,
                   "b": 0.23137255
                 }
-              },
-              "opacity": 1.0,
-              "blend": "Normal",
-              "visible": true
+              }
             },
             {
               "kind": "stroke",
@@ -7117,18 +5698,7 @@
                   "b": 0.14117648
                 }
               },
-              "width": 2.0,
-              "cap": "Butt",
-              "join": "Miter",
-              "miter_limit": 10.0,
-              "align": "Center",
-              "arrow_scale": [
-                100.0,
-                100.0
-              ],
-              "opacity": 1.0,
-              "blend": "Normal",
-              "visible": true
+              "width": 2.0
             }
           ]
         }
@@ -7142,7 +5712,19 @@
     },
     "raster_effects_ppi": 72.0,
     "images": {},
-    "next_id": 39
+    "next_id": 39,
+    "metadata": {
+      "author": "",
+      "authorTitle": "",
+      "description": "",
+      "keywords": [],
+      "rating": 0,
+      "copyrightStatus": "unknown",
+      "copyrightNotice": "",
+      "copyrightUrl": "",
+      "created": 1792384651,
+      "modified": 1792384651
+    }
   },
   "images": {}
 }

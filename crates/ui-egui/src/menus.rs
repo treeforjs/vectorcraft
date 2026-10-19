@@ -388,6 +388,18 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "",
         "{} look for a newer VectorCraft and open the Updates dialog (dialog `updates`, fields state: idle|checking|upToDate|available|downloading|ready|failed, current, version, notes, install, reason, page, received, total, error; set action: download|skip|later|cancel|restart|installOnQuit|openPage|close and confirm) → {pending: \"updates\"}; without the updater (the web) opens the releases page → {url}",
     ),
+    (
+        "help.tour",
+        "Learn the Basics",
+        "",
+        "{action?: start|back|skip|end} the guided tour of first steps (start: from the first step, opening a new document when none is open; back / skip: the step before / after; end: close it). Each step advances when it is done; its state is `ui.tour`",
+    ),
+    (
+        "help.openExample",
+        "Open an Example",
+        "",
+        "{name} open one of the bundled examples (dusk-poster, neon-drive, ribbons, perspective-city, feature-sheet) as a new untitled document",
+    ),
     ("app.quit", "Quit VectorCraft", "Cmd+Q", "{}"),
     (
         "ui.swatchOptions",
@@ -1018,6 +1030,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         .or_else(|| crate::workspaces::run_command(app, id, p))
         .or_else(|| crate::panels::actions::run_command(app, id, p))
         .or_else(|| crate::floating::command(app, id, p))
+        .or_else(|| crate::onboarding::run_command(app, id, p))
     {
         return Some(r);
     }
@@ -2839,7 +2852,8 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("VectorCraft on GitHub", "help.github"),
                 Sep,
                 c("Search Commands…", "help.commandPalette"),
-                todos("VectorCraft Help…", "F1"),
+                c("Learn the Basics", "help.tour"),
+                c("VectorCraft Help…", "help.docs"),
                 Sep,
                 c("Check for Updates…", crate::updates::COMMAND),
                 c("About VectorCraft", "help.about"),
@@ -3369,7 +3383,7 @@ pub fn invoke(app: &mut VectorcraftApp, id: &str, p: Value) {
         return;
     }
     // Help links: the command returns the URL; a menu click opens it (agents just get the URL).
-    if id == "help.github" {
+    if matches!(id, "help.github" | "help.docs") {
         app.open_link(id);
         return;
     }

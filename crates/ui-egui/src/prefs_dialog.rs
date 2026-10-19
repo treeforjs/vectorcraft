@@ -18,6 +18,7 @@ pub const UI_FIELDS: &[(&str, &str, &str)] = &[
     ("__snapToGrid", "Guides & Grid", "Snap to Grid"),
     ("__taskBar", "General", "Enable Contextual Task Bar"),
     ("__checkUpdates", "General", "Check for updates automatically"),
+    ("__statusTimings", "Performance", "Show Frame Timings in the Status Bar"),
 ];
 
 pub fn open(app: &mut VectorcraftApp, category: Option<&str>) {
@@ -34,6 +35,7 @@ pub fn open(app: &mut VectorcraftApp, category: Option<&str>) {
     fields.insert("__snapToGrid".into(), json!(app.ui.view.snap_to_grid));
     fields.insert("__taskBar".into(), json!(app.ui.task_bar));
     fields.insert("__checkUpdates".into(), json!(app.ui.updates.enabled));
+    fields.insert("__statusTimings".into(), json!(app.ui.status_timings));
     app.ui.dialog = Some(Dialog { kind: "preferences".into(), fields });
 }
 
@@ -46,6 +48,7 @@ pub fn confirm(app: &mut VectorcraftApp) -> Result<Value, String> {
     app.ui.view.snap_to_grid = d.fields.get("__snapToGrid").and_then(Value::as_bool).unwrap_or(app.ui.view.snap_to_grid);
     app.ui.task_bar = d.fields.get("__taskBar").and_then(Value::as_bool).unwrap_or(app.ui.task_bar);
     app.ui.updates.enabled = d.fields.get("__checkUpdates").and_then(Value::as_bool).unwrap_or(app.ui.updates.enabled);
+    app.ui.status_timings = d.fields.get("__statusTimings").and_then(Value::as_bool).unwrap_or(app.ui.status_timings);
     app.ui.dialog = None;
     app.ui.engine_prefs = app.session.prefs.to_json();
     Ok(Value::Null)
@@ -158,9 +161,10 @@ pub fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
     let (mut ok, mut cancel, mut reset) = (false, false, false);
     let cat = d.str("__category");
     let cat = PREF_CATEGORIES.iter().find(|c| **c == cat).copied().unwrap_or(PREF_CATEGORIES[0]);
-    crate::dialogs::modal::show(ctx, tl!("Preferences"), egui::Id::new("dialog-preferences"), -20.0, 20, |ui| {
+    // Titled as the menu item that opens it (VectorCraft › Settings…).
+    crate::dialogs::modal::show(ctx, tl!("Settings"), egui::Id::new("dialog-preferences"), -20.0, 20, |ui| {
         ui.set_width(760.0);
-        crate::dialogs::modal::heading(ui, tl!("Preferences"));
+        crate::dialogs::modal::heading(ui, tl!("Settings"));
         ui.add_space(12.0);
         ui.horizontal_top(|ui| {
             // Category list.

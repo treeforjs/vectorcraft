@@ -1641,7 +1641,6 @@
 	Percent:	Porcentagem:
 	Perceptual Scales	Escalas Perceptuais
 	Performance	Desempenho
-	Performance & Storage	Desempenho e Armazenamento
 	Permissions	Permissões
 	Permissions password:	Senha de permissões:
 	Perspective	Perspectiva
@@ -2829,3 +2828,41 @@
 	All Tools…	Todas as Ferramentas…
 	Basic	Básica
 	Starter	Inicial
+# First steps: Home's examples, Learn the Basics, the empty page and Undo toasts.
+	Learn the Basics	Aprender o básico
+	Open an Example	Abrir um exemplo
+	Step {n} of {total}	Etapa {n} de {total}
+	End the tour	Encerrar o tour
+	Back	Voltar
+	Skip	Pular
+	Go to the next step	Ir para a próxima etapa
+	You know the basics	Você já sabe o básico
+	Keep drawing, or open an example from Home to see what VectorCraft can do. Help › Learn the Basics starts this tour again.	Continue desenhando ou abra um exemplo no Início para ver o que o VectorCraft faz. Ajuda › Aprender o básico reinicia este tour.
+	Done · take it again	Concluído · fazer de novo
+	A two-minute tour	Um tour de dois minutos
+	Six short steps: draw, color, move, type, undo and search	Seis etapas curtas: desenhar, colorir, mover, escrever, desfazer e pesquisar
+	Open a copy of this example	Abrir uma cópia deste exemplo
+	Your page is empty	Sua página está vazia
+	The bar below says how to draw your first shape. You can also place an image with File › Place or paste with {key}.	A barra abaixo mostra como desenhar sua primeira forma. Você também pode colocar uma imagem com Arquivo › Colocar ou colar com {key}.
+	Show Frame Timings in the Status Bar	Mostrar os tempos de quadro na barra de status
+	Draw a rectangle	Desenhe um retângulo
+	Choose the Rectangle tool in the toolbar (or press M), then drag on the page.	Escolha a ferramenta Retângulo na barra de ferramentas (ou pressione M) e arraste na página.
+	Change its fill color	Mude a cor de preenchimento
+	With the shape selected, pick a new Fill color in the Properties panel on the right.	Com a forma selecionada, escolha uma nova cor de preenchimento no painel Propriedades, à direita.
+	Move and resize it	Mova e redimensione
+	With the Selection tool (V), drag the shape to move it, or drag a corner handle to resize it.	Com a ferramenta Seleção (V), arraste a forma para movê-la ou arraste uma alça de canto para redimensioná-la.
+	Add some text	Adicione texto
+	Choose the Type tool (or press T), click on the page and type a few words. Press Esc when you are done.	Escolha a ferramenta Texto (ou pressione T), clique na página e digite algumas palavras. Pressione Esc quando terminar.
+	Undo a step	Desfaça uma etapa
+	Press {key} (or Edit › Undo) to take back the last change. Everything can be undone, so feel free to try things.	Pressione {key} (ou Editar › Desfazer) para desfazer a última alteração. Tudo pode ser desfeito, então experimente à vontade.
+	Find anything	Encontre qualquer coisa
+	Press {key} and type what you want to do, such as “align” or “export”, to find any command.	Pressione {key} e digite o que deseja fazer, como “alinhar” ou “exportar”, para encontrar qualquer comando.
+@plural	Deleted {n} object|Deleted {n} objects	{n} objeto excluído|{n} objetos excluídos
+@plural	Cut {n} object|Cut {n} objects	{n} objeto recortado|{n} objetos recortados
+@plural	Ungrouped {n} object|Ungrouped {n} objects	{n} objeto desagrupado|{n} objetos desagrupados
+@plural	Released {n} compound path|Released {n} compound paths	{n} demarcador composto liberado|{n} demarcadores compostos liberados
+@plural	Expanded {n} object|Expanded {n} objects	{n} objeto expandido|{n} objetos expandidos
+@plural	Flattened {n} object|Flattened {n} objects	{n} objeto achatado|{n} objetos achatados
+@plural	Combined {n} object|Combined {n} objects	{n} objeto combinado|{n} objetos combinados
+@msg	no example `{name}` (examples: {_1})	nenhum exemplo `{name}` (exemplos: {_1})
+@msg	action must be start, back, skip or end (not `{other}`)	action deve ser start, back, skip ou end (não `{other}`)

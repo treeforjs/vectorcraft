@@ -36,7 +36,7 @@ parameters gets a dialog generated from its schema (numbers, whole numbers, chec
 preview; without parameters it runs at once. **File › Open** of a `.wasm` file installs it too (on the web this is
 how plug-ins get in).
 
-**Preference folder.** Edit › Preferences › Performance & Storage › *Additional Plug-ins Folder*: when set, every
+**Preference folder.** Settings › Performance › *Additional Plug-ins Folder*: when set, every
 `*.wasm` in that folder (not recursive) is installed at startup and whenever the preference changes (desktop builds;
 the web build installs from bytes).
 

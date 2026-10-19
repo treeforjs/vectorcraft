@@ -422,6 +422,8 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         let overlays = app.session.overlays(view_info);
         draw_overlays(&painter, &xf, &overlays, &t, HandleLook::of(&app.session.prefs));
     }
+    // An empty page: what to do first (gone once there is art).
+    crate::onboarding::empty_canvas_hint(app, ui, rect);
     ime_output(app, ui.ctx(), &xf);
     crate::place::paint_drop_highlight(app, ui.ctx(), &painter, rect);
 
@@ -1817,7 +1819,15 @@ fn home(app: &mut VectorcraftApp, ui: &mut Ui, rect: egui::Rect) {
     ui.painter().rect_filled(rect, 0.0, t.panel_darker);
     let inner = rect.shrink2(vec2((rect.width() - 820.0).max(40.0) / 2.0, 60.0));
     let mut child = ui.new_child(egui::UiBuilder::new().max_rect(inner).layout(egui::Layout::top_down(egui::Align::Min)));
-    let ui = &mut child;
+    // Under a dialog (New Document…) Home takes no hover: no card's tooltip lingers over it.
+    if app.ui.dialog.is_some() {
+        child.disable();
+    }
+    egui::ScrollArea::vertical().id_salt("home").auto_shrink([false, false]).show(&mut child, |ui| home_content(app, ui));
+}
+
+fn home_content(app: &mut VectorcraftApp, ui: &mut Ui) {
+    let t = Tokens::get(ui.ctx());
     ui.label(egui::RichText::new(tl!("Welcome to VectorCraft")).font(theme::semibold(26.0)).color(t.text));
     ui.add_space(4.0);
     ui.label(egui::RichText::new(tl!("Vector illustration — fast, open, scriptable.")).size(14.0).color(t.text_dim));
@@ -1832,6 +1842,8 @@ fn home(app: &mut VectorcraftApp, ui: &mut Ui, rect: egui::Rect) {
         }
     });
     recent(app, ui);
+    // A first step: the tour and the bundled examples.
+    crate::onboarding::home_sections(app, ui);
     ui.add_space(28.0);
     ui.label(egui::RichText::new(tl!("Quickly start a new file")).font(theme::semibold(14.0)).color(t.text));
     ui.add_space(10.0);
