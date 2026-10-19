@@ -4241,3 +4241,196 @@ axis	Both	Оба
 	Not available right now	Сейчас недоступно
 	↑↓ move · Enter runs · Esc closes	↑↓ выбор · Enter — выполнить · Esc — закрыть
 	Type what you want to do…	Введите, что хотите сделать…
+# Starter toolbar, tool descriptions and hints (UX5).
+	 a closed path to fill it with text  |  	 по замкнутому контуру, чтобы заполнить его текстом  |  
+	 a corner point to pull out curve handles  |  	 угловую точку, чтобы вытянуть маркеры кривой  |  
+	 a letter to select it  |  	 по букве, чтобы выделить её  |  
+	 a line across an object to cut it and mirror one half  |  	 линию через объект, чтобы разрезать его и отразить половину  |  
+	 a line across objects to cut them  |  	 линию через объекты, чтобы разрезать их  |  
+	 a path to add a point  |  	 по контуру, чтобы добавить точку  |  
+	 a path to cut it at that point	 по контуру, чтобы разрезать его в этой точке
+	 a path to type along it  |  	 по контуру, чтобы писать вдоль него  |  
+	 a point to delete it	 по точке, чтобы удалить её
+	 a point to delete it  |  	 по точке, чтобы удалить её  |  
+	 a point to move it  |  	 точку, чтобы переместить её  |  
+	 a rectangle around the part to export as its own image	 прямоугольник вокруг части, которую нужно экспортировать отдельным изображением
+	 a rectangle over objects to cut it out	 прямоугольник поверх объектов, чтобы вырезать его
+	 a rough rectangle, circle, triangle or line to get a clean shape  |  	 примерный прямоугольник, круг, треугольник или линию, чтобы получить ровную фигуру  |  
+	 a shape to add a mesh point  |  	 по фигуре, чтобы добавить точку сетки  |  
+	 a slice to select it  |  	 по фрагменту, чтобы выделить его  |  
+	 a smooth point to make it a corner  |  	 по гладкой точке, чтобы сделать её угловой  |  
+	 across shapes to merge them  |  	 через фигуры, чтобы объединить их  |  
+	 across shapes to slice them apart	 через фигуры, чтобы разрезать их на части
+	 adds text	 добавляет текст
+	 along a selected path to erase that part	 вдоль выделенного контура, чтобы стереть эту часть
+	 along a selected path to smooth it	 вдоль выделенного контура, чтобы сгладить его
+	 an area to fill it  |  	 по области, чтобы залить её  |  
+	 an area to make it a shape  |  	 по области, чтобы сделать её фигурой  |  
+	 an area to select it  |  	 по области, чтобы выделить её  |  
+	 an edge to paint its stroke	 по краю, чтобы окрасить его обводку
+	 an object in a group to select it  |  	 по объекту в группе, чтобы выделить его  |  
+	 an object to select all with a similar color  |  	 по объекту, чтобы выделить все объекты похожего цвета  |  
+	 around points or objects to select them  |  	 вокруг точек или объектов, чтобы выделить их  |  
+	 draws with the Pen  |  	 рисует пером  |  
+	 for a new document  |  	 — новый документ  |  
+	 for a square  |  	 для квадрата  |  
+	 for its options	 для его параметров
+	 from center	 от центра
+	 from the center to draw  |  	 от центра, чтобы нарисовать  |  
+	 from the center to size the glow, then click where the rings end  |  	 от центра, чтобы задать размер свечения, затем щёлкните там, где кончаются кольца  |  
+	 of a selected path to keep drawing it  |  	 выделенного контура, чтобы продолжить его  |  
+	 or drag to remove areas	 или перетащите, чтобы удалить области
+	 over shapes to erase  |  	 по фигурам, чтобы стереть  |  
+	 over sprayed symbols to push them  |  	 по распылённым символам, чтобы сдвинуть их  |  
+	 over the gap between two open ends to join them	 по промежутку между двумя открытыми концами, чтобы соединить их
+	 overlapping shapes to cut or merge them	 перекрывающиеся фигуры, чтобы вырезать или объединить их
+	 part of a selected path to reshape it smoothly  |  	 часть выделенного контура, чтобы плавно изменить его форму  |  
+	 the grid's handles to adjust its planes and horizon  |  	 маркеры сетки, чтобы настроить её плоскости и горизонт  |  
+	 the tool's button to put them back	 по кнопке инструмента, чтобы вернуть их на место
+	 the way symbols should turn  |  	 в сторону, куда должны повернуться символы  |  
+	 to add  |  	 для добавления  |  
+	 to add a point instead	 чтобы вместо этого добавить точку
+	 to add the group around it  |  	 чтобы добавить группу вокруг него  |  
+	 to add to the selection  |  	 чтобы добавить к выделению  |  
+	 to apply the selected graphic style  |  	 чтобы применить выбранный графический стиль  |  
+	 to change the brush size	 чтобы изменить размер кисти
+	 to delete a point instead	 чтобы вместо этого удалить точку
+	 to draw freehand  |  	 чтобы рисовать от руки  |  
+	 to keep it upright  |  	 чтобы держать фигуру ровно  |  
+	 to keep the other side	 чтобы оставить другую сторону
+	 to keep to 45° angles	 чтобы держать углы кратными 45°
+	 to keep to 45° angles  |  	 чтобы держать углы кратными 45°  |  
+	 to make symbols bigger  |  	 чтобы увеличить символы  |  
+	 to make symbols more see-through  |  	 чтобы сделать символы прозрачнее  |  
+	 to make them more solid	 чтобы сделать их плотнее
+	 to make them smaller	 чтобы уменьшить их
+	 to measure a distance and angle  |  	 чтобы измерить расстояние и угол  |  
+	 to move it on its own	 чтобы двигать его отдельно
+	 to move where the printed pages fall  |  	 чтобы сдвинуть печатные страницы  |  
+	 to open one	 — открыть документ
+	 to paint a filled shape that merges with ones it touches  |  	 чтобы рисовать залитую фигуру, сливающуюся с теми, которых касается  |  
+	 to pull symbols together  |  	 чтобы стянуть символы вместе  |  
+	 to remove copies  |  	 чтобы убрать копии  |  
+	 to remove from the selection	 чтобы убрать из выделения
+	 to remove it	 чтобы убрать его
+	 to remove the tint	 чтобы убрать оттенок
+	 to resize or turn it	 чтобы изменить размер или повернуть
+	 to rotate  |  	 для поворота  |  
+	 to scale  |  	 для масштабирования  |  
+	 to select an edge instead	 чтобы вместо этого выделить край
+	 to set the chart's size, then type its data  |  	 чтобы задать размер диаграммы, затем ввести её данные  |  
+	 to snap to whole cells	 чтобы привязать к целым ячейкам
+	 to spray copies of the symbol  |  	 чтобы распылить копии символа  |  
+	 to spread them out	 чтобы раздвинуть их
+	 to tint symbols with the fill color  |  	 чтобы окрасить символы цветом заливки  |  
+	 to turn the view (the art stays as it is)	 чтобы повернуть вид (сам рисунок не меняется)
+	 while dragging for more or fewer corners  |  	 при перетаскивании — больше или меньше углов  |  
+	 while dragging to add or remove rays  |  	 при перетаскивании, чтобы добавить или убрать лучи  |  
+	 while dragging to close the path	 при перетаскивании, чтобы замкнуть контур
+	) and drag on the page to draw  |  	) и перетащите по странице, чтобы нарисовать  |  
+	Click again	Щёлкните ещё раз
+	Drag a corner	Перетащите угол
+	Drag from the end	Перетащите от конца
+	Drag outside a corner	Перетащите за углом
+	Scribble	Нарисуйте
+	Scribble over	Зачеркните
+	Pick a shape tool (	Выберите инструмент фигур (
+	To start, press 	Для начала нажмите 
+	Starter	Начальная
+	Basic	Базовая
+	All Tools…	Все инструменты…
+	Toolbar Layout	Вид панели инструментов
+	More Tools	Другие инструменты
+	Every tool, grouped by task. Pick one to use it.	Все инструменты по задачам. Выберите нужный.
+	Click the arrow for more tools like this one.	Щёлкните стрелку, чтобы увидеть похожие инструменты.
+	Pick, move and resize whole objects.	Выделяйте, перемещайте и масштабируйте объекты целиком.
+	Pick single points and path segments to reshape them.	Выделяйте отдельные точки и сегменты, чтобы менять форму.
+	Pick one object inside a group, then the group around it.	Выделяйте объект внутри группы, затем саму группу.
+	Select every object with a similar color or stroke.	Выделяйте все объекты похожего цвета или обводки.
+	Draw around points or objects to select them.	Обведите точки или объекты, чтобы выделить их.
+	Draw precise curves: click for corners, drag for curves.	Рисуйте точные кривые: щелчок — угол, перетаскивание — кривая.
+	Click a path to add a point to it.	Щёлкните контур, чтобы добавить на него точку.
+	Click a point on a path to remove it.	Щёлкните точку на контуре, чтобы удалить её.
+	Turn a point into a sharp corner or a smooth curve.	Превращайте точку в острый угол или плавную кривую.
+	Draw smooth curves by clicking where the path should pass.	Рисуйте плавные кривые, щёлкая там, где должен пройти контур.
+	Add text: click for a line, drag for a text box.	Добавляйте текст: щелчок — строка, перетаскивание — текстовый блок.
+	Fill a shape with flowing text.	Заполняйте фигуру текстом.
+	Make text follow a line or curve.	Пишите текст вдоль линии или кривой.
+	Add text that runs top to bottom.	Добавляйте текст, идущий сверху вниз.
+	Fill a shape with text that runs top to bottom.	Заполняйте фигуру текстом, идущим сверху вниз.
+	Make top-to-bottom text follow a path.	Пишите вертикальный текст вдоль контура.
+	Move, turn and resize single letters.	Двигайте, поворачивайте и масштабируйте отдельные буквы.
+	Draw straight lines.	Рисуйте прямые линии.
+	Draw curved arcs.	Рисуйте дуги.
+	Draw spirals.	Рисуйте спирали.
+	Draw a grid of rows and columns.	Рисуйте сетку из строк и столбцов.
+	Draw a target of circles and spokes.	Рисуйте мишень из кругов и лучей.
+	Draw rectangles and squares.	Рисуйте прямоугольники и квадраты.
+	Draw rectangles with rounded corners.	Рисуйте прямоугольники со скруглёнными углами.
+	Draw ovals and circles.	Рисуйте овалы и круги.
+	Draw shapes with equal sides, like triangles and hexagons.	Рисуйте фигуры с равными сторонами: треугольники, шестиугольники.
+	Draw stars.	Рисуйте звёзды.
+	Draw a lens flare with a glow, rings and rays.	Рисуйте блик со свечением, кольцами и лучами.
+	Paint freehand strokes with a brush.	Рисуйте кистью от руки.
+	Paint filled shapes that merge where they overlap.	Рисуйте залитые фигуры, которые сливаются при перекрытии.
+	Scribble a rough shape and get a clean one.	Набросайте фигуру от руки и получите ровную.
+	Draw freehand lines that smooth themselves.	Рисуйте от руки линии, которые сглаживаются сами.
+	Drag along a path to smooth out bumps.	Ведите вдоль контура, чтобы сгладить неровности.
+	Drag along a path to erase part of it.	Ведите вдоль контура, чтобы стереть его часть.
+	Scribble over two open ends to join them.	Проведите по двум открытым концам, чтобы соединить их.
+	Rub out parts of shapes.	Стирайте части фигур.
+	Cut a path in two at the point you click.	Разрезайте контур надвое там, где щёлкнули.
+	Slice shapes apart along a freehand line.	Разрезайте фигуры по линии, нарисованной от руки.
+	Cut an object along a line and mirror one half.	Разрежьте объект по линии и отразите половину.
+	Cut objects along a straight line.	Разрезайте объекты по прямой.
+	Cut a rectangle out of objects.	Вырезайте прямоугольник из объектов.
+	Turn objects around a point.	Поворачивайте объекты вокруг точки.
+	Flip objects like a mirror.	Отражайте объекты, как в зеркале.
+	Make objects bigger or smaller.	Увеличивайте или уменьшайте объекты.
+	Slant objects sideways.	Наклоняйте объекты вбок.
+	Drag part of a path to reshape it smoothly.	Перетащите часть контура, чтобы плавно изменить форму.
+	Make a stroke thicker or thinner at points along it.	Делайте обводку толще или тоньше в точках вдоль неё.
+	Push paths around like soft clay.	Двигайте контуры, как мягкую глину.
+	Swirl paths into twists.	Закручивайте контуры в вихри.
+	Pull paths in toward the brush.	Стягивайте контуры к кисти.
+	Puff paths out from the brush.	Раздувайте контуры от кисти.
+	Add curved bumps along outlines.	Добавляйте волнистые выступы по контуру.
+	Add spikes along outlines.	Добавляйте шипы по контуру.
+	Add wrinkles along outlines.	Добавляйте морщины по контуру.
+	Move, scale, rotate, slant and distort in one tool.	Перемещение, масштаб, поворот, наклон и искажение в одном инструменте.
+	Pin points on art and drag them to bend it.	Закрепите точки на рисунке и тяните их, чтобы изгибать.
+	Merge or remove overlapping parts of shapes.	Объединяйте или удаляйте перекрывающиеся части фигур.
+	Fill the areas between overlapping lines with color.	Заливайте цветом области между пересекающимися линиями.
+	Select the areas and edges of Live Paint art.	Выделяйте области и края быстрой заливки.
+	Show a grid for drawing in 3D perspective.	Показывает сетку для рисования в 3D-перспективе.
+	Move and place objects on the perspective grid.	Перемещайте и размещайте объекты на сетке перспективы.
+	Add color points inside a shape for soft color blends.	Добавляйте цветовые точки внутри фигуры для мягких переходов.
+	Set where a color gradient starts and ends.	Задайте, где начинается и кончается градиент.
+	Copy the color and style of one object onto another.	Переносите цвет и стиль одного объекта на другой.
+	Measure distances and angles.	Измеряйте расстояния и углы.
+	Make the in-between steps from one object to another.	Создавайте промежуточные шаги от одного объекта к другому.
+	Spray copies of a symbol onto the page.	Распыляйте копии символа на страницу.
+	Push sprayed symbols around.	Сдвигайте распылённые символы.
+	Pull sprayed symbols together or spread them out.	Стягивайте или раздвигайте распылённые символы.
+	Make sprayed symbols bigger or smaller.	Увеличивайте или уменьшайте распылённые символы.
+	Turn sprayed symbols.	Поворачивайте распылённые символы.
+	Tint sprayed symbols with the fill color.	Окрашивайте распылённые символы цветом заливки.
+	Make sprayed symbols more or less see-through.	Делайте распылённые символы прозрачнее или плотнее.
+	Apply the selected graphic style to sprayed symbols.	Применяйте выбранный графический стиль к распылённым символам.
+	Make a chart with vertical bars.	Создайте диаграмму с вертикальными столбцами.
+	Make a chart with stacked vertical bars.	Создайте диаграмму с накопительными столбцами.
+	Make a chart with horizontal bars.	Создайте диаграмму с горизонтальными полосами.
+	Make a chart with stacked horizontal bars.	Создайте диаграмму с накопительными полосами.
+	Make a chart with lines through points.	Создайте линейную диаграмму по точкам.
+	Make a chart with filled areas.	Создайте диаграмму с заливкой областей.
+	Make a chart of dots.	Создайте точечную диаграмму.
+	Make a pie chart.	Создайте круговую диаграмму.
+	Make a radar (spider) chart.	Создайте лепестковую диаграмму.
+	Add, move and resize pages.	Добавляйте, перемещайте и меняйте размер страниц.
+	Mark parts of the art to export as separate images.	Отмечайте части рисунка для экспорта отдельными изображениями.
+	Pick and adjust slices.	Выделяйте и настраивайте фрагменты.
+	Drag to move around the page. Hold Space with any tool.	Перетаскивайте, чтобы двигаться по странице. С любым инструментом — удерживая Пробел.
+	Turn the view without turning the art.	Поворачивайте вид, не поворачивая рисунок.
+	Move where the printed pages fall on the art.	Сдвигайте, где на рисунке окажутся печатные страницы.
+	Zoom in and out of the page.	Приближайте и отдаляйте страницу.
+@msg	layout must be starter, basic or advanced, not {v}	вид должен быть starter, basic или advanced, а не {v}

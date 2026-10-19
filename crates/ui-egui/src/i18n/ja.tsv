@@ -4235,3 +4235,196 @@ theme	Appearance	外観
 	Not available right now	現在は使用できません
 	↑↓ move · Enter runs · Esc closes	↑↓ 移動 · Enter 実行 · Esc 閉じる
 	Type what you want to do…	やりたいことを入力…
+# Starter toolbar, tool descriptions and hints (UX5).
+	 a closed path to fill it with text  |  	：閉じたパスをテキストで埋める  |  
+	 a corner point to pull out curve handles  |  	：角の点から曲線のハンドルを引き出す  |  
+	 a letter to select it  |  	：文字を選択  |  
+	 a line across an object to cut it and mirror one half  |  	：オブジェクトを横切る線で切って片側を反転  |  
+	 a line across objects to cut them  |  	：オブジェクトを横切る線で切る  |  
+	 a path to add a point  |  	：パスに点を追加  |  
+	 a path to cut it at that point	：パスをその位置で切る
+	 a path to type along it  |  	：パスに沿って入力  |  
+	 a point to delete it	：点を削除
+	 a point to delete it  |  	：点を削除  |  
+	 a point to move it  |  	：点を移動  |  
+	 a rectangle around the part to export as its own image	：書き出したい部分を長方形で囲み、別の画像にする
+	 a rectangle over objects to cut it out	：オブジェクト上で長方形を描いて切り抜く
+	 a rough rectangle, circle, triangle or line to get a clean shape  |  	：おおまかな長方形・円・三角形・線を描いて整ったシェイプにする  |  
+	 a shape to add a mesh point  |  	：シェイプにメッシュポイントを追加  |  
+	 a slice to select it  |  	：スライスを選択  |  
+	 a smooth point to make it a corner  |  	：スムーズポイントを角にする  |  
+	 across shapes to merge them  |  	：シェイプをまたいで結合  |  
+	 across shapes to slice them apart	：シェイプを横切って切り分ける
+	 adds text	：テキストを追加
+	 along a selected path to erase that part	：選択したパスに沿って、その部分を消去
+	 along a selected path to smooth it	：選択したパスに沿って滑らかにする
+	 an area to fill it  |  	：領域を塗る  |  
+	 an area to make it a shape  |  	：領域をシェイプにする  |  
+	 an area to select it  |  	：領域を選択  |  
+	 an edge to paint its stroke	：境界線の線を塗る
+	 an object in a group to select it  |  	：グループ内のオブジェクトを選択  |  
+	 an object to select all with a similar color  |  	：似た色のオブジェクトをすべて選択  |  
+	 around points or objects to select them  |  	：点やオブジェクトを囲んで選択  |  
+	 draws with the Pen  |  	：ペンで描画  |  
+	 for a new document  |  	：新規ドキュメント  |  
+	 for a square  |  	：正方形にする  |  
+	 for its options	：オプションを表示
+	 from center	：中心から描画
+	 from the center to draw  |  	：中心から描画  |  
+	 from the center to size the glow, then click where the rings end  |  	：中心からドラッグして光の大きさを決め、リングの終点をクリック  |  
+	 of a selected path to keep drawing it  |  	：選択したパスの続きを描く  |  
+	 or drag to remove areas	：またはドラッグで領域を削除
+	 over shapes to erase  |  	：シェイプの上をなぞって消去  |  
+	 over sprayed symbols to push them  |  	：配置したシンボルを押し動かす  |  
+	 over the gap between two open ends to join them	：2 つの開いた端点の間をなぞって連結
+	 overlapping shapes to cut or merge them	：重なったシェイプを切り抜きまたは結合
+	 part of a selected path to reshape it smoothly  |  	：選択したパスの一部をなめらかに変形  |  
+	 the grid's handles to adjust its planes and horizon  |  	：グリッドのハンドルで面と水平線を調整  |  
+	 the tool's button to put them back	：ツールボタンで元の位置に戻す
+	 the way symbols should turn  |  	：シンボルを回したい方向へ  |  
+	 to add  |  	：追加  |  
+	 to add a point instead	：代わりに点を追加
+	 to add the group around it  |  	：その外側のグループも追加  |  
+	 to add to the selection  |  	：選択に追加  |  
+	 to apply the selected graphic style  |  	：選択したグラフィックスタイルを適用  |  
+	 to change the brush size	：ブラシのサイズを変更
+	 to delete a point instead	：代わりに点を削除
+	 to draw freehand  |  	：フリーハンドで描画  |  
+	 to keep it upright  |  	：まっすぐ立てる  |  
+	 to keep the other side	：反対側を残す
+	 to keep to 45° angles	：45° 単位に固定
+	 to keep to 45° angles  |  	：45° 単位に固定  |  
+	 to make symbols bigger  |  	：シンボルを大きくする  |  
+	 to make symbols more see-through  |  	：シンボルを透明にする  |  
+	 to make them more solid	：不透明にする
+	 to make them smaller	：小さくする
+	 to measure a distance and angle  |  	：距離と角度を測定  |  
+	 to move it on its own	：ハンドルだけを動かす
+	 to move where the printed pages fall  |  	：印刷ページの位置を移動  |  
+	 to open one	：ドキュメントを開く
+	 to paint a filled shape that merges with ones it touches  |  	：触れたシェイプと結合する塗りのシェイプを描く  |  
+	 to pull symbols together  |  	：シンボルを寄せ集める  |  
+	 to remove copies  |  	：コピーを削除  |  
+	 to remove from the selection	：選択から除外
+	 to remove it	：取り除く
+	 to remove the tint	：色合いを取り除く
+	 to resize or turn it	：サイズを変更または回転
+	 to rotate  |  	：回転  |  
+	 to scale  |  	：拡大・縮小  |  
+	 to select an edge instead	：代わりに境界線を選択
+	 to set the chart's size, then type its data  |  	：グラフのサイズを決めてからデータを入力  |  
+	 to snap to whole cells	：セル単位でスナップ
+	 to spray copies of the symbol  |  	：シンボルのコピーを散布  |  
+	 to spread them out	：散らばらせる
+	 to tint symbols with the fill color  |  	：シンボルを塗りの色で着色  |  
+	 to turn the view (the art stays as it is)	：表示を回転（アートワークはそのまま）
+	 while dragging for more or fewer corners  |  	：ドラッグ中に角の数を増減  |  
+	 while dragging to add or remove rays  |  	：ドラッグ中に光線を増減  |  
+	 while dragging to close the path	：ドラッグ中に押すとパスを閉じる
+	) and drag on the page to draw  |  	）を選んで、ページ上をドラッグして描画  |  
+	Click again	もう一度クリック
+	Drag a corner	角をドラッグ
+	Drag from the end	端点からドラッグ
+	Drag outside a corner	角の外側をドラッグ
+	Scribble	なぞり描き
+	Scribble over	上をなぞり描き
+	Pick a shape tool (	シェイプツール（
+	To start, press 	はじめに キー 
+	Starter	スターター
+	Basic	基本
+	All Tools…	すべてのツール…
+	Toolbar Layout	ツールバーのレイアウト
+	More Tools	その他のツール
+	Every tool, grouped by task. Pick one to use it.	すべてのツールを作業別に表示します。選ぶと使えます。
+	Click the arrow for more tools like this one.	矢印をクリックすると、同じ種類のツールが表示されます。
+	Pick, move and resize whole objects.	オブジェクト全体を選択、移動、サイズ変更します。
+	Pick single points and path segments to reshape them.	点やパスの一部を選んで形を変えます。
+	Pick one object inside a group, then the group around it.	グループ内のオブジェクトを選び、続けて外側のグループを選びます。
+	Select every object with a similar color or stroke.	色や線が似たオブジェクトをすべて選択します。
+	Draw around points or objects to select them.	点やオブジェクトを囲むように描いて選択します。
+	Draw precise curves: click for corners, drag for curves.	正確な曲線を描きます。クリックで角、ドラッグで曲線。
+	Click a path to add a point to it.	パスをクリックして点を追加します。
+	Click a point on a path to remove it.	パス上の点をクリックして削除します。
+	Turn a point into a sharp corner or a smooth curve.	点を鋭い角またはなめらかな曲線に切り替えます。
+	Draw smooth curves by clicking where the path should pass.	パスを通したい位置をクリックして、なめらかな曲線を描きます。
+	Add text: click for a line, drag for a text box.	テキストを追加します。クリックで 1 行、ドラッグでテキストボックス。
+	Fill a shape with flowing text.	シェイプの中にテキストを流し込みます。
+	Make text follow a line or curve.	テキストを線や曲線に沿わせます。
+	Add text that runs top to bottom.	上から下へ流れるテキストを追加します。
+	Fill a shape with text that runs top to bottom.	上から下へ流れるテキストでシェイプを埋めます。
+	Make top-to-bottom text follow a path.	縦書きテキストをパスに沿わせます。
+	Move, turn and resize single letters.	1 文字ずつ移動、回転、サイズ変更します。
+	Draw straight lines.	直線を描きます。
+	Draw curved arcs.	円弧を描きます。
+	Draw spirals.	らせんを描きます。
+	Draw a grid of rows and columns.	行と列のグリッドを描きます。
+	Draw a target of circles and spokes.	同心円と放射線の的を描きます。
+	Draw rectangles and squares.	長方形や正方形を描きます。
+	Draw rectangles with rounded corners.	角の丸い長方形を描きます。
+	Draw ovals and circles.	楕円や円を描きます。
+	Draw shapes with equal sides, like triangles and hexagons.	三角形や六角形など、辺の長さが等しいシェイプを描きます。
+	Draw stars.	星形を描きます。
+	Draw a lens flare with a glow, rings and rays.	光、リング、光線のあるフレアを描きます。
+	Paint freehand strokes with a brush.	ブラシでフリーハンドの線を描きます。
+	Paint filled shapes that merge where they overlap.	重なると結合する塗りのシェイプを描きます。
+	Scribble a rough shape and get a clean one.	おおまかに描くと整ったシェイプになります。
+	Draw freehand lines that smooth themselves.	自動で滑らかになるフリーハンドの線を描きます。
+	Drag along a path to smooth out bumps.	パスに沿ってドラッグして凹凸を滑らかにします。
+	Drag along a path to erase part of it.	パスに沿ってドラッグして一部を消去します。
+	Scribble over two open ends to join them.	2 つの開いた端点の上をなぞって連結します。
+	Rub out parts of shapes.	シェイプの一部を消します。
+	Cut a path in two at the point you click.	クリックした位置でパスを 2 つに切ります。
+	Slice shapes apart along a freehand line.	フリーハンドの線でシェイプを切り分けます。
+	Cut an object along a line and mirror one half.	線に沿ってオブジェクトを切り、片側を反転します。
+	Cut objects along a straight line.	直線に沿ってオブジェクトを切ります。
+	Cut a rectangle out of objects.	オブジェクトから長方形を切り抜きます。
+	Turn objects around a point.	オブジェクトを点を中心に回転します。
+	Flip objects like a mirror.	オブジェクトを鏡のように反転します。
+	Make objects bigger or smaller.	オブジェクトを拡大・縮小します。
+	Slant objects sideways.	オブジェクトを横方向に傾けます。
+	Drag part of a path to reshape it smoothly.	パスの一部をドラッグして、なめらかに変形します。
+	Make a stroke thicker or thinner at points along it.	線の途中の位置ごとに太さを変えます。
+	Push paths around like soft clay.	やわらかい粘土のようにパスを押し動かします。
+	Swirl paths into twists.	パスを渦巻き状にねじります。
+	Pull paths in toward the brush.	パスをブラシに向かって縮めます。
+	Puff paths out from the brush.	パスをブラシから外側へふくらませます。
+	Add curved bumps along outlines.	輪郭に丸い波形を加えます。
+	Add spikes along outlines.	輪郭にとげを加えます。
+	Add wrinkles along outlines.	輪郭にしわを加えます。
+	Move, scale, rotate, slant and distort in one tool.	移動、拡大・縮小、回転、傾斜、ゆがみを 1 つのツールで行います。
+	Pin points on art and drag them to bend it.	アートにピンを打ち、ドラッグして曲げます。
+	Merge or remove overlapping parts of shapes.	重なったシェイプの部分を結合または削除します。
+	Fill the areas between overlapping lines with color.	重なった線で囲まれた領域に色を塗ります。
+	Select the areas and edges of Live Paint art.	ライブペイントの領域と境界線を選択します。
+	Show a grid for drawing in 3D perspective.	3D 遠近法で描くためのグリッドを表示します。
+	Move and place objects on the perspective grid.	遠近グリッド上でオブジェクトを移動・配置します。
+	Add color points inside a shape for soft color blends.	シェイプ内に色の点を加え、やわらかいグラデーションを作ります。
+	Set where a color gradient starts and ends.	グラデーションの始点と終点を決めます。
+	Copy the color and style of one object onto another.	あるオブジェクトの色とスタイルを別のオブジェクトにコピーします。
+	Measure distances and angles.	距離と角度を測ります。
+	Make the in-between steps from one object to another.	あるオブジェクトから別のオブジェクトへの中間ステップを作ります。
+	Spray copies of a symbol onto the page.	シンボルのコピーをページに散布します。
+	Push sprayed symbols around.	散布したシンボルを押し動かします。
+	Pull sprayed symbols together or spread them out.	散布したシンボルを寄せ集めたり散らしたりします。
+	Make sprayed symbols bigger or smaller.	散布したシンボルを拡大・縮小します。
+	Turn sprayed symbols.	散布したシンボルを回転します。
+	Tint sprayed symbols with the fill color.	散布したシンボルを塗りの色で着色します。
+	Make sprayed symbols more or less see-through.	散布したシンボルの透明度を変えます。
+	Apply the selected graphic style to sprayed symbols.	散布したシンボルに選択したグラフィックスタイルを適用します。
+	Make a chart with vertical bars.	縦棒のグラフを作ります。
+	Make a chart with stacked vertical bars.	積み上げ縦棒のグラフを作ります。
+	Make a chart with horizontal bars.	横棒のグラフを作ります。
+	Make a chart with stacked horizontal bars.	積み上げ横棒のグラフを作ります。
+	Make a chart with lines through points.	点を線で結んだグラフを作ります。
+	Make a chart with filled areas.	塗りつぶした領域のグラフを作ります。
+	Make a chart of dots.	点のグラフを作ります。
+	Make a pie chart.	円グラフを作ります。
+	Make a radar (spider) chart.	レーダーチャートを作ります。
+	Add, move and resize pages.	ページを追加、移動、サイズ変更します。
+	Mark parts of the art to export as separate images.	アートの一部を別の画像として書き出すよう指定します。
+	Pick and adjust slices.	スライスを選択して調整します。
+	Drag to move around the page. Hold Space with any tool.	ドラッグしてページ内を移動します。どのツールでも Space キーを押している間使えます。
+	Turn the view without turning the art.	アートワークは回転させずに表示だけを回転します。
+	Move where the printed pages fall on the art.	印刷ページがアートのどこに来るかを移動します。
+	Zoom in and out of the page.	ページを拡大・縮小表示します。
+@msg	layout must be starter, basic or advanced, not {v}	レイアウトは starter、basic、advanced のいずれかです（{v} は不可）

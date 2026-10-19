@@ -3658,3 +3658,195 @@ axis	Both	兩者
 	Not available right now	目前無法使用
 	↑↓ move · Enter runs · Esc closes	↑↓ 移動 · Enter 執行 · Esc 關閉
 	Type what you want to do…	輸入你想做的事…
+# Starter toolbar, tool descriptions and hints (UX5).
+	 a closed path to fill it with text  |  	封閉路徑可用文字填滿  |  
+	 a corner point to pull out curve handles  |  	角點可拉出曲線把手  |  
+	 a letter to select it  |  	字母可選取它  |  
+	 a line across an object to cut it and mirror one half  |  	穿過物件的線可切割並鏡射一半  |  
+	 a line across objects to cut them  |  	穿過物件的線可切割它們  |  
+	 a path to add a point  |  	路徑可新增一個點  |  
+	 a path to cut it at that point	路徑可在該處剪斷
+	 a path to type along it  |  	路徑可沿路徑輸入  |  
+	 a point to delete it	點可刪除它
+	 a point to delete it  |  	點可刪除它  |  
+	 a point to move it  |  	點可移動它  |  
+	 a rectangle around the part to export as its own image	矩形框住要單獨轉存為影像的部分
+	 a rectangle over objects to cut it out	在物件上拖出矩形可將其剪出
+	 a rough rectangle, circle, triangle or line to get a clean shape  |  	粗略的矩形、圓形、三角形或直線可得到整齊的形狀  |  
+	 a shape to add a mesh point  |  	形狀可新增網格點  |  
+	 a slice to select it  |  	切片可選取它  |  
+	 a smooth point to make it a corner  |  	平滑點可將其變為角點  |  
+	 across shapes to merge them  |  	跨過形狀可合併它們  |  
+	 across shapes to slice them apart	穿過形狀可將其切開
+	 adds text	新增文字
+	 along a selected path to erase that part	沿選取的路徑可擦除該部分
+	 along a selected path to smooth it	沿選取的路徑可使其平滑
+	 an area to fill it  |  	區域可填色  |  
+	 an area to make it a shape  |  	區域可將其變為形狀  |  
+	 an area to select it  |  	區域可選取它  |  
+	 an edge to paint its stroke	邊緣可為其筆畫上色
+	 an object in a group to select it  |  	群組中的物件可選取它  |  
+	 an object to select all with a similar color  |  	物件可選取所有顏色相近的物件  |  
+	 around points or objects to select them  |  	圍繞點或物件可選取它們  |  
+	 draws with the Pen  |  	用筆型工具繪製  |  
+	 for a new document  |  	新增文件  |  
+	 for a square  |  	可繪製正方形  |  
+	 for its options	可開啟其選項
+	 from center	可從中心繪製
+	 from the center to draw  |  	從中心開始繪製  |  
+	 from the center to size the glow, then click where the rings end  |  	從中心拖曳可決定光暈大小，再按一下光環的終點  |  
+	 of a selected path to keep drawing it  |  	選取路徑的端點可繼續繪製  |  
+	 or drag to remove areas	或拖曳可刪除區域
+	 over shapes to erase  |  	在形狀上拖曳可擦除  |  
+	 over sprayed symbols to push them  |  	在噴出的符號上拖曳可推動它們  |  
+	 over the gap between two open ends to join them	在兩個開放端點之間的空隙上塗畫可連接它們
+	 overlapping shapes to cut or merge them	重疊的形狀可切割或合併它們
+	 part of a selected path to reshape it smoothly  |  	選取路徑的一部分可平滑地改變形狀  |  
+	 the grid's handles to adjust its planes and horizon  |  	格點的把手可調整平面和地平線  |  
+	 the tool's button to put them back	工具按鈕可將其恢復原位
+	 the way symbols should turn  |  	朝符號應旋轉的方向  |  
+	 to add  |  	可新增  |  
+	 to add a point instead	可改為新增點
+	 to add the group around it  |  	可新增其所在的群組  |  
+	 to add to the selection  |  	可加入選取範圍  |  
+	 to apply the selected graphic style  |  	可套用所選圖形樣式  |  
+	 to change the brush size	可變更筆刷大小
+	 to delete a point instead	可改為刪除點
+	 to draw freehand  |  	可徒手繪製  |  
+	 to keep it upright  |  	可保持直立  |  
+	 to keep the other side	可保留另一側
+	 to keep to 45° angles	可限制為 45° 角
+	 to keep to 45° angles  |  	可限制為 45° 角  |  
+	 to make symbols bigger  |  	可放大符號  |  
+	 to make symbols more see-through  |  	可使符號更透明  |  
+	 to make them more solid	可使其更不透明
+	 to make them smaller	可縮小
+	 to measure a distance and angle  |  	可測量距離和角度  |  
+	 to move it on its own	可單獨移動它
+	 to move where the printed pages fall  |  	可移動列印頁面的位置  |  
+	 to open one	開啟文件
+	 to paint a filled shape that merges with ones it touches  |  	可繪製與接觸形狀合併的填色形狀  |  
+	 to pull symbols together  |  	可將符號聚攏  |  
+	 to remove copies  |  	可刪除副本  |  
+	 to remove from the selection	可從選取範圍中移除
+	 to remove it	可移除它
+	 to remove the tint	可移除著色
+	 to resize or turn it	可調整大小或旋轉
+	 to rotate  |  	可旋轉  |  
+	 to scale  |  	可縮放  |  
+	 to select an edge instead	可改為選取邊緣
+	 to set the chart's size, then type its data  |  	可設定圖表大小，然後輸入資料  |  
+	 to snap to whole cells	可對齊到整格
+	 to spray copies of the symbol  |  	可噴出符號副本  |  
+	 to spread them out	可將其分散
+	 to tint symbols with the fill color  |  	可用填色為符號著色  |  
+	 to turn the view (the art stays as it is)	可旋轉檢視（圖稿保持不變）
+	 while dragging for more or fewer corners  |  	拖曳時可增減角數  |  
+	 while dragging to add or remove rays  |  	拖曳時可增減光線  |  
+	 while dragging to close the path	拖曳時可封閉路徑
+	) and drag on the page to draw  |  	）並在頁面上拖曳以繪製  |  
+	Click again	再按一下
+	Drag a corner	拖曳角
+	Drag from the end	從端點拖曳
+	Drag outside a corner	在角外拖曳
+	Scribble	塗畫
+	Scribble over	在其上塗畫
+	Pick a shape tool (	選擇形狀工具（
+	To start, press 	開始：按下 
+	Starter	入門
+	Basic	基本
+	All Tools…	所有工具…
+	Toolbar Layout	工具列版面
+	More Tools	更多工具
+	Every tool, grouped by task. Pick one to use it.	按任務分組的所有工具。選擇一個即可使用。
+	Click the arrow for more tools like this one.	按一下箭頭可查看更多同類工具。
+	Pick, move and resize whole objects.	選取、移動整個物件並調整其大小。
+	Pick single points and path segments to reshape them.	選取單個點和路徑線段以改變形狀。
+	Pick one object inside a group, then the group around it.	選取群組中的一個物件，再選取其所在的群組。
+	Select every object with a similar color or stroke.	選取顏色或筆畫相近的所有物件。
+	Draw around points or objects to select them.	圍繞點或物件繪製以選取它們。
+	Draw precise curves: click for corners, drag for curves.	繪製精確曲線：按一下得到角點，拖曳得到曲線。
+	Click a path to add a point to it.	按一下路徑以新增一個點。
+	Click a point on a path to remove it.	按一下路徑上的點以刪除它。
+	Turn a point into a sharp corner or a smooth curve.	將點轉換為尖角或平滑曲線。
+	Draw smooth curves by clicking where the path should pass.	在路徑應經過的位置按一下，繪製平滑曲線。
+	Add text: click for a line, drag for a text box.	新增文字：按一下得到一行，拖曳得到文字框。
+	Fill a shape with flowing text.	用流動的文字填滿形狀。
+	Make text follow a line or curve.	讓文字沿直線或曲線排列。
+	Add text that runs top to bottom.	新增由上而下排列的文字。
+	Fill a shape with text that runs top to bottom.	用由上而下排列的文字填滿形狀。
+	Make top-to-bottom text follow a path.	讓由上而下的文字沿路徑排列。
+	Move, turn and resize single letters.	移動、旋轉單個字母並調整其大小。
+	Draw straight lines.	繪製直線。
+	Draw curved arcs.	繪製弧線。
+	Draw spirals.	繪製螺旋線。
+	Draw a grid of rows and columns.	繪製由列和欄組成的格點。
+	Draw a target of circles and spokes.	繪製由同心圓和放射線組成的靶形。
+	Draw rectangles and squares.	繪製矩形和正方形。
+	Draw rectangles with rounded corners.	繪製圓角矩形。
+	Draw ovals and circles.	繪製橢圓和圓形。
+	Draw shapes with equal sides, like triangles and hexagons.	繪製邊長相等的形狀，如三角形和六邊形。
+	Draw stars.	繪製星形。
+	Draw a lens flare with a glow, rings and rays.	繪製帶有光暈、光環和光線的反光效果。
+	Paint freehand strokes with a brush.	用筆刷徒手繪製筆畫。
+	Paint filled shapes that merge where they overlap.	繪製重疊處會合併的填色形狀。
+	Scribble a rough shape and get a clean one.	隨手畫出粗略形狀，得到整齊的形狀。
+	Draw freehand lines that smooth themselves.	繪製會自動平滑的徒手線條。
+	Drag along a path to smooth out bumps.	沿路徑拖曳以撫平凹凸。
+	Drag along a path to erase part of it.	沿路徑拖曳以擦除其中一部分。
+	Scribble over two open ends to join them.	在兩個開放端點上塗畫以連接它們。
+	Rub out parts of shapes.	擦除形狀的局部。
+	Cut a path in two at the point you click.	在按一下的位置將路徑一分為二。
+	Slice shapes apart along a freehand line.	沿徒手線將形狀切開。
+	Cut an object along a line and mirror one half.	沿直線切割物件並鏡射其中一半。
+	Cut objects along a straight line.	沿直線切割物件。
+	Cut a rectangle out of objects.	從物件中剪出一個矩形。
+	Turn objects around a point.	圍繞一個點旋轉物件。
+	Flip objects like a mirror.	像鏡子一樣翻轉物件。
+	Make objects bigger or smaller.	放大或縮小物件。
+	Slant objects sideways.	將物件向側面傾斜。
+	Drag part of a path to reshape it smoothly.	拖曳路徑的一部分以平滑地改變形狀。
+	Make a stroke thicker or thinner at points along it.	在筆畫上的各點使其變粗或變細。
+	Push paths around like soft clay.	像揉軟黏土一樣推動路徑。
+	Swirl paths into twists.	將路徑扭成漩渦。
+	Pull paths in toward the brush.	將路徑向筆刷收縮。
+	Puff paths out from the brush.	將路徑從筆刷向外膨脹。
+	Add curved bumps along outlines.	沿輪廓新增弧形凸起。
+	Add spikes along outlines.	沿輪廓新增尖刺。
+	Add wrinkles along outlines.	沿輪廓新增皺褶。
+	Move, scale, rotate, slant and distort in one tool.	用一個工具完成移動、縮放、旋轉、傾斜和扭曲。
+	Pin points on art and drag them to bend it.	在圖稿上釘上圖釘並拖曳以使其彎曲。
+	Merge or remove overlapping parts of shapes.	合併或刪除形狀的重疊部分。
+	Fill the areas between overlapping lines with color.	為重疊線條之間的區域填色。
+	Select the areas and edges of Live Paint art.	選取即時上色圖稿的區域和邊緣。
+	Show a grid for drawing in 3D perspective.	顯示用於 3D 透視繪圖的格點。
+	Move and place objects on the perspective grid.	在透視格點上移動和放置物件。
+	Add color points inside a shape for soft color blends.	在形狀內新增顏色點，形成柔和的顏色過渡。
+	Set where a color gradient starts and ends.	設定顏色漸層的起點和終點。
+	Copy the color and style of one object onto another.	將一個物件的顏色和樣式拷貝到另一個物件。
+	Measure distances and angles.	測量距離和角度。
+	Make the in-between steps from one object to another.	產生從一個物件到另一個物件的中間過渡步驟。
+	Spray copies of a symbol onto the page.	將符號副本噴到頁面上。
+	Push sprayed symbols around.	推動噴出的符號。
+	Pull sprayed symbols together or spread them out.	將噴出的符號聚攏或分散。
+	Make sprayed symbols bigger or smaller.	放大或縮小噴出的符號。
+	Turn sprayed symbols.	旋轉噴出的符號。
+	Tint sprayed symbols with the fill color.	用填色為噴出的符號著色。
+	Make sprayed symbols more or less see-through.	調整噴出符號的透明程度。
+	Apply the selected graphic style to sprayed symbols.	為噴出的符號套用所選圖形樣式。
+	Make a chart with vertical bars.	建立直條圖。
+	Make a chart with stacked vertical bars.	建立堆疊直條圖。
+	Make a chart with horizontal bars.	建立橫條圖。
+	Make a chart with stacked horizontal bars.	建立堆疊橫條圖。
+	Make a chart with lines through points.	建立由線連接各點的圖表。
+	Make a chart with filled areas.	建立區域圖。
+	Make a chart of dots.	建立散佈圖。
+	Make a pie chart.	建立圓形圖。
+	Make a radar (spider) chart.	建立雷達圖。
+	Add, move and resize pages.	新增、移動頁面並調整其大小。
+	Mark parts of the art to export as separate images.	標記圖稿中要單獨轉存為影像的部分。
+	Pick and adjust slices.	選取並調整切片。
+	Drag to move around the page. Hold Space with any tool.	拖曳以在頁面中移動。任何工具下按住空白鍵也可使用。
+	Turn the view without turning the art.	旋轉檢視而不旋轉圖稿。
+	Move where the printed pages fall on the art.	移動列印頁面在圖稿上的位置。
+	Zoom in and out of the page.	放大和縮小頁面檢視。

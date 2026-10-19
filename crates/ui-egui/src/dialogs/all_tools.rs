@@ -66,8 +66,7 @@ fn body(app: &mut VectorcraftApp, ui: &mut egui::Ui, _: &mut Dialog) -> bool {
                     }
                     let icon = egui::Rect::from_center_size(rect.left_center() + vec2(6.0 + ICON / 2.0, 0.0), vec2(ICON, ICON));
                     icons::paint(ui, icons::tool_icon(tool.icon), icon, if on { t.text_strong } else { t.icon });
-                    let name = tl!(tool.label);
-                    let name = if crate::i18n::current() == crate::i18n::Lang::EN { name.trim_end_matches(" Tool") } else { name };
+                    let name = crate::toolbar::tool_name(tool);
                     let text_at = egui::pos2(icon.right() + 8.0, rect.center().y);
                     ui.painter().with_clip_rect(rect).text(
                         text_at,

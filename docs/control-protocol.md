@@ -209,6 +209,16 @@ pop the panel out next to the column like the other icon panels (`ui.dock_collap
 `ui.inspect`); expanding with one popped out shows its tab. The state is saved with the preferences and in user
 workspaces; the built-in workspaces expand the dock.
 
+Toolbar layouts: `window.toolbarLayout {layout?: "starter" | "basic" | "advanced"}` (Window › Toolbars) picks the
+Tools panel's layout and returns `{layout}` (omitted: the current one). Starter, the default for new users, shows ten
+slots under Select, Draw, Edit and View (Selection; Direct and Group Selection; the shapes; the Pen and anchor tools;
+Pencil and the brushes; Type; Eraser, Scissors and Knife; Eyedropper; Hand; Zoom) and a More Tools button that opens
+the All Tools drawer (`window.allTools`); Basic is the categorized toolbar and Advanced every tool group
+(`window.toolbarAdvanced` toggles it, going back to Starter or Basic). `ui.toolbar_starter` and
+`ui.toolbar_advanced` in `ui.inspect` hold the choice; settings saved before Starter existed keep their layout. A
+group button's arrow at its right edge opens its flyout on a click (so do a right-click and a long press).
+`ui.tool.list` gives every tool's `about` line, the one its tooltip shows under its name and key.
+
 Floating tool groups: dragging or clicking the tear-off bar down a tool group's flyout (or releasing the long press
 that opened it over the bar) floats the group as a strip of tool buttons, moved by the same bar and put back in the
 toolbar by the × at its top; `window.floatTools {tool, floating?}` does the same for the group of the current
