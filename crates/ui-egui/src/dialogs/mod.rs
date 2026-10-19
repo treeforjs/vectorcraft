@@ -295,6 +295,7 @@ registry! {
     LayerOptions: [layer_options::KIND] => layer_options::SPEC,
     LayersPanelOptions: [layers_panel_options::KIND] => layers_panel_options::SPEC,
     RearrangeArtboards: [rearrange_artboards::KIND] => rearrange_artboards::SPEC,
+    Updates: [crate::updates::KIND] => DialogSpec::window(crate::updates::show, crate::updates::confirm),
 }
 
 /// The button labels the shared dialog frame can show (OK, discard and the fixed Cancel/Close),
@@ -326,6 +327,10 @@ fn run_and_close(app: &mut VectorcraftApp, id: &str, params: Value) -> DialogRes
 /// Close the open dialog as Cancel does, rolling back a live preview (`ui.dialog.cancel`).
 pub fn cancel(app: &mut VectorcraftApp) {
     missing_fonts::requeue_replaced(app);
+    // Cancelling a Save Changes question stops quitting, and with it Restart Now.
+    if app.ui.dialog.as_ref().is_some_and(|d| d.kind == crate::unsaved::KIND) {
+        app.updates.restart = false;
+    }
     if app.ui.dialog.take().is_some_and(|d| {
         spec(&d.kind).preview
             && (d.kind != effect_gallery::KIND || app.session.active().map(|s| s.uid) == d.fields.get("__doc").and_then(Value::as_u64))

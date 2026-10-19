@@ -186,6 +186,24 @@ the draft `VectorCraft v<version>` with notes generated from the merged pull req
 already exists, it replaces its assets and keeps it a draft. If that version is already published,
 the job fails and asks for a version bump (`cargo xtask version set`).
 
+## In-app updates
+
+Help › Check for Updates… (and a daily background check, Preferences › General) looks for a newer
+published release, downloads the file that matches how the copy was installed (`.msi`, AppImage,
+`.deb`, `.rpm`), checks it against `SHA256SUMS.txt` and that list's Ed25519 signature, and installs
+it when the app quits. The shared [`craft-update`](https://github.com/treeforjs/craftworks/tree/main/crates/craft-update)
+crate does the work; the one-time key setup is in craftworks'
+[`docs/updates.md`](https://github.com/treeforjs/craftworks/blob/main/docs/updates.md).
+
+- The draft-release job signs `SHA256SUMS.txt` into `SHA256SUMS.txt.sig` (uploaded with the other
+  files) when the `UPDATE_SIGNING_KEY` secret is set; without it the release is unsigned, with a
+  warning, and the app only links to its page.
+- The macOS, Windows and Linux jobs embed `CRAFT_UPDATE_PUBLIC_KEY`. Make it a **repository**
+  variable (*Settings › Secrets and variables › Actions › Variables*): the Linux job doesn't run in
+  the `release` environment, so an environment variable wouldn't reach it. A build without it
+  says when a new version exists but never installs anything itself.
+- Only a published release is offered: drafts and (unless asked for) pre-releases never are.
+
 ## Secrets
 
 The jobs that sign (macOS, Windows) and the draft-release job run in the `release` environment,
@@ -199,3 +217,4 @@ warning, never a failed build.
 | `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` | notarization (`APPLE_PASSWORD` is an app-specific password) |
 | `WINDOWS_CERTIFICATE`, `WINDOWS_CERTIFICATE_PASSWORD` | Windows signing with a `.pfx` |
 | `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SIGNING_ENDPOINT`, `AZURE_SIGNING_ACCOUNT`, `AZURE_CERT_PROFILE` | Windows signing with Azure Trusted Signing |
+| `UPDATE_SIGNING_KEY` | the Ed25519 private key (PEM) that signs `SHA256SUMS.txt` for in-app updates (see [In-app updates](#in-app-updates)) |

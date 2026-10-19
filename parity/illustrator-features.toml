@@ -4955,6 +4955,18 @@ tools = []
 evidence = ["crates/ui-egui/src/tests_selectall.rs::cmd_a_while_editing_type_selects_all_of_its_text", "crates/engine/src/tests_file.rs::batch_is_one_undo_step"]
 notes = ""
 
+[[feature]]
+id = "ui.updates"
+title = "Check for and install application updates (Help › Updates)"
+area = "O"
+tier = "P2"
+milestone = "M14"
+status = "shipped"
+commands = ["help.checkForUpdates"]
+tools = []
+evidence = ["crates/ui-egui/src/updates.rs::the_dialog_shows_the_available_version_and_a_download_button", "crates/ui-egui/src/updates.rs::a_background_check_shows_a_notice_not_a_modal", "crates/ui-egui/src/updates.rs::a_skipped_version_is_not_offered_again"]
+notes = "Updates come from GitHub Releases, not a cloud desktop app: .msi, AppImage, .deb and .rpm installs update in place after the download verifies against the signed checksum list; macOS, portable, Flatpak and tarball installs open the release page. Installing needs release builds made with the update signing key"
+
 # ==================================================================================================
 # P. Cloud and generative AI
 # ==================================================================================================

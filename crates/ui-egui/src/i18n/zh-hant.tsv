@@ -3607,3 +3607,22 @@ axis	Both	兩者
 	This isn't an SVG <filter> element.	這不是 SVG <filter> 元素。
 @msg	Import SVG Filter… can't pick a file in the browser yet	在瀏覽器中，「匯入 SVG 濾鏡…」還無法選擇檔案
 @msg	Imported {n} SVG filter(s)	已匯入 {n} 個 SVG 濾鏡
+# Help › Check for Updates… (the Updates dialog, its notice and preference)
+	Check for Updates…	檢查更新…
+	Check for updates automatically	自動檢查更新
+	Software Update	軟體更新
+	VectorCraft {version} is up to date.	VectorCraft {version} 已是最新版本。
+	Downloading VectorCraft {version}…	正在下載 VectorCraft {version}…
+	VectorCraft {version} is ready to install.	VectorCraft {version} 已可安裝。
+	VectorCraft {version} is available.	VectorCraft {version} 已推出。
+	You have version {version}.	您目前的版本是 {version}。
+	{received} of {total} MB	{received} / {total} MB
+	It installs when you quit VectorCraft, or right away if you restart now.	將在結束 VectorCraft 時安裝；若現在重新啟動，則立即安裝。
+	Couldn't update VectorCraft.	無法更新 VectorCraft。
+	Checking for updates…	正在檢查更新…
+	Download and Install	下載並安裝
+	Open Release Page	開啟發行頁面
+	Later	稍後
+	Skip This Version	略過此版本
+	Restart Now	立即重新啟動
+	Install When I Quit	結束時安裝

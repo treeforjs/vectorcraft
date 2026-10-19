@@ -70,6 +70,9 @@ jobs:
     env:
       VECTORCRAFT_VERSION: ${{ needs.version.outputs.version }}
       VECTORCRAFT_BUILD_DATE: ${{ needs.version.outputs.date }}
+      # The update signing key's public half, embedded so in-app updates can verify downloads
+      # (a repository variable, not a secret; see docs/releasing.md › In-app updates).
+      CRAFT_UPDATE_PUBLIC_KEY: ${{ vars.CRAFT_UPDATE_PUBLIC_KEY }}
     steps:
       - uses: actions/checkout@v7
       # Japanese UI/document fonts, embedded by crates/text/build.rs (CRAFT_FONTS_DIR on the build
@@ -129,6 +132,9 @@ jobs:
     env:
       VECTORCRAFT_VERSION: ${{ needs.version.outputs.version }}
       VECTORCRAFT_BUILD_DATE: ${{ needs.version.outputs.date }}
+      # The update signing key's public half, embedded so in-app updates can verify downloads
+      # (a repository variable, not a secret; see docs/releasing.md › In-app updates).
+      CRAFT_UPDATE_PUBLIC_KEY: ${{ vars.CRAFT_UPDATE_PUBLIC_KEY }}
     steps:
       - uses: actions/checkout@v7
       # Japanese UI/document fonts, embedded by crates/text/build.rs (CRAFT_FONTS_DIR on the build
@@ -189,6 +195,9 @@ jobs:
     env:
       VECTORCRAFT_VERSION: ${{ needs.version.outputs.version }}
       VECTORCRAFT_BUILD_DATE: ${{ needs.version.outputs.date }}
+      # The update signing key's public half, embedded so in-app updates can verify downloads
+      # (a repository variable, not a secret; see docs/releasing.md › In-app updates).
+      CRAFT_UPDATE_PUBLIC_KEY: ${{ vars.CRAFT_UPDATE_PUBLIC_KEY }}
       NFPM_VERSION: 2.47.0
     steps:
       - uses: actions/checkout@v7
@@ -401,6 +410,20 @@ jobs:
         working-directory: artifacts
         run: |
           sha256sum -- * | tee SHA256SUMS.txt
+      # In-app updates install only what this signature covers (craft-update; see
+      # docs/releasing.md › In-app updates). Written after the list, so it isn't listed in it.
+      - name: Sign the checksum list
+        working-directory: artifacts
+        env:
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: |
+          if [ -n "$UPDATE_SIGNING_KEY" ]; then
+            printf '%s\n' "$UPDATE_SIGNING_KEY" > "$RUNNER_TEMP/key.pem"
+            openssl pkeyutl -sign -inkey "$RUNNER_TEMP/key.pem" -rawin -in SHA256SUMS.txt | base64 -w0 > SHA256SUMS.txt.sig
+            rm -f "$RUNNER_TEMP/key.pem"
+          else
+            echo "::warning::UPDATE_SIGNING_KEY is not set: this release can't be installed from inside the app"
+          fi
       - name: Create or update the draft release
         working-directory: artifacts
         run: |

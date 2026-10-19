@@ -4182,3 +4182,26 @@ theme	Appearance	外観
 	This isn't an SVG <filter> element.	SVG の <filter> 要素ではありません。
 @msg	Import SVG Filter… can't pick a file in the browser yet	ブラウザーでは「SVG フィルターを読み込み…」でファイルをまだ選択できません
 @msg	Imported {n} SVG filter(s)	SVG フィルターを {n} 個読み込みました
+# Help › Check for Updates… (the Updates dialog, its notice and preference)
+	Check for Updates…	アップデートを確認…
+	Check for updates automatically	アップデートを自動的に確認
+	Software Update	ソフトウェアアップデート
+	VectorCraft {version} is up to date.	VectorCraft {version} は最新です。
+	Downloading VectorCraft {version}…	VectorCraft {version} をダウンロード中…
+	VectorCraft {version} is ready to install.	VectorCraft {version} をインストールする準備ができました。
+	VectorCraft {version} is available.	VectorCraft {version} を利用できます。
+	You have version {version}.	現在のバージョンは {version} です。
+	{received} of {total} MB	{received} / {total} MB
+	It installs when you quit VectorCraft, or right away if you restart now.	VectorCraft の終了時にインストールされます。今すぐ再起動するとすぐにインストールされます。
+	Couldn't update VectorCraft.	VectorCraft をアップデートできませんでした。
+	Checking for updates…	アップデートを確認しています…
+	Download and Install	ダウンロードしてインストール
+	Open Release Page	リリースページを開く
+	Later	後で
+	Skip This Version	このバージョンをスキップ
+	Restart Now	今すぐ再起動
+	Install When I Quit	終了時にインストール
+@msg	no update to download	ダウンロードできるアップデートはありません
+@msg	no update to skip	スキップできるアップデートはありません
+@msg	no updater	アップデーターがありません
+@msg	unknown action `{other}`	不明な操作です: `{other}`

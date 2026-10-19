@@ -718,3 +718,23 @@
 	Artistic	Umělecké
 	Outline Object	Převést objekt na obrys
 	Import SVG Filter…	Importovat filtr SVG…
+# Help › Check for Updates… (the Updates dialog, its notice and preference)
+	Check for Updates…	Vyhledat aktualizace…
+	Check for updates automatically	Automaticky vyhledávat aktualizace
+	Software Update	Aktualizace softwaru
+	VectorCraft {version} is up to date.	VectorCraft {version} je aktuální.
+	Downloading VectorCraft {version}…	Stahuje se VectorCraft {version}…
+	VectorCraft {version} is ready to install.	VectorCraft {version} je připraven k instalaci.
+	VectorCraft {version} is available.	Je k dispozici VectorCraft {version}.
+	You have version {version}.	Máte verzi {version}.
+	{received} of {total} MB	{received} z {total} MB
+	It installs when you quit VectorCraft, or right away if you restart now.	Nainstaluje se při ukončení aplikace VectorCraft, nebo hned, pokud ji nyní restartujete.
+	Couldn't update VectorCraft.	VectorCraft se nepodařilo aktualizovat.
+	Checking for updates…	Vyhledávají se aktualizace…
+	Download and Install	Stáhnout a nainstalovat
+	Open Release Page	Otevřít stránku vydání
+	Later	Později
+	Skip This Version	Přeskočit tuto verzi
+	Restart Now	Restartovat nyní
+	Install When I Quit	Nainstalovat při ukončení
+	Cancel	Zrušit

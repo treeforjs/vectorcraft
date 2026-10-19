@@ -97,6 +97,8 @@ pub fn inspect(app: &VectorcraftApp, ctx: &egui::Context) -> Value {
         "nativeMenuBar": app.services.native_menu.is_some(),
         // Saves and exports still being written in the background (Background Save / Export).
         "background": app.background.jobs.iter().map(|j| j.label.as_str()).collect::<Vec<_>>(),
+        // Help › Check for Updates…: the updater's state and whether its quiet notice shows.
+        "updates": crate::updates::state_json(app),
     })
 }
 

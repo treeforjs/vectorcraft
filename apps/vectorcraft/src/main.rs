@@ -93,11 +93,14 @@ impl eframe::App for App {
     #[cfg(not(feature = "windows7"))]
     fn on_exit(&mut self) {
         save_prefs(&self.app);
+        // After the unsaved documents were handled (the window only closes then).
+        self.app.apply_update();
         end_before_teardown(self.frames);
     }
     #[cfg(feature = "windows7")]
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
         save_prefs(&self.app);
+        self.app.apply_update();
     }
 }
 
@@ -373,6 +376,20 @@ fn adapter_summary(info: &eframe::wgpu::AdapterInfo) -> String {
     format!("{} ({:?}, {:?})", info.name.trim(), info.backend, info.device_type)
 }
 
+/// What Help › Check for Updates… needs to know about this build. Release builds embed the update
+/// signing key's public half (`CRAFT_UPDATE_PUBLIC_KEY`, see docs/releasing.md); without it the app
+/// still tells about new versions but leaves installing them to the person.
+fn update_info() -> craft_update::AppInfo {
+    craft_update::AppInfo {
+        id: "vectorcraft".into(),
+        display_name: "VectorCraft".into(),
+        repo: "treeforjs/vectorcraft".into(),
+        current: env!("CARGO_PKG_VERSION").into(),
+        public_key: option_env!("CRAFT_UPDATE_PUBLIC_KEY").filter(|k| !k.is_empty()).map(Into::into),
+        prereleases: false,
+    }
+}
+
 /// Windows and Linux: no OS title bar; the app bar is the title bar (`vectorcraft_ui_egui::titlebar`).
 /// macOS keeps its traffic lights over the integrated title strip.
 const CUSTOM_TITLEBAR: bool = !cfg!(target_os = "macos");
@@ -488,6 +505,17 @@ fn main() -> std::process::ExitCode {
             Box::new(move |cc| {
                 let mut app = VectorcraftApp::new(Session::new(), services(cc.winit_window().cloned()));
                 load_prefs(&mut app, saved);
+                // Help › Check for Updates… and the daily automatic check, which starts a while
+                // after the first frame (nothing touches the network before). Runs without
+                // preferences (agents' test runs) don't check by themselves.
+                let source = std::sync::Arc::new(craft_update::GitHub::new(concat!("VectorCraft/", env!("CARGO_PKG_VERSION"))));
+                let mut updater = craft_update::Updater::new(update_info(), source);
+                let repaint = cc.egui_ctx.clone();
+                updater.on_change(move || repaint.request_repaint());
+                app.set_updater(updater);
+                if !prefs_enabled() {
+                    app.ui.updates.enabled = false;
+                }
                 // Fit the window to its monitor, or put it back where it was (still hidden).
                 if let Some(w) = cc.winit_window() {
                     app.ui.window = Some(window::restore(w, saved_window));
