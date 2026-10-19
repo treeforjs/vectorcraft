@@ -517,4 +517,6 @@ mod tests_strokeux;
 #[cfg(test)]
 mod tests_style_libraries;
 #[cfg(test)]
+mod tests_symbol_libraries;
+#[cfg(test)]
 mod tests_units;

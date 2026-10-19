@@ -566,7 +566,6 @@
 	Tabs	Tabulátory
 	Variables	Proměnné
 	Brush Libraries	Knihovny štětců
-	Built-in Libraries	Vestavěné knihovny
 	User Defined	Uživatelské
 	Other Library…	Jiná knihovna…
 	Graphic Style Libraries	Knihovny grafických stylů
@@ -596,6 +595,13 @@
 	Radial Glows	Kruhové záře
 	Save Swatch Library…	Uložit knihovnu vzorníku…
 	Symbol Libraries	Knihovny symbolů
+	Badges and Labels	Odznaky a štítky
+	Basic Shapes	Základní tvary
+	Direction Signs	Směrové značky
+	Interface Glyphs	Glyfy rozhraní
+	Map Markers	Mapové značky
+	Outdoors	Příroda
+	Save Symbol Library…	Uložit knihovnu symbolů…
 	Help	Nápověda
 	VectorCraft on GitHub	VectorCraft na GitHubu
 	Search Commands…	Hledat příkazy…

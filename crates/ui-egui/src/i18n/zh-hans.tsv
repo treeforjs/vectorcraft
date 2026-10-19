@@ -443,7 +443,6 @@
 	Brush Options…	画笔选项…
 	Brush Strokes	画笔描边
 	Brushes	画笔
-	Built-in Libraries	内置库
 	Built-in presets are read-only: New… starts an editable copy.	内置预设为只读：“新建…”会创建可编辑的副本。
 	Built-in presets don't change: New makes a copy you can edit.	内置预设不会改变：按“新建”会生成可编辑的副本。
 	Built-in presets don't change: New… starts an editable copy.	内置预设不会变动：“新建…”会创建可编辑的副本。
@@ -2800,7 +2799,29 @@
 	Show all open documents	显示所有打开的文档
 	Symbol Instance	符号实例
 	Symbol Libraries	符号库
-	Symbol Libraries (on the roadmap)	符号库 (已列入路线图)
+	Add to Symbols	添加到符号
+	Badges and Labels	徽章与标签
+	Basic Shapes	基本形状
+	Direction Signs	方向标志
+	Interface Glyphs	界面字形
+	Map Markers	地图标记
+	Outdoors	户外
+	Save Symbol Library…	保存符号库…
+	Save Symbol Library	存储符号库
+	Symbol Library	符号库
+	User Symbol Library 1	用户符号库 1
+	User Symbol Library 2	用户符号库 2
+	User Symbol Library 3	用户符号库 3
+	User Symbol Library 4	用户符号库 4
+	User Symbol Library 5	用户符号库 5
+	User Symbol Library 6	用户符号库 6
+	User Symbol Library 7	用户符号库 7
+	User Symbol Library 8	用户符号库 8
+	User Symbol Library 9	用户符号库 9
+	User Symbol Library 10	用户符号库 10
+	Open Symbol Library	打开符号库
+	Selected Symbols Only	仅限选择的符号
+	Symbol Libraries Menu	符号库菜单
 	Symbol Screener Tool	符号透明度工具
 	Symbol Scruncher Tool	符号紧缩工具
 	Symbol Shifter Tool	符号移位工具

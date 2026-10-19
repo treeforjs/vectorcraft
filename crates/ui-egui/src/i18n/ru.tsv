@@ -454,7 +454,6 @@
 	Brush Options…	Параметры кисти…
 	Brush Strokes	Мазки кисти
 	Brushes	Кисти
-	Built-in Libraries	Встроенные библиотеки
 	Built-in presets are read-only: New… starts an editable copy.	Встроенные наборы доступны только для чтения: «Создать…» создаёт редактируемую копию.
 	Built-in presets don't change: New makes a copy you can edit.	Встроенные наборы не изменяются: «Создать» делает копию, которую можно редактировать.
 	Built-in presets don't change: New… starts an editable copy.	Встроенные наборы не изменяются: «Создать…» создаёт редактируемую копию.
@@ -2879,7 +2878,29 @@
 	Show all open documents	Показать все открытые документы
 	Symbol Instance	Экземпляр символа
 	Symbol Libraries	Библиотеки символов
-	Symbol Libraries (on the roadmap)	Библиотеки символов (в плане развития)
+	Add to Symbols	Добавить в символы
+	Badges and Labels	Значки и ярлыки
+	Basic Shapes	Базовые фигуры
+	Direction Signs	Указатели направления
+	Interface Glyphs	Значки интерфейса
+	Map Markers	Метки на карте
+	Outdoors	На природе
+	Save Symbol Library…	Сохранить библиотеку символов…
+	Save Symbol Library	Сохранить библиотеку символов
+	Symbol Library	Библиотека символов
+	User Symbol Library 1	Пользовательская библиотека символов 1
+	User Symbol Library 2	Пользовательская библиотека символов 2
+	User Symbol Library 3	Пользовательская библиотека символов 3
+	User Symbol Library 4	Пользовательская библиотека символов 4
+	User Symbol Library 5	Пользовательская библиотека символов 5
+	User Symbol Library 6	Пользовательская библиотека символов 6
+	User Symbol Library 7	Пользовательская библиотека символов 7
+	User Symbol Library 8	Пользовательская библиотека символов 8
+	User Symbol Library 9	Пользовательская библиотека символов 9
+	User Symbol Library 10	Пользовательская библиотека символов 10
+	Open Symbol Library	Открыть библиотеку символов
+	Selected Symbols Only	Только выбранные символы
+	Symbol Libraries Menu	Меню «Библиотеки символов»
 	Symbol Screener Tool	Инструмент «Прозрачность символов»
 	Symbol Scruncher Tool	Инструмент «Сжатие символов»
 	Symbol Shifter Tool	Инструмент «Сдвиг символов»
@@ -4210,3 +4231,5 @@ axis	Both	Оба
 	User Brush Library 8	Пользовательская библиотека кистей 8
 	User Brush Library 9	Пользовательская библиотека кистей 9
 	User Brush Library 10	Пользовательская библиотека кистей 10
+@msg	no symbol `{n}`	нет символа `{n}`
+@msg	not a symbol library (format `{_1}`)	не является библиотекой символов (формат `{_1}`)

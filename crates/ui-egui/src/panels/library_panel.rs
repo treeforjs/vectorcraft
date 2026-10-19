@@ -1,10 +1,10 @@
-//! The library panel: a floating, read-only view of one library (swatch and graphic style
+//! The library panel: a floating, read-only view of one library (swatch, graphic style and symbol
 //! libraries; any kind of library implementing [`LibraryKind`]) with thumbnail and list views, a
 //! find field, the libraries menu and previous / next arrows. A plain click on an item adds it to
 //! the document and applies it; Shift and Cmd/Ctrl-clicks select items (and folders) for Add to ….
 //!
 //! Which library is open lives in `UiState::library_panel` (`window.swatchLibrary` and
-//! `window.graphicStyleLibrary` open one), so agents can open and read it; the view, find text and
+//! `window.graphicStyleLibrary` and `window.symbolLibrary` open one), so agents can open and read it; the view, find text and
 //! selection are panel state.
 
 use egui::{CornerRadius, Rect, Sense, Ui, vec2};
@@ -100,6 +100,7 @@ pub fn show_window(app: &mut VectorcraftApp, ctx: &egui::Context) {
         super::swatches::SwatchLibraries::KIND => window::<super::swatches::SwatchLibraries>(app, ctx, &open.id),
         super::graphic_styles::GraphicStyleLibraries::KIND => window::<super::graphic_styles::GraphicStyleLibraries>(app, ctx, &open.id),
         super::brushes::BrushLibraries::KIND => window::<super::brushes::BrushLibraries>(app, ctx, &open.id),
+        super::symbols::SymbolLibraries::KIND => window::<super::symbols::SymbolLibraries>(app, ctx, &open.id),
         _ => app.ui.library_panel = None,
     }
 }

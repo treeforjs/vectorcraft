@@ -454,7 +454,6 @@
 	Brush Options…	筆刷選項…
 	Brush Strokes	筆刷筆畫
 	Brushes	筆刷
-	Built-in Libraries	內建資料庫
 	Built-in presets are read-only: New… starts an editable copy.	內建預設集為唯讀：「新增…」會建立可編輯的複本。
 	Built-in presets don't change: New makes a copy you can edit.	內建預設集無法變更：「新增」會建立可編輯的拷貝。
 	Built-in presets don't change: New… starts an editable copy.	內建預設集不會變動：「新增…」會建立可編輯的複本。
@@ -2886,7 +2885,29 @@
 	Show all open documents	顯示所有開啟的文件
 	Symbol Instance	符號範例
 	Symbol Libraries	符號資料庫
-	Symbol Libraries (on the roadmap)	符號資料庫 (已列入路線圖)
+	Add to Symbols	新增至符號
+	Badges and Labels	徽章與標籤
+	Basic Shapes	基本形狀
+	Direction Signs	方向標誌
+	Interface Glyphs	介面字符
+	Map Markers	地圖標記
+	Outdoors	戶外
+	Save Symbol Library…	儲存符號資料庫…
+	Save Symbol Library	儲存符號資料庫
+	Symbol Library	符號資料庫
+	User Symbol Library 1	使用者符號資料庫 1
+	User Symbol Library 2	使用者符號資料庫 2
+	User Symbol Library 3	使用者符號資料庫 3
+	User Symbol Library 4	使用者符號資料庫 4
+	User Symbol Library 5	使用者符號資料庫 5
+	User Symbol Library 6	使用者符號資料庫 6
+	User Symbol Library 7	使用者符號資料庫 7
+	User Symbol Library 8	使用者符號資料庫 8
+	User Symbol Library 9	使用者符號資料庫 9
+	User Symbol Library 10	使用者符號資料庫 10
+	Open Symbol Library	開啟符號資料庫
+	Selected Symbols Only	僅限選取的符號
+	Symbol Libraries Menu	符號資料庫選單
 	Symbol Screener Tool	符號濾色器工具
 	Symbol Scruncher Tool	符號緊縮器工具
 	Symbol Shifter Tool	符號移位器工具

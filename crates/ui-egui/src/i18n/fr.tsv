@@ -457,7 +457,6 @@
 	Brush Options…	Options de forme…
 	Brush Strokes	Contours de forme
 	Brushes	Formes
-	Built-in Libraries	Bibliothèques intégrées
 	Built-in presets are read-only: New… starts an editable copy.	Les paramètres prédéfinis intégrés sont en lecture seule : Nouveau… crée une copie modifiable.
 	Built-in presets don't change: New makes a copy you can edit.	Les paramètres prédéfinis intégrés ne changent pas : Nouveau crée une copie que vous pouvez modifier.
 	Built-in presets don't change: New… starts an editable copy.	Les paramètres prédéfinis intégrés ne changent pas : Nouveau… crée une copie modifiable.
@@ -2880,7 +2879,29 @@
 	Show all open documents	Afficher tous les documents ouverts
 	Symbol Instance	Occurrence de symbole
 	Symbol Libraries	Bibliothèques de symboles
-	Symbol Libraries (on the roadmap)	Bibliothèques de symboles (prévu dans la feuille de route)
+	Add to Symbols	Ajouter aux symboles
+	Badges and Labels	Badges et étiquettes
+	Basic Shapes	Formes de base
+	Direction Signs	Panneaux de direction
+	Interface Glyphs	Glyphes d’interface
+	Map Markers	Repères de carte
+	Outdoors	Plein air
+	Save Symbol Library…	Enregistrer la bibliothèque de symboles…
+	Save Symbol Library	Enregistrer la bibliothèque de symboles
+	Symbol Library	Bibliothèque de symboles
+	User Symbol Library 1	Bibliothèque de symboles utilisateur 1
+	User Symbol Library 2	Bibliothèque de symboles utilisateur 2
+	User Symbol Library 3	Bibliothèque de symboles utilisateur 3
+	User Symbol Library 4	Bibliothèque de symboles utilisateur 4
+	User Symbol Library 5	Bibliothèque de symboles utilisateur 5
+	User Symbol Library 6	Bibliothèque de symboles utilisateur 6
+	User Symbol Library 7	Bibliothèque de symboles utilisateur 7
+	User Symbol Library 8	Bibliothèque de symboles utilisateur 8
+	User Symbol Library 9	Bibliothèque de symboles utilisateur 9
+	User Symbol Library 10	Bibliothèque de symboles utilisateur 10
+	Open Symbol Library	Ouvrir une bibliothèque de symboles
+	Selected Symbols Only	Symboles sélectionnés uniquement
+	Symbol Libraries Menu	Menu Bibliothèques de symboles
 	Symbol Screener Tool	Outil Transparence de symbole
 	Symbol Scruncher Tool	Outil Contraction de symbole
 	Symbol Shifter Tool	Outil Déplacement de symbole
@@ -4223,3 +4244,5 @@ axis	Both	Les deux
 	User Brush Library 8	Bibliothèque de formes utilisateur 8
 	User Brush Library 9	Bibliothèque de formes utilisateur 9
 	User Brush Library 10	Bibliothèque de formes utilisateur 10
+@msg	no symbol `{n}`	aucun symbole `{n}`
+@msg	not a symbol library (format `{_1}`)	ce n’est pas une bibliothèque de symboles (format `{_1}`)
