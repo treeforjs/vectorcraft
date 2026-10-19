@@ -57,6 +57,8 @@ wat = "1.228"
 vello_cpu = { version = "0.2", features = ["f32_pipeline"] }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif", "tiff", "bmp"] }
 usvg = "0.48"
+# Runs SVG filter primitives (Effect › SVG Filters; MIT OR Apache-2.0).
+resvg = { version = "0.48.1", default-features = false, features = ["raster-images"] }
 krilla = "0.8"
 skrifa = "0.47"
 harfrust = "0.13"

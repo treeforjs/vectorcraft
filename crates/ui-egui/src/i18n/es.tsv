@@ -4183,3 +4183,10 @@ axis	Both	Ambos
 @msg	word list: bad header	lista de palabras: encabezado incorrecto
 @msg	word list: bad prefix	lista de palabras: prefijo incorrecto
 @msg	word list: truncated	lista de palabras: truncada
+	Import SVG Filter…	Importar filtro SVG…
+	Delete SVG Filter	Eliminar filtro SVG
+	Filter	Filtro
+	Filter XML	XML del filtro
+	This isn't an SVG <filter> element.	Esto no es un elemento <filter> de SVG.
+@msg	Import SVG Filter… can't pick a file in the browser yet	Importar filtro SVG… aún no puede elegir un archivo en el navegador
+@msg	Imported {n} SVG filter(s)	Se importaron {n} filtro(s) SVG

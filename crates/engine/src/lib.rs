@@ -1643,6 +1643,8 @@ mod tests_stylepanel;
 #[cfg(test)]
 mod tests_styles;
 #[cfg(test)]
+mod tests_svgfilters;
+#[cfg(test)]
 mod tests_swatchcmds;
 #[cfg(test)]
 mod tests_swatches;

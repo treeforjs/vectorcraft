@@ -4194,3 +4194,10 @@ axis	Both	Les deux
 @msg	word list: bad header	liste de mots : en-tête incorrect
 @msg	word list: bad prefix	liste de mots : préfixe incorrect
 @msg	word list: truncated	liste de mots : tronquée
+	Import SVG Filter…	Importer un filtre SVG…
+	Delete SVG Filter	Supprimer le filtre SVG
+	Filter	Filtre
+	Filter XML	XML du filtre
+	This isn't an SVG <filter> element.	Ceci n'est pas un élément SVG <filter>.
+@msg	Import SVG Filter… can't pick a file in the browser yet	Importer un filtre SVG… ne peut pas encore choisir de fichier dans le navigateur
+@msg	Imported {n} SVG filter(s)	{n} filtre(s) SVG importé(s)

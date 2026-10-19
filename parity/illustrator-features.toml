@@ -2857,11 +2857,11 @@ title = "Effect › SVG Filters (apply, import, edit)"
 area = "H"
 tier = "P2"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["effect.svgFilters", "effect.svgFilters.import", "effect.svgFilters.remove", "ui.importSvgFilter"]
 tools = []
-evidence = []
-notes = "SVG Filters effect not implemented (SVG import keeps filters)"
+evidence = ["crates/engine/src/tests_svgfilters.rs::applied_drawn_edited_and_undone", "crates/engine/src/tests_svgfilters.rs::svg_export_writes_the_filter_and_import_reads_it_back", "crates/ui-egui/src/dialogs/tests.rs::svg_filter_dialog_draws_the_documents_filters_and_applies_one"]
+notes = "svg.filter effect runs the filter primitives with resvg over the object's pixels (no file or URL access); 12 original built-in filters; SVG export writes the live filter, import keeps unknown filters as svg.filter"
 
 [[feature]]
 id = "fx.warp"

@@ -176,11 +176,18 @@ fn drop_shadow_chains_become_drop_shadows() {
 }
 
 #[test]
-fn other_filters_are_reported() {
+fn other_filters_run_as_svg_filters() {
     let (d, w) =
         open(r##"<defs><filter id="t"><feTurbulence baseFrequency="0.05"/></filter></defs><rect width="60" height="40" filter="url(#t)"/>"##);
-    assert!(w.iter().any(|w| w.contains("filter")), "{w:?}");
-    assert!(effects(&d).is_empty());
+    assert!(w.is_empty(), "{w:?}");
+    match effects(&d).as_slice() {
+        [e] => {
+            assert_eq!(e.id, "svg.filter");
+            assert_eq!(e.params["name"], "t");
+            assert!(e.params["filter"].as_str().unwrap().contains("feTurbulence"));
+        }
+        fx => panic!("{fx:?}"),
+    }
 }
 
 #[test]

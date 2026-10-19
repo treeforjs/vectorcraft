@@ -4166,3 +4166,10 @@ axis	Both	Обидві
 @msg	word list: bad header	список слів: неправильний заголовок
 @msg	word list: bad prefix	список слів: неправильний префікс
 @msg	word list: truncated	список слів: обрізаний
+	Import SVG Filter…	Імпортувати фільтр SVG…
+	Delete SVG Filter	Видалити фільтр SVG
+	Filter	Фільтр
+	Filter XML	XML фільтра
+	This isn't an SVG <filter> element.	Це не елемент SVG <filter>.
+@msg	Import SVG Filter… can't pick a file in the browser yet	«Імпортувати фільтр SVG…» поки не може вибрати файл у браузері
+@msg	Imported {n} SVG filter(s)	Імпортовано фільтрів SVG: {n}

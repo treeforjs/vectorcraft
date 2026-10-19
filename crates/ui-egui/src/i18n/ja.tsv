@@ -4175,3 +4175,10 @@ theme	Appearance	外観
 @msg	word list: bad header	単語リスト: ヘッダーが正しくありません
 @msg	word list: bad prefix	単語リスト: プレフィックスが正しくありません
 @msg	word list: truncated	単語リスト: 途中で切れています
+	Import SVG Filter…	SVG フィルターを読み込み…
+	Delete SVG Filter	SVG フィルターを削除
+	Filter	フィルター
+	Filter XML	フィルター XML
+	This isn't an SVG <filter> element.	SVG の <filter> 要素ではありません。
+@msg	Import SVG Filter… can't pick a file in the browser yet	ブラウザーでは「SVG フィルターを読み込み…」でファイルをまだ選択できません
+@msg	Imported {n} SVG filter(s)	SVG フィルターを {n} 個読み込みました

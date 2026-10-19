@@ -375,6 +375,19 @@ pub struct SavedSelection {
     pub objects: Vec<NodeId>,
 }
 
+/// An SVG filter the document offers in Effect › SVG Filters (Import SVG Filter…): its name and
+/// `<filter>` element. Effects keep their own copy of the filter they run.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct SvgFilterDef {
+    pub name: String,
+    pub filter: String,
+}
+
+impl SvgFilterDef {
+    /// Most filters a document keeps.
+    pub const MAX: usize = 500;
+}
+
 impl SavedSelection {
     /// Most saved selections a document keeps (the Select menu lists every one).
     pub const MAX: usize = 25;
@@ -566,6 +579,9 @@ pub struct Document {
     /// Select → Save Selection… (at most [`SavedSelection::MAX`]); saved with the document.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub saved_selections: Vec<SavedSelection>,
+    /// Effect › SVG Filters › Import SVG Filter… (at most [`SvgFilterDef::MAX`]).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub svg_filters: Vec<SvgFilterDef>,
     #[serde(default)]
     pub grid: GridPrefs,
     #[serde(default = "ppi72")]
@@ -698,6 +714,7 @@ impl Document {
             guides: vec![],
             views: vec![],
             saved_selections: vec![],
+            svg_filters: vec![],
             grid: GridPrefs::default(),
             raster_effects_ppi: 72.0,
             images: BTreeMap::new(),

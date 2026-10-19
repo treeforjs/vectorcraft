@@ -137,6 +137,9 @@ pub(crate) fn apply(s: &mut Session, p: &Value) -> Result<Value> {
     if id == effects::CROP_MARKS && params.get("style").is_none() {
         params["style"] = json!(s.crop_mark_style().id());
     }
+    if id == effects::SVG_FILTER {
+        super::svgfilters::check(C, &params)?;
+    }
     let effect = effects::new_effect(id, &params).ok_or_else(|| bad(C, format!("unknown effect `{id}`")))?;
     let label = effects::effect_info(id).map(|e| e.label.trim_end_matches('…').to_string()).unwrap_or_default();
     if let Some(loose) = loose_for_pathfinder(s, p, id)? {
@@ -311,6 +314,7 @@ fn set_params(s: &mut Session, p: &Value) -> Result<Value> {
     if !params.is_null() && !params.is_object() {
         return Err(bad(C, "`params` must be an object"));
     }
+    super::svgfilters::check(C, &params)?;
     let visible = p.get("visible").and_then(Value::as_bool);
     let item = item_target(s, p, C)?;
     let ids = edit_effects(s, p, item, C, "Effect Options", &format!("{C}: no effect at index {index}"), |fx| {

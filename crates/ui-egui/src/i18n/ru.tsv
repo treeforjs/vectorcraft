@@ -4181,3 +4181,10 @@ axis	Both	Оба
 @msg	word list: bad header	список слов: неверный заголовок
 @msg	word list: bad prefix	список слов: неверный префикс
 @msg	word list: truncated	список слов: обрезан
+	Import SVG Filter…	Импортировать фильтр SVG…
+	Delete SVG Filter	Удалить фильтр SVG
+	Filter	Фильтр
+	Filter XML	XML фильтра
+	This isn't an SVG <filter> element.	Это не элемент SVG <filter>.
+@msg	Import SVG Filter… can't pick a file in the browser yet	«Импортировать фильтр SVG…» пока не может выбрать файл в браузере
+@msg	Imported {n} SVG filter(s)	Импортировано фильтров SVG: {n}

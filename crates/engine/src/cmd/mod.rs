@@ -70,6 +70,7 @@ pub mod spelling;
 mod stroke;
 mod style;
 pub mod stylelib;
+mod svgfilters;
 mod swatch;
 pub mod swatchlib;
 pub(crate) mod tabs;
@@ -238,6 +239,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(maskedit::specs());
         v.extend(tabs::specs());
         v.extend(docmenu::specs());
+        v.extend(svgfilters::specs());
         v.extend(docinfo::specs());
         v.extend(panelcmds::specs());
         v.extend(buildcmds::specs());
