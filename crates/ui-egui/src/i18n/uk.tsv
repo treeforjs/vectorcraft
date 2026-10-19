@@ -4218,3 +4218,61 @@ axis	Both	Обидві
 	User Brush Library 10	Користувацька бібліотека пензлів 10
 @msg	no symbol `{n}`	немає символу `{n}`
 @msg	not a symbol library (format `{_1}`)	не є бібліотекою символів (формат `{_1}`)
+# 3D and Materials
+	Turn the selection into a 3D object:	Перетворити виділення на 3D-об’єкт:
+	Materials	Матеріали
+	Lighting	Освітлення
+	Volume	Об’єм
+	Inflate Both Sides	Надути з обох боків
+	Twist	Скручування
+	Taper	Звуження
+	Profile	Профіль
+	Bevel Outside	Фаска назовні
+	Bevel Both Sides	Фаска з обох боків
+	Preset	Набір
+	Presets	Набори
+	Base Properties	Основні властивості
+	Roughness	Шорсткість
+	Metallic	Металевість
+	Material Color	Колір матеріалу
+	Drag to move the chosen light	Перетягніть, щоб перемістити вибране світло
+	Light {n}	Світло {n}
+	Add Light	Додати світло
+	Delete Light	Видалити світло
+	Shadows	Тіні
+	Distance	Відстань
+	Shadow Bounds	Межі тіні
+	Plane	Площина
+	Extrude	Видавлювання
+	Revolve	Обертання
+	Inflate	Надування
+	Front	Спереду
+	Back	Ззаду
+	Off-Axis Front	Поза віссю: спереду
+	Off-Axis Back	Поза віссю: ззаду
+	Off-Axis Left	Поза віссю: ліворуч
+	Off-Axis Right	Поза віссю: праворуч
+	Off-Axis Top	Поза віссю: згори
+	Off-Axis Bottom	Поза віссю: знизу
+	Isometric Left	Ізометрія ліворуч
+	Isometric Right	Ізометрія праворуч
+	Isometric Top	Ізометрія згори
+	Plastic	Пластик
+	Glossy	Глянець
+	Metal	Метал
+	Brushed Metal	Шліфований метал
+	Gold	Золото
+	Copper	Мідь
+	Rubber	Гума
+	Chalk	Крейда
+	Standard	Стандартне
+	Diffuse	Розсіяне
+	Straight	Прямий
+	Stepped	Ступінчастий
+	Cove	Виїмка
+	Behind Object	За об’єктом
+	Below Object	Під об’єктом
+	3D and Materials Settings	Параметри 3D та матеріалів
+	3D and Materials Options	Налаштування 3D та матеріалів
+	3D (Classic)	3D (класичний)
+	Caps	Торці

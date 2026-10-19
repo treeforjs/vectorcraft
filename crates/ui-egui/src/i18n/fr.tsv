@@ -4246,3 +4246,61 @@ axis	Both	Les deux
 	User Brush Library 10	Bibliothèque de formes utilisateur 10
 @msg	no symbol `{n}`	aucun symbole `{n}`
 @msg	not a symbol library (format `{_1}`)	ce n’est pas une bibliothèque de symboles (format `{_1}`)
+# 3D and Materials
+	Turn the selection into a 3D object:	Transformer la sélection en objet 3D :
+	Materials	Matériaux
+	Lighting	Éclairage
+	Volume	Volume
+	Inflate Both Sides	Gonfler les deux côtés
+	Twist	Torsion
+	Taper	Effilement
+	Profile	Profil
+	Bevel Outside	Biseau vers l’extérieur
+	Bevel Both Sides	Biseau des deux côtés
+	Preset	Paramètre prédéfini
+	Presets	Paramètres prédéfinis
+	Base Properties	Propriétés de base
+	Roughness	Rugosité
+	Metallic	Métallique
+	Material Color	Couleur du matériau
+	Drag to move the chosen light	Faire glisser pour déplacer la lumière choisie
+	Light {n}	Lumière {n}
+	Add Light	Ajouter une lumière
+	Delete Light	Supprimer la lumière
+	Shadows	Ombres
+	Distance	Distance
+	Shadow Bounds	Limites de l’ombre
+	Plane	Plan
+	Extrude	Extrusion
+	Revolve	Révolution
+	Inflate	Gonfler
+	Front	Face
+	Back	Arrière
+	Off-Axis Front	Hors axe : face
+	Off-Axis Back	Hors axe : arrière
+	Off-Axis Left	Hors axe : gauche
+	Off-Axis Right	Hors axe : droite
+	Off-Axis Top	Hors axe : dessus
+	Off-Axis Bottom	Hors axe : dessous
+	Isometric Left	Isométrique gauche
+	Isometric Right	Isométrique droite
+	Isometric Top	Isométrique dessus
+	Plastic	Plastique
+	Glossy	Brillant
+	Metal	Métal
+	Brushed Metal	Métal brossé
+	Gold	Or
+	Copper	Cuivre
+	Rubber	Caoutchouc
+	Chalk	Craie
+	Standard	Standard
+	Diffuse	Diffuse
+	Straight	Droit
+	Stepped	En escalier
+	Cove	Gorge
+	Behind Object	Derrière l’objet
+	Below Object	Sous l’objet
+	3D and Materials Settings	Réglages 3D et matières
+	3D and Materials Options	Options 3D et matières
+	3D (Classic)	3D (classique)
+	Caps	Fermetures

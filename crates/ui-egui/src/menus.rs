@@ -361,6 +361,12 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "",
         "{} show a crop box on the selected image (tool `cropImage`): it starts on the part over the image's artboard; drag its handles or inside it, then Enter or the Control bar's Apply crops the image to it (object.cropImage {rect}), Escape or Cancel leaves it as it is, both back to the Selection tool. tool.setOption {key: \"rect\", value: [x, y, width, height]} sets the box",
     ),
+    (
+        "ui.threeD",
+        "3D and Materials",
+        "",
+        "{object?: \"plane\"|\"extrude\"|\"revolve\"|\"inflate\" (give the selected objects Effect › 3D and Materials as that object type first, threeD.apply), tab?: \"object\"|\"materials\"|\"lighting\" (default: object, materials for Materials…)} open the 3D and Materials panel (Window › 3D and Materials) on that tab; Materials… gives a selection without the effect a Plane to show its material on",
+    ),
     ("effect.applyLast", "Apply Last Effect", "Cmd+Shift+E", "{}"),
     (
         "file.export.pdf",
@@ -1311,6 +1317,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
         "tool.setOption" => app.session.set_tool_option_cmd(p),
         "effect.gallery" => crate::dialogs::effect_gallery::open(app, p),
         "effect.dialog" => crate::dialogs::open_effect_dialog(app, p),
+        "ui.threeD" => crate::panels::three_d::open(app, p),
         "ui.recolorDialog" => crate::dialogs::recolor::open(app, p),
         "ui.cropImage" if !selected_image(app, |_| true) => Err("select an image".into()),
         "ui.cropImage" => {
@@ -2062,7 +2069,7 @@ pub fn enabled(app: &VectorcraftApp, id: &str) -> bool {
         id if id.starts_with("view.goto") => {
             id["view.goto".len()..].parse::<usize>().is_ok_and(|n| n >= 1 && app.session.active().is_some_and(|d| n <= d.doc.views.len()))
         }
-        "effect.dialog" | "effect.gallery" | "ui.recolorDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
+        "effect.dialog" | "effect.gallery" | "ui.recolorDialog" | "ui.threeD" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "ui.cropImage" => selected_image(app, |_| true),
         "effect.applyLast" | "effect.last" => app.last_effect.is_some() && app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "file.export.pdf" | "ui.savePdfDialog" | "ui.fileInfoDialog" | "ui.rasterEffectsSettingsDialog" => app.session.active().is_some(),
@@ -2698,6 +2705,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 c("Tools", "window.toolbar"),
                 sub("Toolbars", vec![c("Advanced", "window.toolbarAdvanced"), c("Double Column", "window.toolbarColumns")]),
                 Sep,
+                panel("3D and Materials", crate::panels::three_d::ID),
                 panel("Actions", "actions"),
                 panel("Align", "align"),
                 panel("Appearance", "appearance"),
@@ -3536,18 +3544,11 @@ fn effect_menu() -> Vec<Item> {
         if sub_name == "SVG Filters" {
             items.push(c("Import SVG Filter…", "ui.importSvgFilter"));
         }
-        if sub_name == "3D and Materials" && items.len() == 3 {
-            // Extrude & Bevel, Revolve, Rotate; Inflate and Materials are still to come.
-            items.insert(2, todo("Inflate…"));
-            items.push(todo("Materials…"));
+        if sub_name == "3D and Materials" {
+            out.push(sub(sub_name, crate::panels::three_d::effect_menu(items_at(vectorcraft_effects::THREE_D_CLASSIC))));
+            continue;
         }
-        if items.is_empty() {
-            let placeholder = match sub_name {
-                "3D and Materials" => vec![todo("Extrude & Bevel…"), todo("Revolve…"), todo("Inflate…"), todo("Rotate…"), todo("Materials…")],
-                _ => continue,
-            };
-            out.push(sub(sub_name, placeholder));
-        } else {
+        if !items.is_empty() {
             out.push(sub(sub_name, items));
         }
     }
@@ -3567,7 +3568,10 @@ fn effect_menu() -> Vec<Item> {
     }
     // Anything not placed above (future effects) still shows up.
     let placed = |e: &vectorcraft_effects::EffectInfo| {
-        top_level(e) || order.iter().any(|s| e.menu == ["Effect", *s]) || RASTER_MENUS.iter().any(|(_, path)| e.menu == *path)
+        top_level(e)
+            || order.iter().any(|s| e.menu == ["Effect", *s])
+            || e.menu == vectorcraft_effects::THREE_D_CLASSIC
+            || RASTER_MENUS.iter().any(|(_, path)| e.menu == *path)
     };
     for e in cat.iter().filter(|e| !placed(e)) {
         out.push(Item::Cmd(e.label, "effect.dialog", json!({ "effect": e.id })));

@@ -4227,3 +4227,61 @@ theme	Appearance	外観
 	User Brush Library 10	ユーザーブラシライブラリ 10
 @msg	no symbol `{n}`	シンボル `{n}` が見つかりません
 @msg	not a symbol library (format `{_1}`)	シンボルライブラリではありません (形式: `{_1}`)
+# 3D and Materials
+	Turn the selection into a 3D object:	選択範囲を 3D オブジェクトにする:
+	Materials	マテリアル
+	Lighting	ライト
+	Volume	ボリューム
+	Inflate Both Sides	両面を膨張
+	Twist	ツイスト
+	Taper	テーパー
+	Profile	プロファイル
+	Bevel Outside	外側にベベル
+	Bevel Both Sides	両面にベベル
+	Preset	プリセット
+	Presets	プリセット
+	Base Properties	基本プロパティ
+	Roughness	粗さ
+	Metallic	メタリック
+	Material Color	マテリアルのカラー
+	Drag to move the chosen light	ドラッグして選択したライトを移動
+	Light {n}	ライト {n}
+	Add Light	ライトを追加
+	Delete Light	ライトを削除
+	Shadows	シャドウ
+	Distance	距離
+	Shadow Bounds	シャドウの範囲
+	Plane	平面
+	Extrude	押し出し
+	Revolve	回転体
+	Inflate	膨張
+	Front	正面
+	Back	背面
+	Off-Axis Front	軸外 正面
+	Off-Axis Back	軸外 背面
+	Off-Axis Left	軸外 左
+	Off-Axis Right	軸外 右
+	Off-Axis Top	軸外 上
+	Off-Axis Bottom	軸外 下
+	Isometric Left	等角 左
+	Isometric Right	等角 右
+	Isometric Top	等角 上
+	Plastic	プラスチック
+	Glossy	光沢
+	Metal	金属
+	Brushed Metal	ヘアライン金属
+	Gold	ゴールド
+	Copper	銅
+	Rubber	ゴム
+	Chalk	チョーク
+	Standard	標準
+	Diffuse	拡散
+	Straight	ストレート
+	Stepped	階段
+	Cove	凹面
+	Behind Object	オブジェクトの背後
+	Below Object	オブジェクトの下
+	3D and Materials Settings	3D とマテリアルの設定
+	3D and Materials Options	3D とマテリアルのオプション
+	3D (Classic)	3D（クラシック）
+	Caps	キャップ

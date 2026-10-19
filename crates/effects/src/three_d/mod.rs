@@ -1,4 +1,5 @@
-//! Effect › 3D (Classic): Extrude & Bevel, Revolve and Rotate as live effects.
+//! Effect › 3D and Materials ([`materials`]) and 3D (Classic): Extrude & Bevel, Revolve and
+//! Rotate as live effects.
 //!
 //! The object stays editable art; the renderer, the exporters ([`crate::bake_document`]) and
 //! Expand Appearance draw it as [`three_d_art`]: a group of flat, shaded faces of the solid seen
@@ -13,8 +14,20 @@
 //! Faces take the colour of the shape's fill (a stroke-only shape: its stroke's), shaded by one
 //! light: none ("No Shading"), diffuse, or diffuse with a highlight ("Plastic"); "Wireframe" draws
 //! the faces' edges only. Members of a group become solids of their own, sorted together.
+//!
+//! 3D and Materials ([`MATERIALS`]) shares the face pipeline (the view, the shapes, the faces and
+//! their painting order) and adds its own object types, materials, lights and shadows.
 
-use std::sync::Arc;
+mod materials;
+#[cfg(test)]
+mod tests_materials;
+
+pub use materials::{
+    BEVEL_PROFILES, LIGHTING_PRESETS, MATERIAL_PRESETS, MATERIALS, MAX_LIGHTS, OBJECT_TYPES, PARAMS_DOC as MATERIALS_DOC, ROTATION_PRESETS,
+    defaults as materials_defaults, lighting_preset, material_preset, preview_shade, rotation_preset,
+};
+
+use std::sync::{Arc, Mutex, PoisonError};
 
 use kurbo::{BezPath, PathEl, Point};
 use serde_json::Value;
@@ -46,7 +59,7 @@ const WIRE: f64 = 0.5;
 
 /// Is `id` one of the 3D effects?
 pub fn is_three_d(id: &str) -> bool {
-    matches!(id, EXTRUDE | REVOLVE | ROTATE)
+    matches!(id, EXTRUDE | REVOLVE | ROTATE | MATERIALS)
 }
 
 /// Does `n` carry a visible 3D effect?
@@ -161,8 +174,8 @@ struct View {
 }
 
 impl View {
-    fn new(p: &Params, centre: V3, size: f64) -> Self {
-        let [ax, ay, az] = p.rotate.map(f64::to_radians);
+    fn new(rotate: [f64; 3], perspective: f64, centre: V3, size: f64) -> Self {
+        let [ax, ay, az] = rotate.map(f64::to_radians);
         let (sx, cx) = ax.sin_cos();
         let (sy, cy) = ay.sin_cos();
         let (sz, cz) = az.sin_cos();
@@ -170,7 +183,7 @@ impl View {
         let ry = [[cy, 0.0, sy], [0.0, 1.0, 0.0], [-sy, 0.0, cy]];
         let rz = [[cz, -sz, 0.0], [sz, cz, 0.0], [0.0, 0.0, 1.0]];
         let rot = mul(rz, mul(ry, rx));
-        let focal = (p.perspective >= 0.5).then(|| size.max(1.0) / (2.0 * (p.perspective.to_radians() / 2.0).tan()));
+        let focal = (perspective >= 0.5).then(|| size.max(1.0) / (2.0 * (perspective.to_radians() / 2.0).tan()));
         Self { rot, centre, focal }
     }
 
@@ -179,6 +192,17 @@ impl View {
         let d = p.sub(self.centre);
         let r = |row: [f64; 3]| row[0] * d.x + row[1] * d.y + row[2] * d.z;
         V3::new(r(self.rot[0]), r(self.rot[1]), r(self.rot[2]))
+    }
+
+    /// A direction seen from the viewer (turned, not moved) back in the art's own space.
+    fn unturn_dir(&self, d: V3) -> V3 {
+        let c = |j: usize| self.rot[0][j] * d.x + self.rot[1][j] * d.y + self.rot[2][j] * d.z;
+        V3::new(c(0), c(1), c(2))
+    }
+
+    /// A direction in the art's space as the viewer sees it.
+    fn turn_dir(&self, d: V3) -> V3 {
+        self.turn(d.add(self.centre))
     }
 
     /// A turned point on the page.
@@ -220,18 +244,67 @@ struct Face {
 }
 
 /// The art of an object with a 3D effect (the last visible one): a group with the object's id,
-/// name, transparency, mask and its raster effects, of the solid's faces. `None` without a
-/// visible 3D effect or without art to build a solid from.
+/// name, transparency, mask and its raster effects, of the solid's faces (with 3D and Materials'
+/// shadow first). `None` without a visible 3D effect or without art to build a solid from.
+///
+/// The renderer asks for it more than once a frame (culling, then drawing) and on every frame
+/// the object hasn't changed: the last few solids are kept and reused while their object stays
+/// the same.
 pub fn three_d_art(n: &Node) -> Option<Node> {
+    if !has_three_d(n) {
+        return None;
+    }
+    if let Some(hit) = cache().lock().unwrap_or_else(PoisonError::into_inner).iter().find(|(k, _)| k == n).map(|(_, v)| v.clone()) {
+        return hit;
+    }
+    let art = build_art(n);
+    let mut c = cache().lock().unwrap_or_else(PoisonError::into_inner);
+    c.insert(0, (n.clone(), art.clone()));
+    c.truncate(CACHED);
+    art
+}
+
+/// How many solids [`three_d_art`] keeps.
+const CACHED: usize = 4;
+
+type Cache = Mutex<Vec<(Node, Option<Node>)>>;
+
+fn cache() -> &'static Cache {
+    static C: std::sync::OnceLock<Cache> = std::sync::OnceLock::new();
+    C.get_or_init(Mutex::default)
+}
+
+fn build_art(n: &Node) -> Option<Node> {
     let fx = n.appearance.effects.iter().rev().find(|e| e.visible && is_three_d(&e.id))?;
-    let params = Params::parse(&fx.id, &crate::merged_params(&fx.id, &fx.params))?;
+    let merged = crate::merged_params(&fx.id, &fx.params);
     let shapes = shapes_of(n);
     let bounds = shapes.iter().filter_map(|s| rect_of(&s.path)).reduce(|a, b| a.union(b))?;
-    let faces = build(&params, &shapes, bounds);
-    let wire = params.surface == Surface::Wireframe;
-    let children = faces
+    let (faces, wire, shadow) = if fx.id == MATERIALS {
+        let (faces, shadow) = materials::build(&materials::Params::parse(&merged), &shapes, bounds);
+        (faces, false, shadow)
+    } else {
+        let params = Params::parse(&fx.id, &merged)?;
+        (build(&params, &shapes, bounds), params.surface == Surface::Wireframe, None)
+    };
+    let shadow = shadow.map(|s| {
+        let mut node = Node::path(
+            n.id,
+            PathData::from_bezpath(&s.path),
+            Appearance { items: vec![AppearanceItem::Fill(FillLayer::new(Paint::solid(Color::rgb(0.0, 0.0, 0.0))))], ..Default::default() },
+        );
+        node.opacity = s.opacity as f32;
+        if s.softness > 0.0 {
+            node.appearance.effects.push(vectorcraft_doc::Effect {
+                id: "blur.gaussian".into(),
+                params: serde_json::json!({"radius": s.softness}),
+                visible: true,
+            });
+        }
+        Arc::new(node)
+    });
+    let children = shadow
         .into_iter()
-        .map(|f| {
+        .chain(faces.into_iter().map(|f| {
             let paint = Paint::solid(Color::rgb(f.color[0] as f32, f.color[1] as f32, f.color[2] as f32));
             let mut stroke = StrokeLayer::new(paint.clone(), if wire { WIRE } else { SEAM });
             stroke.join = LineJoin::Round;
@@ -244,7 +317,7 @@ pub fn three_d_art(n: &Node) -> Option<Node> {
                 *rule = f.rule;
             }
             Arc::new(face)
-        })
+        }))
         .collect();
     let mut g = Node::group(n.id, children);
     (g.visible, g.locked) = (n.visible, n.locked);
@@ -372,39 +445,119 @@ fn flattened(shapes: &[Shape], size: f64, budget: usize) -> Vec<Vec<(Vec<Point>,
 fn build(p: &Params, shapes: &[Shape], bounds: Rect) -> Vec<Face> {
     let size = bounds.width().hypot(bounds.height());
     let light = Light::new(p);
-    let mut faces = vec![];
+    let centre = |x: f64| V3::new(x, bounds.center().y, 0.0);
     match p.solid {
         Solid::Extrude { depth, cap } => {
-            let view = View::new(p, V3::new(bounds.center().x, bounds.center().y, 0.0), size + depth);
+            let view = View::new(p.rotate, p.perspective, centre(bounds.center().x), size + depth);
+            let mut sink = Sink::new(&view, &light, false);
             let lines = flattened(shapes, size, MAX_FACES);
             for (s, lines) in shapes.iter().zip(&lines) {
-                extrude(&view, &light, s, lines, depth, cap, &mut faces);
+                extrude(&mut sink, s, lines, depth, cap);
             }
+            sink.sorted()
         }
         Solid::Rotate => {
-            let view = View::new(p, V3::new(bounds.center().x, bounds.center().y, 0.0), size);
+            let view = View::new(p.rotate, p.perspective, centre(bounds.center().x), size);
+            let mut sink = Sink::new(&view, &light, false);
             for s in shapes {
-                faces.extend(cap_face(&view, &light, s, 0.0, None));
+                sink.cap(s, 0.0, None);
             }
+            sink.sorted()
         }
         Solid::Revolve { angle, offset, right, cap } => {
-            let axis = if right { bounds.x1 + offset } else { bounds.x0 - offset };
-            let reach = (bounds.x0 - axis).abs().max((bounds.x1 - axis).abs());
-            let view = View::new(p, V3::new(axis, bounds.center().y, 0.0), (2.0 * reach).hypot(bounds.height()));
-            let steps = (angle / 360.0 * REVOLVE_STEPS).ceil().max(2.0) as usize;
+            let axis = revolve_axis(bounds, offset, right);
+            let view = View::new(p.rotate, p.perspective, centre(axis), revolve_size(bounds, axis));
+            let mut sink = Sink::new(&view, &light, false);
+            let steps = revolve_steps(angle);
             let lines = flattened(shapes, size, MAX_FACES / steps.max(1));
             for (s, lines) in shapes.iter().zip(&lines) {
-                revolve(&view, &light, s, lines, axis, angle.to_radians(), steps, cap, &mut faces);
+                revolve(&mut sink, s, lines, axis, angle.to_radians(), steps, cap);
             }
+            sink.sorted()
         }
     }
-    // Back to front.
-    faces.sort_by(|a, b| b.depth.total_cmp(&a.depth));
-    faces
+}
+
+/// Where a revolve's axis is: at the art's left (or right) edge, `offset` away from it.
+fn revolve_axis(bounds: Rect, offset: f64, right: bool) -> f64 {
+    if right { bounds.x1 + offset } else { bounds.x0 - offset }
+}
+
+/// The size of a revolved solid (its view's reference for perspective).
+fn revolve_size(bounds: Rect, axis: f64) -> f64 {
+    let reach = (bounds.x0 - axis).abs().max((bounds.x1 - axis).abs());
+    (2.0 * reach).hypot(bounds.height())
+}
+
+/// Steps around a revolution of `angle` degrees.
+fn revolve_steps(angle: f64) -> usize {
+    (angle / 360.0 * REVOLVE_STEPS).ceil().clamp(2.0, REVOLVE_STEPS) as usize
+}
+
+/// How a face's colour is lit: by the Classic light, or by 3D and Materials' lights and material.
+trait Shader {
+    /// `base` lit on a face with (turned) normal `n`.
+    fn shade(&self, base: [f64; 3], n: V3) -> [f64; 3];
+}
+
+/// Where a solid's faces go as they are built: shaded and projected into `faces`, and with a
+/// shadow to cast, their corners (in the art's own space) into `shadow`.
+struct Sink<'a> {
+    view: &'a View,
+    shader: &'a dyn Shader,
+    faces: Vec<Face>,
+    shadow: Option<Vec<Vec<V3>>>,
+}
+
+impl<'a> Sink<'a> {
+    fn new(view: &'a View, shader: &'a dyn Shader, shadow: bool) -> Self {
+        Self { view, shader, faces: vec![], shadow: shadow.then(Vec::new) }
+    }
+
+    /// Room for another face: the solid stops at [`MAX_FACES`] however fine its art.
+    fn full(&self) -> bool {
+        self.faces.len() >= MAX_FACES
+    }
+
+    /// A flat polygon (document-space corners `pts`).
+    fn polygon(&mut self, pts: &[V3], color: [f64; 3]) {
+        if self.full() {
+            return;
+        }
+        self.faces.extend(polygon(self.view, self.shader, pts, color, 0.0));
+        if let Some(s) = &mut self.shadow
+            && s.len() < MAX_FACES
+        {
+            s.push(pts.to_vec());
+        }
+    }
+
+    /// The flat shape `s` at depth `z` ([`cap_face`]).
+    fn cap(&mut self, s: &Shape, z: f64, facing: Option<V3>) {
+        if self.full() {
+            return;
+        }
+        self.faces.extend(cap_face(self.view, self.shader, s, z, facing));
+    }
+
+    /// The outline `lines` at depth `z` cast a shadow (a cap drawn with [`Sink::cap`]).
+    fn cap_shadow(&mut self, lines: &[(Vec<Point>, bool)], z: f64) {
+        if let Some(s) = &mut self.shadow
+            && s.len() < MAX_FACES
+        {
+            s.extend(lines.iter().map(|(l, _)| l.iter().map(|p| V3::new(p.x, p.y, z)).collect()));
+        }
+    }
+
+    /// The faces, back to front.
+    fn sorted(mut self) -> Vec<Face> {
+        self.faces.sort_by(|a, b| b.depth.total_cmp(&a.depth));
+        self.faces
+    }
 }
 
 /// A flat polygon (document-space corners `pts`) as a face, shaded by its normal.
-fn polygon(view: &View, light: &Light, pts: &[V3], color: [f64; 3], nudge: f64) -> Option<Face> {
+fn polygon(view: &View, shader: &dyn Shader, pts: &[V3], color: [f64; 3], nudge: f64) -> Option<Face> {
     let turned: Vec<V3> = pts.iter().map(|q| view.turn(*q)).collect();
     let (a, b, c) = (*turned.first()?, *turned.get(1)?, *turned.get(turned.len().checked_sub(1)?)?);
     let normal = b.sub(a).cross(c.sub(a)).unit().or_else(|| turned.get(2).and_then(|t| t.sub(a).cross(c.sub(b)).unit()))?;
@@ -415,14 +568,14 @@ fn polygon(view: &View, light: &Light, pts: &[V3], color: [f64; 3], nudge: f64) 
     }
     path.close_path();
     let depth = turned.iter().map(|q| q.z).sum::<f64>() / turned.len() as f64 + nudge;
-    Some(Face { path, rule: FillRule::NonZero, depth, color: light.shade(color, normal) })
+    Some(Face { path, rule: FillRule::NonZero, depth, color: shader.shade(color, normal) })
 }
 
 /// The flat shape `s` at depth `z`, turned and projected (curves kept). With `facing`, only when
 /// its outward normal (`facing`, unturned) points at the viewer. Drawn in front of the rest of its
 /// solid.
-fn cap_face(view: &View, light: &Light, s: &Shape, z: f64, facing: Option<V3>) -> Option<Face> {
-    let normal = view.turn(facing.unwrap_or(V3::new(0.0, 0.0, -1.0)).add(view.centre));
+fn cap_face(view: &View, shader: &dyn Shader, s: &Shape, z: f64, facing: Option<V3>) -> Option<Face> {
+    let normal = view.turn_dir(facing.unwrap_or(V3::new(0.0, 0.0, -1.0)));
     if facing.is_some() && normal.z >= 0.0 {
         return None;
     }
@@ -436,11 +589,10 @@ fn cap_face(view: &View, light: &Light, s: &Shape, z: f64, facing: Option<V3>) -
             .map(|c| view.turn(V3::new(c.x, c.y, z)).z)
             .fold(f64::INFINITY, f64::min)
     });
-    Some(Face { path, rule: s.rule, depth: near - 1e-3, color: light.shade(s.color, normal) })
+    Some(Face { path, rule: s.rule, depth: near - 1e-3, color: shader.shade(s.color, normal) })
 }
 
-#[allow(clippy::too_many_arguments)]
-fn extrude(view: &View, light: &Light, s: &Shape, lines: &[(Vec<Point>, bool)], depth: f64, cap: bool, faces: &mut Vec<Face>) {
+fn extrude(sink: &mut Sink, s: &Shape, lines: &[(Vec<Point>, bool)], depth: f64, cap: bool) {
     let (front, back) = (-depth / 2.0, depth / 2.0);
     for (line, closed) in lines {
         let closed = *closed || s.filled;
@@ -449,36 +601,27 @@ fn extrude(view: &View, light: &Light, s: &Shape, lines: &[(Vec<Point>, bool)], 
         for i in 0..edges {
             let (Some(a), Some(b)) = (line.get(i), line.get((i + 1) % n)) else { continue };
             let quad = [V3::new(a.x, a.y, front), V3::new(b.x, b.y, front), V3::new(b.x, b.y, back), V3::new(a.x, a.y, back)];
-            faces.extend(polygon(view, light, &quad, s.color, 0.0));
+            sink.polygon(&quad, s.color);
         }
     }
     if s.filled && (cap || depth <= 0.0) {
         if depth <= 0.0 {
-            faces.extend(cap_face(view, light, s, 0.0, None));
+            sink.cap(s, 0.0, None);
+            sink.cap_shadow(lines, 0.0);
         } else {
-            faces.extend(cap_face(view, light, s, front, Some(V3::new(0.0, 0.0, -1.0))));
-            faces.extend(cap_face(view, light, s, back, Some(V3::new(0.0, 0.0, 1.0))));
+            sink.cap(s, front, Some(V3::new(0.0, 0.0, -1.0)));
+            sink.cap(s, back, Some(V3::new(0.0, 0.0, 1.0)));
+            sink.cap_shadow(lines, front);
         }
     }
 }
 
-#[allow(clippy::too_many_arguments)]
-fn revolve(
-    view: &View,
-    light: &Light,
-    s: &Shape,
-    lines: &[(Vec<Point>, bool)],
-    axis: f64,
-    angle: f64,
-    steps: usize,
-    cap: bool,
-    faces: &mut Vec<Face>,
-) {
+fn revolve(sink: &mut Sink, s: &Shape, lines: &[(Vec<Point>, bool)], axis: f64, angle: f64, steps: usize, cap: bool) {
     let at = |p: &Point, t: f64| {
         let r = p.x - axis;
         V3::new(axis + r * t.cos(), p.y, r * t.sin())
     };
-    let theta = |j: usize| angle * j as f64 / steps as f64;
+    let theta = |j: usize| angle * j as f64 / steps.max(1) as f64;
     for (line, closed) in lines {
         let closed = *closed && s.filled;
         let n = line.len();
@@ -487,14 +630,14 @@ fn revolve(
             let (Some(a), Some(b)) = (line.get(i), line.get((i + 1) % n)) else { continue };
             for j in 0..steps {
                 let (t0, t1) = (theta(j), theta(j + 1));
-                faces.extend(polygon(view, light, &[at(a, t0), at(b, t0), at(b, t1), at(a, t1)], s.color, 0.0));
+                sink.polygon(&[at(a, t0), at(b, t0), at(b, t1), at(a, t1)], s.color);
             }
         }
         // The profile at both ends of a partial revolution.
         if closed && cap && angle < std::f64::consts::TAU - 1e-9 {
             for t in [0.0, angle] {
                 let ring: Vec<V3> = line.iter().map(|p| at(p, t)).collect();
-                faces.extend(polygon(view, light, &ring, s.color, 0.0));
+                sink.polygon(&ring, s.color);
             }
         }
     }
@@ -511,7 +654,9 @@ impl Light {
     fn new(p: &Params) -> Self {
         Self { surface: p.surface, dir: V3::new(-0.45, -0.55, -0.7).unit().unwrap_or(V3::new(0.0, 0.0, -1.0)), p: *p }
     }
+}
 
+impl Shader for Light {
     /// `base` lit on a face with (turned) normal `n`, which is made to face the viewer.
     fn shade(&self, base: [f64; 3], n: V3) -> [f64; 3] {
         let n = if n.z > 0.0 { n.scale(-1.0) } else { n };

@@ -80,6 +80,7 @@ mod textedit;
 pub mod textstyles;
 pub(crate) mod textwrap;
 pub(crate) mod threads;
+mod threed;
 pub(crate) mod typecmd;
 mod typemenu;
 pub(crate) mod views;
@@ -219,6 +220,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(draw2::specs());
         v.extend(xform::specs());
         v.extend(effectcmd::specs());
+        v.extend(threed::specs());
         v.extend(pathops::specs());
         v.extend(typecmd::specs());
         v.extend(menucmds::specs());

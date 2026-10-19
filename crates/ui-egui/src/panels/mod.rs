@@ -40,6 +40,7 @@ pub mod swatches;
 pub mod symbols;
 pub mod tabs;
 pub mod text_styles;
+pub mod three_d;
 pub mod transform;
 pub mod transparency;
 
@@ -131,6 +132,7 @@ pub fn show_icon_panel(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) {
         links::ID => links::show(app, ui),
         asset_export::ID => asset_export::show(app, ui),
         css_properties::ID => css_properties::show(app, ui),
+        three_d::ID => three_d::show(app, ui),
         _ => {
             dim_label(ui, tl!("This panel is on the roadmap (see the parity plan)."));
         }
@@ -179,6 +181,7 @@ pub fn panel_menu_items(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) -> bool
         links::ID => links::menu(app, ui),
         asset_export::ID => asset_export::menu(app, ui),
         css_properties::ID => css_properties::menu(app, ui),
+        three_d::ID => three_d::menu(app, ui),
         _ => return false,
     }
     true
@@ -518,5 +521,7 @@ mod tests_strokeux;
 mod tests_style_libraries;
 #[cfg(test)]
 mod tests_symbol_libraries;
+#[cfg(test)]
+mod tests_three_d;
 #[cfg(test)]
 mod tests_units;

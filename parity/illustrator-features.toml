@@ -2692,7 +2692,7 @@ milestone = "M9"
 status = "partial"
 commands = ["effect.apply", "effect.dialog"]
 tools = []
-evidence = ["crates/effects/src/three_d.rs::extrude_builds_shaded_walls_behind_the_front", "crates/effects/src/three_d.rs::revolve_sweeps_the_shape_around_its_left_edge", "crates/render/src/tests_objectfx.rs::extrude_paints_the_solid_around_the_object"]
+evidence = ["crates/effects/src/three_d/mod.rs::extrude_builds_shaded_walls_behind_the_front", "crates/effects/src/three_d/mod.rs::revolve_sweeps_the_shape_around_its_left_edge", "crates/render/src/tests_objectfx.rs::extrude_paints_the_solid_around_the_object"]
 notes = "Extrude, Revolve and Rotate live, with depth, cap, rotation, perspective, wireframe/no/diffuse/plastic shading and Expand Appearance; bevels, mapped art, extra lights and the position trackball pending"
 
 [[feature]]
@@ -2701,11 +2701,11 @@ title = "3D and Materials panel (Extrude, Revolve, Inflate, Rotate, materials, l
 area = "H"
 tier = "P1"
 milestone = "M9"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["threeD.apply", "threeD.set", "threeD.settings", "ui.threeD", "effect.apply", "effect.expandAppearance"]
 tools = []
-evidence = []
-notes = "3D and Materials not implemented"
+evidence = ["crates/effects/src/three_d/tests_materials.rs::twist_turns_the_back_face", "crates/effects/src/three_d/tests_materials.rs::taper_shrinks_the_back_face", "crates/effects/src/three_d/tests_materials.rs::bevel_insets_the_front_and_adds_faces", "crates/effects/src/three_d/tests_materials.rs::inflate_domes_with_the_centre_nearest", "crates/effects/src/three_d/tests_materials.rs::plane_is_flat", "crates/effects/src/three_d/tests_materials.rs::roughness_widens_and_dims_the_highlight", "crates/effects/src/three_d/tests_materials.rs::metallic_tints_the_highlight_and_darkens_the_diffuse", "crates/effects/src/three_d/tests_materials.rs::light_rotation_moves_the_lit_side", "crates/effects/src/three_d/tests_materials.rs::shadows_fall_below_or_behind", "crates/effects/src/three_d/tests_materials.rs::hostile_params_never_panic", "crates/engine/src/cmd/threed.rs::set_edits_params_presets_and_lights_as_one_step_each", "crates/engine/src/cmd/threed.rs::a_drag_is_one_undo_step_and_expand_appearance_makes_faces", "crates/ui-egui/src/panels/tests_three_d.rs::a_slider_drag_is_one_undo_step", "crates/ui-egui/src/panels/tests_three_d.rs::the_tabs_show_the_settings_of_each_part", "crates/render/src/tests_objectfx.rs::materials_paint_the_lit_solid_and_its_shadow"]
+notes = "Effect › 3D and Materials as one live effect (threeD.materials) edited in the 3D and Materials panel (Object, Materials and Lighting tabs; Window › 3D and Materials; the Effect menu's Extrude & Bevel…, Revolve…, Inflate…, Rotate… and Materials… open it): Plane, Extrude (depth, caps, twist, taper, bevel with straight, round, stepped and cove profiles, width, height, repeat, inside or outside, front or both edges), Revolve (angle, offset, left or right edge, caps) and Inflate (depth, volume, both sides); rotation with 15 named views and perspective; materials by roughness and metallic with an optional colour (Lambert diffuse + GGX highlight, 10 presets); up to 4 lights (colour, intensity, rotation, height, softness) with 4 lighting presets, ambient light, and a shadow behind or below the object (distance, bounds, blur, opacity); Expand Appearance gives the faces as paths and exports draw the same faces. Faces are flat-shaded polygons sorted back to front (no smooth shading or intersecting-solid hidden-surface removal); materials are uniform per object (no textures or graphics mapped onto surfaces: fx.3d-map-art) and ray-traced rendering is fx.3d-render, both still planned; 3D (Classic) moved under Effect › 3D and Materials › 3D (Classic)"
 
 [[feature]]
 id = "fx.3d-render"

@@ -216,14 +216,14 @@ The scores are
 self-assessed, so the [honest assessment](ROADMAP.md#honest-assessment-2026-10-05) explains how far to trust them.
 
 **What's missing:**
-- 3D and Materials;
+- 3D Map Art and ray-traced rendering (3D and Materials itself ships);
 - most Photoshop-style raster filters; the [initial Effect Gallery](docs/effect-gallery.md) edits the supported filters;
 - CJK composition for vertical type (vertical type itself has initial support, with a Japanese interface);
 - Variables and scripting;
 - an interaction-fidelity pass covering every tool's modifiers and small behaviours;
 - broader Windows/Linux hardware and desktop validation.
 
-**Where we're going:** next is the interaction-fidelity pass alongside the raster-effects package, then 3D and
+**Where we're going:** next is the interaction-fidelity pass alongside the raster-effects package, then 3D Map Art and
 advanced type, then hardening and packaging for 1.0. The prioritized list is in
 [Where we're lacking](ROADMAP.md#where-were-lacking-in-priority-order).
 

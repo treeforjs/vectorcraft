@@ -285,6 +285,18 @@ fn structured_junk() {
         ("effect.setStack", json!({"effects": [null]})),
         ("effect.remove", json!({"index": 99})),
         ("effect.setParams", json!({"index": 0, "params": null})),
+        (
+            "effect.apply",
+            json!({"effect": "threeD.materials", "params": {"depth": 1e308, "twist": -1e308, "taper": "x", "bevel": true, "bevelRepeat": 1e308}}),
+        ),
+        (
+            "threeD.apply",
+            json!({"object": "inflate", "params": {"depth": 1e308, "volume": -1, "bothSides": 3, "shadow": true, "shadowBounds": 1e308}}),
+        ),
+        ("threeD.apply", json!({"object": 5, "params": []})),
+        ("threeD.set", json!({"params": {"lights": [null, 1, {"rotation": 1e308}]}, "light": {"index": u64::MAX}, "removeLight": -1})),
+        ("threeD.set", json!({"rotation": 7, "material": null, "lighting": "nope"})),
+        ("threeD.settings", json!({"ids": [u64::MAX]})),
         ("object.path.offsetPath", json!({"offset": 1e308})),
         ("object.path.offsetPath", json!({"offset": -1e308})),
         ("object.path.simplify", json!({"tolerance": -1, "cornerAngle": 1e308})),

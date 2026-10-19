@@ -68,7 +68,10 @@ pub use marks::{CROP_MARKS, crop_marks_art, has_crop_marks};
 pub use pixel::{PIXEL_EFFECTS, PixelFx, PixelSpace};
 pub use raster::{RasterFx, outset, raster_effects};
 pub use reshape::{expand_outlined, needs_outline, outline_art, outline_text, reshape};
-pub use three_d::{EXTRUDE, REVOLVE, ROTATE, has_three_d, is_three_d, three_d_art};
+pub use three_d::{
+    BEVEL_PROFILES, EXTRUDE, LIGHTING_PRESETS, MATERIAL_PRESETS, MATERIALS, MAX_LIGHTS, OBJECT_TYPES, REVOLVE, ROTATE, ROTATION_PRESETS, has_three_d,
+    is_three_d, lighting_preset, material_preset, materials_defaults, preview_shade, rotation_preset, three_d_art,
+};
 pub use warp::{WarpStyle, warp_point};
 
 /// Catalogue entry for one effect.
@@ -125,6 +128,7 @@ fn lengths_of(id: &str) -> Lengths {
         "path.offsetPath" => always(&["offset"]),
         EXTRUDE => always(&["depth"]),
         REVOLVE => always(&["offset"]),
+        MATERIALS => always(&["depth", "offset", "bevelWidth", "bevelHeight", "shadowDistance", "shadowSoftness"]),
         "path.outlineStroke" => always(&["width"]),
         "stylize.roundCorners" | "stylize.feather" | "blur.gaussian" | "blur.smart" | "sharpen.unsharpMask" => always(&["radius"]),
         "stylize.scribble" => always(&["overlap", "strokeWidth", "spacing", "variation"]),
@@ -165,6 +169,8 @@ const PATHFINDER: &[&str] = &["Effect", "Pathfinder"];
 const PLUGINS: &[&str] = &["Effect", "Plug-ins"];
 const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
 const THREE_D: &[&str] = &["Effect", "3D and Materials"];
+/// The menu path of the 3D (Classic) effects.
+pub const THREE_D_CLASSIC: &[&str] = &["Effect", "3D and Materials", "3D (Classic)"];
 const SVG_FILTERS: &[&str] = &["Effect", "SVG Filters"];
 
 /// The warp styles in Illustrator's Style menu order: (id suffix, label).
@@ -793,21 +799,22 @@ pub fn effect_catalog() -> Vec<EffectInfo> {
         }
         o
     };
+    v.push(g(MATERIALS, "3D and Materials", THREE_D, three_d::MATERIALS_DOC, materials_defaults()));
     v.push(g(
         EXTRUDE,
         "Extrude & Bevel…",
-        THREE_D,
+        THREE_D_CLASSIC,
         "{depth: pt (0..2000, 50), cap: bool (true), rotateX, rotateY, rotateZ: deg (-180..180; -18, -26, 8), perspective: deg (0..160, 0), surface: \"wireframe\"|\"noShading\"|\"diffuse\"|\"plastic\", lightIntensity: % (100), ambientLight: % (50), highlightIntensity: % (60), highlightSize: % (90)} the art pushed back into a shaded solid",
         view(json!({"depth": 50.0, "cap": true})),
     ));
     v.push(g(
         REVOLVE,
         "Revolve…",
-        THREE_D,
+        THREE_D_CLASSIC,
         "{angle: deg (1..360, 360), offset: pt (0), from: \"leftEdge\"|\"rightEdge\", cap: bool (true), rotateX, rotateY, rotateZ: deg (-180..180; -18, -26, 8), perspective: deg (0..160, 0), surface: \"wireframe\"|\"noShading\"|\"diffuse\"|\"plastic\", lightIntensity: % (100), ambientLight: % (50), highlightIntensity: % (60), highlightSize: % (90)} the art swept around a vertical axis at its edge",
         view(json!({"angle": 360.0, "offset": 0.0, "from": "leftEdge", "cap": true})),
     ));
-    v.push(g(ROTATE, "Rotate…", THREE_D, "{rotateX, rotateY, rotateZ: deg (-180..180; -18, -26, 8), perspective: deg (0..160, 0), surface: \"wireframe\"|\"noShading\"|\"diffuse\"|\"plastic\", lightIntensity: % (100), ambientLight: % (50), highlightIntensity: % (60), highlightSize: % (90)} the flat art turned in space", view(json!({}))));
+    v.push(g(ROTATE, "Rotate…", THREE_D_CLASSIC, "{rotateX, rotateY, rotateZ: deg (-180..180; -18, -26, 8), perspective: deg (0..160, 0), surface: \"wireframe\"|\"noShading\"|\"diffuse\"|\"plastic\", lightIntensity: % (100), ambientLight: % (50), highlightIntensity: % (60), highlightSize: % (90)} the flat art turned in space", view(json!({}))));
     v.push(g(
         CROP_MARKS,
         "Crop Marks",

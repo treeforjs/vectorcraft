@@ -181,6 +181,32 @@ fn extrude_paints_the_solid_around_the_object() {
     assert!(walls.iter().any(|&(x, y)| img.pixel(x, y)[0] < front[0]), "walls darker than the front");
 }
 
+/// 3D and Materials draws its lit solid, and behind it, cast away from the light at the upper
+/// left, a translucent grey shadow; exports draw the same faces (`bake_document`).
+#[test]
+fn materials_paint_the_lit_solid_and_its_shadow() {
+    let mut n = Node::path(
+        NodeId(0),
+        shapes::rectangle(Rect::new(35.0, 25.0, 65.0, 55.0)),
+        Appearance::basic(Paint::solid(Color::rgb(1.0, 0.0, 0.0)), Paint::None, 0.0),
+    );
+    let params = json!({"depth": 20, "shadow": true, "shadowPosition": "behind", "shadowDistance": 20, "shadowSoftness": 0, "rotateX": 0, "rotateY": 0, "rotateZ": 0});
+    n.appearance.effects.push(fx("threeD.materials", params));
+    let d = doc_with(Document::new(100.0, 100.0), n);
+    let img = render(&d);
+    let front = img.pixel(50, 40);
+    assert!(front[0] > 60 && front[1] < 60 && front[2] < 60, "the red front: {front:?}");
+    let shadow = img.pixel(80, 72);
+    assert!(shadow[0] == shadow[1] && shadow[1] == shadow[2] && shadow[0] < 230 && shadow[0] > 40, "a translucent grey shadow: {shadow:?}");
+    assert_eq!(img.pixel(10, 10), [255, 255, 255, 255]);
+    let baked = effects::bake_document(&d).expect("the solid is baked for export");
+    let mut faces = 0;
+    for l in &baked.layers {
+        l.walk(&mut |n| faces += usize::from(matches!(n.kind, NodeKind::Path { .. })));
+    }
+    assert!(faces >= 6, "the shadow, four walls and the front: {faces}");
+}
+
 #[test]
 fn a_strokes_own_glow_paints_around_that_stroke_only() {
     let mut d = Document::new(100.0, 100.0);

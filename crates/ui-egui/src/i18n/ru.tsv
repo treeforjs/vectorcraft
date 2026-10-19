@@ -4233,3 +4233,61 @@ axis	Both	Оба
 	User Brush Library 10	Пользовательская библиотека кистей 10
 @msg	no symbol `{n}`	нет символа `{n}`
 @msg	not a symbol library (format `{_1}`)	не является библиотекой символов (формат `{_1}`)
+# 3D and Materials
+	Turn the selection into a 3D object:	Превратить выделение в 3D-объект:
+	Materials	Материалы
+	Lighting	Освещение
+	Volume	Объём
+	Inflate Both Sides	Надуть с обеих сторон
+	Twist	Скручивание
+	Taper	Сужение
+	Profile	Профиль
+	Bevel Outside	Фаска наружу
+	Bevel Both Sides	Фаска с обеих сторон
+	Preset	Набор
+	Presets	Наборы
+	Base Properties	Основные свойства
+	Roughness	Шероховатость
+	Metallic	Металличность
+	Material Color	Цвет материала
+	Drag to move the chosen light	Перетащите, чтобы переместить выбранный свет
+	Light {n}	Свет {n}
+	Add Light	Добавить свет
+	Delete Light	Удалить свет
+	Shadows	Тени
+	Distance	Расстояние
+	Shadow Bounds	Границы тени
+	Plane	Плоскость
+	Extrude	Выдавливание
+	Revolve	Вращение
+	Inflate	Надувание
+	Front	Спереди
+	Back	Сзади
+	Off-Axis Front	Вне оси: спереди
+	Off-Axis Back	Вне оси: сзади
+	Off-Axis Left	Вне оси: слева
+	Off-Axis Right	Вне оси: справа
+	Off-Axis Top	Вне оси: сверху
+	Off-Axis Bottom	Вне оси: снизу
+	Isometric Left	Изометрия слева
+	Isometric Right	Изометрия справа
+	Isometric Top	Изометрия сверху
+	Plastic	Пластик
+	Glossy	Глянец
+	Metal	Металл
+	Brushed Metal	Шлифованный металл
+	Gold	Золото
+	Copper	Медь
+	Rubber	Резина
+	Chalk	Мел
+	Standard	Стандартное
+	Diffuse	Рассеянное
+	Straight	Прямой
+	Stepped	Ступенчатый
+	Cove	Выемка
+	Behind Object	За объектом
+	Below Object	Под объектом
+	3D and Materials Settings	Параметры 3D и материалов
+	3D and Materials Options	Настройки 3D и материалов
+	3D (Classic)	3D (классический)
+	Caps	Торцы

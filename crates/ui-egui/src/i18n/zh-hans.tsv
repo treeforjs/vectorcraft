@@ -3867,3 +3867,61 @@ axis	Both	两者
 	User Brush Library 8	用户画笔库 8
 	User Brush Library 9	用户画笔库 9
 	User Brush Library 10	用户画笔库 10
+# 3D and Materials
+	Turn the selection into a 3D object:	将所选对象转换为 3D 对象：
+	Materials	材质
+	Lighting	光照
+	Volume	体积
+	Inflate Both Sides	两侧膨胀
+	Twist	扭转
+	Taper	锥化
+	Profile	轮廓
+	Bevel Outside	向外斜角
+	Bevel Both Sides	两侧斜角
+	Preset	预设
+	Presets	预设
+	Base Properties	基本属性
+	Roughness	粗糙度
+	Metallic	金属感
+	Material Color	材质颜色
+	Drag to move the chosen light	拖动以移动所选光源
+	Light {n}	光源 {n}
+	Add Light	添加光源
+	Delete Light	删除光源
+	Shadows	阴影
+	Distance	距离
+	Shadow Bounds	阴影边界
+	Plane	平面
+	Extrude	突出
+	Revolve	回转
+	Inflate	膨胀
+	Front	前
+	Back	后
+	Off-Axis Front	离轴 - 前方
+	Off-Axis Back	离轴 - 后方
+	Off-Axis Left	离轴 - 左方
+	Off-Axis Right	离轴 - 右方
+	Off-Axis Top	离轴 - 上方
+	Off-Axis Bottom	离轴 - 下方
+	Isometric Left	等角 - 左方
+	Isometric Right	等角 - 右方
+	Isometric Top	等角 - 上方
+	Plastic	塑料
+	Glossy	光泽
+	Metal	金属
+	Brushed Metal	拉丝金属
+	Gold	金色
+	Copper	铜
+	Rubber	橡胶
+	Chalk	粉笔
+	Standard	标准
+	Diffuse	漫射
+	Straight	直线
+	Stepped	阶梯
+	Cove	凹槽
+	Behind Object	对象后方
+	Below Object	对象下方
+	3D and Materials Settings	3D 与材质设置
+	3D and Materials Options	3D 与材质选项
+	3D (Classic)	3D（经典）
+	Caps	封顶
