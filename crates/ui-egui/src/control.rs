@@ -99,6 +99,8 @@ pub fn inspect(app: &VectorcraftApp, ctx: &egui::Context) -> Value {
         "background": app.background.jobs.iter().map(|j| j.label.as_str()).collect::<Vec<_>>(),
         // Help › Check for Updates…: the updater's state and whether its quiet notice shows.
         "updates": crate::updates::state_json(app),
+        // Undo toasts showing ({message, action}); the tour's state is `ui.tour`.
+        "toasts": crate::onboarding::toasts_json(app),
     })
 }
 

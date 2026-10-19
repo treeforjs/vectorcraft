@@ -2006,7 +2006,6 @@
 	Percent:	Відсотки:
 	Perceptual Scales	Перцепційні шкали
 	Performance	Продуктивність
-	Performance & Storage	Продуктивність та зберігання
 	Permissions	Дозволи
 	Permissions password:	Пароль дозволів:
 	Perspective	Перспектива
@@ -4442,3 +4441,41 @@ axis	Both	Обидві
 	Move where the printed pages fall on the art.	Зсувайте, де на малюнку опиняться друковані сторінки.
 	Zoom in and out of the page.	Наближайте та віддаляйте сторінку.
 @msg	layout must be starter, basic or advanced, not {v}	вигляд має бути starter, basic або advanced, а не {v}
+# First steps: Home's examples, Learn the Basics, the empty page and Undo toasts.
+	Learn the Basics	Основи роботи
+	Open an Example	Відкрити приклад
+	Step {n} of {total}	Крок {n} з {total}
+	End the tour	Завершити огляд
+	Back	Назад
+	Skip	Пропустити
+	Go to the next step	Перейти до наступного кроку
+	You know the basics	Основи опановано
+	Keep drawing, or open an example from Home to see what VectorCraft can do. Help › Learn the Basics starts this tour again.	Малюйте далі або відкрийте приклад на головному екрані, щоб побачити, що вміє VectorCraft. Довідка › Основи роботи запускає цей огляд знову.
+	Done · take it again	Готово · пройти знову
+	A two-minute tour	Огляд на дві хвилини
+	Six short steps: draw, color, move, type, undo and search	Шість коротких кроків: малювання, колір, переміщення, текст, скасування та пошук
+	Open a copy of this example	Відкрити копію цього прикладу
+	Your page is empty	Сторінка порожня
+	The bar below says how to draw your first shape. You can also place an image with File › Place or paste with {key}.	Рядок унизу підкаже, як намалювати першу фігуру. Також можна розмістити зображення через Файл › Розмістити або вставити за допомогою {key}.
+	Show Frame Timings in the Status Bar	Показувати час кадру в рядку стану
+	Draw a rectangle	Намалюйте прямокутник
+	Choose the Rectangle tool in the toolbar (or press M), then drag on the page.	Виберіть інструмент «Прямокутник» на панелі інструментів (або натисніть M) і протягніть по сторінці.
+	Change its fill color	Змініть колір заливки
+	With the shape selected, pick a new Fill color in the Properties panel on the right.	Виділивши фігуру, виберіть новий колір заливки на панелі «Властивості» праворуч.
+	Move and resize it	Перемістіть фігуру і змініть розмір
+	With the Selection tool (V), drag the shape to move it, or drag a corner handle to resize it.	Інструментом «Виділення» (V) перетягніть фігуру, щоб перемістити її, або потягніть за кутовий маркер, щоб змінити розмір.
+	Add some text	Додайте текст
+	Choose the Type tool (or press T), click on the page and type a few words. Press Esc when you are done.	Виберіть інструмент «Текст» (або натисніть T), клацніть на сторінці й введіть кілька слів. Коли закінчите, натисніть Esc.
+	Undo a step	Скасуйте крок
+	Press {key} (or Edit › Undo) to take back the last change. Everything can be undone, so feel free to try things.	Натисніть {key} (або Редагування › Скасувати), щоб скасувати останню зміну. Скасувати можна все, тож сміливо пробуйте.
+	Find anything	Знайдіть будь-що
+	Press {key} and type what you want to do, such as “align” or “export”, to find any command.	Натисніть {key} і введіть, що хочете зробити, наприклад «вирівняти» або «експорт», щоб знайти будь-яку команду.
+@plural	Deleted {n} object|Deleted {n} objects	Видалено {n} об’єкт|Видалено {n} об’єкти|Видалено {n} об’єктів
+@plural	Cut {n} object|Cut {n} objects	Вирізано {n} об’єкт|Вирізано {n} об’єкти|Вирізано {n} об’єктів
+@plural	Ungrouped {n} object|Ungrouped {n} objects	Розгруповано {n} об’єкт|Розгруповано {n} об’єкти|Розгруповано {n} об’єктів
+@plural	Released {n} compound path|Released {n} compound paths	Скасовано {n} складений контур|Скасовано {n} складені контури|Скасовано {n} складених контурів
+@plural	Expanded {n} object|Expanded {n} objects	Розібрано {n} об’єкт|Розібрано {n} об’єкти|Розібрано {n} об’єктів
+@plural	Flattened {n} object|Flattened {n} objects	Зведено {n} об’єкт|Зведено {n} об’єкти|Зведено {n} об’єктів
+@plural	Combined {n} object|Combined {n} objects	Об’єднано {n} об’єкт|Об’єднано {n} об’єкти|Об’єднано {n} об’єктів
+@msg	no example `{name}` (examples: {_1})	немає прикладу `{name}` (приклади: {_1})
+@msg	action must be start, back, skip or end (not `{other}`)	action має бути start, back, skip або end (а не `{other}`)

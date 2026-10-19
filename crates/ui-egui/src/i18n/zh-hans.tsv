@@ -1969,7 +1969,6 @@
 	Percent:	百分比：
 	Perceptual Scales	感知尺度
 	Performance	性能
-	Performance & Storage	性能和存储
 	Permissions	权限
 	Permissions password:	权限密码：
 	Perspective	透视
@@ -4085,3 +4084,41 @@ axis	Both	两者
 	Turn the view without turning the art.	旋转视图而不旋转图稿。
 	Move where the printed pages fall on the art.	移动打印页面在图稿上的位置。
 	Zoom in and out of the page.	放大和缩小页面视图。
+# First steps: Home's examples, Learn the Basics, the empty page and Undo toasts.
+	Learn the Basics	学习基础知识
+	Open an Example	打开示例
+	Step {n} of {total}	第 {n} 步，共 {total} 步
+	End the tour	结束导览
+	Back	返回
+	Skip	跳过
+	Go to the next step	转到下一步
+	You know the basics	你已经掌握了基础知识
+	Keep drawing, or open an example from Home to see what VectorCraft can do. Help › Learn the Basics starts this tour again.	继续绘图，或从主页打开一个示例，看看 VectorCraft 能做什么。帮助 › 学习基础知识 可重新开始此导览。
+	Done · take it again	已完成 · 再来一次
+	A two-minute tour	两分钟导览
+	Six short steps: draw, color, move, type, undo and search	六个简短步骤：绘制、上色、移动、输入文字、撤销和搜索
+	Open a copy of this example	打开此示例的副本
+	Your page is empty	页面是空的
+	The bar below says how to draw your first shape. You can also place an image with File › Place or paste with {key}.	下方的提示栏会告诉你如何绘制第一个形状。你也可以用 文件 › 置入 置入图像，或用 {key} 粘贴。
+	Show Frame Timings in the Status Bar	在状态栏中显示帧耗时
+	Draw a rectangle	绘制一个矩形
+	Choose the Rectangle tool in the toolbar (or press M), then drag on the page.	在工具栏中选择矩形工具（或按 M），然后在页面上拖动。
+	Change its fill color	更改它的填充颜色
+	With the shape selected, pick a new Fill color in the Properties panel on the right.	选中形状后，在右侧的属性面板中选择新的填充颜色。
+	Move and resize it	移动并调整大小
+	With the Selection tool (V), drag the shape to move it, or drag a corner handle to resize it.	使用选择工具 (V) 拖动形状即可移动，拖动角上的控制点即可调整大小。
+	Add some text	添加一些文字
+	Choose the Type tool (or press T), click on the page and type a few words. Press Esc when you are done.	选择文字工具（或按 T），在页面上单击并输入几个字。完成后按 Esc。
+	Undo a step	撤销一步
+	Press {key} (or Edit › Undo) to take back the last change. Everything can be undone, so feel free to try things.	按 {key}（或 编辑 › 撤销）撤销上一次更改。所有操作都可以撤销，放心尝试吧。
+	Find anything	查找任何内容
+	Press {key} and type what you want to do, such as “align” or “export”, to find any command.	按 {key} 并输入你想做的事，例如“对齐”或“导出”，即可找到任何命令。
+@plural	Deleted {n} object|Deleted {n} objects	已删除 {n} 个对象
+@plural	Cut {n} object|Cut {n} objects	已剪切 {n} 个对象
+@plural	Ungrouped {n} object|Ungrouped {n} objects	已取消编组 {n} 个对象
+@plural	Released {n} compound path|Released {n} compound paths	已释放 {n} 个复合路径
+@plural	Expanded {n} object|Expanded {n} objects	已扩展 {n} 个对象
+@plural	Flattened {n} object|Flattened {n} objects	已拼合 {n} 个对象
+@plural	Combined {n} object|Combined {n} objects	已组合 {n} 个对象
+@msg	no example `{name}` (examples: {_1})	没有示例 `{name}`（示例：{_1}）
+@msg	action must be start, back, skip or end (not `{other}`)	action 必须是 start、back、skip 或 end（不是 `{other}`）

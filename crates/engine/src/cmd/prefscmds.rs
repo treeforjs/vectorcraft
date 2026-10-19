@@ -49,7 +49,7 @@ pub struct PrefSpec {
     pub kind: PrefKind,
 }
 
-/// Categories in Illustrator's order (Plug-ins & Scratch Disks is "Performance & Storage" here).
+/// Categories in Illustrator's order (its Plug-ins & Scratch Disks are under Performance here).
 pub const PREF_CATEGORIES: &[&str] = &[
     "General",
     "Selection & Anchor Display",
@@ -59,7 +59,6 @@ pub const PREF_CATEGORIES: &[&str] = &[
     "Smart Guides",
     "Slices",
     "Hyphenation",
-    "Performance & Storage",
     "User Interface",
     "Performance",
     "File Handling",
@@ -249,10 +248,6 @@ pub const PREF_SPECS: &[PrefSpec] = &[
         ])
     ),
     p!("hyphenationExceptions", "Hyphenation", "", "Exceptions (comma separated)", text),
-    // Performance & Storage
-    p!("pluginsFolder", "Performance & Storage", "Plug-ins", "Additional Plug-ins Folder", text),
-    p!("scratchPrimary", "Performance & Storage", "Scratch Disks", "Primary", text),
-    p!("scratchSecondary", "Performance & Storage", "Scratch Disks", "Secondary", text),
     // User Interface
     p!(
         "uiBrightness",
@@ -289,6 +284,10 @@ pub const PREF_SPECS: &[PrefSpec] = &[
     p!("historyStates", "Performance", "", "History States", int(5, 1000)),
     p!("realTimeDrawing", "Performance", "", "Real-time Drawing and Editing", bool),
     p!("renderThreads", "Performance", "", "Render Threads (-1 = Automatic)", int(-1, 64)),
+    // Performance › Plug-ins and Scratch Disks (after the GPU and rendering preferences)
+    p!("pluginsFolder", "Performance", "Plug-ins", "Additional Plug-ins Folder", text),
+    p!("scratchPrimary", "Performance", "Scratch Disks", "Primary", text),
+    p!("scratchSecondary", "Performance", "Scratch Disks", "Secondary", text),
     // File Handling
     p!("backgroundSave", "File Handling", "", "Enable Background Save", bool),
     p!("backgroundExport", "File Handling", "", "Enable Background Export", bool),

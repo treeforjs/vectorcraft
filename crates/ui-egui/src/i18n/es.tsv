@@ -2014,7 +2014,6 @@
 	Percent:	Porcentaje:
 	Perceptual Scales	Escalas perceptuales
 	Performance	Rendimiento
-	Performance & Storage	Rendimiento y almacenamiento
 	Permissions	Permisos
 	Permissions password:	Contraseña de permisos:
 	Perspective	Perspectiva
@@ -4459,3 +4458,41 @@ axis	Both	Ambos
 	Move where the printed pages fall on the art.	Mueve dónde caen las páginas impresas sobre el diseño.
 	Zoom in and out of the page.	Acerca y aleja la vista de la página.
 @msg	layout must be starter, basic or advanced, not {v}	el diseño debe ser starter, basic o advanced, no {v}
+# First steps: Home's examples, Learn the Basics, the empty page and Undo toasts.
+	Learn the Basics	Aprender lo básico
+	Open an Example	Abrir un ejemplo
+	Step {n} of {total}	Paso {n} de {total}
+	End the tour	Terminar el recorrido
+	Back	Atrás
+	Skip	Omitir
+	Go to the next step	Ir al paso siguiente
+	You know the basics	Ya conoce lo básico
+	Keep drawing, or open an example from Home to see what VectorCraft can do. Help › Learn the Basics starts this tour again.	Siga dibujando o abra un ejemplo desde Inicio para ver lo que puede hacer VectorCraft. Ayuda › Aprender lo básico vuelve a iniciar este recorrido.
+	Done · take it again	Listo · repetir
+	A two-minute tour	Un recorrido de dos minutos
+	Six short steps: draw, color, move, type, undo and search	Seis pasos breves: dibujar, colorear, mover, escribir, deshacer y buscar
+	Open a copy of this example	Abrir una copia de este ejemplo
+	Your page is empty	La página está vacía
+	The bar below says how to draw your first shape. You can also place an image with File › Place or paste with {key}.	La barra de abajo indica cómo dibujar su primera forma. También puede colocar una imagen con Archivo › Colocar o pegar con {key}.
+	Show Frame Timings in the Status Bar	Mostrar los tiempos de fotograma en la barra de estado
+	Draw a rectangle	Dibujar un rectángulo
+	Choose the Rectangle tool in the toolbar (or press M), then drag on the page.	Elija la herramienta Rectángulo en la barra de herramientas (o pulse M) y arrastre sobre la página.
+	Change its fill color	Cambiar su color de relleno
+	With the shape selected, pick a new Fill color in the Properties panel on the right.	Con la forma seleccionada, elija un nuevo color de relleno en el panel Propiedades, a la derecha.
+	Move and resize it	Moverlo y cambiar su tamaño
+	With the Selection tool (V), drag the shape to move it, or drag a corner handle to resize it.	Con la herramienta Selección (V), arrastre la forma para moverla o arrastre un tirador de esquina para cambiar su tamaño.
+	Add some text	Añadir texto
+	Choose the Type tool (or press T), click on the page and type a few words. Press Esc when you are done.	Elija la herramienta Texto (o pulse T), haga clic en la página y escriba unas palabras. Pulse Esc cuando termine.
+	Undo a step	Deshacer un paso
+	Press {key} (or Edit › Undo) to take back the last change. Everything can be undone, so feel free to try things.	Pulse {key} (o Edición › Deshacer) para deshacer el último cambio. Todo se puede deshacer, así que pruebe sin miedo.
+	Find anything	Encontrar cualquier cosa
+	Press {key} and type what you want to do, such as “align” or “export”, to find any command.	Pulse {key} y escriba lo que quiere hacer, como «alinear» o «exportar», para encontrar cualquier comando.
+@plural	Deleted {n} object|Deleted {n} objects	{n} objeto eliminado|{n} objetos eliminados
+@plural	Cut {n} object|Cut {n} objects	{n} objeto cortado|{n} objetos cortados
+@plural	Ungrouped {n} object|Ungrouped {n} objects	{n} objeto desagrupado|{n} objetos desagrupados
+@plural	Released {n} compound path|Released {n} compound paths	{n} trazado compuesto liberado|{n} trazados compuestos liberados
+@plural	Expanded {n} object|Expanded {n} objects	{n} objeto expandido|{n} objetos expandidos
+@plural	Flattened {n} object|Flattened {n} objects	{n} objeto acoplado|{n} objetos acoplados
+@plural	Combined {n} object|Combined {n} objects	{n} objeto combinado|{n} objetos combinados
+@msg	no example `{name}` (examples: {_1})	no hay ningún ejemplo `{name}` (ejemplos: {_1})
+@msg	action must be start, back, skip or end (not `{other}`)	action debe ser start, back, skip o end (no `{other}`)
