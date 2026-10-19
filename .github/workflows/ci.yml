@@ -117,13 +117,13 @@ jobs:
       # Main saves its build for the next runs and deletes the one it replaced, so a single copy
       # (several GB) counts against the cache budget.
       - name: Record the build's commit
-        if: (github.ref == 'refs/heads/main' || github.head_ref == 'claude/project-thread-t9lzky') && !cancelled()
+        if: github.ref == 'refs/heads/main' && !cancelled()
         run: |
           echo "$GITHUB_SHA" > target/.ci-build-sha
           du -sh target
 
       - name: Save the build
-        if: (github.ref == 'refs/heads/main' || github.head_ref == 'claude/project-thread-t9lzky') && !cancelled()
+        if: github.ref == 'refs/heads/main' && !cancelled()
         uses: actions/cache/save@v4
         with:
           path: target
