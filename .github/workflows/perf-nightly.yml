@@ -1,0 +1,96 @@
+name: Perf (nightly)
+
+# The performance budgets (docs/performance.md): `cargo xtask perf` on a hosted Linux runner,
+# every night and on demand. It never runs on pull requests, so it can't block one. It fails
+# when an enforced budget in perf/budgets.toml breaks or a scenario's p50 regresses more than
+# 15 % against perf/baseline.json from the same machine class (OS, architecture, CPU model and
+# core count; other classes are never compared). The table goes to the job summary; results.json
+# is uploaded as an artifact.
+#
+# Hosted runners are shared machines: their timings move more than a dedicated machine's, and
+# the CPU model behind ubuntu-latest changes from run to run. A run on a CPU the baseline wasn't
+# recorded on skips the regression check and only judges the budgets.
+#
+# To give this runner class a baseline: run it by hand with "update_baseline", download the
+# `perf-baseline` artifact and commit it as perf/baseline.json in a PR.
+
+on:
+  schedule:
+    - cron: "41 3 * * *"
+  workflow_dispatch:
+    inputs:
+      quick:
+        description: "Quick subset (small documents, no budgets)"
+        type: boolean
+        default: false
+      update_baseline:
+        description: "Also write perf/baseline.json from this run (uploaded as an artifact, not committed)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perf-nightly
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  perf:
+    name: perf (ubuntu, CPU canvas)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: perf-release
+
+      - name: Run benchmarks
+        id: perf
+        env:
+          QUICK: ${{ inputs.quick }}
+          UPDATE: ${{ inputs.update_baseline }}
+        run: |
+          args=()
+          if [ "$QUICK" = "true" ]; then args+=(--quick); fi
+          if [ "$UPDATE" = "true" ]; then args+=(--update-baseline); fi
+          cargo xtask perf "${args[@]}"
+
+      - name: Job summary
+        if: always()
+        run: |
+          if [ -f target/perf/summary.md ]; then
+            cat target/perf/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No perf summary: the run failed before writing one (see the log)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-results
+          path: |
+            target/perf/*.json
+            target/perf/summary.md
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload baseline
+        if: always() && inputs.update_baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-baseline
+          path: perf/baseline.json
+          if-no-files-found: warn
+          retention-days: 30

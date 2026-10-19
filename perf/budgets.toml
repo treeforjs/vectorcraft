@@ -1,0 +1,234 @@
+# Performance budgets for `cargo xtask perf` (docs/performance.md).
+#
+# Interactive scenarios of everyday vector editing on a dense document: 10,000 paths (stroked
+# ellipses, translucent rectangles, stroked stars) and 200 point-type labels on a 1600×1200 pt
+# page, the canvas a 1920×1080 viewport rendered on the CPU like the desktop canvas.
+#
+# Each [[scenario]] is measured by one row of one bench (`bench` + `row`, the row's exact name in
+# the bench's `--json` report), judged on `metric` (p50 | p95 | max; default p95) against
+# `budget_ms`. `enforce = false` marks a target the code doesn't meet yet: it is reported as
+# "over budget" but only a regression fails the run; flip it to true in the PR that meets it.
+# Scenarios the code can't support yet carry `not_measurable` (why) instead of a bench: never
+# invent a number for them.
+#
+# Budget classes: a frame of a drag or a canvas refresh ≤ 16–25 ms (one display frame at 60 Hz,
+# with headroom); a command and the refresh after it ≤ 50–100 ms (feels immediate); opening or
+# saving a large file ≤ 1–3 s.
+#
+# Benches run in release with `--json <file>` appended. `quick_args` = also runs in
+# `cargo xtask perf --quick` (a 1,000-path document; budgets don't apply there).
+
+[settings]
+# A scenario regresses when its p50 grows by more than this share of the baseline…
+regression_pct = 15.0
+# …and by more than this many milliseconds (timer noise on very fast rows).
+regression_min_ms = 1.0
+
+[[bench]]
+name = "perf_scenarios"
+package = "vectorcraft-engine"
+quick_args = ["--quick"]
+note = "10,000-path document: drags, commands, undo, live effects, area type, Pathfinder, open/save; CPU canvas 1920x1080"
+
+# ---- drags: one pointer move of a tool drag plus the canvas refresh ---------------------------
+
+[[scenario]]
+id = "V01"
+title = "Drag 1 selected object with the Selection tool (per move + canvas refresh)"
+bench = "perf_scenarios"
+row = "selection drag, 1 object (per move + canvas render)"
+budget_ms = 25
+# Misses today (2026-10-19, 4-core Xeon): p95 55 ms: the whole viewport re-renders every move (V04).
+enforce = false
+
+[[scenario]]
+id = "V02"
+title = "Drag 1,000 selected objects with the Selection tool (per move + canvas refresh)"
+bench = "perf_scenarios"
+row = "selection drag, 1,000 objects (per move + canvas render)"
+budget_ms = 25
+# Misses today (2026-10-19, 4-core Xeon): p95 79 ms: the full re-render (V04) plus ~10 ms of tool event.
+enforce = false
+
+[[scenario]]
+id = "V03"
+title = "Edit an anchor: Direct Selection handle drag on a 5,000-anchor path at 800 % (per move + refresh)"
+bench = "perf_scenarios"
+row = "direct selection handle drag, 5,000-anchor path (per move + canvas render)"
+budget_ms = 16
+# Misses today (2026-10-19, 4-core Xeon): p95 83 ms: the zoomed-in render of the long stroked path.
+enforce = false
+
+# ---- canvas refresh: zoom and pan re-render the whole viewport --------------------------------
+
+[[scenario]]
+id = "V04"
+title = "Canvas refresh, fit page"
+bench = "perf_scenarios"
+row = "canvas render, fit page 1920x1080"
+budget_ms = 25
+# Misses today (2026-10-19, 4-core Xeon): p95 54 ms on 4 cores.
+enforce = false
+
+[[scenario]]
+id = "V05"
+title = "Canvas refresh after a pan"
+bench = "perf_scenarios"
+row = "canvas render after a pan, 1920x1080"
+budget_ms = 25
+# Misses today (2026-10-19, 4-core Xeon): p95 58 ms on 4 cores.
+enforce = false
+
+[[scenario]]
+id = "V06"
+title = "Canvas refresh at 400 % zoom"
+bench = "perf_scenarios"
+row = "canvas render at 400% zoom, 1920x1080"
+budget_ms = 16
+# Misses today (2026-10-19, 4-core Xeon): p95 22 ms on 4 cores.
+enforce = false
+
+# ---- commands on many objects -----------------------------------------------------------------
+
+[[scenario]]
+id = "V07"
+title = "Move 1,000 objects (Object › Transform › Move) + refresh"
+bench = "perf_scenarios"
+row = "object.move 1,000 objects + canvas render"
+budget_ms = 50
+# Misses today (2026-10-19, 4-core Xeon): p95 68 ms: ~10 ms of command, the rest the full re-render.
+enforce = false
+
+[[scenario]]
+id = "V08"
+title = "Change the fill of 1,000 objects + refresh"
+bench = "perf_scenarios"
+row = "paint.setFill on 1,000 objects + canvas render"
+budget_ms = 100
+
+[[scenario]]
+id = "V09"
+title = "Change the stroke weight of 1,000 objects + refresh"
+bench = "perf_scenarios"
+row = "stroke.set weight on 1,000 objects + canvas render"
+budget_ms = 100
+
+[[scenario]]
+id = "V10"
+title = "Undo / redo a move of 1,000 objects + refresh"
+bench = "perf_scenarios"
+row = "undo / redo a move of 1,000 objects + canvas render"
+budget_ms = 50
+# Misses today (2026-10-19, 4-core Xeon): p95 48 ms here but 95 ms on a busy machine: at the edge.
+enforce = false
+
+[[scenario]]
+id = "V11"
+title = "Select All (10,200 objects)"
+bench = "perf_scenarios"
+row = "select all"
+budget_ms = 50
+# Misses today (2026-10-19, 4-core Xeon): p95 177 ms: the selection is built in quadratic time.
+enforce = false
+
+# ---- live effects -----------------------------------------------------------------------------
+
+[[scenario]]
+id = "V12"
+title = "Apply a Drop Shadow to 200 objects + refresh"
+bench = "perf_scenarios"
+row = "effect.apply drop shadow on 200 objects + canvas render"
+budget_ms = 100
+# Misses today (2026-10-19, 4-core Xeon): p95 99 ms here but 127 ms on a busy machine: at the edge.
+enforce = false
+
+[[scenario]]
+id = "V13"
+title = "Change the Gaussian Blur radius of 200 objects (slider step) + refresh"
+bench = "perf_scenarios"
+row = "Gaussian Blur radius change on 200 objects + canvas render"
+budget_ms = 100
+# Misses today (2026-10-19, 4-core Xeon): p95 130 ms.
+enforce = false
+
+# ---- type -------------------------------------------------------------------------------------
+
+[[scenario]]
+id = "V14"
+title = "Type a character in a 5,000-word area text + refresh"
+bench = "perf_scenarios"
+row = "type a character in a 5,000-word area text + canvas render"
+budget_ms = 25
+# Misses today (2026-10-19, 4-core Xeon): p95 356 ms: the render lays out and outlines the whole story again.
+enforce = false
+
+[[scenario]]
+id = "V15"
+title = "Resize a 5,000-word area text frame (reflow) + refresh"
+bench = "perf_scenarios"
+row = "resize a 5,000-word area text frame (reflow) + canvas render"
+budget_ms = 50
+# Misses today (2026-10-19, 4-core Xeon): p95 443 ms.
+enforce = false
+
+# ---- Pathfinder -------------------------------------------------------------------------------
+
+[[scenario]]
+id = "V16"
+title = "Pathfinder Unite, 1,000 paths"
+bench = "perf_scenarios"
+row = "Pathfinder Unite, 1,000 paths"
+budget_ms = 100
+
+[[scenario]]
+id = "V17"
+title = "Pathfinder Minus Front, two 2,000-anchor stars"
+bench = "perf_scenarios"
+row = "Pathfinder Minus Front, two 2,000-anchor stars"
+budget_ms = 100
+# Misses today (2026-10-19, 4-core Xeon): p95 109 ms (p50 66 ms).
+enforce = false
+
+# ---- open and save the dense document ---------------------------------------------------------
+
+[[scenario]]
+id = "V18"
+title = "Save the dense document as .svg"
+bench = "perf_scenarios"
+row = "save .svg (dense document)"
+budget_ms = 1000
+
+[[scenario]]
+id = "V19"
+title = "Open the dense document from .svg"
+bench = "perf_scenarios"
+row = "open .svg (dense document)"
+budget_ms = 1000
+
+[[scenario]]
+id = "V20"
+title = "Save the dense document as PDF-compatible .ai"
+bench = "perf_scenarios"
+row = "save .ai (dense document)"
+budget_ms = 3000
+
+[[scenario]]
+id = "V21"
+title = "Open the dense document from PDF-compatible .ai"
+bench = "perf_scenarios"
+row = "open .ai (dense document)"
+budget_ms = 3000
+
+[[scenario]]
+id = "V22"
+title = "Save the dense document as .vectorcraft"
+bench = "perf_scenarios"
+row = "save .vectorcraft (dense document)"
+budget_ms = 1000
+
+[[scenario]]
+id = "V23"
+title = "Open the dense document from .vectorcraft"
+bench = "perf_scenarios"
+row = "open .vectorcraft (dense document)"
+budget_ms = 1000
