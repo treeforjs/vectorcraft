@@ -4548,8 +4548,8 @@ milestone = "M13"
 status = "partial"
 commands = []
 tools = []
-evidence = []
-notes = "Every command is scriptable over MCP, the CLI and the control channel; an in-app script runtime pending"
+evidence = ["apps/vectorcraft-cli/tests/cli.rs::script_runs_a_file_then_saves_and_exports"]
+notes = "Every command is scriptable over MCP, the control channel and the CLI (`vectorcraft-cli script` runs a file of steps, headless or in the app); an in-app script runtime pending"
 
 [[feature]]
 id = "auto.graph-data"
