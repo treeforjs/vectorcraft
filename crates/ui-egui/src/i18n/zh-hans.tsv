@@ -440,7 +440,6 @@
 	Brush Affects:	画笔影响：
 	Brush Definition	画笔定义
 	Brush Libraries	画笔库
-	Brush Libraries (on the roadmap)	画笔库 (规划中)
 	Brush Options…	画笔选项…
 	Brush Strokes	画笔描边
 	Brushes	画笔
@@ -3824,3 +3823,26 @@ axis	Both	两者
 	This isn't an SVG <filter> element.	这不是 SVG <filter> 元素。
 @msg	Import SVG Filter… can't pick a file in the browser yet	在浏览器中，“导入 SVG 滤镜…”还无法选择文件
 @msg	Imported {n} SVG filter(s)	已导入 {n} 个 SVG 滤镜
+	Open Brush Library	打开画笔库
+	Save Brush Library	存储画笔库
+	Save Brush Library…	保存画笔库…
+	Selected Brushes Only	仅限选择的画笔
+	{kind} Brush	{kind}画笔
+	Add to Brushes	添加到画笔
+	Arrows	箭头
+	Borders	边框
+	Brush Library	画笔库
+	Decorative Scatter	装饰散点
+	Ink and Calligraphy	墨水与书法
+	Paint and Pencil	颜料与铅笔
+	Brush Libraries Menu	画笔库菜单
+	User Brush Library 1	用户画笔库 1
+	User Brush Library 2	用户画笔库 2
+	User Brush Library 3	用户画笔库 3
+	User Brush Library 4	用户画笔库 4
+	User Brush Library 5	用户画笔库 5
+	User Brush Library 6	用户画笔库 6
+	User Brush Library 7	用户画笔库 7
+	User Brush Library 8	用户画笔库 8
+	User Brush Library 9	用户画笔库 9
+	User Brush Library 10	用户画笔库 10

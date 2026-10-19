@@ -10,27 +10,27 @@ use vectorcraft_geom::{Anchor, FillRule, PathData, Point, Rect, SubPath, shapes}
 
 use crate::{ArtBrush, ArtScale, Bristle, BristleShape, Brush, BrushKind, Calligraphic, Colorization, Direction, PatternBrush, PatternFit, Scatter};
 
-fn fill(c: Color) -> Appearance {
+pub(crate) fn fill(c: Color) -> Appearance {
     Appearance { items: vec![AppearanceItem::Fill(FillLayer::new(Paint::solid(c)))], ..Default::default() }
 }
 
-fn path(p: PathData, c: Color) -> Node {
+pub(crate) fn path(p: PathData, c: Color) -> Node {
     Node::path(NodeId(0), p, fill(c))
 }
 
-fn group(children: Vec<Node>) -> Node {
+pub(crate) fn group(children: Vec<Node>) -> Node {
     Node::group(NodeId(0), children.into_iter().map(Arc::new).collect())
 }
 
 /// Even-odd compound of `paths`, filled `c`.
-fn compound(paths: Vec<PathData>, c: Color) -> Node {
+pub(crate) fn compound(paths: Vec<PathData>, c: Color) -> Node {
     let children = paths.into_iter().map(|p| Arc::new(Node::path(NodeId(0), p, Appearance::default()))).collect();
     let mut n = Node::new(NodeId(0), NodeKind::Compound { children, rule: FillRule::EvenOdd });
     n.appearance = fill(c);
     n
 }
 
-fn smooth_closed(pts: &[Point]) -> PathData {
+pub(crate) fn smooth_closed(pts: &[Point]) -> PathData {
     let n = pts.len();
     let anchors = (0..n)
         .map(|i| {
@@ -131,7 +131,7 @@ fn diamond_tile() -> Node {
     path(d, Color::BLACK)
 }
 
-fn calli(name: &str, angle: f64, roundness: f64, size: f64) -> Brush {
+pub(crate) fn calli(name: &str, angle: f64, roundness: f64, size: f64) -> Brush {
     Brush { name: name.into(), kind: BrushKind::Calligraphic(Calligraphic { angle, roundness, size, ..Default::default() }) }
 }
 

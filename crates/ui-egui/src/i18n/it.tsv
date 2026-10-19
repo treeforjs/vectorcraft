@@ -453,7 +453,6 @@
 	Brush Affects:	Il pennello influisce su:
 	Brush Definition	Definizione pennello
 	Brush Libraries	Librerie pennelli
-	Brush Libraries (on the roadmap)	Librerie pennelli (in programma)
 	Brush Options…	Opzioni pennello…
 	Brush Strokes	Pennellate
 	Brushes	Pennelli
@@ -4190,3 +4189,26 @@ axis	Both	Entrambi
 	This isn't an SVG <filter> element.	Questo non è un elemento SVG <filter>.
 @msg	Import SVG Filter… can't pick a file in the browser yet	Importa filtro SVG… non può ancora scegliere un file nel browser
 @msg	Imported {n} SVG filter(s)	Importati {n} filtri SVG
+	Open Brush Library	Apri libreria pennelli
+	Save Brush Library	Salva libreria pennelli
+	Save Brush Library…	Salva libreria pennelli…
+	Selected Brushes Only	Solo pennelli selezionati
+	{kind} Brush	Pennello {kind}
+	Add to Brushes	Aggiungi ai pennelli
+	Arrows	Frecce
+	Borders	Bordi
+	Brush Library	Libreria pennelli
+	Decorative Scatter	Diffusione decorativa
+	Ink and Calligraphy	Inchiostro e calligrafia
+	Paint and Pencil	Pittura e matita
+	Brush Libraries Menu	Menu Librerie pennelli
+	User Brush Library 1	Libreria pennelli utente 1
+	User Brush Library 2	Libreria pennelli utente 2
+	User Brush Library 3	Libreria pennelli utente 3
+	User Brush Library 4	Libreria pennelli utente 4
+	User Brush Library 5	Libreria pennelli utente 5
+	User Brush Library 6	Libreria pennelli utente 6
+	User Brush Library 7	Libreria pennelli utente 7
+	User Brush Library 8	Libreria pennelli utente 8
+	User Brush Library 9	Libreria pennelli utente 9
+	User Brush Library 10	Libreria pennelli utente 10

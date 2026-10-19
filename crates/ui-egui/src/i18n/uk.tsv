@@ -447,7 +447,6 @@
 	Brush Affects:	Пензель впливає на:
 	Brush Definition	Визначення пензля
 	Brush Libraries	Бібліотеки пензлів
-	Brush Libraries (on the roadmap)	Бібліотеки пензлів (у плані розвитку)
 	Brush Options…	Параметри пензля…
 	Brush Strokes	Мазки пензля
 	Brushes	Пензлі
@@ -4173,3 +4172,26 @@ axis	Both	Обидві
 	This isn't an SVG <filter> element.	Це не елемент SVG <filter>.
 @msg	Import SVG Filter… can't pick a file in the browser yet	«Імпортувати фільтр SVG…» поки не може вибрати файл у браузері
 @msg	Imported {n} SVG filter(s)	Імпортовано фільтрів SVG: {n}
+	Open Brush Library	Відкрити бібліотеку пензлів
+	Save Brush Library	Зберегти бібліотеку пензлів
+	Save Brush Library…	Зберегти бібліотеку пензлів…
+	Selected Brushes Only	Тільки вибрані пензлі
+	{kind} Brush	Пензель: {kind}
+	Add to Brushes	Додати до пензлів
+	Arrows	Стрілки
+	Borders	Рамки
+	Brush Library	Бібліотека пензлів
+	Decorative Scatter	Декоративні розсипи
+	Ink and Calligraphy	Туш і каліграфія
+	Paint and Pencil	Фарби й олівець
+	Brush Libraries Menu	Меню "Бібліотеки пензлів"
+	User Brush Library 1	Користувацька бібліотека пензлів 1
+	User Brush Library 2	Користувацька бібліотека пензлів 2
+	User Brush Library 3	Користувацька бібліотека пензлів 3
+	User Brush Library 4	Користувацька бібліотека пензлів 4
+	User Brush Library 5	Користувацька бібліотека пензлів 5
+	User Brush Library 6	Користувацька бібліотека пензлів 6
+	User Brush Library 7	Користувацька бібліотека пензлів 7
+	User Brush Library 8	Користувацька бібліотека пензлів 8
+	User Brush Library 9	Користувацька бібліотека пензлів 9
+	User Brush Library 10	Користувацька бібліотека пензлів 10

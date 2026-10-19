@@ -2,15 +2,22 @@
 //! applies it to the selected paths (and makes it the Paintbrush's current brush); double-clicking
 //! one opens its Brush Options.
 
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::sync::Arc;
 
-use egui::{Sense, Ui, vec2};
+use egui::{Rect, Sense, Ui, vec2};
 use serde_json::{Value, json};
+use vectorcraft_brush::libs::{BRUSH_LIBRARIES, BrushLibrary, BuiltinBrushLibrary};
 use vectorcraft_doc::{Appearance, Document, Node, PressureProfile, color::Color, color::Paint};
+use vectorcraft_engine::cmd::brushlib;
+use vectorcraft_engine::cmd::swatchlib::LibraryInfo;
 
+use super::library_panel::{self, LibraryKind, LibraryRef, Row};
 use super::{first_selected, pstate, set_pstate};
 use crate::VectorcraftApp;
 use crate::dialogs::brush_options;
+use crate::menus::Item;
 use crate::theme::Tokens;
 use crate::widgets::{self, PanelDrag, menu_item};
 
@@ -31,7 +38,12 @@ pub fn brushes(app: &mut VectorcraftApp) -> (Vec<(String, String)>, Option<Strin
 /// JSON. The stroke goes from light to heavy pen pressure and back, so pressure-sensitive brushes
 /// show how they vary.
 fn preview(ui: &Ui, def: &Value, size: egui::Vec2) -> Option<egui::TextureHandle> {
-    widgets::doc_preview(ui, &format!("brush:{def}"), size, |w, h| {
+    preview_keyed(ui, &format!("brush:{def}"), def, size)
+}
+
+/// [`preview`] cached under `key` (the definition's JSON, or anything as unique).
+fn preview_keyed(ui: &Ui, key: &str, def: &Value, size: egui::Vec2) -> Option<egui::TextureHandle> {
+    widgets::doc_preview(ui, key, size, |w, h| {
         let mut doc = Document::new(w, h);
         doc.unknown.insert("brushes".into(), json!([def]));
         let name = def["name"].as_str()?.to_string();
@@ -60,7 +72,7 @@ pub(crate) fn chip(ui: &Ui, r: egui::Rect, def: &Value) {
     }
 }
 
-fn selected_brush(app: &VectorcraftApp) -> Option<String> {
+pub(crate) fn selected_brush(app: &VectorcraftApp) -> Option<String> {
     first_selected(app).and_then(|n| n.appearance.stroke().and_then(|s| s.brush.clone()))
 }
 
@@ -166,7 +178,12 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let target = sel_brush.clone().or(current.clone());
     let has_sel = app.session.active().is_some_and(|d| !d.selection.is_empty());
     widgets::bottom_bar(ui, |ui| {
-        widgets::icon_button_enabled(ui, "library", tl!("Brush Libraries (on the roadmap)"), false, false, 24.0);
+        let open = app.ui.library_panel.as_ref().is_some_and(|o| o.kind == BrushLibraries::KIND);
+        let lr = widgets::icon_button(ui, "library", BrushLibraries::MENU, open, 24.0);
+        egui::Popup::menu(&lr).show(|ui| {
+            ui.set_min_width(200.0);
+            library_panel::library_menu::<BrushLibraries>(app, ui);
+        });
         if widgets::icon_button_enabled(ui, "dc-remove-brush", tl!("Remove Brush Stroke"), false, has_brush, 24.0).clicked() {
             app.run("brush.remove", json!({})).ok();
         }
@@ -240,6 +257,11 @@ pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
         }
     }
     ui.separator();
+    ui.menu_button(tl!("Open Brush Library"), |ui| library_panel::library_menu::<BrushLibraries>(app, ui));
+    if menu_item(ui, tl!("Save Brush Library…"), app.session.active().is_some(), false) {
+        open_save(app);
+    }
+    ui.separator();
     let list: bool = pstate(ui.ctx(), "br-list");
     if menu_item(ui, tl!("Thumbnail View"), true, !list) {
         set_pstate(ui.ctx(), "br-list", false);
@@ -247,6 +269,191 @@ pub fn menu(app: &mut VectorcraftApp, ui: &mut Ui) {
     if menu_item(ui, tl!("List View"), true, list) {
         set_pstate(ui.ctx(), "br-list", true);
     }
+}
+
+// ---------- libraries ----------
+
+/// A brush of a library as the library panel shows it.
+pub(crate) struct LibBrush {
+    lib: Arc<BrushLibrary>,
+    index: usize,
+    /// Its definition, and the key its preview is cached under (made once per library).
+    def: Value,
+    key: String,
+}
+
+impl LibBrush {
+    fn name(&self) -> &str {
+        self.lib.brushes.get(self.index).map_or("", |b| b.name.as_str())
+    }
+}
+
+/// A library's brushes as the library panel shows them.
+type LibBrushes = Arc<Vec<LibBrush>>;
+
+thread_local! {
+    /// The libraries the library panel showed, with their brushes' definitions (made once per
+    /// library, so a frame doesn't serialize every brush's art again).
+    static SHOWN_LIBS: RefCell<Vec<(Arc<BrushLibrary>, LibBrushes)>> = const { RefCell::new(Vec::new()) };
+}
+
+fn shown_library(lib: Arc<BrushLibrary>) -> LibBrushes {
+    SHOWN_LIBS.with(|c| {
+        let mut c = c.borrow_mut();
+        if let Some((_, shown)) = c.iter().find(|(l, _)| Arc::ptr_eq(l, &lib)) {
+            return shown.clone();
+        }
+        let shown: LibBrushes = Arc::new(
+            lib.brushes
+                .iter()
+                .enumerate()
+                .map(|(index, b)| {
+                    let def = serde_json::to_value(b).unwrap_or_default();
+                    let key = format!("brush:{def}");
+                    LibBrush { lib: lib.clone(), index, def, key }
+                })
+                .collect(),
+        );
+        if c.len() >= 16 {
+            c.remove(0);
+        }
+        c.push((lib, shown.clone()));
+        shown
+    })
+}
+
+/// Brush libraries in the library panel (engine: `brush.libraries`, `brush.addFromLibrary`…).
+pub(crate) struct BrushLibraries;
+
+impl LibraryKind for BrushLibraries {
+    const KIND: &'static str = "brushes";
+    const OPEN: &'static str = "window.brushLibrary";
+    const MENU: &'static str = "Brush Libraries Menu";
+    const ADD: &'static str = "Add to Brushes";
+    /// Strokes need room to show.
+    const VIEW: super::swatches::View = super::swatches::View::LargeThumb;
+    type Lib = LibBrushes;
+    type Item = LibBrush;
+
+    fn list(app: &VectorcraftApp) -> Vec<LibraryRef> {
+        let libs = brushlib::libraries(&app.session).into_iter();
+        libs.map(|l| LibraryRef { submenu: library_panel::submenu(l.category), id: l.id, name: l.name }).collect()
+    }
+    fn get(app: &VectorcraftApp, id: &str) -> Option<(String, Self::Lib)> {
+        brushlib::library(&app.session, id).map(|(info, lib)| (info.name, shown_library(lib)))
+    }
+    fn rows<'a>(lib: &'a Self::Lib, query: &str) -> Vec<Row<'a, LibBrush>> {
+        let found = |n: &str| query.is_empty() || n.to_lowercase().contains(query);
+        lib.iter().filter(|b| found(b.name())).map(|b| Row { name: b.name(), item: Some(b) }).collect()
+    }
+    /// The brush's stroke preview on white.
+    fn draw(_: &VectorcraftApp, ui: &Ui, r: Rect, b: &LibBrush, selected: bool, hovered: bool) {
+        let t = Tokens::get(ui.ctx());
+        ui.painter().rect_filled(r, 0.0, egui::Color32::WHITE);
+        if let Some(tex) = preview_keyed(ui, &b.key, &b.def, r.size()) {
+            ui.painter().image(tex.id(), r, Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)), egui::Color32::WHITE);
+        }
+        let color = if selected {
+            t.accent
+        } else if hovered {
+            t.text
+        } else {
+            t.border
+        };
+        ui.painter().rect_stroke(r, 0.0, egui::Stroke::new(if selected { 2.0 } else { 1.0 }, color), egui::StrokeKind::Inside);
+    }
+    fn row_icons(_: &Ui, _: Rect, _: &LibBrush) {}
+    fn describe(b: &LibBrush) -> String {
+        let kind = b.lib.brushes.get(b.index).map_or("", |b| b.kind.label());
+        crate::i18n::fmt(tl!("{kind} Brush"), &[("kind", tl!(kind))])
+    }
+    /// Adds the brush and applies it to the selected paths (nothing selected: makes it the
+    /// Paintbrush's), as one step.
+    fn click(app: &mut VectorcraftApp, _: &Ui, id: &str, name: &str) {
+        run(app, "brush.addFromLibrary", json!({"library": id, "name": name, "apply": true}));
+    }
+    fn add(app: &mut VectorcraftApp, id: &str, names: Vec<String>) {
+        run(app, "brush.addFromLibrary", json!({"library": id, "names": names}));
+    }
+    fn menu_tail(app: &mut VectorcraftApp, ui: &mut Ui) {
+        ui.separator();
+        if menu_item(ui, tl!("Other Library…"), true, false)
+            && let Err(e) = other_library(app, None)
+        {
+            app.status(e);
+        }
+        if menu_item(ui, tl!("Save Brush Library…"), app.session.active().is_some(), false) {
+            open_save(app);
+        }
+    }
+}
+
+/// Run `cmd`, reporting a failure in the status bar.
+fn run(app: &mut VectorcraftApp, cmd: &str, params: Value) {
+    if let Err(e) = app.run(cmd, params) {
+        app.status(e);
+    }
+}
+
+/// Save Brush Library… for the selected path's brush, else all of them.
+fn open_save(app: &mut VectorcraftApp) {
+    run(app, "ui.saveBrushLibrary", json!({}));
+}
+
+/// `window.brushLibrary {library}`: open a brush library in the library panel (`library` null
+/// closes it).
+pub(crate) fn open_library(app: &mut VectorcraftApp, p: &Value) -> Result<Value, String> {
+    library_panel::open_command::<BrushLibraries>(app, p, "brush.libraries", |app, key| {
+        brushlib::library(&app.session, key).map(|(info, lib)| (info.id, info.name, lib.len()))
+    })
+}
+
+/// `brush.loadLibrary` params, then open the library in the panel.
+pub(crate) fn load_library(app: &mut VectorcraftApp, params: Value) -> Result<Value, String> {
+    let r = app.run("brush.loadLibrary", params)?;
+    open_library(app, &json!({ "library": r["library"] }))
+}
+
+/// Other Library…: load the library (or document) at `path`, else one picked in an open dialog.
+pub(crate) fn other_library(app: &mut VectorcraftApp, path: Option<String>) -> Result<Value, String> {
+    match library_panel::pick_library_file(app, path)? {
+        Some(path) => load_library(app, json!({ "path": path })),
+        None => Ok(Value::Null),
+    }
+}
+
+/// The id prefix of the Window → Brush Libraries → User Defined slots.
+pub(crate) const USER_SLOT: &str = "window.userBrushLibrary";
+
+/// The User Defined library slot `id` (`window.userBrushLibrary3`) stands for.
+pub(crate) fn user_library(app: &VectorcraftApp, id: &str) -> Option<LibraryInfo> {
+    library_panel::user_slot(id, USER_SLOT, brushlib::libraries(&app.session))
+}
+
+/// Window → Brush Libraries.
+pub(crate) fn window_menu() -> Vec<Item> {
+    const SLOTS: [&str; 10] = [
+        "window.userBrushLibrary1",
+        "window.userBrushLibrary2",
+        "window.userBrushLibrary3",
+        "window.userBrushLibrary4",
+        "window.userBrushLibrary5",
+        "window.userBrushLibrary6",
+        "window.userBrushLibrary7",
+        "window.userBrushLibrary8",
+        "window.userBrushLibrary9",
+        "window.userBrushLibrary10",
+    ];
+    let open = |b: &'static BuiltinBrushLibrary| Item::Cmd(b.name, BrushLibraries::OPEN, json!({ "library": b.id }));
+    let mut items: Vec<Item> = BRUSH_LIBRARIES.iter().map(open).collect();
+    items.extend([
+        Item::Sep,
+        Item::Sub("User Defined", SLOTS.iter().map(|id| Item::Cmd("User Library", id, Value::Null)).collect()),
+        Item::Sep,
+        Item::Cmd("Other Library…", "window.brushLibrary.other", Value::Null),
+        Item::Cmd("Save Brush Library…", "ui.saveBrushLibrary", Value::Null),
+    ]);
+    items
 }
 
 #[cfg(test)]
