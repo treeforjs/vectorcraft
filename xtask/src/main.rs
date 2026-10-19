@@ -10,6 +10,7 @@ mod bundle;
 mod ico;
 mod layers;
 mod parity;
+mod perf;
 mod sha256;
 mod stats;
 mod version;
@@ -30,6 +31,9 @@ commands:
   parity [--json] [--partial] [--planned]
                   validate the parity checklist in parity/ against the command registry, tool catalogue
                   and tests; report progress towards the reference app
+  perf [--quick] [--update-baseline] [--threshold PCT] [--bench NAME]... [--skip-build] [--reuse]
+                  run the release benches, merge them by scenario id into target/perf/results.json,
+                  check perf/budgets.toml and perf/baseline.json (non-zero on a broken budget or regression)
   corpus [--download] [--affinity]
                   show where test corpora live; --download fetches PngSuite into corpus/pngsuite,
                   --affinity the pinned public Affinity documents into corpus/affinity
@@ -51,6 +55,7 @@ fn main() -> ExitCode {
         Some("wasm") => cmd_wasm(),
         Some("ci") => cmd_ci(),
         Some("parity") => parity::run(&rest),
+        Some("perf") => perf::run(&root(), &rest),
         Some("corpus") if rest.contains(&"--affinity") => affinity_corpus::fetch(),
         Some("corpus") => cmd_corpus(rest.contains(&"--download")),
         Some("bundle") => bundle::run(&root()),
