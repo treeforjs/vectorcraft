@@ -4113,11 +4113,11 @@ title = "Brush libraries (bundled, open, save)"
 area = "J"
 tier = "P2"
 milestone = "M10"
-status = "planned"
-commands = []
+status = "shipped"
+commands = ["brush.libraries", "brush.library", "brush.addFromLibrary", "brush.saveLibrary", "brush.loadLibrary", "window.brushLibrary", "window.brushLibrary.other", "ui.saveBrushLibrary"]
 tools = []
-evidence = []
-notes = "Bundled brush libraries (original, generated in code) pending"
+evidence = ["crates/engine/src/tests_brushlib.rs::list_and_get_every_builtin_library", "crates/engine/src/tests_brushlib.rs::save_and_load_round_trip_and_user_libraries", "crates/ui-egui/src/panels/tests_brush_libraries.rs::clicking_a_library_brush_adds_and_applies_it_in_one_step"]
+notes = "Five original built-in libraries generated in code (Arrows, Borders, Decorative Scatter, Ink and Calligraphy, Paint and Pencil); .vcbrushes files, User Defined and Other Library…"
 
 [[feature]]
 id = "brush.image-brush"

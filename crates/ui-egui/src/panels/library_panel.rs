@@ -99,6 +99,7 @@ pub fn show_window(app: &mut VectorcraftApp, ctx: &egui::Context) {
     match open.kind.as_str() {
         super::swatches::SwatchLibraries::KIND => window::<super::swatches::SwatchLibraries>(app, ctx, &open.id),
         super::graphic_styles::GraphicStyleLibraries::KIND => window::<super::graphic_styles::GraphicStyleLibraries>(app, ctx, &open.id),
+        super::brushes::BrushLibraries::KIND => window::<super::brushes::BrushLibraries>(app, ctx, &open.id),
         _ => app.ui.library_panel = None,
     }
 }

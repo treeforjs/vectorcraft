@@ -454,7 +454,6 @@
 	Brush Affects:	Le pinceau affecte :
 	Brush Definition	Définition de la forme
 	Brush Libraries	Bibliothèques de formes
-	Brush Libraries (on the roadmap)	Bibliothèques de formes (prévu dans la feuille de route)
 	Brush Options…	Options de forme…
 	Brush Strokes	Contours de forme
 	Brushes	Formes
@@ -4201,3 +4200,26 @@ axis	Both	Les deux
 	This isn't an SVG <filter> element.	Ceci n'est pas un élément SVG <filter>.
 @msg	Import SVG Filter… can't pick a file in the browser yet	Importer un filtre SVG… ne peut pas encore choisir de fichier dans le navigateur
 @msg	Imported {n} SVG filter(s)	{n} filtre(s) SVG importé(s)
+	Open Brush Library	Ouvrir une bibliothèque de formes
+	Save Brush Library	Enregistrer la bibliothèque de formes
+	Save Brush Library…	Enregistrer la bibliothèque de formes…
+	Selected Brushes Only	Formes sélectionnées uniquement
+	{kind} Brush	Forme {kind}
+	Add to Brushes	Ajouter aux formes
+	Arrows	Flèches
+	Borders	Bordures
+	Brush Library	Bibliothèque de formes
+	Decorative Scatter	Formes diffuses décoratives
+	Ink and Calligraphy	Encre et calligraphie
+	Paint and Pencil	Peinture et crayon
+	Brush Libraries Menu	Menu Bibliothèques de formes
+	User Brush Library 1	Bibliothèque de formes utilisateur 1
+	User Brush Library 2	Bibliothèque de formes utilisateur 2
+	User Brush Library 3	Bibliothèque de formes utilisateur 3
+	User Brush Library 4	Bibliothèque de formes utilisateur 4
+	User Brush Library 5	Bibliothèque de formes utilisateur 5
+	User Brush Library 6	Bibliothèque de formes utilisateur 6
+	User Brush Library 7	Bibliothèque de formes utilisateur 7
+	User Brush Library 8	Bibliothèque de formes utilisateur 8
+	User Brush Library 9	Bibliothèque de formes utilisateur 9
+	User Brush Library 10	Bibliothèque de formes utilisateur 10

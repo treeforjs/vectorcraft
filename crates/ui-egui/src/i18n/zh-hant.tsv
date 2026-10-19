@@ -451,7 +451,6 @@
 	Brush Affects:	筆刷影響：
 	Brush Definition	筆刷定義
 	Brush Libraries	筆刷資料庫
-	Brush Libraries (on the roadmap)	筆刷資料庫 (規劃中)
 	Brush Options…	筆刷選項…
 	Brush Strokes	筆刷筆畫
 	Brushes	筆刷
@@ -3607,3 +3606,26 @@ axis	Both	兩者
 	This isn't an SVG <filter> element.	這不是 SVG <filter> 元素。
 @msg	Import SVG Filter… can't pick a file in the browser yet	在瀏覽器中，「匯入 SVG 濾鏡…」還無法選擇檔案
 @msg	Imported {n} SVG filter(s)	已匯入 {n} 個 SVG 濾鏡
+	Open Brush Library	開啟筆刷資料庫
+	Save Brush Library	儲存筆刷資料庫
+	Save Brush Library…	儲存筆刷資料庫…
+	Selected Brushes Only	僅限選取的筆刷
+	{kind} Brush	{kind}筆刷
+	Add to Brushes	新增至筆刷
+	Arrows	箭頭
+	Borders	邊框
+	Brush Library	筆刷資料庫
+	Decorative Scatter	裝飾散落
+	Ink and Calligraphy	墨水與書法
+	Paint and Pencil	顏料與鉛筆
+	Brush Libraries Menu	筆刷資料庫選單
+	User Brush Library 1	使用者筆刷資料庫 1
+	User Brush Library 2	使用者筆刷資料庫 2
+	User Brush Library 3	使用者筆刷資料庫 3
+	User Brush Library 4	使用者筆刷資料庫 4
+	User Brush Library 5	使用者筆刷資料庫 5
+	User Brush Library 6	使用者筆刷資料庫 6
+	User Brush Library 7	使用者筆刷資料庫 7
+	User Brush Library 8	使用者筆刷資料庫 8
+	User Brush Library 9	使用者筆刷資料庫 9
+	User Brush Library 10	使用者筆刷資料庫 10

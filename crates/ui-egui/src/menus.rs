@@ -575,6 +575,34 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
     ("window.userGraphicStyleLibrary9", "User Graphic Style Library 9", "", "{} open the 9. User Defined graphic style library"),
     ("window.userGraphicStyleLibrary10", "User Graphic Style Library 10", "", "{} open the 10. User Defined graphic style library"),
     (
+        "window.brushLibrary",
+        "Brush Library",
+        "",
+        "{library: id or name (see brush.libraries) | null (close)} open the read-only library panel on a brush library (UI state `library_panel`, kind brushes); clicking a brush there runs brush.addFromLibrary with apply (applied to the selected paths, else made the current brush) → {open, name, count}",
+    ),
+    (
+        "window.brushLibrary.other",
+        "Other Library…",
+        "",
+        "{path?} (default: pick a file) load a .vcbrushes library, or another document's brushes (engine: brush.loadLibrary), and open it in the library panel",
+    ),
+    (
+        "ui.saveBrushLibrary",
+        "Save Brush Library…",
+        "",
+        "{names?: [brush names] (default: the selected paths' brushes)} open Save Brush Library (dialog `saveBrushLibrary`: name, user: save to the user library folder, selectedOnly); OK runs brush.saveLibrary",
+    ),
+    ("window.userBrushLibrary1", "User Brush Library 1", "", "{} open the 1. User Defined brush library (brush.libraries, category user)"),
+    ("window.userBrushLibrary2", "User Brush Library 2", "", "{} open the 2. User Defined brush library"),
+    ("window.userBrushLibrary3", "User Brush Library 3", "", "{} open the 3. User Defined brush library"),
+    ("window.userBrushLibrary4", "User Brush Library 4", "", "{} open the 4. User Defined brush library"),
+    ("window.userBrushLibrary5", "User Brush Library 5", "", "{} open the 5. User Defined brush library"),
+    ("window.userBrushLibrary6", "User Brush Library 6", "", "{} open the 6. User Defined brush library"),
+    ("window.userBrushLibrary7", "User Brush Library 7", "", "{} open the 7. User Defined brush library"),
+    ("window.userBrushLibrary8", "User Brush Library 8", "", "{} open the 8. User Defined brush library"),
+    ("window.userBrushLibrary9", "User Brush Library 9", "", "{} open the 9. User Defined brush library"),
+    ("window.userBrushLibrary10", "User Brush Library 10", "", "{} open the 10. User Defined brush library"),
+    (
         "ui.expandDialog",
         "Expand…",
         "",
@@ -1371,6 +1399,17 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             Some(l) => crate::panels::graphic_styles::open_library(app, &json!({ "library": l.id })),
             None => Err("no such user library".into()),
         },
+        "window.brushLibrary" => crate::panels::brushes::open_library(app, p),
+        "window.brushLibrary.other" => crate::panels::brushes::other_library(app, s("path")),
+        "ui.saveBrushLibrary" => {
+            let names = p.get("names").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect());
+            let names = names.unwrap_or_else(|| crate::panels::brushes::selected_brush(app).into_iter().collect());
+            crate::dialogs::save_brush_library::open(app, names)
+        }
+        id if id.starts_with(crate::panels::brushes::USER_SLOT) => match crate::panels::brushes::user_library(app, id) {
+            Some(l) => crate::panels::brushes::open_library(app, &json!({ "library": l.id })),
+            None => Err("no such user library".into()),
+        },
         "ui.expandDialog" => crate::dialogs::expand::open(app),
         "attributes.openUrl" => crate::panels::attributes::open_url(app, p),
         "ui.spotColors" => crate::dialogs::spot_colors::open(app),
@@ -1640,6 +1679,9 @@ pub fn dynamic_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
         id if id.starts_with(crate::panels::graphic_styles::USER_SLOT) => {
             crate::panels::graphic_styles::user_library(app, id).map_or_else(|| "—".into(), |l| l.name)
         }
+        id if id.starts_with(crate::panels::brushes::USER_SLOT) => {
+            crate::panels::brushes::user_library(app, id).map_or_else(|| "—".into(), |l| l.name)
+        }
         id if id.starts_with(crate::dialogs::perspective_presets::SLOT) => {
             crate::dialogs::perspective_presets::slot_preset(app, id).unwrap_or_else(|| "—".into())
         }
@@ -1655,12 +1697,13 @@ pub fn dynamic_label(app: &VectorcraftApp, id: &str, label: &str) -> String {
 /// plug-in? Such names are shown as they are, never translated (a workspace the user calls
 /// "Layers" stays "Layers").
 fn shows_a_name(id: &str, label: &str) -> bool {
-    const SLOTS: [&str; 6] = [
+    const SLOTS: [&str; 7] = [
         "file.openRecent",
         "view.goto",
         "type.recentFont",
         crate::panels::swatches::USER_SLOT,
         crate::panels::graphic_styles::USER_SLOT,
+        crate::panels::brushes::USER_SLOT,
         crate::dialogs::perspective_presets::SLOT,
     ];
     SLOTS.iter().any(|s| id.starts_with(s))
@@ -1712,6 +1755,7 @@ fn hidden_when_disabled(id: &str) -> bool {
         || id.starts_with("file.openRecent")
         || id.starts_with(crate::panels::swatches::USER_SLOT)
         || id.starts_with(crate::panels::graphic_styles::USER_SLOT)
+        || id.starts_with(crate::panels::brushes::USER_SLOT)
         || id.starts_with(crate::dialogs::perspective_presets::SLOT)
 }
 
@@ -1995,6 +2039,8 @@ pub fn enabled(app: &VectorcraftApp, id: &str) -> bool {
         "ui.flattenTransparencyDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "ui.saveGraphicStyleLibrary" => app.session.active().is_some(),
         id if id.starts_with(crate::panels::graphic_styles::USER_SLOT) => crate::panels::graphic_styles::user_library(app, id).is_some(),
+        "ui.saveBrushLibrary" => app.session.active().is_some(),
+        id if id.starts_with(crate::panels::brushes::USER_SLOT) => crate::panels::brushes::user_library(app, id).is_some(),
         "ui.expandDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
         "ui.spotColors" => app.session.active().is_some(),
         "ui.menuDialog" => app.session.active().is_some_and(|d| !d.selection.is_empty()),
@@ -2658,7 +2704,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 ),
                 todo("Variables"),
                 Sep,
-                sub("Brush Libraries", library_placeholders()),
+                sub("Brush Libraries", crate::panels::brushes::window_menu()),
                 sub("Graphic Style Libraries", crate::panels::graphic_styles::window_menu()),
                 sub("Swatch Libraries", crate::panels::swatches::window_menu()),
                 sub("Symbol Libraries", library_placeholders()),

@@ -3,6 +3,7 @@
 pub(crate) mod appearance;
 mod assets;
 mod attributes;
+pub mod brushlib;
 mod brushsym;
 mod buildcmds;
 pub mod clipboard;
@@ -255,6 +256,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(freeform::specs());
         v.extend(flatten::specs());
         v.extend(stylelib::specs());
+        v.extend(brushlib::specs());
         v.extend(library::specs());
         v.extend(expand::specs());
         v.extend(attributes::specs());

@@ -67,12 +67,10 @@ fn raster_effects_sit_in_their_submenus() {
 fn library_submenus_are_disabled_placeholders() {
     let app = app();
     let entries = menus::menu_entries(&app);
-    for lib in ["Brush Libraries", "Symbol Libraries"] {
-        let items: Vec<_> = entries.iter().filter(|e| e.path == ["Window", lib]).collect();
-        let labels: Vec<&str> = items.iter().map(|e| e.label.as_str()).collect();
-        assert_eq!(labels, ["Built-in Libraries", "User Defined", "Other Library…"], "{lib}");
-        assert!(items.iter().all(|e| !e.enabled && e.command.is_none()), "{lib}");
-    }
+    let items: Vec<_> = entries.iter().filter(|e| e.path == ["Window", "Symbol Libraries"]).collect();
+    let labels: Vec<&str> = items.iter().map(|e| e.label.as_str()).collect();
+    assert_eq!(labels, ["Built-in Libraries", "User Defined", "Other Library…"]);
+    assert!(items.iter().all(|e| !e.enabled && e.command.is_none()));
 }
 
 #[test]

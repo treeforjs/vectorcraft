@@ -1015,7 +1015,6 @@
 	Browser	ブラウザー
 	Brush Affects:	ブラシの影響:
 	Brush Definition	ブラシの定義
-	Brush Libraries (on the roadmap)	ブラシライブラリ (今後対応予定)
 	Brush Options…	ブラシオプション…
 	Built-in presets are read-only: New… starts an editable copy.	組み込みのプリセットは読み取り専用です。「新規…」で編集可能なコピーを作成できます。
 	Built-in presets don't change: New makes a copy you can edit.	組み込みのプリセットは変更できません。「新規」で編集可能なコピーを作成します。
@@ -4182,3 +4181,26 @@ theme	Appearance	外観
 	This isn't an SVG <filter> element.	SVG の <filter> 要素ではありません。
 @msg	Import SVG Filter… can't pick a file in the browser yet	ブラウザーでは「SVG フィルターを読み込み…」でファイルをまだ選択できません
 @msg	Imported {n} SVG filter(s)	SVG フィルターを {n} 個読み込みました
+	Open Brush Library	ブラシライブラリを開く
+	Save Brush Library	ブラシライブラリを保存
+	Save Brush Library…	ブラシライブラリを保存…
+	Selected Brushes Only	選択したブラシのみ
+	{kind} Brush	{kind}ブラシ
+	Add to Brushes	ブラシに追加
+	Arrows	矢印
+	Borders	ボーダー
+	Brush Library	ブラシライブラリ
+	Decorative Scatter	装飾散布
+	Ink and Calligraphy	インクとカリグラフィ
+	Paint and Pencil	絵の具と鉛筆
+	Brush Libraries Menu	ブラシライブラリメニュー
+	User Brush Library 1	ユーザーブラシライブラリ 1
+	User Brush Library 2	ユーザーブラシライブラリ 2
+	User Brush Library 3	ユーザーブラシライブラリ 3
+	User Brush Library 4	ユーザーブラシライブラリ 4
+	User Brush Library 5	ユーザーブラシライブラリ 5
+	User Brush Library 6	ユーザーブラシライブラリ 6
+	User Brush Library 7	ユーザーブラシライブラリ 7
+	User Brush Library 8	ユーザーブラシライブラリ 8
+	User Brush Library 9	ユーザーブラシライブラリ 9
+	User Brush Library 10	ユーザーブラシライブラリ 10
