@@ -109,6 +109,8 @@ if has appimage; then
   APPDIR="$WORK/VectorCraft.AppDir"
   cp -R "$STAGE" "$APPDIR"
   mv "$APPDIR/usr/share/doc" "$WORK/doc-unused"
+  install -Dm644 "$ROOT/assets/fonts/OFL-Cantarell.txt" "$APPDIR/usr/share/licenses/vectorcraft/OFL-Cantarell.txt"
+  install -Dm644 "$ROOT/NOTICE" "$APPDIR/usr/share/licenses/vectorcraft/NOTICE"
   ln -s usr/bin/vectorcraft "$APPDIR/AppRun"
   install -m644 "$HERE/$APP_ID.desktop" "$APPDIR/$APP_ID.desktop"
   install -m644 "$ROOT/assets/app-icon/hicolor/256x256/apps/$APP_ID.png" "$APPDIR/$APP_ID.png"

@@ -50,6 +50,8 @@ copy_docs() {
   for f in README.md LICENSE LICENSE-MIT LICENSE-APACHE NOTICE COPYRIGHT; do
     if [ -f "$ROOT/$f" ]; then cp "$ROOT/$f" "$dest/"; fi
   done
+  # The Linux Wayland title-bar dependency embeds this font as its title-text fallback.
+  cp "$ROOT/assets/fonts/OFL-Cantarell.txt" "$dest/OFL-Cantarell.txt"
   copy_font_licences "$dest"
 }
 

@@ -53,6 +53,17 @@ must be permitted by that environment's deployment-branch rules.
 
 `vectorcraft --version` and `vectorcraft-cli --version` print the version from `Cargo.toml`.
 
+Windows and Linux use standard title-bar controls. Linux enables winit's Adwaita fallback when
+a Wayland compositor does not provide a frame; X11 and Windows retain their native decorations.
+The Linux x86_64 release job launches the packaged build in a private Weston/Xvfb desktop and
+uploads `window-frame-linux-x86_64` with its screenshot and logs for review. This diagnostic
+artifact is separate from the signed release packages. To run the same check on Ubuntu 22.04+:
+
+```sh
+sudo apt-get install weston xvfb scrot libegl1-mesa libgl1-mesa-dri fonts-cantarell
+bash packaging/linux/check-window-frame.sh target/release/vectorcraft target/window-frame
+```
+
 **Fonts.** Every build job checks out [craft-fonts](https://github.com/storytold/craft-fonts) at a
 pinned commit (the `ref:` of its craft-fonts checkout step) and builds with `CRAFT_FONTS_DIR` and
 `CRAFT_FONTS_REQUIRED=1`, so releases embed its Japanese fonts and fail rather than ship without
@@ -60,6 +71,10 @@ them. The packages carry each embedded font's licence as `OFL-<family>.txt`
 (`copy_font_licences` in `packaging/env.sh`). Bump the pins deliberately, in every job at once.
 The rules are in craftrules `standards/fonts.md`, the build option in
 [`docs/development.md`](development.md) › Fonts.
+
+The Linux window-frame dependency also embeds Cantarell Regular as a title-text fallback. Its
+`OFL-Cantarell.txt` ships in Linux package documentation and in AppImages under
+`usr/share/licenses/vectorcraft/`; no additional font file is stored in this repository.
 
 ### Windows
 

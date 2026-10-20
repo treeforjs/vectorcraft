@@ -180,6 +180,24 @@ mod tests {
     }
 
     #[test]
+    fn native_window_close_preserves_unsaved_documents_until_the_question_is_answered() {
+        let (mut app, written) = app();
+        new_doc(&mut app, true);
+        assert!(!app.custom_titlebar);
+        let ctx = egui::Context::default();
+        crate::theme::install_fonts(&ctx);
+        let mut input = egui::RawInput::default();
+        input.viewports.entry(egui::ViewportId::ROOT).or_default().events.push(egui::ViewportEvent::Close);
+        let output = ctx.run_ui(input, |ui| app.logic(ui.ctx()));
+        assert!(output.viewport_output.get(&egui::ViewportId::ROOT).unwrap().commands.contains(&egui::ViewportCommand::CancelClose));
+        assert_eq!((docs(&app), pending(&app)), (1, Some(0)));
+        assert!(written.lock().unwrap().is_empty());
+        app.ui.dialog = None;
+        assert_eq!(docs(&app), 1);
+        assert!(any_dirty(&app));
+    }
+
+    #[test]
     fn close_all_and_quit_ask_once_per_modified_document() {
         let (mut app, written) = app();
         new_doc(&mut app, false);
