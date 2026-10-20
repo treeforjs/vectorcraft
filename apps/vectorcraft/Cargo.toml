@@ -20,7 +20,7 @@ windows7 = ["eframe/glow"]
 vectorcraft-engine = { workspace = true }
 vectorcraft-ui-egui = { workspace = true }
 vectorcraft-text = { workspace = true }
-eframe = { workspace = true, features = ["default_fonts", "wayland", "x11"] }
+eframe = { workspace = true, features = ["default_fonts", "links", "wayland", "x11"] }
 egui = { workspace = true }
 serde_json = { workspace = true }
 log = { workspace = true }
@@ -35,6 +35,10 @@ webbrowser = { workspace = true }
 craft-update = { workspace = true, features = ["github"] }
 # The window's monitors, size and position (the same winit eframe runs on).
 winit = { version = "0.30", default-features = false }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Standard title-bar controls when the Wayland compositor does not provide decorations.
+winit = { version = "0.30.13", default-features = false, features = ["wayland-csd-adwaita"] }
 
 [target.'cfg(windows)'.dependencies]
 clipboard-win = { workspace = true }

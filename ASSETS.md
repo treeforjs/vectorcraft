@@ -10,8 +10,13 @@ Generated-in-code art is original and has no file to list. This covers the defau
 
 **Optional build input: craft-fonts.** Builds made with `CRAFT_FONTS_DIR=<craft-fonts checkout>` (all official releases) embed the Japanese fonts listed in its [`ATTRIBUTION.md`](https://github.com/storytold/craft-fonts/blob/main/ATTRIBUTION.md): BIZ UDPGothic Regular and Bold, Shippori Mincho Regular and BIZ UDMincho Regular (web builds: BIZ UDPGothic Regular only), all under the SIL Open Font License 1.1. They are not files in this repository; release packages carry each one's `OFL-<family>.txt`. Builds without `CRAFT_FONTS_DIR` embed none of them.
 
+**Linux window-title font.** The `sctk-adwaita` 0.10.1 dependency embeds Cantarell Regular 0.05
+as a fallback for Wayland window titles. Its font stays in the dependency; Linux packages include
+`OFL-Cantarell.txt`, including AppImages under `usr/share/licenses/vectorcraft/`.
+
 | Asset | Author | Source | Licence | Notes |
 |---|---|---|---|---|
+| Dependency-embedded Cantarell Regular | Understanding Limited and Jakub Steiner | [sctk-adwaita 0.10.1](https://docs.rs/crate/sctk-adwaita/0.10.1/source/src/title/), `Cantarell-Regular.ttf` | OFL-1.1 (`assets/fonts/OFL-Cantarell.txt`) | Linux Wayland title-text fallback; no font file added to this repository |
 | `assets/app-icon/LICENSE.txt` | (licence/readme text) | VectorCraft | MIT OR Apache-2.0 |  |
 | `assets/app-icon/README.md` | (licence/readme text) | VectorCraft | MIT OR Apache-2.0 |  |
 | `assets/app-icon/hicolor/128x128/apps/ai.storyteller.vectorcraft.png` | Project owner (ArtCraft team) | Original artwork drawn in ArtCraft for VectorCraft, vectorised and rendered by `packaging/icons.sh` | MIT OR Apache-2.0 (`assets/app-icon/LICENSE.txt`) | App icon (engraved dragon) |
@@ -41,6 +46,7 @@ Generated-in-code art is original and has no file to list. This covers the defau
 | `assets/fonts/SourceSans3-Regular.ttf` | Paul D. Hunt / Adobe (released as open source) | https://github.com/adobe-fonts/source-sans | OFL-1.1 (`assets/fonts/OFL-SourceSans3.txt`) | Open-source typeface, not product iconography or artwork |
 | `assets/fonts/SourceSans3-Semibold.ttf` | Paul D. Hunt / Adobe (released as open source) | https://github.com/adobe-fonts/source-sans | OFL-1.1 (`assets/fonts/OFL-SourceSans3.txt`) | Open-source typeface, not product iconography or artwork |
 | `assets/fonts/SourceSerif4-Regular.ttf` | Frank Grießhammer / Adobe (released as open source) | https://github.com/adobe-fonts/source-serif | OFL-1.1 (`assets/fonts/OFL-SourceSerif4.txt`) | Open-source typeface, not product iconography or artwork |
+| `assets/fonts/OFL-Cantarell.txt` | Understanding Limited and Jakub Steiner (copyright); SIL International (licence text) | Copyright and licence from the Cantarell Regular font embedded in sctk-adwaita 0.10.1 | OFL-1.1 | Bundled with Linux packages |
 | `assets/fonts/OFL-Inter.txt` | (licence text) | upstream project | — |  |
 | `assets/fonts/OFL-JetBrainsMono.txt` | (licence text) | upstream project | — |  |
 | `assets/fonts/OFL-SourceSans3.txt` | (licence text) | upstream project | — |  |

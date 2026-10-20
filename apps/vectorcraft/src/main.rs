@@ -390,9 +390,18 @@ fn update_info() -> craft_update::AppInfo {
     }
 }
 
-/// Windows and Linux: no OS title bar; the app bar is the title bar (`vectorcraft_ui_egui::titlebar`).
-/// macOS keeps its traffic lights over the integrated title strip.
-const CUSTOM_TITLEBAR: bool = !cfg!(target_os = "macos");
+/// Use native window controls; macOS keeps its traffic lights over the integrated title strip.
+fn window_viewport() -> egui::ViewportBuilder {
+    let viewport = egui::ViewportBuilder::default()
+        .with_title("VectorCraft")
+        .with_inner_size(window::DEFAULT_SIZE)
+        .with_min_inner_size(window::MIN_SIZE)
+        .with_drag_and_drop(true)
+        .with_decorations(true)
+        .with_icon(app_icon())
+        .with_app_id("ai.storyteller.vectorcraft");
+    if cfg!(target_os = "macos") { viewport.with_fullsize_content_view(true).with_titlebar_shown(false).with_title_shown(false) } else { viewport }
+}
 
 fn main() -> std::process::ExitCode {
     // First, so every start-up warning is recorded (`logging`).
@@ -457,17 +466,7 @@ fn main() -> std::process::ExitCode {
     #[cfg(feature = "wgpu")]
     let startup = std::sync::Arc::new(gpu::Startup::default());
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_title("VectorCraft")
-            .with_inner_size(window::DEFAULT_SIZE)
-            .with_min_inner_size(window::MIN_SIZE)
-            .with_drag_and_drop(true)
-            .with_decorations(!CUSTOM_TITLEBAR)
-            .with_fullsize_content_view(true)
-            .with_titlebar_shown(false)
-            .with_title_shown(false)
-            .with_icon(app_icon())
-            .with_app_id("ai.storyteller.vectorcraft"),
+        viewport: window_viewport(),
         #[cfg(feature = "windows7")]
         renderer: eframe::Renderer::Glow,
         ..Default::default()
@@ -561,7 +560,7 @@ fn main() -> std::process::ExitCode {
                     app.graphics_adapter = Some("OpenGL (Windows 7 compatibility)".into());
                 }
                 app.integrated_titlebar = cfg!(target_os = "macos");
-                app.custom_titlebar = CUSTOM_TITLEBAR;
+                app.custom_titlebar = false;
                 if let Some(port) = control_port {
                     let rx = control_server::start(port, cc.egui_ctx.clone());
                     app = app.with_control(rx);

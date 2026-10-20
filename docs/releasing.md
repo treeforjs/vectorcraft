@@ -1,7 +1,7 @@
 # Releasing VectorCraft
 
 Every push to the `release` branch runs `.github/workflows/release.yml`. The workflow builds
-installers for macOS, Windows, Linux (including Flatpak bundles) and FreeBSD, plus the web build, and creates or updates a
+Windows and Linux installers and portable packages, and creates or updates a
 **draft** GitHub Release named `VectorCraft v<version>`. Nobody sees a draft until a maintainer
 publishes it.
 
@@ -21,84 +21,60 @@ User-facing names say **VectorCraft**. Files, binaries and ids stay lowercase
    Commit the change (`Cargo.toml` + `Cargo.lock`) through the normal review flow, as a
    `Release: VectorCraft v0.4.0` commit whose message says what changed for users.
 2. **Merge `main` into `release`** (or fast-forward it) and push. The workflow starts by itself.
-3. **Wait for the draft.** When every job is done (macOS notarization is the slow part), the
+3. **Wait for the draft.** When the Windows and Linux jobs are done, the
    Releases page has a draft `VectorCraft v0.4.0`, targeting the pushed commit, with every
-   artifact and `SHA256SUMS.txt`. The notes are generated from the merged pull requests.
-4. **Check it.** Download an installer or two and read the job summaries. A `::warning::` there
-   means a signing secret was missing and that artifact is unsigned.
+   artifact, `SHA256SUMS.txt` and its Ed25519 signature `SHA256SUMS.txt.sig`.
+4. **Check it.** Download and test a Windows portable ZIP and a Linux AppImage, and read the job
+   summaries. Windows Authenticode is optional; update-signature verification is required.
 5. **Publish** the draft in the GitHub UI. Publishing creates the `v0.4.0` tag. A version with a
    pre-release suffix (`-rc.1`) is marked as a pre-release.
 
 Pushing to `release` again before you publish rebuilds the same draft and replaces its assets.
 Once the draft is published, the workflow refuses to touch that version again: bump it first.
 
-**Test runs:** *Actions › Release › Run workflow* runs the whole pipeline by hand. The optional
-`version` input (such as `0.4.0-rc.1`) overrides `Cargo.toml` for that run only; each build job
-applies it with `cargo xtask version set` before building. The signing jobs (macOS, Windows) and
-the draft-release job run in the `release` environment, which only the `release` branch can use, so
-pick that branch for a full run. Run on any other branch, it is a dry run: the Linux, Flatpak,
-FreeBSD and web jobs build and upload their artifacts, the environment refuses the signing jobs,
-and no draft release is created.
+**Manual runs:** *Actions › Release › Run workflow* runs the pipeline by hand. Pick the
+`release` branch to create a signed draft. The optional `version` input (such as `0.4.0-rc.1`)
+overrides `Cargo.toml` for that run only; each build job applies it with `cargo xtask version set`
+before building. Other branches cannot create or replace a draft. Every run validates the
+repository public-key variable; release-branch runs also validate the private signing secret
+and its public half before starting any package build. Jobs using the `release` environment
+must be permitted by that environment's deployment-branch rules.
 
 ## What gets built
 
 | Platform | Artifacts | Built on |
 |---|---|---|
-| macOS 11+ (universal: Apple silicon and Intel) | `vectorcraft-<v>-macos-universal.dmg`, `vectorcraft-cli-<v>-macos-universal.zip` | `macos-15` |
 | Windows x64 | `vectorcraft-<v>-windows-x64.msi`, `vectorcraft-<v>-windows-x64-portable.zip` | `windows-latest` |
 | Windows x86 (32-bit) | `vectorcraft-<v>-windows-x86.msi`, `vectorcraft-<v>-windows-x86-portable.zip` | `windows-latest` |
 | Windows on ARM64 | `vectorcraft-<v>-windows-arm64.msi`, `vectorcraft-<v>-windows-arm64-portable.zip` | `windows-latest` (cross-compiled) |
 | Linux x86_64 | `vectorcraft-<v>-linux-x86_64.{AppImage,deb,rpm,tar.gz}` | `ubuntu-22.04` |
 | Linux aarch64 | `vectorcraft-<v>-linux-aarch64.{AppImage,deb,rpm,tar.gz}` | `ubuntu-22.04-arm` |
 | Linux AppImage updates | `vectorcraft-<v>-linux-{x86_64,aarch64}.AppImage.zsync` | with the AppImages |
-| Flatpak x86_64, aarch64 | `vectorcraft-<v>-linux-{x86_64,aarch64}.flatpak` | `ubuntu-24.04`, `ubuntu-24.04-arm` (repackages the Linux tarball) |
-| FreeBSD 14 x86_64 | `vectorcraft-<v>-freebsd-x86_64.tar.gz` | a FreeBSD 14.3 VM on `ubuntu-latest` |
-| Web | `vectorcraft-web-<v>.zip`, a static site (see [`packaging/web/README.md`](../packaging/web/README.md)) | `ubuntu-latest` |
 
 `vectorcraft --version` and `vectorcraft-cli --version` print the version from `Cargo.toml`.
+
+Windows and Linux use standard title-bar controls. Linux enables winit's Adwaita fallback when
+a Wayland compositor does not provide a frame; X11 and Windows retain their native decorations.
+The Linux x86_64 release job launches the packaged build in a private Weston/Xvfb desktop and
+uploads `window-frame-linux-x86_64` with its screenshot and logs for review. This diagnostic
+artifact is separate from the signed release packages. To run the same check on Ubuntu 22.04+:
+
+```sh
+sudo apt-get install weston xvfb scrot libegl1-mesa libgl1-mesa-dri fonts-cantarell
+bash packaging/linux/check-window-frame.sh target/release/vectorcraft target/window-frame
+```
 
 **Fonts.** Every build job checks out [craft-fonts](https://github.com/storytold/craft-fonts) at a
 pinned commit (the `ref:` of its craft-fonts checkout step) and builds with `CRAFT_FONTS_DIR` and
 `CRAFT_FONTS_REQUIRED=1`, so releases embed its Japanese fonts and fail rather than ship without
-them (the web build embeds only the UI font, BIZ UDPGothic Regular, to stay small). The packages carry each embedded font's licence as `OFL-<family>.txt`
+them. The packages carry each embedded font's licence as `OFL-<family>.txt`
 (`copy_font_licences` in `packaging/env.sh`). Bump the pins deliberately, in every job at once.
 The rules are in craftrules `standards/fonts.md`, the build option in
 [`docs/development.md`](development.md) › Fonts.
 
-### macOS
-
-`packaging/macos/package.sh` builds `aarch64-apple-darwin` and `x86_64-apple-darwin` with
-`MACOSX_DEPLOYMENT_TARGET=11.0`, joins them with `lipo` and assembles `VectorCraft.app`:
-
-- `Info.plist` is generated from `Info.plist.in` (bundle id `ai.storyteller.vectorcraft`,
-  `LSMinimumSystemVersion` 11.0, the version and the build commit). The icon is
-  `assets/app-icon/vectorcraft.icns`. `cargo xtask bundle` fills in the same template for its
-  development app.
-- **Document types:** `Info.plist.in` declares every format File › Open reads, so Finder opens
-  them with VectorCraft (double-click, Open With, a drop on the Dock icon). VectorCraft owns its own
-  formats and is an alternate for the others. A test keeps the list in step with the engine's
-  `OPEN_EXTS`. AppKit hands the files to the app as open-document events, which
-  `apps/vectorcraft/src/open_documents.rs` opens like files named on the command line.
-- **Signing** goes inside-out with the hardened runtime and a secure timestamp: the executable
-  first, then the bundle, with no `--deep` on the final signature. The entitlements
-  (`entitlements.plist`) are deliberately empty.
-- **Notarization:** the app is zipped and sent with `xcrun notarytool submit --wait`, then the
-  ticket is stapled and checked with `stapler validate` and `spctl`. The app goes on a DMG
-  (`hdiutil makehybrid` and `convert`, with an `Applications` link to drag onto), which is signed,
-  notarized and stapled too. Its Finder window (background, icon size and positions) comes from
-  [`packaging/macos/dmg/`](../packaging/macos/dmg/README.md), and its volume is named `VectorCraft`
-  without the version, which the window's background needs; the DMG file name keeps the version.
-- **CLI:** the universal `vectorcraft-cli` is signed the same way, zipped, and the zip is
-  notarized. A bare executable can't hold a stapled ticket, so Gatekeeper looks the CLI's ticket up
-  online the first time a downloaded copy runs.
-
-Locally, without certificates, the script signs ad hoc (`codesign -s -`) and skips notarization,
-which is enough to check the bundle and the DMG on your own Mac:
-
-```sh
-packaging/macos/package.sh --arch universal   # needs both rustup targets
-packaging/macos/package.sh --arch aarch64     # quicker, host only
-```
+The Linux window-frame dependency also embeds Cantarell Regular as a title-text fallback. Its
+`OFL-Cantarell.txt` ships in Linux package documentation and in AppImages under
+`usr/share/licenses/vectorcraft/`; no additional font file is stored in this repository.
 
 ### Windows
 
@@ -156,35 +132,12 @@ and runs the desktop smoke script under Xvfb with software graphics.
 and AppImageLauncher then download only the changed blocks from the newest published,
 non-pre-release release. The job checks both are there.
 
-**Flatpak.** The `flatpak` jobs (x86_64 on `ubuntu-24.04`, aarch64 on `ubuntu-24.04-arm`) take the
-Linux job's tarball and repackage it with `packaging/linux/flatpak-bundle.sh` and
-`packaging/linux/flatpak/ai.storyteller.vectorcraft.bundle.yml` into a single-file bundle
-(`flatpak install --user vectorcraft-<v>-linux-<arch>.flatpak`), then install it and run
-`vectorcraft-cli --version` in the sandbox. No Rust build happens there, so the bundle carries the
-same binaries as the AppImage. `packaging/linux/flatpak/ai.storyteller.vectorcraft.yml` is the
-from-source manifest for a Flathub submission (its header says how to build it); packaging-lint
-keeps the runtime and sandbox permissions of the two manifests identical.
-
-### FreeBSD
-
-GitHub has no FreeBSD runners, so the job builds in a FreeBSD 14.3 VM on `ubuntu-latest` (the same
-image as `.github/workflows/freebsd.yml`). `packaging/freebsd/package.sh` writes a
-`/usr/local`-style tree; users install it with
-`tar -xzf vectorcraft-*-freebsd-x86_64.tar.gz --strip-components 1 -C /usr/local`.
-
-### Web
-
-The web job builds `apps/vectorcraft-web` with trunk and zips the static site
-(`packaging/web/package.sh`). [`packaging/web/README.md`](../packaging/web/README.md) covers
-hosting: any path works, `.wasm` must be served as `application/wasm`, and the sample header
-files for common hosts.
-
 ## The draft release
 
-The last job waits for every build, downloads their artifacts, writes `SHA256SUMS.txt` and creates
-the draft `VectorCraft v<version>` with notes generated from the merged pull requests. If the draft
-already exists, it replaces its assets and keeps it a draft. If that version is already published,
-the job fails and asks for a version bump (`cargo xtask version set`).
+The last job waits for Windows and Linux, checks every expected package, writes `SHA256SUMS.txt`,
+signs and verifies that list, and creates the draft `VectorCraft v<version>` with Windows/Linux
+release notes. If the draft already exists, it replaces its assets and keeps it a draft. If that
+version is already published, the job fails and asks for a version bump (`cargo xtask version set`).
 
 ## In-app updates
 
@@ -195,26 +148,26 @@ it when the app quits. The shared [`craft-update`](https://github.com/treeforjs/
 crate does the work; the one-time key setup is in craftworks'
 [`docs/updates.md`](https://github.com/treeforjs/craftworks/blob/main/docs/updates.md).
 
-- The draft-release job signs `SHA256SUMS.txt` into `SHA256SUMS.txt.sig` (uploaded with the other
-  files) when the `UPDATE_SIGNING_KEY` secret is set; without it the release is unsigned, with a
-  warning, and the app only links to its page.
-- The macOS, Windows and Linux jobs embed `CRAFT_UPDATE_PUBLIC_KEY`. Make it a **repository**
-  variable (*Settings › Secrets and variables › Actions › Variables*): the Linux job doesn't run in
-  the `release` environment, so an environment variable wouldn't reach it. A build without it
-  says when a new version exists but never installs anything itself.
+- The draft-release job requires `UPDATE_SIGNING_KEY` and signs `SHA256SUMS.txt` into
+  `SHA256SUMS.txt.sig` (uploaded with the packages). Missing, malformed or mismatched keys fail
+  the release; an unsigned draft is never created.
+- Windows and Linux builds embed `CRAFT_UPDATE_PUBLIC_KEY`. Make it a **repository** variable
+  (*Settings › Secrets and variables › Actions › Variables*), containing the single-line base64
+  Ed25519 public key (raw32 or DER44). The Linux job does not run in the `release` environment, so an
+  environment variable would not reach it. Use the same key pair as Craftworks.
 - Only a published release is offered: drafts and (unless asked for) pre-releases never are.
 
 ## Secrets
 
-The jobs that sign (macOS, Windows) and the draft-release job run in the `release` environment,
-which only the `release` branch can use and which holds the signing secrets. The other jobs get no
-secrets. Every secret is optional: a missing one produces unsigned artifacts and a
-warning, never a failed build.
+The version preflight, Windows packaging and draft-release jobs use the `release` environment.
+Allow the `release` branch in its deployment-branch rules. Set `UPDATE_SIGNING_KEY` there to the
+complete, unencrypted Ed25519 private-key PEM, including its BEGIN/END lines. It is required for
+release-branch runs and must match `CRAFT_UPDATE_PUBLIC_KEY`. Temporary private-key files use
+restricted permissions and are removed when their steps exit. Windows certificate secrets are
+optional and separate from the required update signature.
 
 | Secret | Used for |
 |---|---|
-| `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `KEYCHAIN_PASSWORD` | the Developer ID certificate (base64 `.p12`), imported into a temporary keychain by `packaging/macos/import-cert.sh` |
-| `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` | notarization (`APPLE_PASSWORD` is an app-specific password) |
 | `WINDOWS_CERTIFICATE`, `WINDOWS_CERTIFICATE_PASSWORD` | Windows signing with a `.pfx` |
 | `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SIGNING_ENDPOINT`, `AZURE_SIGNING_ACCOUNT`, `AZURE_CERT_PROFILE` | Windows signing with Azure Trusted Signing |
 | `UPDATE_SIGNING_KEY` | the Ed25519 private key (PEM) that signs `SHA256SUMS.txt` for in-app updates (see [In-app updates](#in-app-updates)) |

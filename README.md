@@ -201,6 +201,10 @@ Add `"--headless"` or `"--connect", "127.0.0.1:7979"` to `args` to pin a mode. T
 VectorCraft is under active development. [**ROADMAP.md**](ROADMAP.md) covers what ships today, the
 milestones, and honest time-to-parity estimates.
 
+Windows and Linux use standard title-bar controls for minimizing, maximizing and closing the
+window. Linux Wayland desktops without server decorations use an Adwaita frame. The Home button,
+menus and workspace tools remain in the app bar, and closing still asks about unsaved documents.
+
 **Where we are (2026-10-11):** roughly 69–75% of Illustrator's features exist and work, and about 40–55% of
 "a power user can't tell the difference". Everyday vector illustration is close to usable: drawing and path tools,
 Pathfinder and Shape Builder, paint, gradients, appearance and transparency, type with styles, threading and Hebrew/Arabic bidirectional layout, and

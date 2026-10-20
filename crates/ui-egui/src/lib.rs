@@ -350,8 +350,8 @@ pub struct VectorcraftApp {
     pub(crate) clipboard_in: Option<vectorcraft_engine::cmd::clipboard::Flavour>,
     /// A URL to open through egui next frame (when the host has no `open_url` service).
     pending_url: Option<String>,
-    /// Windows and Linux: the window has no OS decorations, so the app bar is the title bar (drag,
-    /// double-click to maximize, caption buttons) and invisible edge zones resize the window.
+    /// Optional host-provided mode for an undecorated window: app-bar dragging, caption buttons
+    /// and edge resize zones. The desktop host uses native decorations and leaves this disabled.
     pub custom_titlebar: bool,
     /// The graphics adapter the window renders with ("name (backend)"), as the host reports it:
     /// shown in Help › About and `ui.inspect` for GPU bug reports. `None` when unknown.

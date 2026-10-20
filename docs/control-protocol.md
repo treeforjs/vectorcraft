@@ -184,11 +184,12 @@ Tile Edge Color: Object → Pattern → Tile Edge Color… (`ui.tileEdgeColor`) 
 `color`: `#rrggbb` or a preset name such as "Light Blue"); `ui.dialog.confirm` sets the preference
 `patternTileEdgeColor` (`prefs.set`), the colour pattern editing mode draws the tile edge and the swatch bounds in.
 
-Window title bar: on Windows and Linux the window has no OS decorations and the app bar is the title bar. Its
-caption buttons (Minimize, Maximize/Restore, Close) sit at the bar's right end, 46 pt each; they are window chrome,
-not commands, so drive them with `ui.click` if needed. Close runs `app.quit` (the same `saveChanges` questions for
-modified documents), and empty bar space and the 5 pt window edges move and resize the window. macOS and the web
-build are unchanged.
+Window title bar: Windows and Linux use standard window controls for Minimize, Maximize/Restore and Close,
+with native moving and resizing. Wayland compositors without server decorations use the Adwaita frame supplied
+by winit. These controls belong to the window system and cannot be driven by `ui.click`; use `app.quit` to
+request a close through the control channel. Both the native Close button and `app.quit` ask the same
+`saveChanges` questions for modified documents. The in-window app bar keeps its Home, menus and workspace tools.
+macOS and the web build are unchanged.
 
 Fill/Stroke chips and panel shortcuts: the Control bar's and Properties' Fill and Stroke chips bring their proxy
 forward (`paint.toggleActive {fill}`) and open a popover with the Swatches panel (Shift-click: the Color panel's mixer);
