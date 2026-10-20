@@ -77,8 +77,8 @@ pinned commit (the `ref:` of its craft-fonts checkout step) and builds with `CRA
 `CRAFT_FONTS_REQUIRED=1`, so releases embed its Japanese fonts and fail rather than ship without
 them. The packages carry each embedded font's licence as `OFL-<family>.txt`
 (`copy_font_licences` in `packaging/env.sh`). Bump the pins deliberately, in every job at once.
-The rules are in craftrules `standards/fonts.md`, the build option in
-[`docs/development.md`](development.md) › Fonts.
+The licence and source requirements are in [`AGENTS.md`](../AGENTS.md#non-negotiables),
+and the build option is documented in [`development.md`](development.md) › Fonts.
 
 The Linux window-frame dependency also embeds Cantarell Regular as a title-text fallback. Its
 `OFL-Cantarell.txt` ships in Linux package documentation and in AppImages under

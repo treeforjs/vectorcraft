@@ -11,7 +11,7 @@ This file contains the working rules for contributors and the automation clients
 ### Start every session here
 1. Read the [honest assessment in `ROADMAP.md`](ROADMAP.md#honest-assessment-2026-10-05): where we stand by dimension, **where we're lacking** (the prioritized gap list) and **where we're going**. Unless you were given a task, pick work from that list.
 2. If a local `plan/` folder exists (gitignored session notes; maintainers keep one), read `plan/STATUS.md` (may lag the ROADMAP), then the task in `plan/execution-plan.md` §3 and the relevant `plan/architecture.md` section. Behaviour reference: public documentation only (see Clean-room below); the local reference notes holds notes from it.
-3. Work in a loop: orient → plan → implement + test → verify → record → commit. An client working autonomously doesn't stop to ask unless the decision belongs to the person it works for (scope, licensing, anything the Non-negotiables forbid).
+3. Work in a loop: orient → plan → implement + test → verify → record → commit. A client working autonomously doesn't stop to ask unless the decision belongs to the person it works for (scope, licensing, anything the Non-negotiables forbid).
 
 `plan/` is gitignored (local only).
 
@@ -32,7 +32,7 @@ This file contains the working rules for contributors and the automation clients
     - Creative Commons with redistribution allowed.
   - **Every asset file must have a row in [`ASSETS.md`](ASSETS.md)** (path, author, source URL, licence, notes). Put licence texts next to the assets (e.g. `assets/fonts/OFL-*.txt`) and summarize them in `NOTICE`.
   - `cargo xtask assets` (run by `cargo xtask ci`) fails on any unattributed asset.
-  - **Fonts live in [craft-fonts](https://github.com/storytold/craft-fonts), never in this repo** (rules: craftrules [`standards/fonts.md`](https://github.com/storytold/craftrules/blob/main/standards/fonts.md)). Never commit a font file here; add new fonts to craft-fonts. The app uses it only through the optional `CRAFT_FONTS_DIR` build option (`CRAFT_FONTS_DIR="$PWD/../craft-fonts" cargo xtask ci`; use an absolute path), read by `crates/text/build.rs` into `vectorcraft_text::CRAFT_FONTS`; never add it to a `Cargo.toml`. Everything must build, test and run with `CRAFT_FONTS` empty, and tests of its glyphs skip when it is. Details: `docs/development.md` › Fonts.
+  - **Fonts live in [craft-fonts](https://github.com/storytold/craft-fonts), never in this repo**. Never commit a font file here; add new fonts to craft-fonts. The app uses it only through the optional `CRAFT_FONTS_DIR` build option (`CRAFT_FONTS_DIR="$PWD/../craft-fonts" cargo xtask ci`; use an absolute path), read by `crates/text/build.rs` into `vectorcraft_text::CRAFT_FONTS`; never add it to a `Cargo.toml`. Everything must build, test and run with `CRAFT_FONTS` empty, and tests of its glyphs skip when it is. Details: `docs/development.md` › Fonts.
   - Code and original assets are MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`, `NOTICE`).
   - Prefer art generated in code for defaults (swatches, brushes, symbols, patterns, cursors). If the provenance of an asset is unclear, don't add it.
   - Reference images stay local under the gitignored `plan/` and are never committed, published or used as assets.
@@ -48,7 +48,7 @@ This file contains the working rules for contributors and the automation clients
 - **Layering** is enforced by `cargo xtask layers`. Nothing below L6 depends on egui/eframe/winit/rfd.
 - **The UI is thin**: panels read engine state and act through `app.run(id, params)`. Colours come from `theme::Tokens`.
 - **Rust only** (no handwritten JS/TS). **Never break wasm** (`cargo xtask wasm`).
-- **Shared test corpora.** Real-file test oracles (the reference raster editor-authored PSDs, etc.) live in [`storytold/photocraft-corpus`](https://github.com/storytold/photocraft-corpus), explained in [craftrules `standards/test-corpora.md`](https://github.com/storytold/craftrules/blob/main/standards/test-corpora.md). Never commit large binary fixtures to this repo; fetch them pinned by commit and sha256-verified, as PhotoCraft does with `cargo xtask corpus`.
+- **Shared test corpora.** Real-file test oracles (the reference raster editor-authored PSDs, etc.) live in [`storytold/photocraft-corpus`](https://github.com/storytold/photocraft-corpus); keep their pinned source and licence records with the fixtures. Never commit large binary fixtures to this repo; fetch them pinned by commit and sha256-verified, as PhotoCraft does with `cargo xtask corpus`.
 - **Human contributor credits only.** Commit messages, pull requests and documentation in this repository name no automation service or tool as an author; keep commit subjects plain (`M2.1: pen tool`). Agent-facing docs say "an automation client" or "an MCP client", never a product name.
 
 ### Quality gates
@@ -82,13 +82,13 @@ Before every commit run `cargo xtask ci` (fmt, clippy -D warnings including the 
   username has a `[people.<username>]` entry in `contributors/people.toml`. If not, ask them once
   whether they want to be credited by more than their username: a real name, a display name, and/or
   their public GitHub profile name (`sync_github_name = true`). If yes, add **only their own** entry
-  (copy the template at the top of the file, or run
-  `python3 ../../craftrules/scripts/contributors.py --add-me . --real-name "…" --sync-github-name`)
+  (copy the template at the top of the file)
   and include it in their PR, committed as them. If no, change nothing: they are credited as
   `@username` anyway.
 - Never add, edit, guess or copy anyone else's entry or name (not from git config, commit authors or
   GitHub profiles). Never hand-edit `contributors.json`.
-- Maintainers refresh the stats with `python3 ../../craftrules/scripts/contributors.py .` (it also
-  re-verifies who wrote each `people.toml` entry; `--check` only verifies).
-  Then run `python3 contributors/prepare.py` to retain only the human contributor table and
-  `python3 contributors/prepare.py --check` before committing it.
+- The repository carries a reviewed historical statistics snapshot; a Git-history statistics
+  generator is not included. Maintainers verify consent before importing a refresh and preserve
+  every existing human record. Run `python3 contributors/prepare.py`, then
+  `python3 contributors/prepare.py --check`: these prepare and validate the human table and repository
+  metadata, without generating statistics, looking up names or changing individual human records.

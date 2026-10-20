@@ -8,7 +8,7 @@ verified GitHub usernames and names that contributors chose for themselves.
 - Two files, both **compiled into the binary** by the UI crate's `build.rs` (nothing is read from
   disk or the network at run time; the web build has them too):
   - [`contributors/contributors.json`](../contributors/contributors.json): commit stats per GitHub
-    username. Refresh with the statistics generator, then run `contributors/prepare.py` below.
+    username. A maintainer may import a reviewed snapshot, then run `contributors/prepare.py` below.
     Keep individual contributor records unchanged when preparing the generated file.
   - [`contributors/people.toml`](../contributors/people.toml): the names people chose for
     themselves. **Each contributor adds only their own entry**, in their own PR.
@@ -36,22 +36,26 @@ display_name = "Nickname"
 sync_github_name = true   # use the name on your public GitHub profile as display name
 ```
 
-or, with craftrules checked out next to `craft-apps/`:
-
-```sh
-python3 ../../craftrules/scripts/contributors.py --add-me . --real-name "Your Name" --sync-github-name
-```
-
-Names show after the next refresh: the script checks that each entry was committed by its own
-user (or by a maintainer with a `consent_source`). Delete your entry to remove your names.
+Maintainers verify that each requested name was submitted by its own contributor (or with a
+recorded `consent_source`) before marking that entry verified in the statistics snapshot.
+Delete your own entry to remove your names from the next build.
 
 ## Refreshing (maintainers)
 
+This repository does not include a Git-history statistics generator. Keep the last verified
+snapshot until a maintainer can import a reviewed refresh, with verified consent and all existing
+human contributor records preserved. Building the application does not need another repository.
+
+Prepare an imported snapshot using the local helper:
+
 ```sh
-python3 ../../craftrules/scripts/contributors.py .           # regenerate + verify; needs git, Python 3.11+, gh
-python3 contributors/prepare.py                             # prepare the local human contributor table
-python3 ../../craftrules/scripts/contributors.py --check .   # verify people.toml only
-python3 contributors/prepare.py --check                     # validate the prepared statistics
+python3 contributors/prepare.py
+python3 contributors/prepare.py --check
 ```
+
+The helper retains only the human statistics table and supported metadata, updates the repository
+identity and verifies that preparation is complete. It does not calculate new commit totals, fetch
+profile names, verify consent or change individual human records. Consent review remains a
+maintainer responsibility. CI runs its `--check` mode.
 
 Commit the updated `contributors/contributors.json`. Git author names and emails are never recorded.

@@ -124,7 +124,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # Japanese UI/document fonts, embedded by crates/text/build.rs (CRAFT_FONTS_DIR on the build
-      # step). Bump the commit deliberately; see craftrules standards/fonts.md.
+      # step). Bump the commit deliberately; see docs/development.md, Fonts.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: storytold/craft-fonts
@@ -188,7 +188,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # Japanese UI/document fonts, embedded by crates/text/build.rs (CRAFT_FONTS_DIR on the build
-      # step). Bump the commit deliberately; see craftrules standards/fonts.md.
+      # step). Bump the commit deliberately; see docs/development.md, Fonts.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: storytold/craft-fonts

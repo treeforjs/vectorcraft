@@ -117,9 +117,9 @@ The window runs natively on Wayland (eframe's `wayland` feature) and on X11. On 
 ## Fonts: craft-fonts (optional build input)
 
 Font files are never committed to this repository. Fonts shared with the sibling Craft apps live in
-[craft-fonts](https://github.com/storytold/craft-fonts); the rules are in craftrules
-[`standards/fonts.md`](https://github.com/storytold/craftrules/blob/main/standards/fonts.md). To add
-a font, add it there. (The Latin fonts in `assets/fonts/` predate the rule and stay.)
+[craft-fonts](https://github.com/storytold/craft-fonts). Follow the asset and licence policy in
+[`AGENTS.md`](../AGENTS.md#non-negotiables); add shared fonts to that repository with their
+original source, licence text and attribution. (The Latin fonts in `assets/fonts/` predate the rule and stay.)
 
 VectorCraft builds, tests and runs without craft-fonts. To embed its Japanese fonts (BIZ UDPGothic
 for UI text, Shippori Mincho and BIZ UDMincho for document text), point the `CRAFT_FONTS_DIR` build
