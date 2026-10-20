@@ -8,7 +8,7 @@
 //! object. Effects that change the object itself (inner glow, feather, Gaussian blur) replace it
 //! with the image. Expand Appearance makes its images with the same helpers.
 //!
-//! SVG has filters for shadows, glows, blurs and feathers but none for the Photoshop-style
+//! SVG has filters for shadows, glows, blurs and feathers but none for the raster
 //! effects (Radial Blur, Unsharp Mask…): SVG export turns only the objects carrying one of those
 //! into images the same way ([`flatten_pixel_effects`]).
 
@@ -384,7 +384,7 @@ fn placed_symbol(d: &Document, n: &Node) -> Option<Node> {
 enum Which {
     /// Every raster effect (PDF).
     All,
-    /// Objects with a Photoshop-style effect, which SVG can't draw (with all their raster effects).
+    /// Objects with a raster effect, which SVG can't draw (with all their raster effects).
     Pixel,
 }
 
@@ -473,7 +473,7 @@ pub fn flatten_raster_effects(doc: &Document) -> Option<Document> {
     flatten(doc, Which::All)
 }
 
-/// A copy of `doc` in which the objects with Photoshop-style raster effects (Radial Blur, Unsharp
+/// A copy of `doc` in which the objects with raster effects (Radial Blur, Unsharp
 /// Mask…) are images as [`flatten_raster_effects`] makes them (SVG export: its filters draw the
 /// other raster effects live), or `None` when there are none.
 pub fn flatten_pixel_effects(doc: &Document) -> Option<Document> {

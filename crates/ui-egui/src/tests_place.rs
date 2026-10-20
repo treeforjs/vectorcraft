@@ -108,7 +108,7 @@ fn laid_out(app: &mut VectorcraftApp, ctx: &egui::Context) -> egui::Rect {
     app.canvas_rect.expect("the canvas is laid out")
 }
 
-/// Where the platform tells where files were dropped (the web), they go as in Illustrator: placed
+/// Where the platform tells where files were dropped (the web), they go as in the reference editor: placed
 /// at the pointer on the canvas whatever they are, opened off it (the tab bar).
 #[test]
 fn a_drop_with_a_position_places_on_the_canvas_and_opens_off_it() {

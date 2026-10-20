@@ -220,7 +220,7 @@ impl WordList {
     }
 }
 
-/// Check Spelling's options (Illustrator's Find and Ignore groups).
+/// Check Spelling's options (the reference editor's Find and Ignore groups).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct SpellOptions {

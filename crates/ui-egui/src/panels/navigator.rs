@@ -38,7 +38,7 @@ pub fn thumb_to_doc(region: DRect, thumb: Rect, p: egui::Pos2) -> Point {
     Point::new(region.x0 + (p.x as f64 - ox) / s, region.y0 + (p.y as f64 - oy) / s)
 }
 
-/// Slider position (0..1) ↔ zoom percent on Illustrator's log range 3.13 %–64 000 %.
+/// Slider position (0..1) ↔ zoom percent on the reference editor's log range 3.13 %–64 000 %.
 pub fn zoom_to_slider(z: f64) -> f64 {
     ((z.clamp(3.13, 64000.0)).ln() - 3.13f64.ln()) / (64000f64.ln() - 3.13f64.ln())
 }

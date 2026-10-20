@@ -121,7 +121,7 @@ impl Raster {
     }
 }
 
-/// Tracing mode (Illustrator's Mode popup).
+/// Tracing mode (the reference editor's Mode popup).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Mode {
@@ -217,7 +217,7 @@ pub struct TraceParams {
 }
 
 impl Default for TraceParams {
-    /// Illustrator's [Default]: black and white, threshold 128.
+    /// the reference editor's [Default]: black and white, threshold 128.
     fn default() -> Self {
         Self {
             mode: Mode::BlackAndWhite,

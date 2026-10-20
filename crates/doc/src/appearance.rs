@@ -747,7 +747,7 @@ pub struct Appearance {
 }
 
 impl Appearance {
-    /// Illustrator's "basic appearance": one fill below one stroke.
+    /// the reference editor's "basic appearance": one fill below one stroke.
     pub fn basic(fill: Paint, stroke: Paint, width: f64) -> Self {
         Self { items: vec![AppearanceItem::Fill(FillLayer::new(fill)), AppearanceItem::Stroke(StrokeLayer::new(stroke, width))], ..Self::default() }
     }

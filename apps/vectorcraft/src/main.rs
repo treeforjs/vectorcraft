@@ -305,7 +305,7 @@ fn services(parent: Parent) -> Services {
         // Windows dialogs run the window's events while they are open; Linux's don't, and macOS
         // ones re-enter the window's event handler (#867).
         start_pick: cfg!(unix).then(|| Box::new(move |request: PickRequest| start_pick(request, &p5)) as vectorcraft_ui_egui::picks::StartPick),
-        read: Some(Box::new(|p: &str| std::fs::read(p).map_err(|e| e.to_string()))),
+        read: Some(Box::new(|p: &str| vectorcraft_format::read_regular_file(std::path::Path::new(p)).map_err(|e| e.to_string()))),
         write: Some(Box::new(write_file)),
         // Background Save and Export write from a worker thread.
         write_shared: Some(std::sync::Arc::new(write_file)),
@@ -349,12 +349,12 @@ fn open_file(path: &str) -> Result<(), String> {
 
 /// The window, Dock, taskbar and app-switcher icon (`assets/app-icon/`, see its README). macOS gets
 /// the version with Apple's transparent margin; elsewhere the full-bleed tile. The app ID matches
-/// `packaging/linux/ai.storyteller.vectorcraft.desktop` so Wayland docks find the launcher icon.
+/// `packaging/linux/io.github.treeforjs.vectorcraft.desktop` so Wayland docks find the launcher icon.
 fn app_icon() -> egui::IconData {
     #[cfg(target_os = "macos")]
     let png: &[u8] = include_bytes!("../../../assets/app-icon/vectorcraft-macos-512.png");
     #[cfg(not(target_os = "macos"))]
-    let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ai.storyteller.vectorcraft.png");
+    let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/io.github.treeforjs.vectorcraft.png");
     eframe::icon_data::from_png_bytes(png).unwrap_or_default()
 }
 
@@ -399,7 +399,7 @@ fn window_viewport() -> egui::ViewportBuilder {
         .with_drag_and_drop(true)
         .with_decorations(true)
         .with_icon(app_icon())
-        .with_app_id("ai.storyteller.vectorcraft");
+        .with_app_id("io.github.treeforjs.vectorcraft");
     if cfg!(target_os = "macos") { viewport.with_fullsize_content_view(true).with_titlebar_shown(false).with_title_shown(false) } else { viewport }
 }
 

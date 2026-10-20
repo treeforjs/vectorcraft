@@ -251,7 +251,7 @@ impl Unit {
 
 fn parse_measure(s: &str, default: Unit) -> Option<f64> {
     let s = s.trim();
-    // Simple arithmetic on the right (Illustrator fields accept "10+5", "100/2", "3in*2").
+    // Simple arithmetic on the right (the reference editor fields accept "10+5", "100/2", "3in*2").
     for op in ['+', '-', '*', '/'] {
         // Past the first character, so a leading sign isn't an operator.
         let skip = s.chars().next().map_or(0, char::len_utf8);
@@ -575,7 +575,7 @@ pub struct Document {
     pub symbols: Vec<Symbol>,
     #[serde(default)]
     pub guides: Vec<Guide>,
-    /// View → New View… (up to 25, like Illustrator).
+    /// View → New View… (up to 25, like the reference editor).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub views: Vec<SavedView>,
     /// Select → Save Selection… (at most [`SavedSelection::MAX`]); saved with the document.

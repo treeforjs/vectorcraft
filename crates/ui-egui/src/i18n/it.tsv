@@ -1635,7 +1635,6 @@
 	Mixed Appearances	Aspetti misti
 	Mixed Objects	Oggetti misti
 	Mode:	Modalità:
-	Model	Modello
 	Modified	Modificato
 	Modified since it was read: {path}	Modificato dopo la lettura: {path}
 	Modified:	Modificato:
@@ -3327,10 +3326,9 @@
 	Burasagari	Burasagari
 	Force	Forza
 
-# About › Contributors / Models (credits.rs)
+# About › Contributors (credits.rs)
 	About	Informazioni
 	Contributors	Collaboratori
-	Models	Modelli
 	Username	Nome utente
 	Display name	Nome visualizzato
 	Real name	Nome reale
@@ -3352,11 +3350,7 @@
 	Last	Ultimo
 	{people} contributors · {commits} commits	{people} collaboratori · {commits} commit
 	No contributor data was built into this copy.	Questa copia non include dati sui collaboratori.
-	No model credits were built into this copy.	Questa copia non include riconoscimenti dei modelli.
-	Company	Azienda
 	Version	Versione
-	% of all commits	% di tutti i commit
-	Lines +/−	Righe +/−
 	Joins	Giunzioni
 	Miter	Angolo vivo
 	Bevel	Smussato

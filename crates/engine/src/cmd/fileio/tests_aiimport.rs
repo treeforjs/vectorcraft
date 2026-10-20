@@ -1,4 +1,4 @@
-//! Illustrator EPS and `.ai` files open from the editing data they carry: layers, groups, names,
+//! the reference editor EPS and `.ai` files open from the editing data they carry: layers, groups, names,
 //! hidden objects, artboards, colours and images as they were; what the reader doesn't read yet
 //! opens as before, with a warning saying why.
 

@@ -127,7 +127,7 @@ function New-InstallerArt([string] $IconPng, [string] $BannerOut, [string] $Dial
 }
 $Banner = Join-Path $Stage 'installer-banner.bmp'
 $Dialog = Join-Path $Stage 'installer-dialog.bmp'
-New-InstallerArt (Join-Path $Root 'assets\app-icon\hicolor\256x256\apps\ai.storyteller.vectorcraft.png') $Banner $Dialog
+New-InstallerArt (Join-Path $Root 'assets\app-icon\hicolor\256x256\apps\io.github.treeforjs.vectorcraft.png') $Banner $Dialog
 
 $Msi = Join-Path $Dist "vectorcraft-$Version-windows-$Arch.msi"
 Invoke-Native 'wix build' {

@@ -196,7 +196,7 @@ fn the_shortcut_table_maps_f6_to_color() {
     assert_eq!(color.shortcut, "F6");
 }
 
-/// Illustrator's other Window menu panel keys (Discord feedback: Shift+F7 for Align), the dock's
+/// the reference editor's other Window menu panel keys (Discord feedback: Shift+F7 for Align), the dock's
 /// Layers tab (F7) among them; the menu shows them and the Keyboard Shortcuts editor lists every
 /// panel, so they can be changed.
 #[test]

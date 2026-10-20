@@ -1,7 +1,7 @@
 //! Curve-preserving boolean operations built on `linesweeper`'s robust sweep-line topology.
 //!
 //! Inputs are converted to closed [`BezPath`]s (open subpaths are implicitly closed, as a filled
-//! open path is painted in Illustrator). The sweep splits curves at intersections and y-extrema;
+//! open path is painted in the reference editor). The sweep splits curves at intersections and y-extrema;
 //! [`tidy_segments`] then re-joins pieces that came from the same smooth curve by refitting, so
 //! results have roughly as few anchors as the inputs.
 
@@ -15,7 +15,7 @@ use crate::PathOpsError;
 use crate::fit::{end_tangent, fit_single, is_straight, sample, start_tangent};
 
 /// Default curve-refit tolerance (document points) used to merge split curve pieces back together.
-/// Similar in spirit to Illustrator's Pathfinder "Precision" option (0.028 pt).
+/// Similar in spirit to the reference editor's Pathfinder "Precision" option (0.028 pt).
 pub const DEFAULT_PRECISION: f64 = 0.01;
 
 /// Binary boolean operation.
@@ -337,7 +337,7 @@ pub(crate) fn all_contours_to_path(c: &Contours, tidy: &Tidy) -> PathData {
 }
 
 /// Contours whose mean width (2·area / perimeter) is below `precision` are numerical debris
-/// (e.g. the lens left between two coincident curves) and are dropped, like Illustrator's
+/// (e.g. the lens left between two coincident curves) and are dropped, like the reference editor's
 /// Pathfinder precision setting does.
 pub(crate) fn is_sliver(bp: &BezPath, precision: f64) -> bool {
     let a = bp.area().abs();

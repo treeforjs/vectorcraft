@@ -12,7 +12,7 @@ fn table() -> &'static HashMap<&'static str, &'static [u8]> {
             .iter()
             .map(|(n, b)| {
                 // Icons use currentColor; render white and tint at draw time. Slightly thinner strokes
-                // than Lucide's default read closer to Illustrator's glyph weight.
+                // than Lucide's default read closer to the reference editor's glyph weight.
                 let s = String::from_utf8_lossy(b).replace("currentColor", "white").replace("stroke-width=\"2\"", "stroke-width=\"1.6\"");
                 let leaked: &'static [u8] = Box::leak(s.into_bytes().into_boxed_slice());
                 (*n, leaked)

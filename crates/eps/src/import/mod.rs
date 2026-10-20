@@ -10,12 +10,12 @@
 //! - `data`: data the program reads from itself through decoding filters, and images.
 //! - `text`: fonts by name and type as point type; Type 3 fonts' glyphs drawn by their procedures.
 //! - `preview`: the previews a file carries, for when its PostScript can't be read.
-//! - `native`: the layers of an Illustrator file, from the editing copy of its art that it carries.
+//! - `native`: the layers of a reference editor file, from the editing copy of its art that it carries.
 //!
-//! Clipped art comes in as clipping groups. In a file in the legacy Illustrator format (versions
+//! Clipped art comes in as clipping groups. In a file in the legacy reference editor format (versions
 //! 3–8, with the prolog that defines its operators), the group operators `u` … `U` (nested) come in
 //! as groups. The format's published specification documents its header comments (`%AI…`,
-//! `%%Creator`) and these operators: Adobe Illustrator File Format Specification, version 7.0
+//! `%%Creator`) and these operators: the reference editor File Format Specification, version 7.0
 //! (1998), listed by PRONOM at https://www.nationalarchives.gov.uk/PRONOM/fmt/423.
 //!
 //! The page is the file's `%%BoundingBox` (`%%HiResBoundingBox` when it has one), the first page
@@ -84,7 +84,7 @@ struct Dsc {
     /// `llx lly urx ury` in PostScript's default space.
     bbox: Option<[f64; 4]>,
     pages: Option<u32>,
-    /// In the legacy Illustrator format: its header has `%AI…` comments or names the app as the
+    /// In the legacy reference editor format: its header has `%AI…` comments or names the app as the
     /// creator (see the module docs for the specification).
     illustrator: bool,
 }
@@ -166,13 +166,13 @@ fn reason(e: &PsError, fault: Option<&Fault>) -> String {
     }
 }
 
-/// Read an EPS or PostScript file (its first page), an Illustrator EPS through the editing copy of
+/// Read an EPS or PostScript file (its first page), a reference editor EPS through the editing copy of
 /// its art when it carries one (see `native`).
 pub fn import(bytes: &[u8]) -> Result<Imported, String> {
     import_with(bytes, true)
 }
 
-/// [`import`], an Illustrator EPS through the editing copy of its art only when `editing_data`
+/// [`import`], a reference editor EPS through the editing copy of its art only when `editing_data`
 /// (else what its page prints, as any EPS).
 pub fn import_with(bytes: &[u8], editing_data: bool) -> Result<Imported, String> {
     let (ps, _) = crate::sections(bytes).ok_or("the file's preview header points outside the file")?;

@@ -490,7 +490,7 @@ fn paint_params(v: &Value) -> Result<Value, String> {
     })
 }
 
-fn apply_paint(b: &mut dyn Backend, a: &Args, ids: Option<Value>) -> Result<Value, String> {
+fn paint_steps(a: &Args, ids: Option<Value>) -> Result<(Vec<Value>, Value), String> {
     let with_ids = |mut p: Value| {
         if let Some(ids) = &ids {
             p["ids"] = ids.clone();
@@ -498,24 +498,38 @@ fn apply_paint(b: &mut dyn Backend, a: &Args, ids: Option<Value>) -> Result<Valu
         p
     };
     let mut applied = Map::new();
+    let mut commands = vec![];
     if let Some(f) = a.get("fill") {
-        exec(b, "paint.setFill", with_ids(paint_params(f)?))?;
+        commands.push(json!({"command": "paint.setFill", "params": with_ids(paint_params(f)?)}));
         applied.insert("fill".into(), f.clone());
     }
     if let Some(s) = a.get("stroke") {
-        exec(b, "paint.setStroke", with_ids(paint_params(s)?))?;
+        commands.push(json!({"command": "paint.setStroke", "params": with_ids(paint_params(s)?)}));
         applied.insert("stroke".into(), s.clone());
     }
     if let Some(w) = a.get("strokeWidth") {
         let w = w.as_f64().ok_or("`strokeWidth` must be a number")?;
-        exec(b, "stroke.set", with_ids(json!({"weight": w})))?;
+        commands.push(json!({"command": "stroke.set", "params": with_ids(json!({"weight": w}))}));
         applied.insert("strokeWidth".into(), json!(w));
     }
-    Ok(Value::Object(applied))
+    Ok((commands, Value::Object(applied)))
 }
 
-fn created_id(r: &Value) -> Option<Value> {
-    r.get("id").filter(|v| v.is_u64()).map(|id| json!([id]))
+fn apply_paint(b: &mut dyn Backend, a: &Args, ids: Option<Value>) -> Result<Value, String> {
+    let (commands, applied) = paint_steps(a, ids)?;
+    if !commands.is_empty() {
+        exec(b, "command.batch", json!({"label": "Paint", "commands": commands}))?;
+    }
+    Ok(applied)
+}
+
+/// Creation selects the new object, so the following paint steps act on it in the same transaction.
+fn draw_with_paint(b: &mut dyn Backend, command: &str, params: Value, a: &Args) -> Result<(Value, Value), String> {
+    let (mut commands, applied) = paint_steps(a, None)?;
+    commands.insert(0, json!({"command": command, "params": params}));
+    let result = exec(b, "command.batch", json!({"label": "Draw", "commands": commands}))?;
+    let created = result.get("results").and_then(Value::as_array).and_then(|r| r.first()).ok_or("drawing returned no result")?;
+    Ok((created.get("id").cloned().unwrap_or(Value::Null), applied))
 }
 
 fn draw_path(b: &mut dyn Backend, a: &Args) -> Result<Value, String> {
@@ -539,9 +553,8 @@ fn draw_path(b: &mut dyn Backend, a: &Args) -> Result<Value, String> {
         p["anchors"] = Value::Array(anchors);
         p["closed"] = json!(a.get("closed").and_then(Value::as_bool).unwrap_or(false));
     }
-    let r = exec(b, "path.create", p)?;
-    let paint = apply_paint(b, a, created_id(&r))?;
-    Ok(json!({"id": r.get("id"), "paint": paint}))
+    let (id, paint) = draw_with_paint(b, "path.create", p, a)?;
+    Ok(json!({"id": id, "paint": paint}))
 }
 
 fn draw_shape(b: &mut dyn Backend, a: &Args) -> Result<Value, String> {
@@ -558,9 +571,8 @@ fn draw_shape(b: &mut dyn Backend, a: &Args) -> Result<Value, String> {
     for k in ["shape", "fill", "stroke", "strokeWidth"] {
         p.remove(k);
     }
-    let r = exec(b, cmd, Value::Object(p))?;
-    let paint = apply_paint(b, a, created_id(&r))?;
-    Ok(json!({"id": r.get("id"), "shape": shape, "paint": paint}))
+    let (id, paint) = draw_with_paint(b, cmd, Value::Object(p), a)?;
+    Ok(json!({"id": id, "shape": shape, "paint": paint}))
 }
 
 /// Select `ids` when given (tools that act on the selection).

@@ -20,6 +20,7 @@ windows7 = ["eframe/glow"]
 vectorcraft-engine = { workspace = true }
 vectorcraft-ui-egui = { workspace = true }
 vectorcraft-text = { workspace = true }
+vectorcraft-format = { workspace = true }
 eframe = { workspace = true, features = ["default_fonts", "links", "wayland", "x11"] }
 egui = { workspace = true }
 serde_json = { workspace = true }
@@ -48,7 +49,7 @@ clipboard-win = { workspace = true }
 winsafe = { version = "0.0.29", default-features = false, features = ["user"], optional = true }
 
 # DirectWrite's system font collection (src/system_fonts.rs): fonts that font services such as
-# Adobe Fonts load in place (#579). MIT OR Apache-2.0, already in the build through accesskit.
+# Font subscription services load in place (#579). MIT OR Apache-2.0, already in the build through accesskit.
 [target.'cfg(all(windows, not(target_vendor = "win7")))'.dependencies]
 windows = { version = "0.62", features = ["Win32_Graphics_DirectWrite"] }
 

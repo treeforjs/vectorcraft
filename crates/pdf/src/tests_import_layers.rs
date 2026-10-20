@@ -249,7 +249,7 @@ fn a_view_state_that_is_off_hides_the_layer_with_its_art() {
 
 #[test]
 fn nested_groups_become_sublayers_and_hidden_ones_keep_their_art() {
-    // The order as an object of its own (as Illustrator writes it): "Top" holds "Sub", which is
+    // The order as an object of its own (as the reference editor writes it): "Top" holds "Sub", which is
     // off; a label's groups stay at the level of the label.
     let order = first_extra(1) + 3;
     let bytes = three_groups(

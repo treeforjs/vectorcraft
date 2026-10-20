@@ -199,7 +199,7 @@ mod tests {
         assert_eq!(selected(&s), [a, c]);
         s.execute("select.magicWand", &json!({"id": a, "mode": "subtract"})).unwrap();
         assert!(selected(&s).is_empty());
-        // Settings survive tool switches and reset to Illustrator's defaults.
+        // Settings survive tool switches and reset to the reference editor's defaults.
         s.select_tool("pen", Default::default()).unwrap();
         assert_eq!(s.execute("magicWand.options", &json!({})).unwrap()["strokeWeight"], true);
         assert_eq!(s.execute("magicWand.set", &json!({"reset": true})).unwrap(), json!(WandSettings::default()));

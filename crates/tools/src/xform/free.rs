@@ -3,7 +3,7 @@
 //! Shows the bounding box with handles. In the default mode handles scale (Shift proportional,
 //! Alt from centre), outside the corners rotates, inside moves, and Cmd-dragging a side handle
 //! shears along that side. The Perspective Distort and Free Distort modes (tool option `mode`, or
-//! Cmd / Cmd+Alt+Shift while dragging a corner like classic Illustrator) move the corners of the
+//! Cmd / Cmd+Alt+Shift while dragging a corner like classic the reference editor) move the corners of the
 //! box and preview `object.distort`.
 
 use serde_json::{Value, json};

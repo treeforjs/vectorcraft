@@ -5,7 +5,7 @@
 //! bitmaps, PDF and text pasted from other apps, nor EMF and WMF pictures (damaged files, records
 //! of every kind with random contents) opened, placed or pasted, nor EPS and PostScript files
 //! (damaged ones, hostile programs) read by the PostScript interpreter, nor the editing data of
-//! Illustrator EPS and `.ai` files (the layers they carry, damaged or hostile), nor Affinity documents
+//! the reference editor EPS and `.ai` files (the layers they carry, damaged or hostile), nor Affinity documents
 //! (mutated object streams, archives and indexed PNG previews, hostile image dimensions), nor the
 //! font files a folder search reads (damaged fonts, collections whose headers give any count of
 //! faces).
@@ -1224,7 +1224,7 @@ proptest! {
     }
 
     /// Hostile PostScript programs: operators in any order with any operands, opened and placed;
-    /// as files in the legacy Illustrator format too (the creator line is what turns on its
+    /// as files in the legacy reference editor format too (the creator line is what turns on its
     /// documented `u` … `U` groups), the groups unbalanced, deep and among clips.
     #[test]
     fn eps_hostile_programs_never_panic(tokens in prop::collection::vec(arb_ps_token(), 0..60), illustrator in any::<bool>()) {
@@ -1629,7 +1629,7 @@ proptest! {
     }
 }
 
-// ---------- the editing data of Illustrator files ----------
+// ---------- the editing data of the reference editor files ----------
 
 /// `data` as ASCII85, up to the `~>`.
 fn ascii85(data: &[u8]) -> String {
@@ -1777,7 +1777,7 @@ fn text_eps_of(document: &str, objects: &str) -> Vec<u8> {
 proptest! {
     #![proptest_config(config())]
 
-    /// An Illustrator EPS whose text document is damaged or hostile: read as its type, or without it.
+    /// An the reference editor EPS whose text document is damaged or hostile: read as its type, or without it.
     #[test]
     fn eps_text_document_never_panics(cut in 0usize..1_500, edits in prop::collection::vec((0usize..1_500, prop::sample::select(vec!['0', '9', '-', '.', ' ', '\n', '(', ')', '/', '[', ']', '<', '>', '\\', 'e', '1'])), 0..12)) {
         let text = mutate_text(&text_document_text(), cut, &edits);
@@ -1794,7 +1794,7 @@ proptest! {
         survive("mutated EPS text frames", || vectorcraft_engine::cmd::fileio::load("x.eps", &bytes).ok().map(|l| l.doc))?;
     }
 
-    /// An Illustrator EPS whose editing data is damaged or hostile: read as its layers, or as its page.
+    /// An the reference editor EPS whose editing data is damaged or hostile: read as its layers, or as its page.
     #[test]
     fn eps_editing_data_never_panics(cut in 0usize..3_000, edits in prop::collection::vec((0usize..3_000, prop::sample::select(vec!['0', '9', '-', '.', ' ', '\n', '(', ')', '/', ':', ';', '[', ']', '%', 'q', 'Q', 'W', 'u', 'U', 'L', 'k', 'x'])), 0..12)) {
         let text = mutate_text(&editing_text(), cut, &edits);
@@ -1962,7 +1962,7 @@ fn ai_sample_compressed() -> Vec<u8> {
 proptest! {
     #![proptest_config(config())]
 
-    /// Hostile editing data in Illustrator EPS and `.ai` files: operators in any order with any
+    /// Hostile editing data in the reference editor EPS and `.ai` files: operators in any order with any
     /// operands, sections and dictionaries left open, images of any size.
     #[test]
     fn ai_hostile_editing_data_never_panics(tokens in prop::collection::vec(arb_ai_token(), 0..80)) {

@@ -1,7 +1,7 @@
 //! Graphs: the nine graph tools and Object → Graph (Type…, Data…).
 //!
 //! A graph is a group carrying a [`GraphSpec`]; its children (axes, labels, one group per series
-//! with that series' legend swatch, like Illustrator's group-selectable series) are generated from
+//! with that series' legend swatch, like the reference editor's group-selectable series) are generated from
 //! the spec. Editing the data or the type regenerates them in place, keeping any move/scale the
 //! user applied to the graph since it was generated.
 
@@ -131,7 +131,7 @@ fn fmt_value(v: f64) -> String {
 
 // ---------- generation ----------
 
-/// Series colours: black, then greys (Illustrator's graphs start in greyscale too).
+/// Series colours: black, then greys (the reference editor's graphs start in greyscale too).
 fn series_paint(i: usize) -> Paint {
     const LEVELS: [f32; 8] = [0.0, 0.55, 0.8, 0.3, 0.68, 0.15, 0.9, 0.42];
     let l = LEVELS[i % LEVELS.len()];

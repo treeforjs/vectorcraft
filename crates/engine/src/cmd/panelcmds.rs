@@ -180,7 +180,7 @@ pub(crate) fn push_artboard_copy(d: &mut vectorcraft_doc::Document, src: &vector
 
 // ---------- text ----------
 
-/// Largest indent or paragraph spacing (points; Illustrator's limit).
+/// Largest indent or paragraph spacing (points; the reference editor's limit).
 const MAX_PARA: f64 = 1296.0;
 
 fn set_format(s: &mut Session, p: &Value) -> Result<Value> {

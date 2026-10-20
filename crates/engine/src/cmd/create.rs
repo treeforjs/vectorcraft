@@ -324,7 +324,7 @@ fn line(s: &mut Session, p: &Value) -> Result<Value> {
     let a = Point::new(f64_req(p, "x1", "shape.line")?, f64_req(p, "y1", "shape.line")?);
     let b = Point::new(f64_req(p, "x2", "shape.line")?, f64_req(p, "y2", "shape.line")?);
     let live = LiveShape::Line { a, b };
-    // Lines are stroked, never filled (Illustrator ignores the fill for new open lines).
+    // Lines are stroked, never filled (the reference editor ignores the fill for new open lines).
     let look = s.new_art_look(
         vectorcraft_color::Paint::None,
         if s.paint.stroke.is_none() { vectorcraft_color::Paint::solid(vectorcraft_color::Color::BLACK) } else { s.paint.stroke.clone() },
@@ -414,7 +414,7 @@ fn path_create(s: &mut Session, p: &Value) -> Result<Value> {
         PathData::single(SubPath::new(anchors, bool_or(p, "closed", false)))
     };
     let mut look = s.new_art_look(s.paint.fill.clone(), s.paint.stroke.clone(), s.paint.stroke_width);
-    // Open paths drawn with a stroke of None would be invisible: mimic Illustrator and keep what the user set.
+    // Open paths drawn with a stroke of None would be invisible: mimic the reference editor and keep what the user set.
     let ap = &mut look.appearance;
     if !path.is_closed() && ap.stroke_paint().is_none() && ap.fill_paint().is_none() {
         ap.set_stroke(vectorcraft_color::Paint::solid(vectorcraft_color::Color::BLACK));

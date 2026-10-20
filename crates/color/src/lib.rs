@@ -82,7 +82,7 @@ impl Color {
         match *self {
             Color::Rgb { r, g, b } if cms::rgb_is_srgb() => [r, g, b],
             Color::Cmyk { c, m, y, k } if cms::cmyk_is_device() => cms::naive_cmyk_to_rgb([c, m, y, k]),
-            // Illustrator's Gray is ink percentage: 0 = white, 1 = black.
+            // the reference editor's Gray is ink percentage: 0 = white, 1 = black.
             Color::Gray { k } => [1.0 - k; 3],
             Color::Lab { l, a, b } => cms::lab::lab_to_srgb(cms::Lab::new(l, a, b)),
             _ => cms::active().display_rgb(self),
@@ -188,7 +188,7 @@ impl Color {
             _ => None,
         }
     }
-    /// Complement (Illustrator's Edit → Edit Colors → Invert is 1 - rgb; this is hue + 180).
+    /// Complement (the reference editor's Edit → Edit Colors → Invert is 1 - rgb; this is hue + 180).
     pub fn complement(&self) -> Self {
         let [h, s, v] = self.to_hsb();
         Color::from_hsb(h + 180.0, s, v)

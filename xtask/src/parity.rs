@@ -1,4 +1,4 @@
-//! `cargo xtask parity`: validate `parity/illustrator-features.toml` and report progress.
+//! `cargo xtask parity`: validate `parity/features.toml` and report progress.
 //!
 //! Checks:
 //! - schema: unique ids (`area.kebab-name`), known area letters, tiers, milestones and statuses;
@@ -18,7 +18,7 @@ use serde::Deserialize;
 
 use crate::{cargo, root};
 
-const CHECKLIST: &str = "parity/illustrator-features.toml"; // brand-ok: named after the app it tracks
+const CHECKLIST: &str = "parity/features.toml";
 
 pub const AREAS: &[(&str, &str)] = &[
     ("A", "Documents, files and output"),
@@ -36,7 +36,7 @@ pub const AREAS: &[(&str, &str)] = &[
     ("M", "Automation and data"),
     ("N", "Print and production"),
     ("O", "Interface and preferences"),
-    ("P", "Cloud and generative AI"),
+    ("P", "Hosted services outside local scope"),
 ];
 const TIERS: &[&str] = &["P0", "P1", "P2", "P3", "N/A"];
 const STATUSES: &[&str] = &["planned", "partial", "shipped", "na"];

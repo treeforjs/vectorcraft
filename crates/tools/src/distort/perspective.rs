@@ -62,7 +62,7 @@ impl Plane {
             Self::None => "none",
         }
     }
-    /// Illustrator's plane colours: left blue, right orange, ground green.
+    /// the reference editor's plane colours: left blue, right orange, ground green.
     pub fn color(self) -> [u8; 3] {
         match self {
             Self::Left => [0x33, 0x66, 0xff],
@@ -172,7 +172,7 @@ pub struct PerspectiveGrid {
 }
 
 impl PerspectiveGrid {
-    /// Illustrator-like preset for `kind` fitted to an artboard.
+    /// the reference editor-like preset for `kind` fitted to an artboard.
     pub fn preset(kind: u8, ab: Rect) -> Self {
         let (w, h) = (ab.width().max(1.0), ab.height().max(1.0));
         let kind = kind.clamp(1, 3);

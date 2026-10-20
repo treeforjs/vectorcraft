@@ -10,7 +10,7 @@ use crate::EPS;
 /// Fill rule for paths and compound paths.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum FillRule {
-    /// Illustrator's default for compound paths created from overlapping shapes.
+    /// the reference editor's default for compound paths created from overlapping shapes.
     #[default]
     NonZero,
     EvenOdd,

@@ -1,6 +1,6 @@
 //! VectorCraft geometry kernel.
 //!
-//! The editable path model is anchor based (like every Illustrator tool thinks about paths):
+//! The editable path model is anchor based (like every the reference editor tool thinks about paths):
 //! a [`PathData`] is a list of [`SubPath`]s, each a list of [`Anchor`]s with absolute in/out
 //! handle positions. Rendering and algorithms convert to [`kurbo::BezPath`].
 //!
@@ -68,7 +68,7 @@ pub fn rect_from_points(a: Point, b: Point) -> Rect {
     Rect::from_points(a, b)
 }
 
-/// The 9 reference points of a rect (Illustrator's reference-point locator), row-major from top-left.
+/// The 9 reference points of a rect (the reference editor's reference-point locator), row-major from top-left.
 pub fn reference_point(r: Rect, index: usize) -> Point {
     let xs = [r.x0, r.center().x, r.x1];
     let ys = [r.y0, r.center().y, r.y1];

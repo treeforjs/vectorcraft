@@ -32,7 +32,7 @@ pub struct LoadOptions {
     pub layers: bool,
     /// How a DXF drawing comes in (the `dxf` param, see [`super::dxfimport`]).
     pub dxf: vectorcraft_cad::ImportOptions,
-    /// An Illustrator EPS or `.ai` that carries the editing copy of its art opens from it (its
+    /// An the reference editor EPS or `.ai` that carries the editing copy of its art opens from it (its
     /// layers, hidden objects and the art outside its artboards); else only what its page or PDF
     /// part prints comes in.
     pub editing_data: bool,

@@ -1,7 +1,7 @@
 # VectorCraft MCP server
 
 `vectorcraft-cli mcp` runs a [Model Context Protocol](https://modelcontextprotocol.io) server on stdio
-(newline-delimited JSON-RPC 2.0; see [Protocol](#protocol) for version negotiation). Agents use it to
+(newline-delimited JSON-RPC 2.0; see [Protocol](#protocol) for version negotiation). Clients use it to
 draw, inspect and look at VectorCraft documents.
 
 It has two backends:
@@ -78,7 +78,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"prompts/get","params":{"name":"poster","
 
 `vectorcraft://document` (summary), `vectorcraft://document/json` (the whole model), and
 `vectorcraft://commands` (the live command catalog with enabled state) are the fixed resources. The templates read one thing at a time, which matters on a real document: the full model
-is thousands of lines an agent pays for again on every change.
+is thousands of lines an client pays for again on every change.
 
 | `uriTemplate` | Reads |
 |---|---|
@@ -219,9 +219,12 @@ objects' fills or strokes differ (`fillMixed` / `strokeMixed`, drawn as a "?" pr
 | `apply_effect` | `{effect?, params?, ids?}` | Appends a live effect. Without `effect`, returns the effect catalogue with parameters and defaults. |
 | `pathfinder` | `{operation, ids?}` | `unite`, `minusFront`, `intersect`, `exclude`, `divide`, `trim`, `merge`, `crop`, `outline`, `minusBack`. For a live version, apply the `pathfinder.*` effect to a group (`effect.apply` groups several loose selected objects first). |
 | `transform` | `{ids?, dx?, dy?, rotate?, scale?, scaleX?, scaleY?, reflect?, shear?, origin?, copy?}` | Runs move, rotate, scale, reflect, shear in that order. With `copy`, the first step duplicates. |
-| `create_graph` | `{type?, x, y, width, height, csv? \| series?, categories?, rows?}` | The nine Illustrator graph types: column, stacked column, bar, stacked bar, line, area, scatter, pie and radar. Edit later with `graph.setData` / `graph.setType` via `run_command`. |
+| `create_graph` | `{type?, x, y, width, height, csv? \| series?, categories?, rows?}` | The nine supported graph types: column, stacked column, bar, stacked bar, line, area, scatter, pie and radar. Edit later with `graph.setData` / `graph.setType` via `run_command`. |
 | `text_wrap` | `{ids?, offset?, invert?, release?}` | Area type below the objects (same layer) flows around them. |
 | `undo` / `redo` | `{}` | |
+
+`draw_shape`, `draw_path` and `set_paint` apply each request as one undo step. Invalid geometry
+or paint leaves the document, selection and history unchanged.
 
 With `mods.shift`, a marquee dragged with the Selection tool toggles the objects it reaches (the selected ones leave
 the selection, the others join it, the rest stays), and one dragged with Direct or Group Selection toggles the anchors
@@ -319,7 +322,7 @@ of the file, so Save asks for a new name instead of writing it back.
 `file.documentColorMode {mode, convert?, intent?, grays?}` switches the document colour mode, converting the colours of
 the art, symbols, pattern tiles and swatches through the colour settings (`object.convertDocumentColorMode` is an
 alias kept for older scripts). Gray colours stay Gray and print on the black plate only. RGB greys are colours like any
-other: to CMYK they separate through the profile into four-colour greys and a rich black, as Illustrator converts
+other: to CMYK they separate through the profile into four-colour greys and a rich black, as the reference editor converts
 them. `grays: "black"` puts RGB greys with R = G = B on the black plate instead, K = their grey value (the inks Edit Colors ›
 Convert to Grayscale before the switch would give); other colours convert as usual.
 
@@ -414,7 +417,7 @@ and `flattener` options over it (as `object.flattenTransparency` takes them); im
 transparency and rasterized areas are clipped to their regions. A file that would still have transparency fails the
 export. PDF/X-1a and PDF/X-3 files are PDF 1.3 files too.
 
-An Illustrator EPS (version 9 on) or `.ai` file opens from the editing data it carries (after the EPS page; in the
+An the reference editor EPS (version 9 on) or `.ai` file opens from the editing data it carries (after the EPS page; in the
 `.ai` file's PDF private data): layers and sublayers (name, order, visibility, lock, printing, preview, dimming,
 colour), groups as they were nested, compound paths, clipping groups, object names, hidden and locked objects, fills and
 strokes (spot colours as spot swatches), linear and radial gradients, opacity, blend modes, isolation and knockout,
@@ -461,7 +464,7 @@ PostScript files (`.eps`, and `.ai` files saved in older formats or without PDF 
 reader (see EPS and PostScript import). An `.ai` saved without PDF compatibility (its PDF part is only a placeholder
 page) opens from its editing data alone: its type is made from the file's text document where it can be (point type,
 area type and type on a path), and what can't be is left out with a warning; so is non-native art (the content of a
-placed PDF, which Illustrator shows but doesn't edit and keeps as a PDF inside the editing data); without editing data
+placed PDF, which the reference editor shows but doesn't edit and keeps as a PDF inside the editing data); without editing data
 it says it can't be opened.
 
 What a PDF holds comes in as editable art: soft masks become opacity masks (an alpha mask as a white copy of its art;
@@ -946,7 +949,7 @@ run's) in `stroke.set` terms. `stroke.set` on a group leaves the images and symb
 
 ## Inline graphics in type
 
-A document symbol can sit in a line of type like a character (beyond Illustrator; like InDesign's inline
+A document symbol can sit in a line of type like a character (beyond the reference editor; like InDesign's inline
 anchored objects), e.g. mana symbols in card rules text. `text.insertInline {id?, at?, symbol?, scale?: 1,
 shift?: 0}` inserts one at byte offset `at` (default: the Type tool's selection, which it replaces) of text `id`
 (default: the text being edited), showing `symbol` (default: the Symbols panel's current symbol) → `{id, caret}`;
@@ -1926,7 +1929,7 @@ files in `Links/` (relinked: the packaged document points at the copies; the ope
 type uses in `Fonts/` (fonts whose licence doesn't allow embedding are listed in `skippedFonts` instead) and
 `<document> Report.txt`. A placed `.vectorcraft` document is packaged with its own linked files and fonts, relinked to
 the copies (each file copied once); one that can't be read is copied as it is, and a cycle of placed documents or one
-past the nesting limit stops there, each with a line in `warnings` and the report. Every option defaults to true. Without `folder` (the web, or an agent that wants the bytes) the
+past the nesting limit stops there, each with a line in `warnings` and the report. Every option defaults to true. Without `folder` (the web, or an client that wants the bytes) the
 result carries the same files as a zip (`{name: "<name>.zip", dataBase64}`, entries under `<name>/`).
 
 `document.info {selectionOnly?, category?, format?: "text"}` adds `sections` (`[{id, title, rows: [[label, value]]}]`:
@@ -2079,7 +2082,7 @@ Lock the browser holds until the tab is gone (where the browser has Web Locks: s
 are offered: their lock is free, or no tab holds their Web Lock and their heartbeat is older than three intervals (at
 least three minutes). A background tab whose timers are paused therefore keeps its copies. Without Web Locks another
 tab can take such a tab for gone; when it resumes, its next heartbeat or recovery save writes its missing copies
-again. Several apps running at once (agents' instances included) never see each other's copies as crash leftovers,
+again. Several apps running at once (clients' instances included) never see each other's copies as crash leftovers,
 and an area being restored or discarded is held, so two apps launched together never both take it.
 
 `file.recovery.list` → `{copies: [{file, title, path, format, saved, open, running}], location}` (`open`: the copy of a
@@ -2299,8 +2302,8 @@ dictionaries (the standard ones are values in `systemdict`; `dictstack`, `intern
 intervals share storage, resources (categories made from `Generic`, `resourceforall`), executable filters (`cvx exec`
 runs their data; `flushfile` skips it), axial and radial shadings and shading patterns (gradients), images and image
 masks (data in the file through ASCII85, hex, run-length, Flate, LZW or DCT filters, or from procedures), and type as
-point type in the font the file names (embedded font programs are skipped). In a file in Illustrator's own format
-(Illustrator 3–8 `.ai` and their EPS, written with the prolog that defines its operators) the groups it writes (`u` …
+point type in the font the file names (embedded font programs are skipped). In a file in the reference editor's own format
+(the reference editor 3–8 `.ai` and their EPS, written with the prolog that defines its operators) the groups it writes (`u` …
 `U`) come in as groups, nested as they were; clips and groups nest at most 128 deep. The artboard is the `%%HiResBoundingBox`
 (else `%%BoundingBox`; a letter page without one). A program the interpreter can't run (an operator it doesn't know,
 an error, a runaway loop) or that draws nothing comes in as its TIFF preview (palette previews with an alpha channel
@@ -2591,7 +2594,7 @@ alignment back, with indents that keep it in place.
 
 The link between W and H in the Transform panel, the Properties panel and the Control bar is the
 `constrainProportions` preference (`prefs.get` / `prefs.set`). With it on, those fields send `proportional: true`
-to `object.setBounds`, which scales the other dimension by the same factor; agents pass `proportional` themselves.
+to `object.setBounds`, which scales the other dimension by the same factor; clients pass `proportional` themselves.
 
 ```json
 {"name":"run_command","arguments":{"command":"prefs.set","params":{"key":"constrainProportions","value":true}}}
@@ -2638,7 +2641,7 @@ tone (mono, or CMYK screens multiplied over each other), clipped to the art's ou
 Type can use the bundled fonts, fonts added to the session and the fonts installed on the system (none on the web):
 the system's and the user's font folders (Windows: `Fonts` and `%LOCALAPPDATA%\Microsoft\Windows\Fonts`, plus fonts
 registered outside them, such as fonts installed as shortcuts, and in the desktop app and `vectorcraft-cli` (MCP
-included) the fonts in DirectWrite's system font collection, such as those Adobe Fonts activates while Creative Cloud runs; macOS: `/System/Library/Fonts`, `/Library/Fonts`,
+included) the fonts in DirectWrite's system font collection, such as those font subscription services activates while Creative Cloud runs; macOS: `/System/Library/Fonts`, `/Library/Fonts`,
 `/Network/Library/Fonts`, `~/Library/Fonts` and downloaded system fonts, plus in the desktop app and `vectorcraft-cli`
 the fonts CoreText's font manager lists outside them, such as those apps and font managers register from their own
 folders; Linux and BSD: `/usr/share/fonts`,
@@ -2817,7 +2820,7 @@ it square to the page.
 
 The Liquify tools (`warp`, `twirl`, `pucker`, `bloat`, `scallop`, `crystallize`, `wrinkle`) drag a brush over paths:
 the selected ones, or with nothing selected every path the brush passes over. A stroke is one undo step and one
-`object.liquify` journal entry, which an agent can also run directly. Their options (`tool.setOption`) are the Global
+`object.liquify` journal entry, which an client can also run directly. Their options (`tool.setOption`) are the Global
 Brush Dimensions shared by the seven tools (`width`, `height` in pt, `angle`, `intensity` 0..1, `usePressure`,
 `showBrush`) and the tool's own: `detail` (1..10); `simplify` (0..100) with `simplifyOn` (Warp, Twirl, Pucker,
 Bloat); `rate` (Twirl, -180..180°); `complexity` (0..15) and `affectAnchors`, `affectIn`, `affectOut` (Scallop,

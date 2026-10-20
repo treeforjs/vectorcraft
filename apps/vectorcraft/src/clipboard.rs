@@ -12,7 +12,7 @@
 //! - Everywhere: files copied in a file manager paste as the first one that is art (SVG, PDF, a
 //!   metafile or a bitmap), before the clipboard's other formats (the files' paths as text).
 
-use std::io::{Cursor, Read};
+use std::io::Cursor;
 use std::path::PathBuf;
 
 use vectorcraft_engine::cmd::clipboard::{BITMAP, FILE_HEAD, Flavour, PNG, TEXT, file_flavour};
@@ -114,10 +114,10 @@ fn copied_file(paths: Vec<PathBuf>, mimes: &[&'static str]) -> Option<Flavour> {
             Some(p) if p.ends_with('\r') => PathBuf::from(p.trim_end_matches('\r')),
             _ => path,
         };
-        let mut head = Vec::with_capacity(FILE_HEAD);
-        std::fs::File::open(&path).ok()?.take(FILE_HEAD as u64).read_to_end(&mut head).ok()?;
+        let head = vectorcraft_format::read_regular_file_prefix(&path, FILE_HEAD).ok()?;
         let mime = file_flavour(&path.to_string_lossy(), &head, mimes)?;
-        let data = std::fs::read(&path).ok()?;
+        // Revalidate the full read as well: a clipboard path can change after the sniff.
+        let data = vectorcraft_format::read_regular_file(&path).ok()?;
         (!data.is_empty()).then_some(Flavour { mime, data })
     })
 }
@@ -454,6 +454,21 @@ mod tests {
         std::fs::write(&red, png(2, 2)).unwrap();
         let with_cr = PathBuf::from(format!("{}\r", red.display()));
         assert_eq!(copied_file(vec![with_cr], &PASTE_ORDER).map(|f| f.mime), Some(PNG));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn copied_devices_and_fifos_are_skipped_without_waiting_for_a_writer() {
+        let d = dir("nonregular");
+        let fifo = d.join("copied.svg");
+        assert!(std::process::Command::new("mkfifo").arg(&fifo).status().unwrap().success());
+        let art = d.join("art.svg");
+        let bytes = b"<svg xmlns=\"http://www.w3.org/2000/svg\"/>";
+        std::fs::write(&art, bytes).unwrap();
+        let pasted = copied_file(vec![PathBuf::from("/dev/zero"), fifo, art], &PASTE_ORDER).unwrap();
+        assert_eq!(pasted.mime, SVG);
+        assert_eq!(pasted.data, bytes);
+        std::fs::remove_dir_all(d).unwrap();
     }
 
     /// A DIB of `w`×`h` pixels (top row first when `h` is negative): a `header`-byte header (40,

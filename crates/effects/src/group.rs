@@ -17,7 +17,7 @@ use vectorcraft_doc::{Appearance, AppearanceItem, Node, NodeId, NodeKind, Stroke
 use vectorcraft_geom::{FillRule, PathData, Rect};
 use vectorcraft_pathops::{self as po, PathfinderOp};
 
-/// Effect ids of the Pathfinder submenu with their operation, in Illustrator's menu order.
+/// Effect ids of the Pathfinder submenu with their operation, in the reference editor's menu order.
 pub const PATHFINDER_EFFECTS: [(&str, &str, PathfinderOp); 10] = [
     ("pathfinder.add", "Add", PathfinderOp::Unite),
     ("pathfinder.intersect", "Intersect", PathfinderOp::Intersect),

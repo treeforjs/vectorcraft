@@ -12,7 +12,7 @@
 //! - Feather: like Gaussian Blur but clipped to the shape, so the edge fades inward;
 //! - Inner Glow: a blurred inverse silhouette (Edge) or the blurred silhouette (Center), clipped
 //!   to the shape and painted above it;
-//! - Photoshop-style filters (Radial Blur, Smart Blur, Unsharp Mask…): the content is rendered
+//! - raster filters (Radial Blur, Smart Blur, Unsharp Mask…): the content is rendered
 //!   offscreen and its pixels run through the content-changing effects in stack order (those
 //!   filters, Gaussian Blur and Feather, see [`effects::pixel`]), then drawn back
 //!   ([`Renderer::pixel_content`]). The result is cached per object while it and the zoom don't
@@ -214,7 +214,7 @@ fn looks_around(fx: &RasterFx) -> Option<f64> {
     }
 }
 
-/// The content of an object with Photoshop-style effects as filtered pixels, drawn at
+/// The content of an object with raster effects as filtered pixels, drawn at
 /// (`anchor`'s view position + `rel`) scaled by 1 / `k` (see [`Renderer::pixel_content`]).
 pub(crate) struct PixelEntry {
     node: Node,
@@ -538,7 +538,7 @@ impl Renderer {
     }
 
     /// Paint `content` through the content-changing effects of `rfx` (Gaussian Blur, Feather and the
-    /// Photoshop-style filters) in stack order on its pixels: rendered offscreen over all it can
+    /// raster filters) in stack order on its pixels: rendered offscreen over all it can
     /// reach, filtered on the CPU and drawn back. The raster holds at most [`PIXEL_BUDGET`] pixels:
     /// larger content is cropped to the view when every effect only looks nearby, else rendered
     /// at a lower resolution. A whole raster at full resolution is cached while the object and the

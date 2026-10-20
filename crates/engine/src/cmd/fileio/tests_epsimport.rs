@@ -92,7 +92,7 @@ fn postscript_ai_files_and_garbage() {
     assert_eq!((&r["format"], &r["restored"]), (&json!("ai"), &json!(false)), "{r}");
     assert_eq!(s.doc().unwrap().path, None);
     assert_eq!(objects(&s), 1);
-    // Illustrator's groups come in as groups, nested as they were.
+    // the reference editor's groups come in as groups, nested as they were.
     let ai = b"%!PS-Adobe-3.0
 %%Creator: Adobe Illustrator(R) 8.0
 %%BoundingBox: 0 0 100 100

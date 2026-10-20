@@ -7,7 +7,7 @@ use vectorcraft_geom::Point;
 
 use super::*;
 
-/// Illustrator keeps up to 25 views per document.
+/// the reference editor keeps up to 25 views per document.
 pub const MAX_VIEWS: usize = 25;
 
 pub fn specs() -> Vec<CommandSpec> {

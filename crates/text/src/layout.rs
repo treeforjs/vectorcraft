@@ -813,7 +813,7 @@ impl Region {
         let cw = ((bbox.width() - gutter * (cols - 1) as f64) / cols as f64).max(0.0);
         let rh = ((bbox.height() - gutter * (rows - 1) as f64) / rows as f64).max(0.0);
         let mut out = Vec::with_capacity(rows * cols);
-        // Text flows down each column, then across (Illustrator's default "by columns").
+        // Text flows down each column, then across (the reference editor's default "by columns").
         for c in 0..cols {
             for r in 0..rows {
                 let x0 = bbox.x0 + c as f64 * (cw + gutter);

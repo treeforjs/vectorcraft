@@ -6,7 +6,15 @@ Windows and Linux installers and portable packages, and creates or updates a
 publishes it.
 
 User-facing names say **VectorCraft**. Files, binaries and ids stay lowercase
-(`vectorcraft-<version>-<platform>-<arch>.<ext>`, `ai.storyteller.vectorcraft`).
+(`vectorcraft-<version>-<platform>-<arch>.<ext>`, `io.github.treeforjs.vectorcraft`).
+
+The application identifier is `io.github.treeforjs.vectorcraft`. Linux packages also retain the
+older `ai.storyteller.vectorcraft` desktop-file and icon names as compatibility aliases. Its
+desktop entry is hidden so application menus show one VectorCraft launcher. Native configuration
+folders and the Windows MSI UpgradeCode stay unchanged, so existing settings and upgrades work.
+The old macOS document type identifier remains an imported compatibility type. Flatpak users
+changing application IDs should keep their previous installation and its data until they have
+migrated their documents/settings; this release pipeline does not publish Flatpak packages.
 
 ## Cutting a release
 

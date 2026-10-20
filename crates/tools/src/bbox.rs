@@ -56,7 +56,7 @@ pub fn hit_handle(r: Rect, p: Point, tol: f64) -> Option<Handle> {
     })
 }
 
-/// Is `p` in the rotate zone just outside a corner (Illustrator shows the curved rotate cursor there)?
+/// Is `p` in the rotate zone just outside a corner (the reference editor shows the curved rotate cursor there)?
 pub fn in_rotate_zone(r: Rect, p: Point, inner: f64, outer: f64) -> Option<Handle> {
     [Handle::TopLeft, Handle::TopRight, Handle::BottomRight, Handle::BottomLeft].into_iter().find(|h| {
         let q = h.pos(r);
@@ -86,7 +86,7 @@ pub fn scale_for_drag(r: Rect, handle: Handle, p: Point, proportional: bool, fro
             sx = sy.abs();
         }
     }
-    // Avoid degenerate zero scales (Illustrator never collapses an object completely).
+    // Avoid degenerate zero scales (the reference editor never collapses an object completely).
     let clamp = |s: f64| if s.abs() < 1e-4 { 1e-4 * if s < 0.0 { -1.0 } else { 1.0 } } else { s };
     Affine::translate(origin.to_vec2()) * Affine::scale_non_uniform(clamp(sx), clamp(sy)) * Affine::translate(-origin.to_vec2())
 }

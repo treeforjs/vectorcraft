@@ -19,7 +19,7 @@ pub use curvature::{CurvatureTool, EndCurve, curvature_close, curvature_extend, 
 pub use family::FamilyTool;
 pub use gesture::GestureTool;
 
-/// Colour of tool feedback (Illustrator's selection blue).
+/// Colour of tool feedback (the reference editor's selection blue).
 pub const FEEDBACK: [u8; 3] = [0x4f, 0x9d, 0xff];
 
 /// Create a drawing tool by id (None = not one of ours).

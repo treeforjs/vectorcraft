@@ -13,7 +13,7 @@
   <key>CFBundleExecutable</key>
   <string>VectorCraft</string>
   <key>CFBundleIdentifier</key>
-  <string>ai.storyteller.vectorcraft</string>
+  <string>io.github.treeforjs.vectorcraft</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundlePackageType</key>
@@ -54,7 +54,7 @@
   <array>
     <dict>
       <key>CFBundleTypeName</key><string>VectorCraft Document</string>
-      <key>LSItemContentTypes</key><array><string>ai.storyteller.vectorcraft.document</string></array>
+      <key>LSItemContentTypes</key><array><string>io.github.treeforjs.vectorcraft.document</string></array>
       <key>CFBundleTypeRole</key><string>Editor</string>
       <key>LSHandlerRank</key><string>Owner</string>
     </dict>
@@ -123,7 +123,7 @@
   <array>
     <dict>
       <key>UTTypeIdentifier</key>
-      <string>ai.storyteller.vectorcraft.document</string>
+      <string>io.github.treeforjs.vectorcraft.document</string>
       <key>UTTypeDescription</key>
       <string>VectorCraft Document</string>
       <key>UTTypeConformsTo</key>
@@ -140,6 +140,15 @@
         <key>public.mime-type</key>
         <array><string>application/x-vectorcraft</string></array>
       </dict>
+    </dict>
+  </array>
+  <!-- Compatibility with document associations from previous installations. -->
+  <key>UTImportedTypeDeclarations</key>
+  <array>
+    <dict>
+      <key>UTTypeIdentifier</key><string>ai.storyteller.vectorcraft.document</string>
+      <key>UTTypeDescription</key><string>VectorCraft Document</string>
+      <key>UTTypeConformsTo</key><array><string>io.github.treeforjs.vectorcraft.document</string></array>
     </dict>
   </array>
 </dict>

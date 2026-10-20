@@ -14,7 +14,7 @@ pub struct SimplifyOptions {
     pub tolerance: f64,
     /// Anchors where the path turns by more than this many degrees stay corners.
     pub corner_angle_deg: f64,
-    /// Produce only straight segments (Illustrator's "Convert to Straight Lines").
+    /// Produce only straight segments (the reference editor's "Convert to Straight Lines").
     pub straight_lines: bool,
 }
 

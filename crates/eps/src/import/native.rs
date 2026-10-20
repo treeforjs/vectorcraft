@@ -1,4 +1,4 @@
-//! The layers of an Illustrator EPS or `.ai`.
+//! The layers of a reference editor EPS or `.ai`.
 //!
 //! Besides the page it prints, such a file carries the app's own copy of the art: an EPS after its
 //! `%%EOF`, a `.ai` in its `AIPrivateData` streams (see `ai` for the containers). It has what the

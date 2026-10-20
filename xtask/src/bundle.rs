@@ -68,8 +68,8 @@ mod tests {
         let read = |p: &str| std::fs::read_to_string(crate::root().join(p)).unwrap();
         let plist = read("packaging/macos/Info.plist.in");
         assert!(plist.contains("<array><string>vectorcraft</string><string>drawcraft</string></array>"), "native format extensions");
-        assert!(read("packaging/linux/ai.storyteller.vectorcraft.desktop").contains("Categories=Graphics;2DGraphics;VectorGraphics;"));
-        assert!(read("packaging/linux/ai.storyteller.vectorcraft.metainfo.xml.in").contains("<category>VectorGraphics</category>"));
+        assert!(read("packaging/linux/io.github.treeforjs.vectorcraft.desktop").contains("Categories=Graphics;2DGraphics;VectorGraphics;"));
+        assert!(read("packaging/linux/io.github.treeforjs.vectorcraft.metainfo.xml.in").contains("<category>VectorGraphics</category>"));
     }
 
     #[test]

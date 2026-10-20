@@ -181,7 +181,7 @@ fn selectable(d: &Document, iso: Option<NodeId>) -> Vec<NodeId> {
 
 fn all(s: &mut Session, _: &Value) -> Result<Value> {
     // While the Type tool edits text, Select All takes all of that text and leaves the art
-    // selection as it is (Illustrator: text cursor in a text object).
+    // selection as it is (the reference editor: text cursor in a text object).
     if s.tool_wants_text() {
         s.set_tool_option("selectAll", &json!(true));
         let editing = s.tool_options()["editing"].clone();

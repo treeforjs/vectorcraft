@@ -1,16 +1,15 @@
 # Contributors in the About window
 
-**About ▸ Contributors** credits everyone who contributed to VectorCraft, and **About ▸ Models** credits
-the AI models named in `Co-Authored-By` trailers. This follows the shared craftrules standard
-[`standards/contributors.md`](https://github.com/storytold/craftrules/blob/main/standards/contributors.md);
-this page is the local copy of the decision.
+**About ▸ Contributors** credits the people who contributed to VectorCraft. The table contains
+verified GitHub usernames and names that contributors chose for themselves.
 
 ## Decision
 
 - Two files, both **compiled into the binary** by the UI crate's `build.rs` (nothing is read from
   disk or the network at run time; the web build has them too):
   - [`contributors/contributors.json`](../contributors/contributors.json): commit stats per GitHub
-    username. **Generated** by `craftrules/scripts/contributors.py`; never hand-edit.
+    username. Refresh with the statistics generator, then run `contributors/prepare.py` below.
+    Keep individual contributor records unchanged when preparing the generated file.
   - [`contributors/people.toml`](../contributors/people.toml): the names people chose for
     themselves. **Each contributor adds only their own entry**, in their own PR.
 - Each contributor gets one line: GitHub username (always), display name (opt-in, or their synced
@@ -50,7 +49,9 @@ user (or by a maintainer with a `consent_source`). Delete your entry to remove y
 
 ```sh
 python3 ../../craftrules/scripts/contributors.py .           # regenerate + verify; needs git, Python 3.11+, gh
+python3 contributors/prepare.py                             # prepare the local human contributor table
 python3 ../../craftrules/scripts/contributors.py --check .   # verify people.toml only
+python3 contributors/prepare.py --check                     # validate the prepared statistics
 ```
 
 Commit the updated `contributors/contributors.json`. Git author names and emails are never recorded.

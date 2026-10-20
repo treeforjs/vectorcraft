@@ -188,7 +188,9 @@ mod tests {
         crate::theme::install_fonts(&ctx);
         let mut input = egui::RawInput::default();
         input.viewports.entry(egui::ViewportId::ROOT).or_default().events.push(egui::ViewportEvent::Close);
-        let output = ctx.run_ui(input, |ui| app.logic(ui.ctx()));
+        let mut output = ctx.run_ui(input, |ui| app.logic(ui.ctx()));
+        // This headless logic test has no painter to consume the font texture upload.
+        output.textures_delta.clear();
         assert!(output.viewport_output.get(&egui::ViewportId::ROOT).unwrap().commands.contains(&egui::ViewportCommand::CancelClose));
         assert_eq!((docs(&app), pending(&app)), (1, Some(0)));
         assert!(written.lock().unwrap().is_empty());

@@ -1,4 +1,4 @@
-//! Shape generators matching Illustrator's anchor layouts (so later edits behave the same).
+//! Shape generators matching the reference editor's anchor layouts (so later edits behave the same).
 
 use std::f64::consts::{PI, TAU};
 
@@ -87,7 +87,7 @@ pub fn ellipse(r: Rect) -> PathData {
 }
 
 /// The ellipse inscribed in `r` cut as a pie: from `start` to `end` degrees, measured
-/// counterclockwise on screen from 3 o'clock (as Illustrator's Pie Start and End Angle are), then
+/// counterclockwise on screen from 3 o'clock (as the reference editor's Pie Start and End Angle are), then
 /// back through the centre. A pie spanning the whole turn (or nothing) is the whole [`ellipse`].
 /// The arc is one cubic per quarter turn at most: the centre, then the arc's anchors.
 pub fn ellipse_pie(r: Rect, start: f64, end: f64) -> PathData {
@@ -157,7 +157,7 @@ pub fn star(center: Point, r1: f64, r2: f64, points: u32, rotation_deg: f64) -> 
     PathData::single(SubPath::polyline(&pts, true))
 }
 
-/// Inner radius of a "straight-armed" star (Illustrator's Alt-drag behaviour): shoulders aligned.
+/// Inner radius of a "straight-armed" star (the reference editor's Alt-drag behaviour): shoulders aligned.
 pub fn straight_star_inner_radius(r1: f64, points: u32) -> f64 {
     let n = points.max(3) as f64;
     r1 * (PI / n * 2.0).cos() / (PI / n).cos()
@@ -184,7 +184,7 @@ pub fn arc(a: Point, b: Point, slope: f64, closed: bool) -> PathData {
     PathData::single(SubPath::new(anchors, closed))
 }
 
-/// Archimedean-style spiral approximating Illustrator's Spiral tool (decay-based, `segments` quarter turns).
+/// Archimedean-style spiral approximating the reference editor's Spiral tool (decay-based, `segments` quarter turns).
 pub fn spiral(center: Point, radius: f64, decay_percent: f64, segments: u32, clockwise: bool) -> PathData {
     let decay = (decay_percent / 100.0).clamp(0.05, 0.9999);
     let dir = if clockwise { 1.0 } else { -1.0 };
@@ -202,7 +202,7 @@ pub fn spiral(center: Point, radius: f64, decay_percent: f64, segments: u32, clo
         anchors.push(Anchor { p, h_in: if i == 0 { p } else { h_in }, h_out: if i == segments { p } else { h_out }, kind: AnchorKind::Smooth });
         r *= decay;
     }
-    // Illustrator spirals wind inward from the outer point; reverse so the path starts at the centre end.
+    // the reference editor spirals wind inward from the outer point; reverse so the path starts at the centre end.
     let mut sp = SubPath::new(anchors, false);
     sp.reverse();
     PathData::single(sp)

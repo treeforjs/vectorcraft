@@ -282,7 +282,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
             Some(n) => stack(app, ui, n, sel, r),
             None => default_stack(app, ui),
         }
-        // Spacer row like Illustrator's empty tail.
+        // Spacer row like the reference editor's empty tail.
         ui.allocate_exact_size(vec2(ui.available_width(), 10.0), Sense::hover());
     });
     bottom(app, ui, node.as_ref(), sel);

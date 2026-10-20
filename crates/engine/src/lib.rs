@@ -69,7 +69,7 @@ pub struct HistoryEntry {
 pub struct History {
     pub undo: Vec<HistoryEntry>,
     pub redo: Vec<HistoryEntry>,
-    /// Maximum undo depth (Illustrator has no hard limit; snapshots are cheap here).
+    /// Maximum undo depth (the reference editor has no hard limit; snapshots are cheap here).
     pub limit: usize,
 }
 
@@ -349,7 +349,7 @@ impl DocState {
     }
 }
 
-/// Coordinates beyond this (points) are rejected: ~1,400 m, far past Illustrator's large canvas.
+/// Coordinates beyond this (points) are rejected: ~1,400 m, far past the reference editor's large canvas.
 pub const MAX_COORD: f64 = 4.0e6;
 
 /// `(command, param)` pairs the journal records only so a replay reproduces the original run
@@ -387,7 +387,7 @@ fn doc_sane(d: &Document, sel: &Selection) -> bool {
         && sel.objects.iter().all(|id| d.node(*id).and_then(|n| n.geometric_bounds()).is_none_or(ok))
 }
 
-/// Where new art goes (Illustrator's drawing modes, Shift+D cycles).
+/// Where new art goes (the reference editor's drawing modes, Shift+D cycles).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DrawMode {
@@ -423,7 +423,7 @@ pub struct Prefs {
     pub zoom_with_mouse_wheel: bool,
     /// A horizontal drag on a numeric field or its label steps its value (#400).
     pub scrub_numeric_fields: bool,
-    /// Offset for Paste / duplicate (Illustrator pastes to the view centre; we offset by this).
+    /// Offset for Paste / duplicate (the reference editor pastes to the view centre; we offset by this).
     pub paste_offset: f64,
     // Selection & Anchor Display
     pub selection_tolerance: f64,

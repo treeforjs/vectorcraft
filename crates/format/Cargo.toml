@@ -15,6 +15,10 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 flate2 = { workspace = true }
 
+[target.'cfg(unix)'.dependencies]
+# Nonblocking file opens keep a path swapped for a FIFO from blocking the reader.
+libc = "0.2"
+
 [dev-dependencies]
 vectorcraft-testkit = { workspace = true }
 proptest = { workspace = true }

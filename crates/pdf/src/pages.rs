@@ -134,7 +134,7 @@ const PRIVATE_DATA_OWNER: &[u8] = b"Illustrator"; // brand-ok: the key the files
 /// Most bytes of an editor's private data read.
 const MAX_PRIVATE: usize = 256 << 20;
 
-/// The private data of an Illustrator `.ai` (its first page's `PieceInfo`): the `AIPrivateData`
+/// The private data of a reference editor `.ai` (its first page's `PieceInfo`): the `AIPrivateData`
 /// streams in order, joined. `None` for a PDF without them (or with a stream that can't be read).
 /// What it holds is the editor's own copy of the art (see `vectorcraft_eps::layered_ai`).
 pub fn illustrator_data(bytes: &[u8], password: Option<&str>) -> Option<Vec<u8>> {

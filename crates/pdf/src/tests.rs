@@ -346,7 +346,7 @@ fn text_exported_as_outlines() {
     outlined.settings.advanced.outline_text = true;
     let s = String::from_utf8_lossy(&export(&d, &outlined).unwrap()).into_owned();
     assert!(!s.contains("/Font"), "no fonts when outlining text");
-    // Real text in an embedded font by default, as a PDF from Illustrator has it (#733).
+    // Real text in an embedded font by default, as a PDF from the reference editor has it (#733).
     assert!(uncompressed(&d).contains("/FontFile"), "a font embedded by default");
     let r = import_with_report(&export(&d, &outlined).unwrap(), &ImportOptions::default()).unwrap();
     let l = leaves(&r.document);

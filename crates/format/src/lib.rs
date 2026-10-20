@@ -33,6 +33,8 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 mod atomic;
+#[cfg(not(target_arch = "wasm32"))]
+mod bounded_read;
 mod legacy;
 
 use std::borrow::Cow;
@@ -44,6 +46,8 @@ use vectorcraft_doc::{Document, ImageBlob};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use atomic::{write_atomic, write_atomic_with, write_new_with};
+#[cfg(not(target_arch = "wasm32"))]
+pub use bounded_read::{MAX_FILE_BYTES, read_regular_file, read_regular_file_prefix};
 
 /// v4: large data after the JSON (v1 to v3 files still load).
 pub const VERSION: u32 = 4;

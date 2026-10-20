@@ -143,6 +143,46 @@ fn tool_schemas_are_valid() {
 // ---------- headless end-to-end ----------
 
 #[test]
+fn drawing_and_paint_errors_leave_document_selection_and_history_unchanged() {
+    for (tool, args) in [
+        ("draw_shape", json!({"shape":"rectangle", "x":0, "y":0, "width":10, "height":10, "fill":"invalid-color"})),
+        ("draw_shape", json!({"shape":"ellipse", "x":0, "y":0, "width":10, "height":10, "fill":"#ff0000", "stroke":"invalid-color"})),
+        ("draw_shape", json!({"shape":"rectangle", "x":0, "y":0, "width":10, "height":10, "strokeWidth":"invalid-width"})),
+        ("draw_path", json!({"points":[[0,0],[10,10]], "fill":"#ff0000", "stroke":"invalid-color"})),
+        ("set_paint", json!({"fill":"#ff0000", "stroke":"invalid-color"})),
+    ] {
+        let mut backend = Headless::with_document();
+        backend.session.execute("shape.rectangle", &json!({"x":20, "y":20, "width":30, "height":30})).unwrap();
+        let state = backend.session.active().unwrap();
+        let before = serde_json::to_value(&*state.doc).unwrap();
+        let selection = state.selection.clone();
+        let history = (state.history.undo.len(), state.history.redo.len());
+        let result = crate::call_tool(&mut backend, tool, &args);
+        assert!(result.is_error, "{tool} should reject {args}");
+        let state = backend.session.active().unwrap();
+        assert_eq!(serde_json::to_value(&*state.doc).unwrap(), before, "{tool} changed the document after an error");
+        assert_eq!(state.selection, selection, "{tool} changed the selection after an error");
+        assert_eq!((state.history.undo.len(), state.history.redo.len()), history, "{tool} changed undo history after an error");
+    }
+}
+
+#[test]
+fn creating_and_painting_an_object_is_one_undo_step() {
+    let mut backend = Headless::with_document();
+    let before = serde_json::to_value(&*backend.session.active().unwrap().doc).unwrap();
+    let history = backend.session.active().unwrap().history.undo.len();
+    let result = crate::call_tool(
+        &mut backend,
+        "draw_shape",
+        &json!({"shape":"rectangle", "x":0, "y":0, "width":10, "height":10, "fill":"#ff0000", "stroke":"#000000", "strokeWidth":2}),
+    );
+    assert!(!result.is_error, "{result:?}");
+    assert_eq!(backend.session.active().unwrap().history.undo.len(), history + 1);
+    backend.session.execute("edit.undo", &json!({})).unwrap();
+    assert_eq!(serde_json::to_value(&*backend.session.active().unwrap().doc).unwrap(), before);
+}
+
+#[test]
 fn headless_end_to_end() {
     let mut s = server();
     rpc(&mut s, 1, "initialize", json!({"protocolVersion": PROTOCOL_VERSION}));

@@ -1,4 +1,4 @@
-//! The Photoshop-style raster effects (Effect › Blur › Radial Blur and Smart Blur, Sharpen ›
+//! The raster effects (Effect › Blur › Radial Blur and Smart Blur, Sharpen ›
 //! Unsharp Mask): applied and edited as commands, listed in the catalogue, drawn on the canvas,
 //! and written to PDF and SVG as images of the effected object.
 

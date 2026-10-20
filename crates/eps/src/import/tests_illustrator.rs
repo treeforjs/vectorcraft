@@ -1,4 +1,4 @@
-//! Illustrator files (Illustrator 3–8 and their EPS): the groups they write (`u` … `U`) come in
+//! the reference editor files (the reference editor 3–8 and their EPS): the groups they write (`u` … `U`) come in
 //! as groups, nested as they were, between and inside clipping groups.
 
 use std::sync::Arc;
@@ -8,7 +8,7 @@ use vectorcraft_doc::{Node, NodeKind};
 
 use crate::import::import;
 
-/// A minimal file in Illustrator's format: its header comments, a prolog of our own defining the
+/// A minimal file in the reference editor's format: its header comments, a prolog of our own defining the
 /// operators `body` uses (`u` and `U` as `ugroup` and `Ugroup`), and `body`.
 fn ai(header: &str, ugroup: &str, body: &str) -> Vec<u8> {
     format!(
@@ -20,7 +20,7 @@ fn ai(header: &str, ugroup: &str, body: &str) -> Vec<u8> {
     .into_bytes()
 }
 
-/// A legacy Illustrator format header: the reader takes `u` … `U` as groups only in files whose
+/// A legacy reference editor format header: the reader takes `u` … `U` as groups only in files whose
 /// header says they are in that format (`%AI…` comments or the creator, which the format's
 /// published specification documents; see the `import` module docs).
 const AI8: &str = "%%Creator: Adobe Illustrator(R) 8.0\n%AI5_FileFormat 4.0\n";
@@ -52,7 +52,7 @@ fn read(header: &str, ugroup: &str, body: &str) -> (String, Vec<String>) {
 fn groups_and_nested_groups_come_in_as_groups() {
     let body = format!("u {} u {} {} U U {}", tri(10), tri(30), tri(50), tri(70));
     assert_eq!(read(AI8, "", &body), ("g[p g[p p]] p".into(), vec![]));
-    // Illustrator 3's header names it only as the creator; a prolog whose groups save and restore
+    // the reference editor 3's header names it only as the creator; a prolog whose groups save and restore
     // the graphics state groups the same.
     assert_eq!(read("%%Creator:Adobe Illustrator(TM) 3.2\n", "gsave", &body).0, "g[p g[p p]] p");
     // Groups of one object, and groups next to each other.
@@ -75,7 +75,7 @@ fn groups_nest_with_clipping_groups() {
 
 #[test]
 fn other_postscript_keeps_its_own_u() {
-    // A program that isn't Illustrator's may name its own procedures `u` and `U`.
+    // A program that isn't the reference editor's may name its own procedures `u` and `U`.
     let body = format!("u {} {} U", tri(10), tri(30));
     assert_eq!(read("%%Creator: some app\n", "", &body).0, "p p");
 }

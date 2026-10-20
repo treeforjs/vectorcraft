@@ -106,7 +106,7 @@ pub(crate) fn reflow(before: &Document, doc: &mut Document) {
         let paras = vectorcraft_text::thread::story_paras(&source_refs, &later_wins);
         vectorcraft_text::edit::normalize(&mut story);
         if live.len() >= 2 {
-            // Threaded frames keep their size: Auto Size is off for them (as in Illustrator).
+            // Threaded frames keep their size: Auto Size is off for them (as in the reference editor).
             for id in &live {
                 if text_of(doc, *id).is_some_and(|t| t.area.fit == vectorcraft_doc::AreaFit::AutoHeight)
                     && let Some(NodeKind::Text(t)) = doc.node_mut(*id).map(|n| &mut n.kind)

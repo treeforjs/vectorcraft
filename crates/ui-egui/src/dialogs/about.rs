@@ -17,11 +17,11 @@ pub(super) fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
         .default_pos(ctx.content_rect().center())
         .frame(egui::Frame::window(&ctx.global_style()).inner_margin(egui::Margin::same(18)))
         .show(ctx, |ui| {
-            // Tabs: About · Contributors · Models (the credits are compiled in, see `credits`).
+            // Contributor credits are compiled in; see `credits`.
             let tab_id = egui::Id::new("about_tab");
             let mut tab = ui.data_mut(|d| d.get_temp::<u8>(tab_id)).unwrap_or(0);
             ui.horizontal(|ui| {
-                for (i, label) in [tl!("About"), tl!("Contributors"), tl!("Models")].into_iter().enumerate() {
+                for (i, label) in [tl!("About"), tl!("Contributors")].into_iter().enumerate() {
                     let i = i as u8;
                     if ui.selectable_label(tab == i, label).clicked() {
                         tab = i;
@@ -34,10 +34,6 @@ pub(super) fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
                 1 => {
                     ui.set_width(660.0);
                     crate::credits::contributors_ui(ui);
-                }
-                2 => {
-                    ui.set_width(660.0);
-                    crate::credits::models_ui(ui);
                 }
                 _ => about_tab(app, ui),
             }

@@ -27,7 +27,7 @@ serde_json = { workspace = true }
 log = { workspace = true }
 
 # DirectWrite's system font collection (the desktop app's src/system_fonts.rs, shared): fonts that
-# font services such as Adobe Fonts load in place (#579). MIT OR Apache-2.0.
+# font subscription services load in place (#579). MIT OR Apache-2.0.
 [target.'cfg(all(windows, not(target_vendor = "win7")))'.dependencies]
 windows = { version = "0.62", features = ["Win32_Graphics_DirectWrite"] }
 

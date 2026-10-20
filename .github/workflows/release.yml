@@ -233,7 +233,7 @@ jobs:
           dpkg-deb --info dist/release/*.deb
           dpkg-deb --contents dist/release/*.deb | grep -E 'usr/bin/vectorcraft$|metainfo|applications'
           ldd target/release/vectorcraft
-          python3 -c "import yaml; m = yaml.safe_load(open('packaging/linux/flatpak/ai.storyteller.vectorcraft.yml')); assert m['id'] == 'ai.storyteller.vectorcraft'"
+          python3 -c "import yaml; m = yaml.safe_load(open('packaging/linux/flatpak/io.github.treeforjs.vectorcraft.yml')); assert m['id'] == 'io.github.treeforjs.vectorcraft'"
           for appimage in dist/release/*.AppImage; do
             chmod +x "$appimage"
             APPIMAGE_EXTRACT_AND_RUN=1 "$appimage" --version

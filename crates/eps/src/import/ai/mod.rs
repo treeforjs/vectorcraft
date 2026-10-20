@@ -1,6 +1,6 @@
-//! Illustrator's editing data: the document as the app keeps it, which an Illustrator EPS carries
+//! the reference editor's editing data: the document as the app keeps it, which a reference editor EPS carries
 //! after its printed page and a `.ai` file (PDF compatible or not) in its first page's
-//! `/PieceInfo /Illustrator /Private` streams.
+//! `/PieceInfo /the reference editor /Private` streams.
 //!
 //! - In an EPS it starts at the `%AI9_PrivateDataBegin` comment: header comments, then
 //!   `%AI24_DataStream` (Zstandard) or `%AI9_DataStream` (zlib) and the compressed data as ASCII85
@@ -9,7 +9,7 @@
 //! - In a `.ai` file the streams joined start with `%AI24_ZStandard_Data` (Zstandard) or
 //!   `%AI12_CompressedData` (zlib), else are the data itself ([`decode_private`]).
 //!
-//! The data is a PostScript-like program of the legacy Illustrator format's operators (layers,
+//! The data is a PostScript-like program of the legacy reference editor format's operators (layers,
 //! groups, paths, colours, gradients, images) with newer ones (transparency, hidden objects) and
 //! dictionaries (names, artboards, type). `lex` scans it, `read` builds the document.
 //!
@@ -43,7 +43,7 @@ const MAX_FRAMES: usize = 4096;
 const EPS_BEGIN: &[u8] = b"%AI9_PrivateDataBegin";
 const EPS_END: &[u8] = b"%AI9_PrivateDataEnd";
 
-/// The editing data an Illustrator EPS carries (`ps`: its PostScript), decoded: `None` without
+/// The editing data a reference editor EPS carries (`ps`: its PostScript), decoded: `None` without
 /// one, an error when it can't be decoded.
 pub fn eps_data(ps: &[u8]) -> Option<Result<Vec<u8>, String>> {
     let start = find(ps, EPS_BEGIN)? + EPS_BEGIN.len();

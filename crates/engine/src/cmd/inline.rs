@@ -1,5 +1,5 @@
 //! Inline graphics in text: document symbols placed in a run of text, flowing like a glyph
-//! (beyond Illustrator; InDesign's inline anchored objects). See [`vectorcraft_doc::InlineArt`].
+//! (beyond the reference editor; InDesign's inline anchored objects). See [`vectorcraft_doc::InlineArt`].
 
 use serde_json::{Value, json};
 use vectorcraft_doc::text::INLINE_MAX_SCALE;

@@ -35,6 +35,8 @@ jobs:
           "$RUNNER_TEMP/actionlint" -color
       - name: shellcheck
         run: shellcheck packaging/*.sh packaging/*/*.sh
+      - name: Package metadata and compatibility fixtures
+        run: bash packaging/linux/package-test.sh
       - name: PowerShell
         shell: pwsh
         run: |
@@ -51,15 +53,15 @@ jobs:
           if grep -oE '<Icon Id="[^"]*"' packaging/windows/vectorcraft.wxs | grep -vE '\.(ico|exe)"$'; then
             echo "::error::Icon Id must end in .ico or .exe"; exit 1
           fi
-          desktop-file-validate packaging/linux/ai.storyteller.vectorcraft.desktop
-          sed -e 's/@VERSION@/0.0.0/' -e 's/@DATE@/2026-01-01/' packaging/linux/ai.storyteller.vectorcraft.metainfo.xml.in >"$RUNNER_TEMP/ai.storyteller.vectorcraft.metainfo.xml"
-          appstreamcli validate --no-net --explain "$RUNNER_TEMP/ai.storyteller.vectorcraft.metainfo.xml"
+          desktop-file-validate packaging/linux/io.github.treeforjs.vectorcraft.desktop
+          sed -e 's/@VERSION@/0.0.0/' -e 's/@DATE@/2026-01-01/' packaging/linux/io.github.treeforjs.vectorcraft.metainfo.xml.in >"$RUNNER_TEMP/io.github.treeforjs.vectorcraft.metainfo.xml"
+          appstreamcli validate --no-net --explain "$RUNNER_TEMP/io.github.treeforjs.vectorcraft.metainfo.xml"
           python3 - <<'EOF'
           import yaml
-          src = yaml.safe_load(open("packaging/linux/flatpak/ai.storyteller.vectorcraft.yml"))
-          bundle = yaml.safe_load(open("packaging/linux/flatpak/ai.storyteller.vectorcraft.bundle.yml"))
+          src = yaml.safe_load(open("packaging/linux/flatpak/io.github.treeforjs.vectorcraft.yml"))
+          bundle = yaml.safe_load(open("packaging/linux/flatpak/io.github.treeforjs.vectorcraft.bundle.yml"))
           for m in (src, bundle):
-              assert m["id"] == "ai.storyteller.vectorcraft" and m["command"] == "vectorcraft", m["id"]
+              assert m["id"] == "io.github.treeforjs.vectorcraft" and m["command"] == "vectorcraft", m["id"]
           for key in ("runtime", "runtime-version", "sdk", "finish-args"):
               assert src[key] == bundle[key], f"Flatpak manifests disagree on {key}: {src[key]} vs {bundle[key]}"
           print("Flatpak manifests ok")

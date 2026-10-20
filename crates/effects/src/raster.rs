@@ -11,7 +11,7 @@ use crate::svgfilter::SvgFilter;
 use crate::util::*;
 use crate::{SVG_FILTER, merged_params};
 
-/// A painted effect, in document units. `blur` is Illustrator's blur distance; the renderer uses
+/// A painted effect, in document units. `blur` is the reference editor's blur distance; the renderer uses
 /// a Gaussian with σ = blur / 2 (so the visible spread is about 1.5 × blur).
 #[derive(Clone, Debug, PartialEq)]
 pub enum RasterFx {
@@ -44,7 +44,7 @@ pub enum RasterFx {
     GaussianBlur {
         radius: f64,
     },
-    /// A Photoshop-style filter over the object's pixels (Radial Blur, Unsharp Mask…).
+    /// A raster filter over the object's pixels (Radial Blur, Unsharp Mask…).
     Pixel(PixelFx),
     /// Effect › SVG Filters: an SVG filter over the object's pixels.
     Svg(SvgFilter),

@@ -1,4 +1,4 @@
-//! Swatches and the default swatch set (our own palette, not Adobe's).
+//! Swatches and the default swatch set (an original palette).
 
 use serde::{Deserialize, Serialize};
 

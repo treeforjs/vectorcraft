@@ -1,5 +1,5 @@
 //! The About window's credits: every contributor (GitHub login always; display and real names only
-//! with recorded consent) and the AI models that helped. The tables are baked into the binary by
+//! with recorded consent). The tables are baked into the binary by
 //! build.rs from contributors/contributors.json (craftrules standards/contributors.md); nothing is
 //! read at run time.
 
@@ -21,16 +21,6 @@ pub struct Contributor {
     /// ISO 8601 UTC; empty for someone credited only through a merged PR.
     pub first_commit: &'static str,
     pub last_commit: &'static str,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Model {
-    pub company: &'static str,
-    pub model: &'static str,
-    pub version: &'static str,
-    pub commits: u64,
-    pub lines_added: u64,
-    pub lines_deleted: u64,
 }
 
 include!(concat!(env!("OUT_DIR"), "/credits.rs"));
@@ -296,32 +286,6 @@ fn table(ui: &mut egui::Ui, list: &[&Contributor], v: &mut View) {
             ui.label(day(c.last_commit));
             ui.end_row();
         }
-    });
-}
-
-/// About ▸ Models: AI models credited in Co-Authored-By trailers.
-pub fn models_ui(ui: &mut egui::Ui) {
-    if MODELS.is_empty() {
-        ui.label(tl!("No model credits were built into this copy."));
-        return;
-    }
-    let assisted: u64 = MODELS.iter().map(|m| m.commits).max().unwrap_or(0).max(1);
-    egui::ScrollArea::both().max_height(SCROLL_HEIGHT).auto_shrink([false, true]).show(ui, |ui| {
-        egui::Grid::new("credits_models").striped(true).num_columns(6).show(ui, |ui| {
-            for h in [tl!("Company"), tl!("Model"), tl!("Version"), tl!("Commits"), tl!("% of all commits"), tl!("Lines +/−")] {
-                ui.label(RichText::new(h).strong());
-            }
-            ui.end_row();
-            for m in MODELS {
-                ui.label(m.company);
-                ui.label(m.model);
-                ui.label(m.version);
-                ui.label(group(m.commits));
-                ui.label(format!("{:.0}%", 100.0 * m.commits as f64 / TOTAL_COMMITS.max(assisted) as f64));
-                ui.label(format!("+{} / −{}", group(m.lines_added), group(m.lines_deleted)));
-                ui.end_row();
-            }
-        });
     });
 }
 

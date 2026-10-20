@@ -1,4 +1,4 @@
-//! The Properties panel: context-sensitive sections like Illustrator's.
+//! The Properties panel: context-sensitive sections like the reference editor's.
 
 use egui::Ui;
 use serde_json::json;

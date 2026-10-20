@@ -44,7 +44,7 @@ impl Default for Workspace {
 
 pub const ESSENTIALS: &str = "Essentials";
 
-/// Built-in workspaces, in Illustrator's menu order (Essentials first).
+/// Built-in workspaces, in the reference editor's menu order (Essentials first).
 pub fn builtins() -> Vec<Workspace> {
     let base = Workspace::default();
     let w = |name: &str, f: &dyn Fn(&mut Workspace)| {

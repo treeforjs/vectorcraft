@@ -76,7 +76,7 @@ fn dash_state(dash: Option<&Dash>, last: Option<([Option<f64>; 6], bool)>) -> ([
 }
 
 /// Six dash/gap fields → a dash pattern: stops at the first empty dash; a dash without a gap
-/// repeats its length as the gap (Illustrator's behaviour).
+/// repeats its length as the gap (the reference editor's behaviour).
 pub fn dash_pattern(fields: &[Option<f64>; 6]) -> Vec<f64> {
     let mut out = vec![];
     for pair in 0..3 {

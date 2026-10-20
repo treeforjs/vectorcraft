@@ -14,7 +14,7 @@ use crate::appearance::Appearance;
 use crate::{Document, Node, NodeKind};
 
 /// A clip: a region in document space and its rule, or a plain group (one that holds its art
-/// without clipping it, such as an Illustrator file's `u` … `U`). Each has an id unique within an
+/// without clipping it, such as a reference editor file's `u` … `U`). Each has an id unique within an
 /// import, so what one clip clips (or one group holds) can be grouped.
 #[derive(Debug)]
 pub struct Clip {

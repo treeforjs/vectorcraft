@@ -1,6 +1,6 @@
 //! CMYK images: the ink amounts of image blobs that hold CMYK samples.
 //!
-//! Two encodings hold them: a four-component JPEG, whose samples are stored inverted with Adobe's
+//! Two encodings hold them: a four-component JPEG, whose samples are stored inverted with the APP14
 //! marker (the convention JPEG readers and PDF writers take a CMYK JPEG to follow), and a CMYK
 //! TIFF (8 or 16 bits, chunky, ink amounts as they are). [`ImageBlob::cmyk_tiff`] writes the
 //! latter, Deflate-compressed. Every other image decodes to RGB(A) only.
@@ -212,7 +212,7 @@ mod tests {
 
     #[test]
     fn a_cmyk_jpeg_reads_back_as_ink_amounts() {
-        // A flat CMYK JPEG: Adobe's inverted samples with its marker.
+        // A flat CMYK JPEG: inverted samples with the APP14 marker.
         let flat = [10u8, 40, 100, 20];
         let px: Vec<u8> = (0..16 * 16).flat_map(|_| flat).collect();
         let mut jpg = Vec::new();
