@@ -120,6 +120,9 @@ grade by behaviour against `plan/illustrator/`, not by whether a menu item exist
   This completes a first editing workflow, not the missing filter library or full Gallery parity;
   see [scope, automation and renderer limits](docs/effect-gallery.md). Parity scores are unchanged.
 
+- **Windows/Linux releases:** the release workflow builds Windows x64/x86/ARM64 and Linux
+  x86_64/aarch64 packages, validates matching Ed25519 keys before building, and requires a
+  verified signed checksum list before creating a draft.
 - **Ubuntu LTS packaging:** Ubuntu 24.04 / 26.04 x86_64 build/install guide, native and legacy
   document file associations, runtime dependencies for X11 and portal dialogs, and `.deb`
   glibc requirements derived from the packaged binaries. A dedicated compatibility workflow
