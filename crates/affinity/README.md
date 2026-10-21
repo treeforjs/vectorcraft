@@ -47,7 +47,7 @@ for swatches and styles. Save never writes back over the Affinity file.
 Affinity has no published file-format specification, so this reader is built only from a public
 description of the format and from public files, never from Affinity itself. This is how the sibling app PhotoCraft already treats formats that
 are only partly documented:
-its PSD reader fills the gaps in Adobe's specification from the MIT-licensed psd-tools and
+its PSD reader fills the gaps in the published PSD specification from the MIT-licensed psd-tools and
 ag-psd, and its camera raw decoder recovered Nikon's compression tables by black-box analysis
 of CC0 sample files.
 

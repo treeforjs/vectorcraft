@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "repo": "storytold/vectorcraft",
+  "repo": "treeforjs/vectorcraft",
   "branch": "main",
   "head": "866ea5878a7f6db7dd3d6b1287f9a9bb3a241c33",
   "head_date": "2026-10-10T00:04:42Z",
@@ -721,80 +721,6 @@
       "binary_deleted": 0,
       "first_commit": null,
       "last_commit": null
-    }
-  ],
-  "models": [
-    {
-      "id": "anthropic/claude-opus/5.5",
-      "company": "Anthropic",
-      "model": "Claude Opus",
-      "version": "5.5",
-      "commits": 787,
-      "lines_added": 439476,
-      "lines_deleted": 75146
-    },
-    {
-      "id": "anthropic/claude-sonnet/5.5",
-      "company": "Anthropic",
-      "model": "Claude Sonnet",
-      "version": "5.5",
-      "commits": 22,
-      "lines_added": 7688,
-      "lines_deleted": 196
-    },
-    {
-      "id": "anthropic/claude-fable/5.1",
-      "company": "Anthropic",
-      "model": "Claude Fable",
-      "version": "5.1",
-      "commits": 9,
-      "lines_added": 8008,
-      "lines_deleted": 2754
-    },
-    {
-      "id": "anthropic/claude-opus/4.8",
-      "company": "Anthropic",
-      "model": "Claude Opus",
-      "version": "4.8",
-      "commits": 4,
-      "lines_added": 1729,
-      "lines_deleted": 44
-    },
-    {
-      "id": "openai/codex",
-      "company": "OpenAI",
-      "model": "Codex",
-      "version": "",
-      "commits": 3,
-      "lines_added": 448,
-      "lines_deleted": 120
-    },
-    {
-      "id": "anysphere/cursor",
-      "company": "Anysphere",
-      "model": "Cursor",
-      "version": "",
-      "commits": 2,
-      "lines_added": 63,
-      "lines_deleted": 25
-    },
-    {
-      "id": "anthropic/claude",
-      "company": "Anthropic",
-      "model": "Claude",
-      "version": "",
-      "commits": 1,
-      "lines_added": 55,
-      "lines_deleted": 4
-    },
-    {
-      "id": "anthropic/claude-opus/4.7",
-      "company": "Anthropic",
-      "model": "Claude Opus",
-      "version": "4.7",
-      "commits": 1,
-      "lines_added": 94,
-      "lines_deleted": 12
     }
   ]
 }

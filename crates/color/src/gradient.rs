@@ -38,7 +38,7 @@ pub struct GradientStop {
     pub color: Color,
     #[serde(default = "one")]
     pub opacity: f32,
-    /// Midpoint to the next stop, 0.13..=0.87 (Illustrator's diamond), default 0.5.
+    /// Midpoint to the next stop, 0.13..=0.87 (the reference editor's diamond), default 0.5.
     #[serde(default = "half")]
     pub midpoint: f32,
     /// The global or spot swatch this stop's colour is linked to (edits to the swatch recolour it).
@@ -78,7 +78,7 @@ pub struct Gradient {
 }
 
 impl Default for Gradient {
-    /// Illustrator's default "White, Black" gradient.
+    /// the reference editor's default "White, Black" gradient.
     fn default() -> Self {
         Self { kind: GradientKind::Linear, stops: vec![GradientStop::new(0.0, Color::WHITE), GradientStop::new(1.0, Color::BLACK)] }
     }

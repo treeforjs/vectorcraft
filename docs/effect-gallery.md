@@ -49,7 +49,7 @@ original document to continue editing. Cancel never rolls back another document'
 Original synthetic tests cover actual pointer clicks on stack controls, live preview and rollback,
 one-step undo/redo, unchanged/sparse stacks, multiple targets, appearance items, invalid input,
 document switches, native save/reopen, and raster appearance through SVG/PDF and Expand Appearance.
-No Adobe application, source code, bundled asset or generated test fixture is used. The workflow
+No proprietary application, source code, bundled asset or generated test fixture is used. The workflow
 reference is [public effects documentation](https://helpx.adobe.com/illustrator/using/effects.html).
 
 The preview is fitted to one object and bounded to 300 pixels. Zoom/pan, comparison views, filter

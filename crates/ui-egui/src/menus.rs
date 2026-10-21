@@ -1,4 +1,4 @@
-//! The menu bar (Illustrator's menu tree) and UI-level commands.
+//! The menu bar (the reference editor's menu tree) and UI-level commands.
 //!
 //! Items bound to a command id run through [`VectorcraftApp::run`]. Items not implemented yet are
 //! listed (disabled, with their shortcut) so the full surface is visible and discoverable; the
@@ -3570,7 +3570,7 @@ fn font_items() -> Vec<Item> {
     items.1.clone()
 }
 
-/// The raster effects' submenus of the Effect menu (the Photoshop-style effects, below the
+/// The raster effects' submenus of the Effect menu (the raster effects, below the
 /// vector effects): (submenu, the catalogue's menu path of its effects).
 const RASTER_MENUS: [(&str, &[&str]); 9] = [
     ("Artistic", &["Effect", "Artistic"]),
@@ -3616,7 +3616,7 @@ fn effect_menu() -> Vec<Item> {
         cat.iter()
             .filter(|e| e.menu == path)
             .map(|e| match e.defaults.as_object().is_some_and(|o| o.is_empty()) {
-                // No options (Effect → Pathfinder): apply directly, like Illustrator.
+                // No options (Effect → Pathfinder): apply directly, like the reference editor.
                 true => Item::Cmd(e.label, "effect.apply", json!({ "effect": e.id })),
                 false => Item::Cmd(e.label, "effect.dialog", json!({ "effect": e.id })),
             })

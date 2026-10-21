@@ -1539,7 +1539,7 @@ impl<'a> Device<'a> for Builder<'_> {
             PathDrawMode::Stroke(props) => {
                 let st = stroke_layer(paint, opacity, props, mean_scale(transform));
                 // Fill-then-stroke of the same path (the `B` operator, or a fill and a stroke of
-                // the outline as Illustrator writes an object) becomes one object: a path with a
+                // the outline as the reference editor writes an object) becomes one object: a path with a
                 // fill and a live stroke.
                 let blend = self.blend;
                 let fill = self.last_fill.take();

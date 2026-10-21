@@ -13,7 +13,7 @@ use skrifa::raw::FileRef;
 use skrifa::string::StringId;
 use skrifa::{GlyphId, MetadataProvider, Tag};
 
-/// The family used when a requested family is unknown (Illustrator's Myriad Pro analogue).
+/// The family used when a requested family is unknown (the reference editor's Myriad Pro analogue).
 pub const FALLBACK_FAMILY: &str = "Source Sans 3";
 
 static BUNDLED: &[&[u8]] = &[
@@ -1127,7 +1127,7 @@ static PLATFORM_FONT_FILES: std::sync::OnceLock<PlatformFontFiles> = std::sync::
 /// Have [`system_font_dirs`] add the font files `list` gives (full paths) outside the font
 /// folders, asked again by each scan and each check for installed fonts
 /// ([`FontDb::installed_fonts_changed`]). The desktop app lists DirectWrite's system font
-/// collection on Windows: fonts a font service such as Adobe Fonts loads in place, from files
+/// collection on Windows: fonts a font service such as font subscription services loads in place, from files
 /// outside the font folders and unknown to the registry (#579). On macOS it lists the fonts
 /// CoreText's font manager has available, which apps and font managers can register from any
 /// folder. Only the first call counts.

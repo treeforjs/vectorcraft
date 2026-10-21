@@ -177,7 +177,7 @@ impl Session {
             return None;
         }
         let d = self.clipboard.to_document();
-        // SVG has no filters for the Photoshop-style effects: their objects go in as images.
+        // SVG has no filters for the raster effects: their objects go in as images.
         let flat = super::rasterfx::flatten_pixel_effects(&d);
         Some(vectorcraft_svg::export(
             flat.as_ref().unwrap_or(&d),
@@ -270,7 +270,7 @@ mod tests {
 
     #[test]
     fn pasted_type_gets_its_layout_bounds_cache() {
-        // Reported from Illustrator: pasted type kept no layout bounds, so its box (and alignment)
+        // Reported from the reference editor: pasted type kept no layout bounds, so its box (and alignment)
         // fell back to the rough estimate until the file was saved and reopened.
         let mut s = session();
         let svg = r#"<svg xmlns="http://www.w3.org/2000/svg" width="500" height="120"><text x="0" y="80" font-family="Source Sans 3" font-size="40">WWWWWWWW</text></svg>"#;

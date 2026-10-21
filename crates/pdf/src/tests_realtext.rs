@@ -275,7 +275,7 @@ fn an_embedded_fonts_own_cmap_names_its_glyphs() {
     assert!(crate::import::font_chars(b"not a font").is_none());
 }
 
-/// Type whose text matrix shears its glyphs (slanted as a whole, as Illustrator writes type
+/// Type whose text matrix shears its glyphs (slanted as a whole, as the reference editor writes type
 /// turned and skewed) reopens as type that still leans: drawn, it covers what its outlines do.
 #[test]
 fn slanted_type_reopens_as_type_that_still_leans() {

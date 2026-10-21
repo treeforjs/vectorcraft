@@ -451,7 +451,7 @@ pub(crate) fn delete_anchors(s: &mut Session, _: &Value) -> Result<Value> {
         for (id, set) in &sel {
             let remove_node = {
                 let path = path_mut(d, *id)?;
-                // Deleting an anchor from a closed path opens it there (Illustrator behaviour on Delete).
+                // Deleting an anchor from a closed path opens it there (the reference editor behaviour on Delete).
                 for &(si, ai) in set.iter().rev() {
                     if let Some(sp) = path.subpaths.get_mut(si)
                         && ai < sp.anchors.len()

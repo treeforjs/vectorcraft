@@ -3,7 +3,7 @@
 //! [`Backend`] (the desktop app's, through muda).
 //!
 //! Pure and platform-free, so it is tested everywhere and builds for the web; only the backend
-//! touches AppKit. What the layout does ([`mac_layout`], Illustrator on the Mac as the reference):
+//! touches AppKit. What the layout does ([`mac_layout`], the reference editor on the Mac as the reference):
 //! - an **app menu** named VectorCraft: About; Settings, a submenu with one item per Preferences
 //!   page (General… ⌘K first); Language; Appearance (the UI brightness); Services; Hide VectorCraft
 //!   ⌃⌘H (⌘H stays View › Hide Edges), Hide Others ⌥⌘H, Show All; and Quit ⌘Q, still the app's own
@@ -351,7 +351,7 @@ pub fn mac_layout(bar: &MenuBar, lang: Lang) -> Layout {
 }
 
 /// Settings ▸: one item per page of the Preferences dialog (its own list), each opening it there;
-/// the first (General…) has Preferences' shortcut (⌘K), as in Illustrator.
+/// the first (General…) has Preferences' shortcut (⌘K), as in the reference editor.
 fn settings_pages(preferences: &Item, lang: Lang) -> Vec<Node> {
     vectorcraft_engine::cmd::prefscmds::PREF_CATEGORIES
         .iter()

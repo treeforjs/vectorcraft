@@ -294,7 +294,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
             mask_view,
             highlight_substitutions: true,
             // General › Anti-aliased Artwork: off, edges are hard on screen (raster effects and
-            // pattern tiles stay smooth), as in Illustrator.
+            // pattern tiles stay smooth), as in the reference editor.
             anti_alias: if app.session.prefs.anti_aliased_artwork { vectorcraft_render::AntiAlias::Art } else { vectorcraft_render::AntiAlias::None },
             progressive_placed: true,
             trace_views: true,
@@ -457,7 +457,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
             {
                 crate::place::paint_cursor(app, ui.ctx(), &painter, hp);
             }
-            // Caps Lock gives precise (crosshair) cursors, like Illustrator; env opt-out for system cursors.
+            // Caps Lock gives precise (crosshair) cursors, like the reference editor; env opt-out for system cursors.
             let custom = std::env::var_os("VECTORCRAFT_SYSTEM_CURSORS").is_none();
             // User Interface › Scale Cursor Proportional to UI: the glyphs grow with UI Scaling;
             // off, they keep their size.
@@ -743,7 +743,7 @@ const HOLD_DELAY: f32 = 0.3;
 /// …and how fast it zooms then (as `exp(seconds × HOLD_ZOOM)`: twice as close each second).
 const HOLD_ZOOM: f64 = std::f64::consts::LN_2;
 
-/// Performance › Animated Zoom, which needs GPU Performance as in Illustrator: the Zoom tool zooms
+/// Performance › Animated Zoom, which needs GPU Performance as in the reference editor: the Zoom tool zooms
 /// as it is dragged sideways or held, instead of zooming to the area dragged across.
 pub(crate) fn animated_zoom(p: &vectorcraft_engine::Prefs) -> bool {
     p.animated_zoom && p.gpu_performance
@@ -1146,7 +1146,7 @@ fn rulers(ui: &Ui, full: egui::Rect, xf: &Xf, hover: Option<Point>, unit: Unit, 
         let sy = left.top() + d;
         clip_left.line_segment([pos2(left.right() - tick(y), sy), pos2(left.right(), sy)], Stroke::new(1.0, t.ruler_tick));
         if near(y, step) {
-            // Vertical labels read top-to-bottom, one digit per line like Illustrator.
+            // Vertical labels read top-to-bottom, one digit per line like the reference editor.
             for (k, ch) in ruler_label(y, step).chars().enumerate() {
                 clip_left.text(
                     pos2(left.left() + 4.0, sy + 2.0 + k as f32 * 8.5),
@@ -1479,7 +1479,7 @@ fn hidden_chars_overlay(app: &VectorcraftApp, p: &egui::Painter, xf: &Xf) {
 }
 
 /// Text threads of the selected frames: a line from each frame's out port (bottom right) to the
-/// next frame's in port (top left), like Illustrator's thread indicators.
+/// next frame's in port (top left), like the reference editor's thread indicators.
 fn thread_overlay(app: &VectorcraftApp, p: &egui::Painter, xf: &Xf) {
     let Some(st) = app.session.active() else { return };
     for thread in &st.doc.text_threads {

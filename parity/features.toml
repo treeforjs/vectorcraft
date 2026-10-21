@@ -1,4 +1,4 @@
-# VectorCraft parity checklist against the reference vector illustration app (Illustrator 2026 feature set).
+# VectorCraft parity checklist against the reference vector illustration app (the reference editor 2026 feature set).
 # Validated and reported by `cargo xtask parity`. One row per user-visible feature; update the row in the same PR
 # that ships or improves the feature, plus a ROADMAP.md line.
 # Status: `shipped` = usable today with at least one cited test; `partial` = part exists (notes say what is missing);
@@ -161,7 +161,7 @@ notes = ""
 
 [[feature]]
 id = "file.ai-write"
-title = "Write Illustrator .ai files (PDF-compatible)"
+title = "Write .ai files (PDF-compatible)"
 area = "A"
 tier = "P0"
 milestone = "M4"
@@ -173,7 +173,7 @@ notes = ""
 
 [[feature]]
 id = "file.ai-read"
-title = "Read Illustrator .ai files with editing data"
+title = "Read .ai files with editing data"
 area = "A"
 tier = "P0"
 milestone = "M4"
@@ -185,7 +185,7 @@ notes = "Editing data read for layers, groups, colours, gradients, transparency,
 
 [[feature]]
 id = "file.ai-legacy"
-title = "Read legacy (pre-PDF) Illustrator .ai/EPS files"
+title = "Read legacy (pre-PDF) .ai/EPS files"
 area = "A"
 tier = "P2"
 milestone = "M4"
@@ -209,7 +209,7 @@ notes = ""
 
 [[feature]]
 id = "file.pdf-export"
-title = "Save as Adobe PDF with presets"
+title = "Save as PDF with presets"
 area = "A"
 tier = "P0"
 milestone = "M4"
@@ -241,7 +241,7 @@ status = "shipped"
 commands = ["document.exportPdf"]
 tools = []
 evidence = ["crates/pdf/src/tests_encrypt.rs::every_level_opens_only_with_a_password", "crates/pdf/src/tests_encrypt.rs::permission_bits_follow_the_options", "crates/engine/src/cmd/fileio/tests_pdfsecurity.rs::export_with_passwords_writes_a_pdf_that_only_its_passwords_open", "crates/ui-egui/src/dialogs/save_pdf.rs::the_security_section_takes_passwords_that_presets_drop"]
-notes = "Save Adobe PDF › Security: open and permissions passwords, printing, changes, copying and accessibility permissions; RC4/AES-128/AES-256 by compatibility level"
+notes = "Save PDF › Security: open and permissions passwords, printing, changes, copying and accessibility permissions; RC4/AES-128/AES-256 by compatibility level"
 
 [[feature]]
 id = "file.eps-import"
@@ -293,7 +293,7 @@ notes = ""
 
 [[feature]]
 id = "file.svg-preserve-editing"
-title = "SVG Preserve Illustrator Editing Capabilities"
+title = "SVG Preserve the reference editor Editing Capabilities"
 area = "A"
 tier = "P2"
 milestone = "M4"
@@ -377,7 +377,7 @@ notes = ""
 
 [[feature]]
 id = "file.psd-export"
-title = "Export Photoshop PSD with layers"
+title = "Export the reference raster editor PSD with layers"
 area = "A"
 tier = "P1"
 milestone = "M4"
@@ -4968,7 +4968,7 @@ evidence = ["crates/ui-egui/src/updates.rs::the_dialog_shows_the_available_versi
 notes = "Updates come from GitHub Releases, not a cloud desktop app: .msi, AppImage, .deb and .rpm installs update in place after the download verifies against the signed checksum list; macOS, portable, Flatpak and tarball installs open the release page. Installing needs release builds made with the update signing key"
 
 # ==================================================================================================
-# P. Cloud and generative AI
+# P. Hosted services outside local scope
 # ==================================================================================================
 
 [[feature]]
@@ -4996,20 +4996,8 @@ evidence = []
 notes = "Cloud service; export a PDF for review instead"
 
 [[feature]]
-id = "type.retype"
-title = "Retype (identify fonts in images, AI)"
-area = "P"
-tier = "N/A"
-milestone = "none"
-status = "na"
-commands = []
-tools = []
-evidence = []
-notes = "Cloud AI font identification; Find Font and the font menu cover local fonts"
-
-[[feature]]
 id = "type.font-services"
-title = "Adobe Fonts activation"
+title = "font subscription services activation"
 area = "P"
 tier = "N/A"
 milestone = "none"
@@ -5020,8 +5008,8 @@ evidence = []
 notes = "Cloud font service; installed fonts, including those that services activate, are listed"
 
 [[feature]]
-id = "library.cc-libraries"
-title = "Creative Cloud Libraries panel"
+id = "library.hosted-libraries"
+title = "Hosted libraries"
 area = "P"
 tier = "N/A"
 milestone = "none"
@@ -5030,39 +5018,3 @@ commands = []
 tools = []
 evidence = []
 notes = "Cloud libraries; local libraries (library.local-libraries) stand in"
-
-[[feature]]
-id = "image.mockup"
-title = "Mockup (AI)"
-area = "P"
-tier = "N/A"
-milestone = "none"
-status = "na"
-commands = []
-tools = []
-evidence = []
-notes = "Cloud generative AI; Envelope Distort and Perspective Grid place art on surfaces locally"
-
-[[feature]]
-id = "image.generative-fill"
-title = "Generative Shape Fill / Text to Vector Graphic (AI)"
-area = "P"
-tier = "N/A"
-milestone = "none"
-status = "na"
-commands = []
-tools = []
-evidence = []
-notes = "Cloud generative AI; Image Trace and agent drawing over MCP stand in"
-
-[[feature]]
-id = "image.generative-recolor"
-title = "Generative Recolor (AI)"
-area = "P"
-tier = "N/A"
-milestone = "none"
-status = "na"
-commands = []
-tools = []
-evidence = []
-notes = "Cloud generative AI; Recolor Artwork and Color Themes stand in"

@@ -100,6 +100,7 @@ jobs:
 
       - name: Assets, brands, layers
         run: |
+          python3 contributors/prepare.py --check
           cargo xtask assets
           cargo xtask brands
           cargo xtask layers

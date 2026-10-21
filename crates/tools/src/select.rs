@@ -175,7 +175,7 @@ impl SelectionTool {
     }
 
     /// With Smart Guides on, the anchor or the centre of an object near `p` (the one under the
-    /// pointer, else a selected one) and its label, "anchor" or "center", as Illustrator shows
+    /// pointer, else a selected one) and its label, "anchor" or "center", as the reference editor shows
     /// them while hovering (#812). A press there grabs the object by that point.
     fn hover_point(cx: &ToolContext, p: Point) -> Option<(Point, &'static str)> {
         if !cx.smart_guides {

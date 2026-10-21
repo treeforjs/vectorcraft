@@ -454,8 +454,8 @@ mod tests {
             display_name: "VectorCraft".into(),
             repo: REPO.into(),
             current: "0.8.0".into(),
-            // Any 32 bytes: nothing is downloaded in these tests.
-            public_key: Some(format!("{}=", "A".repeat(43))),
+            // RFC 8032 verification key: valid and non-weak; nothing is downloaded here.
+            public_key: Some("11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=".into()),
             prereleases: false,
         }
     }

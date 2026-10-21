@@ -3,6 +3,22 @@
 version = 4
 
 [[package]]
+name = "ab_glyph"
+version = "0.2.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01c0457472c38ea5bd1c3b5ada5e368271cb550be7a4ca4a0b4634e9913f6cc2"
+dependencies = [
+ "ab_glyph_rasterizer",
+ "owned_ttf_parser",
+]
+
+[[package]]
+name = "ab_glyph_rasterizer"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "366ffbaa4442f4684d91e2cd7c5ea7c4ed8add41959a31447066e279e432b618"
+
+[[package]]
 name = "accesskit"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -835,8 +851,8 @@ dependencies = [
 
 [[package]]
 name = "craft-update"
-version = "0.1.0"
-source = "git+https://github.com/treeforjs/craftworks?rev=8c52baa4c73e7fb8def81d19426a96005c814c12#8c52baa4c73e7fb8def81d19426a96005c814c12"
+version = "0.2.0"
+source = "git+https://github.com/treeforjs/craftworks?rev=5be884ea9973989501d9e25c25ea75268f136c9b#5be884ea9973989501d9e25c25ea75268f136c9b"
 dependencies = [
  "base64 0.22.1",
  "ed25519-dalek",
@@ -844,6 +860,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.11.1",
+ "tempfile",
  "ureq",
 ]
 
@@ -1160,6 +1177,7 @@ dependencies = [
  "raw-window-handle",
  "smithay-clipboard",
  "web-time",
+ "webbrowser",
  "winit",
 ]
 
@@ -1298,7 +1316,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2464,7 +2482,7 @@ dependencies = [
  "objc2-foundation 0.3.2",
  "png 0.18.1",
  "thiserror 2.0.21",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -2959,7 +2977,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d8fae84b431384b68627d0f9b3b1245fcf9f46f6c0e3dc902e9dce64edd1967"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "owned_ttf_parser"
+version = "0.25.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36820e9051aca1014ddc75770aab4d68bc1e9e632f0f5627c4086bc216fb583b"
+dependencies = [
+ "ttf-parser",
 ]
 
 [[package]]
@@ -3636,7 +3663,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3677,9 +3704,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-webpki"
-version = "0.103.15"
+version = "0.103.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3c3cf1d8b1e7d4927e2d154c3fcb02979afb9939629c62cd9048d4f07b60ac2"
+checksum = "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281"
 dependencies = [
  "ring",
  "rustls-pki-types",
@@ -3766,6 +3793,19 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "sctk-adwaita"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6277f0217056f77f1d8f49f2950ac6c278c0d607c45f5ee99328d792ede24ec"
+dependencies = [
+ "ab_glyph",
+ "log",
+ "memmap2",
+ "smithay-client-toolkit 0.19.2",
+ "tiny-skia 0.11.4",
+]
 
 [[package]]
 name = "security-framework"
@@ -4079,7 +4119,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3d1e2c7f27f8d4cb10542a02c49005dbd6e93095799d6f3be745fae9f8fedd4"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -4206,10 +4246,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix 1.1.5",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4493,7 +4533,7 @@ checksum = "f2f6fb2847f6742cd76af783a2a2c49e9375d0a111c7bef6f71cd9e738c72d6e"
 dependencies = [
  "memoffset",
  "tempfile",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -4682,7 +4722,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "arboard",
  "block2 0.6.2",
@@ -4701,6 +4741,7 @@ dependencies = [
  "rfd",
  "serde_json",
  "vectorcraft-engine",
+ "vectorcraft-format",
  "vectorcraft-text",
  "vectorcraft-ui-egui",
  "webbrowser",
@@ -4712,7 +4753,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-affinity"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "crc32fast",
  "flate2",
@@ -4723,7 +4764,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-brush"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "kurbo 0.13.1",
  "serde",
@@ -4735,7 +4776,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-cad"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "image",
  "kurbo 0.13.1",
@@ -4751,7 +4792,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-cli"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "log",
  "objc2-core-foundation",
@@ -4772,7 +4813,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-color"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "kurbo 0.13.1",
  "moxcms",
@@ -4784,7 +4825,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-doc"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "image",
  "jpeg-encoder",
@@ -4801,7 +4842,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-effects"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "kurbo 0.13.1",
  "png 0.18.1",
@@ -4818,7 +4859,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-engine"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "crc32fast",
  "flate2",
@@ -4853,7 +4894,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-eps"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "flate2",
  "image",
@@ -4872,9 +4913,10 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-format"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "flate2",
+ "libc",
  "proptest",
  "serde",
  "serde_json",
@@ -4886,7 +4928,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-geom"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "kurbo 0.13.1",
  "proptest",
@@ -4898,7 +4940,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-mcp"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "image",
  "log",
@@ -4917,7 +4959,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-metafile"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "image",
  "kurbo 0.13.1",
@@ -4931,7 +4973,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-pathops"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "kurbo 0.13.1",
  "linesweeper",
@@ -4943,7 +4985,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-pdf"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "aes",
  "flate2",
@@ -4972,7 +5014,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-plugins"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -4986,7 +5028,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-render"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "flate2",
  "gif",
@@ -5011,7 +5053,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-svg"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "flate2",
  "image",
@@ -5035,7 +5077,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-testkit"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "image",
  "kurbo 0.13.1",
@@ -5052,7 +5094,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-text"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "flate2",
  "harfrust 0.13.3",
@@ -5072,7 +5114,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-tools"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "image",
  "kurbo 0.13.1",
@@ -5087,7 +5129,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-trace"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "image",
  "kurbo 0.13.1",
@@ -5100,7 +5142,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-ui-egui"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "craft-ui",
  "craft-update",
@@ -5132,7 +5174,7 @@ dependencies = [
 
 [[package]]
 name = "vectorcraft-web"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "eframe",
  "egui",
@@ -5763,7 +5805,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -6085,6 +6127,7 @@ dependencies = [
  "raw-window-handle",
  "redox_syscall 0.4.1",
  "rustix 0.38.44",
+ "sctk-adwaita",
  "smithay-client-toolkit 0.19.2",
  "smol_str",
  "tracing",
@@ -6248,7 +6291,7 @@ checksum = "9440ea3e5aeabb0ac63af70daf835274065238cdd0cec83418f417eae38bacee"
 
 [[package]]
 name = "xtask"
-version = "0.8.0"
+version = "0.8.2"
 dependencies = [
  "serde",
  "serde_json",

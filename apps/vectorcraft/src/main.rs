@@ -305,7 +305,7 @@ fn services(parent: Parent) -> Services {
         // Windows dialogs run the window's events while they are open; Linux's don't, and macOS
         // ones re-enter the window's event handler (#867).
         start_pick: cfg!(unix).then(|| Box::new(move |request: PickRequest| start_pick(request, &p5)) as vectorcraft_ui_egui::picks::StartPick),
-        read: Some(Box::new(|p: &str| std::fs::read(p).map_err(|e| e.to_string()))),
+        read: Some(Box::new(|p: &str| vectorcraft_format::read_regular_file(std::path::Path::new(p)).map_err(|e| e.to_string()))),
         write: Some(Box::new(write_file)),
         // Background Save and Export write from a worker thread.
         write_shared: Some(std::sync::Arc::new(write_file)),
@@ -349,12 +349,12 @@ fn open_file(path: &str) -> Result<(), String> {
 
 /// The window, Dock, taskbar and app-switcher icon (`assets/app-icon/`, see its README). macOS gets
 /// the version with Apple's transparent margin; elsewhere the full-bleed tile. The app ID matches
-/// `packaging/linux/ai.storyteller.vectorcraft.desktop` so Wayland docks find the launcher icon.
+/// `packaging/linux/io.github.treeforjs.vectorcraft.desktop` so Wayland docks find the launcher icon.
 fn app_icon() -> egui::IconData {
     #[cfg(target_os = "macos")]
     let png: &[u8] = include_bytes!("../../../assets/app-icon/vectorcraft-macos-512.png");
     #[cfg(not(target_os = "macos"))]
-    let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ai.storyteller.vectorcraft.png");
+    let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/io.github.treeforjs.vectorcraft.png");
     eframe::icon_data::from_png_bytes(png).unwrap_or_default()
 }
 
@@ -390,9 +390,18 @@ fn update_info() -> craft_update::AppInfo {
     }
 }
 
-/// Windows and Linux: no OS title bar; the app bar is the title bar (`vectorcraft_ui_egui::titlebar`).
-/// macOS keeps its traffic lights over the integrated title strip.
-const CUSTOM_TITLEBAR: bool = !cfg!(target_os = "macos");
+/// Use native window controls; macOS keeps its traffic lights over the integrated title strip.
+fn window_viewport() -> egui::ViewportBuilder {
+    let viewport = egui::ViewportBuilder::default()
+        .with_title("VectorCraft")
+        .with_inner_size(window::DEFAULT_SIZE)
+        .with_min_inner_size(window::MIN_SIZE)
+        .with_drag_and_drop(true)
+        .with_decorations(true)
+        .with_icon(app_icon())
+        .with_app_id("io.github.treeforjs.vectorcraft");
+    if cfg!(target_os = "macos") { viewport.with_fullsize_content_view(true).with_titlebar_shown(false).with_title_shown(false) } else { viewport }
+}
 
 fn main() -> std::process::ExitCode {
     // First, so every start-up warning is recorded (`logging`).
@@ -457,17 +466,7 @@ fn main() -> std::process::ExitCode {
     #[cfg(feature = "wgpu")]
     let startup = std::sync::Arc::new(gpu::Startup::default());
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_title("VectorCraft")
-            .with_inner_size(window::DEFAULT_SIZE)
-            .with_min_inner_size(window::MIN_SIZE)
-            .with_drag_and_drop(true)
-            .with_decorations(!CUSTOM_TITLEBAR)
-            .with_fullsize_content_view(true)
-            .with_titlebar_shown(false)
-            .with_title_shown(false)
-            .with_icon(app_icon())
-            .with_app_id("ai.storyteller.vectorcraft"),
+        viewport: window_viewport(),
         #[cfg(feature = "windows7")]
         renderer: eframe::Renderer::Glow,
         ..Default::default()
@@ -561,7 +560,7 @@ fn main() -> std::process::ExitCode {
                     app.graphics_adapter = Some("OpenGL (Windows 7 compatibility)".into());
                 }
                 app.integrated_titlebar = cfg!(target_os = "macos");
-                app.custom_titlebar = CUSTOM_TITLEBAR;
+                app.custom_titlebar = false;
                 if let Some(port) = control_port {
                     let rx = control_server::start(port, cc.egui_ctx.clone());
                     app = app.with_control(rx);

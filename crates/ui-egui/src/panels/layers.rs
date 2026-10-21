@@ -482,7 +482,7 @@ fn bottom_bar(app: &mut VectorcraftApp, ui: &mut Ui, view: &View, doc: &Document
             actions.push(("layer.new".into(), json!({"top": m.command})));
         }
     }
-    // Rows dropped on the trash are deleted, on New Layer duplicated, as in Illustrator. Both are
+    // Rows dropped on the trash are deleted, on New Layer duplicated, as in the reference editor. Both are
     // outlined while rows (or, on the trash, a target circle) hang over them.
     for (button, cmd) in [(&trash, "layer.delete"), (&new_layer, "layer.duplicate")] {
         if let Some(d) = button.dnd_release_payload::<LayersDrag>()

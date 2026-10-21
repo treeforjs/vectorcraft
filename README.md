@@ -1,11 +1,11 @@
 <h1 align="center">VectorCraft</h1>
 
 <p align="center">
-  <b>Vector illustration; an open-source, clean-room reimplementation of Adobe Illustrator, rebuilt in pure Rust.</b>
+  <b>Open-source vector illustration in pure Rust.</b>
 </p>
 
 <p align="center">
-  A fast, open-source, clean-room take on the Adobe Illustrator workflow. It runs natively on
+  Draw, edit and export vector artwork. VectorCraft runs natively on
   macOS, Windows, Linux and FreeBSD, and in the browser via WebAssembly.
 </p>
 
@@ -13,7 +13,7 @@
   <img alt="Status: in active development" src="https://img.shields.io/badge/status-in%20active%20development-e8573f">
   <img alt="Written in pure Rust" src="https://img.shields.io/badge/pure-Rust-b83a24?logo=rust&logoColor=white">
   <img alt="Runs on macOS, Windows, Linux, FreeBSD and the web" src="https://img.shields.io/badge/runs%20on-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux%20%C2%B7%20FreeBSD%20%C2%B7%20Web-555555">
-  <img alt="MCP server for agents" src="https://img.shields.io/badge/agents-MCP%20server-555555">
+  <img alt="MCP automation" src="https://img.shields.io/badge/automation-MCP%20server-555555">
   <img alt="License: MIT OR Apache-2.0" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-555555">
 </p>
 
@@ -29,7 +29,7 @@
   <a href="#made-in-vectorcraft">Made in VectorCraft</a> ·
   <a href="#why-vectorcraft">Why VectorCraft</a> ·
   <a href="#quick-start">Quick start</a> ·
-  <a href="#built-for-agents">Built for agents</a> ·
+  <a href="#automation">Automation</a> ·
   <a href="#status">Status</a> ·
   <a href="#downloads">Downloads</a> ·
   <a href="#contributing">Contributing</a> ·
@@ -64,7 +64,7 @@
 ## Made in VectorCraft
 
 Every piece below was built entirely through VectorCraft's command API, the same one the MCP server
-exposes to agents, and exported by VectorCraft's own renderer. The source files are in
+exposes to clients, and exported by VectorCraft's own renderer. The source files are in
 [`examples/`](examples).
 
 <table>
@@ -108,7 +108,7 @@ exposes to agents, and exported by VectorCraft's own renderer. The source files 
 
 ## Why VectorCraft
 
-- **Familiar.** Illustrator's layout, tools, menus, panels and shortcuts: the Pen, Direct Selection,
+- **Familiar.** the reference editor's layout, tools, menus, panels and shortcuts: the Pen, Direct Selection,
   Pathfinder, Smart Guides, Appearance, Swatches, Layers and more. You already know how to use it.
 - **Fast.** Multithreaded SIMD rendering off the UI thread. 20,000 shapes render in about 27 ms at
   full retina resolution while the interface stays at 120 fps.
@@ -118,7 +118,7 @@ exposes to agents, and exported by VectorCraft's own renderer. The source files 
   PDF-compatible `.ai`) import and export, PNG/JPEG/WebP export, Export for Screens, and SVGZ,
   templates, GIF, TIFF and BMP on open.
 - **Agent-native.** Every menu item, tool gesture, panel and dialog can be driven over a JSON
-  control channel and an **MCP server**, so AI agents can draw, edit and export the way a person
+  control channel and an **MCP server**, so automation clients can draw, edit and export the way a person
   does.
 - **Everywhere.** One codebase for the desktop apps and the same UI in the browser.
 
@@ -160,9 +160,9 @@ respond to it yet (#491). Start the app under XWayland instead: `WAYLAND_DISPLAY
 
 For the experimental, unsupported 64-bit Windows 7 build, see [Windows 7 instructions](docs/windows7.md).
 
-## Built for agents
+## Automation
 
-VectorCraft exposes everything a person can do to AI agents and scripts, through three doors:
+VectorCraft exposes everything a person can do to automation clients and scripts, through three doors:
 
 - **MCP server.** `vectorcraft-cli mcp` runs a [Model Context Protocol](https://modelcontextprotocol.io)
   server on stdio: tools to run any command, inspect the document, render previews and take
@@ -176,7 +176,7 @@ VectorCraft exposes everything a person can do to AI agents and scripts, through
   running app; `bench` times one file and `perf` checks the performance budgets.
 
 To register the MCP server with an MCP client, build the CLI and add the server command to your
-agent's MCP configuration (the JSON shape most clients use):
+client's MCP configuration (the JSON shape most clients use):
 
 ```sh
 cargo build --release -p vectorcraft-cli
@@ -201,7 +201,11 @@ Add `"--headless"` or `"--connect", "127.0.0.1:7979"` to `args` to pin a mode. T
 VectorCraft is under active development. [**ROADMAP.md**](ROADMAP.md) covers what ships today, the
 milestones, and honest time-to-parity estimates.
 
-**Where we are (2026-10-11):** roughly 69–75% of Illustrator's features exist and work, and about 40–55% of
+Windows and Linux use standard title-bar controls for minimizing, maximizing and closing the
+window. Linux Wayland desktops without server decorations use an Adwaita frame. The Home button,
+menus and workspace tools remain in the app bar, and closing still asks about unsaved documents.
+
+**Where we are (2026-10-11):** roughly 69–75% of the reference editor's features exist and work, and about 40–55% of
 "a power user can't tell the difference". Everyday vector illustration is close to usable: drawing and path tools,
 Pathfinder and Shape Builder, paint, gradients, appearance and transparency, type with styles, threading and Hebrew/Arabic bidirectional layout, and
 files (SVG, PDF and PDF-compatible `.ai` with PDF/X, EPS, DXF, EMF/WMF, raster formats and PSD, Print, Package).
@@ -219,7 +223,7 @@ self-assessed, so the [honest assessment](ROADMAP.md#honest-assessment-2026-10-0
 
 **What's missing:**
 - 3D and Materials;
-- most Photoshop-style raster filters; the [initial Effect Gallery](docs/effect-gallery.md) edits the supported filters;
+- most raster filters; the [initial Effect Gallery](docs/effect-gallery.md) edits the supported filters;
 - CJK composition for vertical type (vertical type itself has initial support, with a Japanese interface);
 - Variables and scripting;
 - an interaction-fidelity pass covering every tool's modifiers and small behaviours;
@@ -292,7 +296,7 @@ and Wayland notes.
 
 ## Contributing
 
-Rules for agents and contributors (clean-room, the asset policy, no panics in shipped code, quality
+Rules for clients and contributors (clean-room, the asset policy, no panics in shipped code, quality
 gates, how to run and look at the app) are in [`AGENTS.md`](AGENTS.md).
 [`docs/development.md`](docs/development.md#robustness-vectorcraft-never-crashes) explains how
 VectorCraft avoids crashing, and [`docs/releasing.md`](docs/releasing.md) how releases are built,
@@ -313,4 +317,4 @@ Simplified Chinese and Arabic faces; SIL Open Font License 1.1).
 The app icon (an engraved dragon on VectorCraft red, `#e8573f`) is original artwork by the project
 owner; its palette and files are in [`assets/app-icon/`](assets/app-icon/README.md).
 
-<sub>Adobe, Photoshop, Illustrator, Premiere Pro, Lightroom, Acrobat, After Effects and InDesign are trademarks or registered trademarks of Adobe Inc. in the United States and/or other countries. VectorCraft is an independent, open-source project and is not affiliated with, sponsored by or endorsed by Adobe Inc.; these names are used only to describe the workflows it is compatible with.</sub>
+<sub>VectorCraft is an independent open-source project.</sub>

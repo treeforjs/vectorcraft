@@ -101,7 +101,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
             .response
             .rect
     });
-    // Collapsed icon-panel strip, left of the expanded panel group (like Illustrator's dock). A
+    // Collapsed icon-panel strip, left of the expanded panel group (like the reference editor's dock). A
     // collapsed group's panels head it, under the « that expands them again. Floating panels leave
     // it.
     let collapsed = app.ui.dock_collapsed && shown.is_some();

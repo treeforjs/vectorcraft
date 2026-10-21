@@ -305,7 +305,7 @@ pub const DEFAULT_TAB_INTERVAL: f64 = 36.0;
 pub enum Composer {
     /// Break each line as soon as it is full.
     SingleLine,
-    /// Total fit over the whole paragraph (Illustrator's default): justified lines get even word
+    /// Total fit over the whole paragraph (the reference editor's default): justified lines get even word
     /// spacing, ragged lines an even rag.
     #[default]
     EveryLine,
@@ -559,7 +559,7 @@ pub enum Burasagari {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum FirstBaseline {
-    /// The tallest glyph ascent touches the frame top (Illustrator's default).
+    /// The tallest glyph ascent touches the frame top (the reference editor's default).
     #[default]
     Ascent,
     CapHeight,
@@ -602,7 +602,7 @@ impl VerticalAlign {
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct TextWrap {
-    /// Distance kept between the text and the object, in points (Illustrator's default 6 pt).
+    /// Distance kept between the text and the object, in points (the reference editor's default 6 pt).
     pub offset: f64,
     /// Invert Wrap: text flows inside the object instead of around it.
     pub invert: bool,
@@ -736,7 +736,7 @@ pub enum AreaFit {
     /// The frame keeps its size; text that doesn't fit overflows.
     #[default]
     None,
-    /// The frame's height follows the text (Illustrator's Auto Size): resolved by the engine after
+    /// The frame's height follows the text (the reference editor's Auto Size): resolved by the engine after
     /// each edit, for rectangular frames of horizontal type in one row.
     AutoHeight,
     /// Text that overflows is scaled down (size, leading and baseline shift; not paragraph

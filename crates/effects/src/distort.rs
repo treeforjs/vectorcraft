@@ -108,7 +108,7 @@ pub fn transform(path: &PathData, b: Rect, p: &Value) -> PathData {
     let sy = num(p, "scaleV", 100.0) / 100.0;
     let (rx, ry) = (if flag(p, "reflectX", false) { -1.0 } else { 1.0 }, if flag(p, "reflectY", false) { -1.0 } else { 1.0 });
     let c = b.center().to_vec2();
-    // Reflect X mirrors across the horizontal axis (flips x coordinates in Illustrator's dialog).
+    // Reflect X mirrors across the horizontal axis (flips x coordinates in the reference editor's dialog).
     let m = Affine::translate(Vec2::new(num(p, "moveH", 0.0), num(p, "moveV", 0.0)) + c)
         * Affine::rotate(-num(p, "rotate", 0.0).to_radians())
         * Affine::scale_non_uniform(sx * rx, sy * ry)

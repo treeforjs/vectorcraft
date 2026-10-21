@@ -62,7 +62,7 @@ pub(crate) struct Interp<'a> {
     pub g: GState,
     pub saved: Vec<GState>,
     pub out: Out,
-    /// The program is in the legacy Illustrator format: its group operators `u` … `U` (at the top
+    /// The program is in the legacy reference editor format: its group operators `u` … `U` (at the top
     /// level, whatever its prolog defines them as) are groups (see the module docs of `import`).
     pub illustrator: bool,
 }

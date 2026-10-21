@@ -1,6 +1,6 @@
 //! Baking live geometry effects for export.
 //!
-//! SVG, PDF and the clipboard have no notion of Illustrator's live effects, so exporters receive a
+//! SVG, PDF and the clipboard have no notion of the reference editor's live effects, so exporters receive a
 //! copy of the document in which every geometry effect — object level, per fill/stroke and
 //! Effect → Pathfinder, and those on type, images, symbol instances and live objects (through their
 //! outlines, [`reshape`]) — is evaluated exactly like the renderer does, and so are the own fills,

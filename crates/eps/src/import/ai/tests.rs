@@ -331,7 +331,7 @@ fn sections_it_skips() {
 
 /// Non-native art (a placed PDF's content) keeps its PDF as ASCII85 in comment lines after
 /// `/Data ,`. ASCII85 has `_`, so a line may start with `%_`, which otherwise reads as hidden
-/// tokens, and a `(` in it would swallow the rest of the layer (a letterhead saved by Illustrator
+/// tokens, and a `(` in it would swallow the rest of the layer (a letterhead saved by the reference editor
 /// 28 wouldn't open: "it ends inside a layer"). The art is left out with a note.
 #[test]
 fn non_native_art_is_skipped_with_its_ascii85_data() {

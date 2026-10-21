@@ -1636,7 +1636,6 @@
 	Mixed Appearances	混合外觀
 	Mixed Objects	混雜物件
 	Mode:	模式：
-	Model	模型
 	Modified	已修改
 	Modified since it was read: {path}	讀取後已被修改：{path}
 	Modified:	修改時間：
@@ -3329,10 +3328,9 @@
 	[Normal Character Style]	[正常字元樣式]
 	[Normal Paragraph Style]	[正常段落樣式]
 
-# About › Contributors / Models (credits.rs)
+# About › Contributors (credits.rs)
 	About	關於
 	Contributors	貢獻者
-	Models	模型
 	Username	使用者名稱
 	Display name	顯示名稱
 	Real name	真實姓名
@@ -3354,11 +3352,6 @@
 	Last	最近
 	{people} contributors · {commits} commits	{people} 位貢獻者 · {commits} 次提交
 	No contributor data was built into this copy.	此版本未內建貢獻者資料。
-	No model credits were built into this copy.	此版本未內建模型致謝資料。
-	Company	公司
-	Version	版本
-	% of all commits	佔全部提交的比例
-	Lines +/−	行數 +/−
 	Joins	轉角
 	Miter	尖角
 	Bevel	斜角
@@ -3398,7 +3391,7 @@ axis	Both	兩者
 	Free Transform	任意變形
 	Perspective Distort	透視扭曲
 
-# Photoshop-style raster effects (Effect menu, their dialogs).
+# Raster effects (Effect menu, their dialogs).
 	Radial Blur…	放射狀模糊…
 	Smart Blur…	智慧型模糊…
 	Sharpen	銳利化

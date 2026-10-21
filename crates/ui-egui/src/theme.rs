@@ -1,5 +1,5 @@
 //! Design tokens (the shared craft-ui System / Light / Warm / Dim / Dark / High contrast appearances), fonts
-//! and egui style. The look follows treeforjs/craftworks DESIGN.md, not Illustrator's.
+//! and egui style. The look follows treeforjs/craftworks DESIGN.md, not another application's.
 
 use std::sync::Arc;
 
@@ -7,7 +7,7 @@ use egui::{Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId,
 use serde::{Deserialize, Serialize};
 
 /// The interface appearance: the shared craft-ui choices every craft app offers (System, Light,
-/// Warm, Dim, Dark, High contrast). Illustrator's four brightness levels are gone; older settings
+/// Warm, Dim, Dark, High contrast). the reference editor's four brightness levels are gone; older settings
 /// and scripts that name them read as the nearest of these (Medium Dark is Dim).
 /// Warm (once called Cream, then Paper; settings saved under those names still load) and Light
 /// draw light; Dim, Dark and High contrast draw dark.
@@ -42,7 +42,7 @@ impl Brightness {
         if let Some(b) = Self::ALL.into_iter().find(|b| b.id().eq_ignore_ascii_case(s) || b.label().eq_ignore_ascii_case(s)) {
             return Some(b);
         }
-        // The retired Illustrator brightness levels.
+        // The retired the reference editor brightness levels.
         match s.to_ascii_lowercase().replace([' ', '-', '_'], "").as_str() {
             "mediumdark" => Some(Brightness::Dim),
             "mediumlight" => Some(Brightness::Light),
@@ -313,7 +313,7 @@ mod tests {
             assert_eq!(Brightness::parse(b.label()), Some(b));
         }
         assert!(!Tokens::for_brightness(Brightness::Light).dark);
-        // Older settings and scripts that name Illustrator's levels still load.
+        // Older settings and scripts that name the reference editor's levels still load.
         assert_eq!(Brightness::parse("mediumDark"), Some(Brightness::Dim));
         assert_eq!(Brightness::parse("Medium Light"), Some(Brightness::Light));
         assert_eq!(serde_json::from_str::<Brightness>("\"MediumDark\"").ok(), Some(Brightness::Dim));

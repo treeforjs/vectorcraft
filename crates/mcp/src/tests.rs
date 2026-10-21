@@ -94,6 +94,37 @@ fn initialize_negotiates_version() {
     assert_eq!(v["result"]["protocolVersion"], PROTOCOL_VERSION);
 }
 
+#[test]
+fn stdio_accepts_exact_limit_with_lf_crlf_and_eof() {
+    let request = json!({"jsonrpc": "2.0", "id": 7, "method": "ping"}).to_string();
+    for ending in ["\n", "\r\n", ""] {
+        let mut s = server();
+        let mut output = Vec::new();
+        s.serve_with_limit(format!("{request}{ending}").as_bytes(), &mut output, request.len()).unwrap();
+        let reply: Value = serde_json::from_slice(&output).unwrap();
+        assert_eq!(reply["id"], 7);
+        assert_eq!(reply["result"], json!({}));
+    }
+}
+
+#[test]
+fn stdio_oversized_or_invalid_utf8_line_never_runs_its_tail() {
+    for prefix in [vec![b'x'; 129], vec![0xff]] {
+        let mut s = server();
+        let before = s.backend().call("document.inspect", json!({})).unwrap();
+        let mut input = prefix;
+        input.extend_from_slice(b"\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"tools/call\",\"params\":{\"name\":\"draw_shape\",\"arguments\":{\"shape\":\"rectangle\"}}}\n");
+        let mut output = Vec::new();
+        assert_eq!(s.serve_with_limit(input.as_slice(), &mut output, 128).unwrap_err().kind(), std::io::ErrorKind::InvalidData);
+        let text = String::from_utf8(output).unwrap();
+        assert_eq!(text.lines().count(), 1, "one framing error, no reply to the edit after it");
+        let reply: Value = serde_json::from_str(text.trim()).unwrap();
+        assert!(reply["error"].is_object());
+        assert!(reply["id"].is_null());
+        assert_eq!(s.backend().call("document.inspect", json!({})).unwrap(), before);
+    }
+}
+
 // ---------- tools/list ----------
 
 #[test]
@@ -141,6 +172,46 @@ fn tool_schemas_are_valid() {
 }
 
 // ---------- headless end-to-end ----------
+
+#[test]
+fn drawing_and_paint_errors_leave_document_selection_and_history_unchanged() {
+    for (tool, args) in [
+        ("draw_shape", json!({"shape":"rectangle", "x":0, "y":0, "width":10, "height":10, "fill":"invalid-color"})),
+        ("draw_shape", json!({"shape":"ellipse", "x":0, "y":0, "width":10, "height":10, "fill":"#ff0000", "stroke":"invalid-color"})),
+        ("draw_shape", json!({"shape":"rectangle", "x":0, "y":0, "width":10, "height":10, "strokeWidth":"invalid-width"})),
+        ("draw_path", json!({"points":[[0,0],[10,10]], "fill":"#ff0000", "stroke":"invalid-color"})),
+        ("set_paint", json!({"fill":"#ff0000", "stroke":"invalid-color"})),
+    ] {
+        let mut backend = Headless::with_document();
+        backend.session.execute("shape.rectangle", &json!({"x":20, "y":20, "width":30, "height":30})).unwrap();
+        let state = backend.session.active().unwrap();
+        let before = serde_json::to_value(&*state.doc).unwrap();
+        let selection = state.selection.clone();
+        let history = (state.history.undo.len(), state.history.redo.len());
+        let result = crate::call_tool(&mut backend, tool, &args);
+        assert!(result.is_error, "{tool} should reject {args}");
+        let state = backend.session.active().unwrap();
+        assert_eq!(serde_json::to_value(&*state.doc).unwrap(), before, "{tool} changed the document after an error");
+        assert_eq!(state.selection, selection, "{tool} changed the selection after an error");
+        assert_eq!((state.history.undo.len(), state.history.redo.len()), history, "{tool} changed undo history after an error");
+    }
+}
+
+#[test]
+fn creating_and_painting_an_object_is_one_undo_step() {
+    let mut backend = Headless::with_document();
+    let before = serde_json::to_value(&*backend.session.active().unwrap().doc).unwrap();
+    let history = backend.session.active().unwrap().history.undo.len();
+    let result = crate::call_tool(
+        &mut backend,
+        "draw_shape",
+        &json!({"shape":"rectangle", "x":0, "y":0, "width":10, "height":10, "fill":"#ff0000", "stroke":"#000000", "strokeWidth":2}),
+    );
+    assert!(!result.is_error, "{result:?}");
+    assert_eq!(backend.session.active().unwrap().history.undo.len(), history + 1);
+    backend.session.execute("edit.undo", &json!({})).unwrap();
+    assert_eq!(serde_json::to_value(&*backend.session.active().unwrap().doc).unwrap(), before);
+}
 
 #[test]
 fn headless_end_to_end() {

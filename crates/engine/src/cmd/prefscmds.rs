@@ -49,7 +49,7 @@ pub struct PrefSpec {
     pub kind: PrefKind,
 }
 
-/// Categories in Illustrator's order (its Plug-ins & Scratch Disks are under Performance here).
+/// Categories in the reference editor's order (its Plug-ins & Scratch Disks are under Performance here).
 pub const PREF_CATEGORIES: &[&str] = &[
     "General",
     "Selection & Anchor Display",

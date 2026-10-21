@@ -1,11 +1,5 @@
-# Release pipeline: every push to `release` builds signed installers for every platform and
-# creates or updates the draft GitHub Release "VectorCraft v<version>". See docs/releasing.md.
-#
-# Jobs that sign (macOS, Windows) and the job that creates the release run in the `release`
-# environment (restricted to the `release` branch), which holds the signing secrets. Every secret
-# is optional: missing ones produce unsigned artifacts and a warning, never a failed build. The
-# other jobs sign nothing and get no environment, so a `workflow_dispatch` on any branch is a dry
-# run: they build and upload artifacts, the signed jobs are refused, and no release is drafted.
+# Windows/Linux release pipeline. Signing is checked before any package build.
+# Only the release branch can create or replace a draft; publishing is a maintainer action.
 name: Release
 
 on:
@@ -23,7 +17,7 @@ permissions:
 
 concurrency:
   group: release-${{ github.ref }}
-  # Never cancel a run mid-notarization or mid-upload; a newer push waits its turn.
+  # Never cancel a run mid-build or mid-upload; a newer push waits its turn.
   cancel-in-progress: false
 
 env:
@@ -37,13 +31,58 @@ jobs:
   version:
     name: version
     runs-on: ubuntu-latest
-    # No `environment: release`: no secrets here.
+    environment: release
     outputs:
       version: ${{ steps.v.outputs.version }}
       date: ${{ steps.v.outputs.date }}
       prerelease: ${{ steps.v.outputs.prerelease }}
+    env:
+      CRAFT_UPDATE_PUBLIC_KEY: ${{ vars.CRAFT_UPDATE_PUBLIC_KEY }}
     steps:
       - uses: actions/checkout@v7
+      - name: Validate the update public key
+        run: |
+          python3 - <<'PY'
+          import base64
+          import binascii
+          import os
+          import sys
+          from pathlib import Path
+          value = os.environ.get("CRAFT_UPDATE_PUBLIC_KEY", "")
+          try:
+              key = base64.b64decode(value, validate=True)
+          except (ValueError, binascii.Error):
+              sys.exit("::error::CRAFT_UPDATE_PUBLIC_KEY must be a single base64 Ed25519 public key")
+          if base64.b64encode(key).decode() != value:
+              sys.exit("::error::CRAFT_UPDATE_PUBLIC_KEY must use canonical base64 without whitespace")
+          prefix = bytes.fromhex("302a300506032b6570032100")
+          if len(key) == 32:
+              key = prefix + key
+          elif len(key) != 44 or not key.startswith(prefix):
+              sys.exit("::error::CRAFT_UPDATE_PUBLIC_KEY must contain raw32 or DER44 Ed25519 bytes")
+          Path(os.environ["RUNNER_TEMP"], "update-public.der").write_bytes(key)
+          PY
+      - name: Validate the release signing key
+        if: github.ref == 'refs/heads/release'
+        env:
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$UPDATE_SIGNING_KEY" ]; then
+            echo "::error::Set UPDATE_SIGNING_KEY in the release environment before releasing"
+            exit 1
+          fi
+          umask 077
+          key_dir="$(mktemp -d "$RUNNER_TEMP/update-signing.XXXXXX")"
+          trap 'rm -rf -- "$key_dir"' EXIT
+          printf '%s\n' "$UPDATE_SIGNING_KEY" > "$key_dir/key.pem"
+          openssl pkey -in "$key_dir/key.pem" -passin pass: -check -noout >/dev/null
+          openssl pkey -in "$key_dir/key.pem" -passin pass: -pubout -outform DER \
+            -out "$key_dir/derived-public.der"
+          if ! cmp -s "$key_dir/derived-public.der" "$RUNNER_TEMP/update-public.der"; then
+            echo "::error::UPDATE_SIGNING_KEY does not match CRAFT_UPDATE_PUBLIC_KEY"
+            exit 1
+          fi
       - id: v
         name: Resolve version
         run: |
@@ -61,59 +100,6 @@ jobs:
             echo "prerelease=$pre"
           } >>"$GITHUB_OUTPUT"
           echo "### VectorCraft v$v (\`${GITHUB_SHA::9}\`)" >>"$GITHUB_STEP_SUMMARY"
-
-  macos:
-    name: macOS universal
-    needs: version
-    runs-on: macos-15-xlarge  # M2 Pro larger runner; use only in release.yml (actions_macos_xl budget caps spend)
-    environment: release
-    env:
-      VECTORCRAFT_VERSION: ${{ needs.version.outputs.version }}
-      VECTORCRAFT_BUILD_DATE: ${{ needs.version.outputs.date }}
-      # The update signing key's public half, embedded so in-app updates can verify downloads
-      # (a repository variable, not a secret; see docs/releasing.md › In-app updates).
-      CRAFT_UPDATE_PUBLIC_KEY: ${{ vars.CRAFT_UPDATE_PUBLIC_KEY }}
-    steps:
-      - uses: actions/checkout@v7
-      # Japanese UI/document fonts, embedded by crates/text/build.rs (CRAFT_FONTS_DIR on the build
-      # step). Bump the commit deliberately; see craftrules standards/fonts.md.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: storytold/craft-fonts
-          ref: abb83316d96aa59c1cf64784289e378fe9fa5695
-          path: craft-fonts
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-darwin, x86_64-apple-darwin
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: release-macos-universal
-      - name: Apply version override
-        if: inputs.version != ''
-        run: cargo xtask version set "$VECTORCRAFT_VERSION"
-      - name: Import signing certificate
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: packaging/macos/import-cert.sh
-      - name: Build, sign, notarize
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          CRAFT_FONTS_DIR: ${{ github.workspace }}/craft-fonts
-          CRAFT_FONTS_REQUIRED: "1"
-        run: packaging/macos/package.sh --arch universal
-      - uses: actions/upload-artifact@v7
-        with:
-          name: release-macos
-          path: dist/release/*
-          if-no-files-found: error
-      - name: Remove temporary keychain
-        if: always()
-        run: |
-          if [ -n "${MACOS_KEYCHAIN:-}" ]; then security delete-keychain "$MACOS_KEYCHAIN" || true; fi
 
   windows:
     name: Windows ${{ matrix.arch }}
@@ -138,7 +124,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # Japanese UI/document fonts, embedded by crates/text/build.rs (CRAFT_FONTS_DIR on the build
-      # step). Bump the commit deliberately; see craftrules standards/fonts.md.
+      # step). Bump the commit deliberately; see docs/development.md, Fonts.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: storytold/craft-fonts
@@ -202,7 +188,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # Japanese UI/document fonts, embedded by crates/text/build.rs (CRAFT_FONTS_DIR on the build
-      # step). Bump the commit deliberately; see craftrules standards/fonts.md.
+      # step). Bump the commit deliberately; see docs/development.md, Fonts.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: storytold/craft-fonts
@@ -229,12 +215,25 @@ jobs:
           CRAFT_FONTS_DIR: ${{ github.workspace }}/craft-fonts
           CRAFT_FONTS_REQUIRED: "1"
         run: packaging/linux/package.sh
+      - name: Install Wayland window-check tools
+        if: matrix.arch == 'x86_64'
+        run: sudo apt-get install -y --no-install-recommends weston xvfb scrot libegl1-mesa libgl1-mesa-dri fonts-cantarell
+      - name: Check the native Wayland window frame
+        if: matrix.arch == 'x86_64'
+        timeout-minutes: 3
+        run: bash packaging/linux/check-window-frame.sh target/release/vectorcraft target/window-frame
+      - uses: actions/upload-artifact@v7
+        if: always() && matrix.arch == 'x86_64'
+        with:
+          name: window-frame-linux-x86_64
+          path: target/window-frame/
+          if-no-files-found: warn
       - name: Check the packages
         run: |
           dpkg-deb --info dist/release/*.deb
           dpkg-deb --contents dist/release/*.deb | grep -E 'usr/bin/vectorcraft$|metainfo|applications'
           ldd target/release/vectorcraft
-          python3 -c "import yaml; m = yaml.safe_load(open('packaging/linux/flatpak/ai.storyteller.vectorcraft.yml')); assert m['id'] == 'ai.storyteller.vectorcraft'"
+          python3 -c "import yaml; m = yaml.safe_load(open('packaging/linux/flatpak/io.github.treeforjs.vectorcraft.yml')); assert m['id'] == 'io.github.treeforjs.vectorcraft'"
           for appimage in dist/release/*.AppImage; do
             chmod +x "$appimage"
             APPIMAGE_EXTRACT_AND_RUN=1 "$appimage" --version
@@ -251,146 +250,10 @@ jobs:
           path: dist/release/*
           if-no-files-found: error
 
-  flatpak:
-    name: Flatpak ${{ matrix.arch }}
-    needs: [version, linux]
-    # Repackages the Linux job's tarball (the same binaries as the AppImage/deb/rpm); no Rust
-    # build here. 24.04 for a newer flatpak-builder (1.4) than 22.04 ships.
-    runs-on: ${{ matrix.runner }}
-    # No `environment: release`: this job signs nothing, so it gets no release secrets.
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { arch: x86_64, runner: ubuntu-24.04 }
-          - { arch: aarch64, runner: ubuntu-24.04-arm }
-    env:
-      VECTORCRAFT_VERSION: ${{ needs.version.outputs.version }}
-      VECTORCRAFT_BUILD_DATE: ${{ needs.version.outputs.date }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
-        with:
-          name: release-linux-${{ matrix.arch }}
-          path: dist/linux
-      - name: Install flatpak-builder
-        run: |
-          sudo apt-get update
-          # librsvg2-common: the SVG pixbuf loader. flatpak-builder runs the host's
-          # `appstreamcli compose`, which renders the scalable icon and fails without it.
-          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder librsvg2-common
-          # Ubuntu 24.04's AppArmor blocks the unprivileged user namespaces bubblewrap needs.
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-      - name: Build the Flatpak bundle
-        run: packaging/linux/flatpak-bundle.sh "dist/linux/vectorcraft-$VECTORCRAFT_VERSION-linux-${{ matrix.arch }}.tar.gz"
-      - uses: actions/upload-artifact@v7
-        with:
-          name: release-flatpak-${{ matrix.arch }}
-          path: dist/release/*.flatpak
-          if-no-files-found: error
-
-  freebsd:
-    name: FreeBSD x86_64
-    needs: version
-    # GitHub has no FreeBSD runners: build in a FreeBSD 14.3 VM (same image and packages as
-    # freebsd.yml).
-    runs-on: ubuntu-latest
-    timeout-minutes: 150
-    # No `environment: release`: this job signs nothing, so it gets no release secrets.
-    env:
-      VECTORCRAFT_VERSION: ${{ needs.version.outputs.version }}
-      VECTORCRAFT_BUILD_DATE: ${{ needs.version.outputs.date }}
-    steps:
-      - uses: actions/checkout@v7
-      # Japanese UI/document fonts, embedded by crates/text/build.rs (CRAFT_FONTS_DIR in the VM).
-      # Bump the commit deliberately; see craftrules standards/fonts.md.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: storytold/craft-fonts
-          ref: abb83316d96aa59c1cf64784289e378fe9fa5695
-          path: craft-fonts
-      - uses: dtolnay/rust-toolchain@stable
-        if: inputs.version != ''
-      - name: Apply version override
-        if: inputs.version != ''
-        run: cargo xtask version set "$VECTORCRAFT_VERSION"
-      - name: Build and package in a FreeBSD VM
-        # v1.5.9, pinned by commit.
-        uses: vmactions/freebsd-vm@c46abacb49f09938ca4e1702d15d836285d694cc
-        with:
-          release: "14.3"
-          usesh: true
-          cpu: 4
-          mem: 12288
-          # Passed through by name; never templated into the script.
-          envs: "VECTORCRAFT_VERSION VECTORCRAFT_BUILD_DATE VECTORCRAFT_BUILD_SHA"
-          prepare: |
-            pkg install -y bash curl git pkgconf cmake python3 libxkbcommon wayland libX11 libXcursor libXrandr libXi libxcb mesa-libs vulkan-loader gtk3 fontconfig freetype2 alsa-lib
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
-          run: |
-            . "$HOME/.cargo/env"
-            git config --global --add safe.directory "$PWD"
-            # Build outside the checkout so only dist/ is copied back out of the VM.
-            # The craft-fonts checkout is synced into the VM with the workspace.
-            export CRAFT_FONTS_DIR="$PWD/craft-fonts" CRAFT_FONTS_REQUIRED=1
-            export CARGO_TARGET_DIR=/var/tmp/vectorcraft-target CARGO_BUILD_JOBS=4
-            bash packaging/freebsd/package.sh
-            tar -tzf dist/release/vectorcraft-*-freebsd-x86_64.tar.gz \
-              | grep -E '/bin/vectorcraft$|/bin/vectorcraft-cli$|/share/applications/ai\.storyteller\.vectorcraft\.desktop$'
-      - uses: actions/upload-artifact@v7
-        with:
-          name: release-freebsd
-          path: dist/release/*
-          if-no-files-found: error
-
-  web:
-    name: Web (wasm)
-    needs: version
-    runs-on: ubuntu-latest
-    # No `environment: release`: no secrets here.
-    env:
-      VECTORCRAFT_VERSION: ${{ needs.version.outputs.version }}
-      VECTORCRAFT_BUILD_DATE: ${{ needs.version.outputs.date }}
-      TRUNK_VERSION: 0.21.14
-    steps:
-      - uses: actions/checkout@v7
-      # Japanese UI/document fonts, embedded by crates/text/build.rs (CRAFT_FONTS_DIR on the build
-      # step). Bump the commit deliberately; see craftrules standards/fonts.md.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: storytold/craft-fonts
-          ref: abb83316d96aa59c1cf64784289e378fe9fa5695
-          path: craft-fonts
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: release-web
-      - name: Install trunk
-        run: |
-          curl -fsSL "https://github.com/trunk-rs/trunk/releases/download/v${TRUNK_VERSION}/trunk-x86_64-unknown-linux-gnu.tar.gz" \
-            | tar -xz -C "$HOME/.cargo/bin" trunk
-          trunk --version
-      - name: Apply version override
-        if: inputs.version != ''
-        run: cargo xtask version set "$VECTORCRAFT_VERSION"
-      - name: Build and zip
-        env:
-          CRAFT_FONTS_DIR: ${{ github.workspace }}/craft-fonts
-          CRAFT_FONTS_REQUIRED: "1"
-        run: packaging/web/package.sh
-      - uses: actions/upload-artifact@v7
-        with:
-          name: release-web
-          path: dist/release/*
-          if-no-files-found: error
-
   release:
     name: Draft GitHub Release
-    # Needs the signed jobs, so a branch dry run (where the environment refuses them) never
-    # drafts a release.
-    needs: [version, macos, windows, linux, flatpak, freebsd, web]
+    if: github.ref == 'refs/heads/release'
+    needs: [version, windows, linux]
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -400,6 +263,7 @@ jobs:
       PRERELEASE: ${{ needs.version.outputs.prerelease }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
+      CRAFT_UPDATE_PUBLIC_KEY: ${{ vars.CRAFT_UPDATE_PUBLIC_KEY }}
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -409,6 +273,16 @@ jobs:
       - name: Checksums
         working-directory: artifacts
         run: |
+          set -euo pipefail
+          for arch in x64 x86 arm64; do
+            test -s "vectorcraft-$VERSION-windows-$arch.msi"
+            test -s "vectorcraft-$VERSION-windows-$arch-portable.zip"
+          done
+          for arch in x86_64 aarch64; do
+            for format in AppImage AppImage.zsync deb rpm tar.gz; do
+              test -s "vectorcraft-$VERSION-linux-$arch.$format"
+            done
+          done
           sha256sum -- * | tee SHA256SUMS.txt
       # In-app updates install only what this signature covers (craft-update; see
       # docs/releasing.md › In-app updates). Written after the list, so it isn't listed in it.
@@ -417,18 +291,57 @@ jobs:
         env:
           UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
         run: |
-          if [ -n "$UPDATE_SIGNING_KEY" ]; then
-            printf '%s\n' "$UPDATE_SIGNING_KEY" > "$RUNNER_TEMP/key.pem"
-            openssl pkeyutl -sign -inkey "$RUNNER_TEMP/key.pem" -rawin -in SHA256SUMS.txt | base64 -w0 > SHA256SUMS.txt.sig
-            rm -f "$RUNNER_TEMP/key.pem"
-          else
-            echo "::warning::UPDATE_SIGNING_KEY is not set: this release can't be installed from inside the app"
+          set -euo pipefail
+          if [ -z "$UPDATE_SIGNING_KEY" ] || [ -z "$CRAFT_UPDATE_PUBLIC_KEY" ]; then
+            echo "::error::UPDATE_SIGNING_KEY and CRAFT_UPDATE_PUBLIC_KEY are required"
+            exit 1
           fi
+          umask 077
+          key_dir="$(mktemp -d "$RUNNER_TEMP/update-signing.XXXXXX")"
+          trap 'rm -rf -- "$key_dir"' EXIT
+          printf '%s\n' "$UPDATE_SIGNING_KEY" > "$key_dir/key.pem"
+          PUBLIC_KEY_DER="$key_dir/expected-public.der" python3 - <<'PY'
+          import base64
+          import binascii
+          import os
+          import sys
+          from pathlib import Path
+          value = os.environ["CRAFT_UPDATE_PUBLIC_KEY"]
+          try:
+              key = base64.b64decode(value, validate=True)
+          except (ValueError, binascii.Error):
+              sys.exit("::error::CRAFT_UPDATE_PUBLIC_KEY must be a single base64 Ed25519 public key")
+          if base64.b64encode(key).decode() != value:
+              sys.exit("::error::CRAFT_UPDATE_PUBLIC_KEY must use canonical base64 without whitespace")
+          prefix = bytes.fromhex("302a300506032b6570032100")
+          if len(key) == 32:
+              key = prefix + key
+          elif len(key) != 44 or not key.startswith(prefix):
+              sys.exit("::error::CRAFT_UPDATE_PUBLIC_KEY must contain raw32 or DER44 Ed25519 bytes")
+          Path(os.environ["PUBLIC_KEY_DER"]).write_bytes(key)
+          PY
+          openssl pkey -in "$key_dir/key.pem" -passin pass: -pubout -outform DER \
+            -out "$key_dir/derived-public.der"
+          if ! cmp -s "$key_dir/derived-public.der" "$key_dir/expected-public.der"; then
+            echo "::error::UPDATE_SIGNING_KEY does not match CRAFT_UPDATE_PUBLIC_KEY"
+            exit 1
+          fi
+          openssl pkeyutl -sign -inkey "$key_dir/key.pem" -passin pass: -rawin \
+            -in SHA256SUMS.txt -out "$key_dir/signature.bin"
+          test "$(wc -c < "$key_dir/signature.bin")" -eq 64
+          openssl pkeyutl -verify -pubin -keyform DER -inkey "$key_dir/expected-public.der" -rawin \
+            -in SHA256SUMS.txt -sigfile "$key_dir/signature.bin"
+          base64 -w0 "$key_dir/signature.bin" > SHA256SUMS.txt.sig
       - name: Create or update the draft release
         working-directory: artifacts
         run: |
+          set -euo pipefail
           tag="v$VERSION"
           title="VectorCraft v$VERSION"
+          printf '%s\n' "Windows and Linux packages for VectorCraft v$VERSION." \
+            "Standard Windows and Linux title-bar controls, with an Adwaita frame on Wayland desktops that need one." \
+            "Downloads are verified with the signed SHA256SUMS.txt checksum list." \
+            > "$RUNNER_TEMP/release-notes.md"
           pre=()
           if [ "$PRERELEASE" = true ]; then pre=(--prerelease); fi
           if draft="$(gh release view "$tag" --json isDraft --jq .isDraft 2>/dev/null)"; then
@@ -440,11 +353,11 @@ jobs:
             gh release view "$tag" --json assets --jq '.assets[].name' | while read -r asset; do
               gh release delete-asset "$tag" "$asset" --yes
             done
-            gh release edit "$tag" --draft --title "$title" --target "$GITHUB_SHA" --prerelease="$PRERELEASE"
+            gh release edit "$tag" --draft --title "$title" --target "$GITHUB_SHA" --prerelease="$PRERELEASE" --notes-file "$RUNNER_TEMP/release-notes.md"
             gh release upload "$tag" --clobber -- *
           else
             echo "Creating draft $tag"
-            gh release create "$tag" --draft --title "$title" --target "$GITHUB_SHA" --generate-notes "${pre[@]}" -- *
+            gh release create "$tag" --draft --title "$title" --target "$GITHUB_SHA" --notes-file "$RUNNER_TEMP/release-notes.md" "${pre[@]}" -- *
           fi
           {
             echo "Draft release **$title** at \`${GITHUB_SHA::9}\`:"

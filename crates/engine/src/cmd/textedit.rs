@@ -481,7 +481,7 @@ fn set_range_style(s: &mut Session, p: &Value) -> Result<Value> {
     let n = s.edit("Character", |d, _| {
         let t = text_mut(d, id).ok_or(EngineError::NoNode(id))?;
         if a == b && !t.plain_text().is_empty() {
-            // An empty range inside text styles nothing (Illustrator keeps it for the next typing).
+            // An empty range inside text styles nothing (the reference editor keeps it for the next typing).
             return Ok(t.runs.len());
         }
         let before = protect.then(|| t.runs.clone());

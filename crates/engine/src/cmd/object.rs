@@ -688,7 +688,7 @@ fn clip_release(s: &mut Session, _: &Value) -> Result<Value> {
 }
 
 /// Selects the clipping path (`mask`) or the clipped contents of every selected clip group (or of the
-/// clip group containing a selected object), like Illustrator's Edit Contents / Edit Clipping Path toggle.
+/// clip group containing a selected object), like the reference editor's Edit Contents / Edit Clipping Path toggle.
 fn clip_edit(s: &mut Session, mask: bool) -> Result<Value> {
     let st = s.doc()?;
     let mut ids = vec![];
@@ -1119,7 +1119,7 @@ fn set_live_shape(s: &mut Session, p: &Value) -> Result<Value> {
                 && (pie_start.is_some() || pie_end.is_some() || invert)
             {
                 if let LiveShape::Ellipse { pie, .. } = l {
-                    // An end of 0 is a full turn (Illustrator shows a whole ellipse as 0° to 360°).
+                    // An end of 0 is a full turn (the reference editor shows a whole ellipse as 0° to 360°).
                     let end_of = |a: f64| if a == 0.0 { 360.0 } else { a };
                     *pie = (pie_start.unwrap_or(pie.0), pie_end.map_or(pie.1, end_of));
                     if invert {

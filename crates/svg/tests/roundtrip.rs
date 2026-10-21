@@ -755,7 +755,7 @@ fn import_tspan_far_below_is_bounded() {
 
 #[test]
 fn import_tspan_on_the_same_baseline_stays_on_the_line() {
-    // Styled runs positioned on the line's own baseline (as Illustrator writes them, with x and y on
+    // Styled runs positioned on the line's own baseline (as the reference editor writes them, with x and y on
     // every tspan) are one line, not a line break before each run.
     let d = import_art(
         r#"<svg xmlns="http://www.w3.org/2000/svg" width="300" height="100">

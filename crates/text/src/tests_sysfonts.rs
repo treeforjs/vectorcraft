@@ -259,7 +259,7 @@ fn service_font() -> PathBuf {
     std::env::temp_dir().join(format!("vc-sysfonts-{}-service", std::process::id())).join(".29457")
 }
 
-/// The fonts a font service (Adobe Fonts on Windows, through DirectWrite) loads in place are
+/// The fonts a font service (font subscription services on Windows, through DirectWrite) loads in place are
 /// cataloged: named by the platform's lister, read whatever their file is called (#579).
 #[test]
 fn fonts_the_platform_lists_outside_the_font_folders_are_cataloged() {

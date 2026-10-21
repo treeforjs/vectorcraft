@@ -16,13 +16,13 @@
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package
       Name="VectorCraft"
-      Manufacturer="Learning Machines LLC"
+      Manufacturer="Craft contributors"
       Version="$(var.Version)"
       UpgradeCode="601C6437-08AE-4645-ADCC-27F036C2EA2F"
       Scope="perMachine"
       Compressed="yes"
       Language="1033">
-    <SummaryInformation Description="VectorCraft vector illustration app" Manufacturer="Learning Machines LLC" />
+    <SummaryInformation Description="VectorCraft vector illustration app" Manufacturer="Craft contributors" />
     <!-- Same-version upgrades let successive pre-releases of one X.Y.Z replace each other
          (MSI versions are numeric, so 1.2.3-rc.1 and 1.2.3-rc.2 are both 1.2.3). -->
     <MajorUpgrade AllowSameVersionUpgrades="yes"

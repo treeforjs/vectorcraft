@@ -46,7 +46,7 @@ pub fn create(id: &str) -> Option<Box<dyn Tool>> {
 
 /// Cyan used for the reference point target and tool annotations.
 pub const CYAN: [u8; 3] = [0x00, 0xa8, 0xff];
-/// Illustrator's selection blue for bounding boxes.
+/// the reference editor's selection blue for bounding boxes.
 pub const BLUE: [u8; 3] = [0x4a, 0x7c, 0xff];
 
 /// The reference-point target (circle + crosshair) drawn at `p`, `r` in document units.

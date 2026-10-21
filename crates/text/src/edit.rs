@@ -48,7 +48,7 @@ pub fn style_at(runs: &[TextRun], byte: usize) -> CharStyle {
     last.or(runs.first().map(|r| &r.style)).cloned().unwrap_or_default()
 }
 
-/// Style for text typed over `start..end` (Illustrator: the first replaced character's style, or
+/// Style for text typed over `start..end` (the reference editor: the first replaced character's style, or
 /// the character before the caret).
 pub fn insertion_style(runs: &[TextRun], start: usize, end: usize) -> CharStyle {
     if end > start {

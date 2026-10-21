@@ -1,5 +1,6 @@
-//! The window's own title bar on Windows and Linux, where the window has no OS decorations
-//! ([`VectorcraftApp::custom_titlebar`]): empty space in the app bar drags the window and a
+//! Optional title bar for hosts that explicitly choose an undecorated window
+//! ([`VectorcraftApp::custom_titlebar`]); the desktop app uses native controls instead.
+//! In this optional mode, empty space in the app bar drags the window and a
 //! double-click there maximizes it, caption buttons at the far right minimize, maximize/restore and
 //! close, and thin invisible zones along the window's edges resize it.
 

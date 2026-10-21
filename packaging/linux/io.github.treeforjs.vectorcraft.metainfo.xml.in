@@ -2,13 +2,13 @@
 <!-- AppStream metadata (software centres, Flathub). Template: package.sh and the Flatpak
      manifest substitute @VERSION@ and @DATE@ from Cargo.toml and the build date. -->
 <component type="desktop-application">
-  <id>ai.storyteller.vectorcraft</id>
+  <id>io.github.treeforjs.vectorcraft</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT OR Apache-2.0</project_license>
   <name>VectorCraft</name>
   <summary>Draw and edit vector illustrations, SVG and PDF</summary>
-  <developer id="ai.storyteller">
-    <name>Learning Machines LLC</name>
+  <developer id="io.github.treeforjs">
+    <name>Craft contributors</name>
   </developer>
   <description>
     <p>
@@ -17,8 +17,8 @@
       open and save SVG and PDF.
     </p>
   </description>
-  <launchable type="desktop-id">ai.storyteller.vectorcraft.desktop</launchable>
-  <icon type="stock">ai.storyteller.vectorcraft</icon>
+  <launchable type="desktop-id">io.github.treeforjs.vectorcraft.desktop</launchable>
+  <icon type="stock">io.github.treeforjs.vectorcraft</icon>
   <!-- Only url types known to appstream 0.15 (Ubuntu 22.04, where CI validates): no vcs-browser. -->
   <url type="homepage">https://github.com/treeforjs/vectorcraft</url>
   <url type="bugtracker">https://github.com/treeforjs/vectorcraft/issues</url>

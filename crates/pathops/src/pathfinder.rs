@@ -1,4 +1,4 @@
-//! Illustrator's Pathfinder panel and Shape Builder regions, over an ordered stack of shapes
+//! the reference editor's Pathfinder panel and Shape Builder regions, over an ordered stack of shapes
 //! (index 0 = back-most, last = front-most).
 
 use std::collections::HashMap;

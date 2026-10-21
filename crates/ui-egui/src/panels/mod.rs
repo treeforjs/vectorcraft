@@ -137,7 +137,7 @@ pub fn show_icon_panel(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) {
     }
 }
 
-/// Items of a panel's (≡) menu. Unimplemented Illustrator items are listed disabled. False for a
+/// Items of a panel's (≡) menu. Unimplemented the reference editor items are listed disabled. False for a
 /// panel without items of its own.
 pub fn panel_menu_items(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) -> bool {
     match id {

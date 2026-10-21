@@ -1,6 +1,6 @@
 //! "VectorCraft Generic CMYK (SWOP-like)": our own parametric press model.
 //!
-//! We can't redistribute Adobe's or ECI's characterisation profiles, so the built-in CMYK space is
+//! The built-in CMYK space avoids third-party characterisation profiles. It uses
 //! a small physical model instead of an ICC LUT. It is *ours* and only SWOP-*like*: the numbers
 //! are rounded, typical values for coated web offset, not a measured dataset.
 //!

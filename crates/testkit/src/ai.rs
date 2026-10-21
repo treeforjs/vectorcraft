@@ -1,4 +1,4 @@
-//! Hand-written Illustrator editing data (the format `vectorcraft_eps`'s reader documents) and the
+//! Hand-written the reference editor editing data (the format `vectorcraft_eps`'s reader documents) and the
 //! EPS and `.ai` files that carry it, for import tests. Nothing here comes from files another app
 //! wrote.
 
@@ -88,7 +88,7 @@ pub fn page_pdf() -> &'static str {
     "1 0 0 rg 10 50 30 40 re f 100 50 40 40 re 110 60 20 20 re f* 0.5 g 160 60 20 20 re f"
 }
 
-/// An Illustrator EPS: its page drawing `page` (PostScript, 200 × 100 pt), and the editing data
+/// An the reference editor EPS: its page drawing `page` (PostScript, 200 × 100 pt), and the editing data
 /// `data` after it, not compressed.
 pub fn eps(data: &[u8], page: &str) -> Vec<u8> {
     let mut out = format!(
@@ -100,7 +100,7 @@ pub fn eps(data: &[u8], page: &str) -> Vec<u8> {
     out
 }
 
-/// An Illustrator `.ai` file: a 200 × 100 pt PDF page drawing `page` (PDF content), carrying
+/// An the reference editor `.ai` file: a 200 × 100 pt PDF page drawing `page` (PDF content), carrying
 /// `private` (the private data streams' contents, such as `%AI12_CompressedData` and zlib data) in
 /// two streams.
 pub fn ai(private: &[u8], page: &str) -> Vec<u8> {

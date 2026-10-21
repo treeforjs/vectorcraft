@@ -1,4 +1,4 @@
-//! The command registry. Ids follow Illustrator's menu structure.
+//! The command registry. Ids follow the reference editor's menu structure.
 
 pub(crate) mod appearance;
 mod assets;

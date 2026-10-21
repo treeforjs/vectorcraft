@@ -4,7 +4,7 @@
 //! (grid, brick by row/column, hex by column/row). Pattern space has the tile's top-left at the
 //! origin; instance `(i, j)` is the art translated by `-tile.origin + tile_offset(i, j)`. A
 //! [`Paint::Pattern`] maps pattern space into the document with its own `xf` (identity = tiles
-//! anchored at the document origin, like Illustrator's ruler origin). Every tiling is periodic
+//! anchored at the document origin, like the reference editor's ruler origin). Every tiling is periodic
 //! on a rectangular *super-tile* ([`PatternDef::period`]), which is what renderers rasterize and
 //! what SVG `<pattern>` elements repeat.
 //!

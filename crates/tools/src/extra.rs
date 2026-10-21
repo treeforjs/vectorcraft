@@ -153,7 +153,7 @@ pub struct ReshapeTool {
 }
 
 impl ReshapeTool {
-    /// The selected path under `p` (Reshape works on selected paths only, like Illustrator).
+    /// The selected path under `p` (Reshape works on selected paths only, like the reference editor).
     fn hit(cx: &ToolContext, p: Point) -> Option<(vectorcraft_doc::NodeId, Point)> {
         let tol = cx.tol(4.0);
         cx.selection.objects.iter().copied().filter(|id| cx.doc.is_editable(*id)).find_map(|id| {

@@ -1,4 +1,4 @@
-//! Graphs (Illustrator's graph tools): a group whose art is generated from a [`GraphSpec`].
+//! Graphs (the reference editor's graph tools): a group whose art is generated from a [`GraphSpec`].
 
 use serde::{Deserialize, Serialize};
 use vectorcraft_geom::Rect;
@@ -66,7 +66,7 @@ impl GraphKind {
 
 /// Graph data and options. `rows` are categories (one per row of the Graph Data window), each
 /// holding one value per series; `series` are the legend labels (the first row of the window).
-/// Scatter graphs read each series as (y, x) column pairs, like Illustrator.
+/// Scatter graphs read each series as (y, x) column pairs, like the reference editor.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct GraphSpec {

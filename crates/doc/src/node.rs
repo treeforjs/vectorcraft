@@ -31,7 +31,7 @@ pub enum LayerColor {
     Custom([u8; 3]),
 }
 
-/// Layer highlight colours, assigned in sequence to new layers. First is Illustrator-like light blue.
+/// Layer highlight colours, assigned in sequence to new layers. First is the reference editor-like light blue.
 pub const LAYER_COLORS: [(&str, [u8; 3]); 27] = [
     ("Light Blue", [0x4f, 0x80, 0xff]),
     ("Red", [0xff, 0x4f, 0x4f]),
@@ -71,7 +71,7 @@ impl LayerColor {
     }
 }
 
-/// Live shape parameters (Illustrator's "Live Shapes"). The node's path is regenerated from these
+/// Live shape parameters (the reference editor's "Live Shapes"). The node's path is regenerated from these
 /// while the shape stays live; editing anchors directly converts it to a plain path.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "shape", rename_all = "lowercase")]

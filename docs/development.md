@@ -1,5 +1,12 @@
 # Development
 
+Local document and linked-resource reads accept regular files up to 2 GiB. Devices, pipes and
+larger inputs are rejected before decoding; reads use fallible allocation and also check the
+opened file and any growth while reading. This ceiling is an input limit, not a process-memory
+budget: decoding, document snapshots and rendering need additional memory. Individual decoders
+retain their own limits, including the 512 MiB compressed-native expansion limit. Streaming very
+large documents and a coordinated memory budget remain future work.
+
 For native builds on Ubuntu 24.04 / 26.04 LTS x86_64, see the [Ubuntu guide](ubuntu.md).
 For NVIDIA RTX PRO/GeForce and Intel graphics drivers on Windows 11 x64, see
 [Windows graphics setup](windows-gpu.md).
@@ -81,7 +88,7 @@ By default VectorCraft's own crates log at `info` and everything else at `warn`.
 |---|---|
 | `VECTORCRAFT_CONTROL_PORT` | Same as `--control <port>` |
 | `VECTORCRAFT_IN_WINDOW_MENUS` | Any value but empty or `0`: same as `--in-window-menus` (see [macOS: the menu bar](#macos-the-menu-bar)) |
-| `VECTORCRAFT_NO_PREFS` | No preferences read or written, no default Data Recovery folder and no log file (agents' test runs) |
+| `VECTORCRAFT_NO_PREFS` | No preferences read or written, no default Data Recovery folder and no log file (clients' test runs) |
 | `WGPU_POWER_PREF` | Graphics adapter: `low`, `high` or `none` (see [Desktop graphics processor](#desktop-graphics-processor)) |
 | `WGPU_ADAPTER_NAME` | Graphics adapter by (part of) its name, any case (see [Desktop graphics processor](#desktop-graphics-processor)) |
 | `WGPU_BACKEND` | Graphics backends: `vulkan`, `dx12`, `metal`, `gl` |
@@ -110,9 +117,9 @@ The window runs natively on Wayland (eframe's `wayland` feature) and on X11. On 
 ## Fonts: craft-fonts (optional build input)
 
 Font files are never committed to this repository. Fonts shared with the sibling Craft apps live in
-[craft-fonts](https://github.com/storytold/craft-fonts); the rules are in craftrules
-[`standards/fonts.md`](https://github.com/storytold/craftrules/blob/main/standards/fonts.md). To add
-a font, add it there. (The Latin fonts in `assets/fonts/` predate the rule and stay.)
+[craft-fonts](https://github.com/storytold/craft-fonts). Follow the asset and licence policy in
+[`AGENTS.md`](../AGENTS.md#non-negotiables); add shared fonts to that repository with their
+original source, licence text and attribution. (The Latin fonts in `assets/fonts/` predate the rule and stay.)
 
 VectorCraft builds, tests and runs without craft-fonts. To embed its Japanese fonts (BIZ UDPGothic
 for UI text, Shippori Mincho and BIZ UDMincho for document text), point the `CRAFT_FONTS_DIR` build
@@ -165,7 +172,7 @@ another craft-fonts face on the web, add a line to `web-fonts.txt`.
 Strings in code stay English and are the default lookup keys. `crates/ui-egui/src/i18n` maps them to display
 text at render time from one catalog per language (`i18n/<code>.tsv`; the format is documented in the header of
 `zh-hant.tsv`). Command ids, menu paths used for logic, `ui.menu.list`, the control channel, the CLI and MCP
-always use the English ids and labels, so agents and scripts never see translated text.
+always use the English ids and labels, so clients and scripts never see translated text.
 
 Languages shipped: English (`en`, the source), Traditional Chinese (`zh-hant`, complete, in the vocabulary used
 in Taiwan; `zh-TW`, `zh-HK`, `zh-MO` and `zh-Hant-*` locales all resolve to it), Simplified Chinese (`zh-hans`,

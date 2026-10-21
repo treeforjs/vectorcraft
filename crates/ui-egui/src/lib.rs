@@ -1,4 +1,4 @@
-//! VectorCraft's egui frontend: an Illustrator-style UI over `vectorcraft-engine`.
+//! VectorCraft's egui frontend: a reference editor-style UI over `vectorcraft-engine`.
 //!
 //! The UI is thin: every action goes through [`VectorcraftApp::run`], which dispatches UI commands
 //! (view/window) here and everything else to the engine. The same entry point serves menus,
@@ -20,6 +20,7 @@ pub mod chrome;
 mod clipboard_probe;
 pub mod community;
 pub mod control;
+mod control_request;
 pub mod credits;
 pub mod cursors;
 pub mod dialogs;
@@ -69,6 +70,8 @@ mod tests_background;
 mod tests_clipboard;
 #[cfg(test)]
 mod tests_contextmenu;
+#[cfg(test)]
+mod tests_control_dispatch;
 #[cfg(test)]
 mod tests_cut;
 #[cfg(test)]
@@ -156,6 +159,7 @@ use vectorcraft_engine::cmd::fileio;
 use vectorcraft_engine::{Session, ViewInfo};
 
 pub use control::{ControlRequest, ControlResponse};
+pub use control_request::ControlTicket;
 pub use state::{UiState, View};
 pub use sysclip::{ClipboardProbeFactory, SystemClipboard};
 
@@ -350,8 +354,8 @@ pub struct VectorcraftApp {
     pub(crate) clipboard_in: Option<vectorcraft_engine::cmd::clipboard::Flavour>,
     /// A URL to open through egui next frame (when the host has no `open_url` service).
     pending_url: Option<String>,
-    /// Windows and Linux: the window has no OS decorations, so the app bar is the title bar (drag,
-    /// double-click to maximize, caption buttons) and invisible edge zones resize the window.
+    /// Optional host-provided mode for an undecorated window: app-bar dragging, caption buttons
+    /// and edge resize zones. The desktop host uses native decorations and leaves this disabled.
     pub custom_titlebar: bool,
     /// The graphics adapter the window renders with ("name (backend)"), as the host reports it:
     /// shown in Help › About and `ui.inspect` for GPU bug reports. `None` when unknown.
@@ -632,6 +636,9 @@ impl VectorcraftApp {
     fn drain_control(&mut self, ctx: &egui::Context) {
         let Some(rx) = self.control_rx.take() else { return };
         while let Ok(req) = rx.try_recv() {
+            if !req.start() {
+                continue;
+            }
             let reply = req.reply.clone();
             // Guarded per request: a panic must not drop the channel (taken out of `self` above).
             let outcome = vectorcraft_engine::guard::catch_panic(|| control::handle(self, ctx, &req))

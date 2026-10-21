@@ -839,7 +839,7 @@ impl<'a> Reader<'a> {
             "Document" => self.document(&o),
             "AI11Text" => self.text_slot(&o)?,
             "SymbolInstance" => self.unreadable("symbols"),
-            // Art Illustrator shows but doesn't edit (a placed PDF's content): its PDF is kept in
+            // Art the reference editor shows but doesn't edit (a placed PDF's content): its PDF is kept in
             // the dictionary, which nothing draws from yet, so the file opens without it.
             "ForeignObject" => self.warn(NON_NATIVE_ART),
             _ => {}

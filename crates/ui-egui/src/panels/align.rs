@@ -26,7 +26,7 @@ impl AlignTo {
     }
 }
 
-/// `object.align` params: a single object aligns to the artboard (Illustrator does the same).
+/// `object.align` params: a single object aligns to the artboard (the reference editor does the same).
 pub fn align_params(base: Value, to: AlignTo, n_selected: usize) -> Value {
     let mut p = base;
     let to = if n_selected == 1 && to == AlignTo::Selection { AlignTo::Artboard } else { to };

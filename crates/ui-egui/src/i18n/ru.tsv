@@ -9,7 +9,7 @@
 # Coverage: the whole interface — every menu string and every `tl!` literal (`complete_menus`,
 # tested). Left in English on purpose (`MENU_KEEP_AS_IS` in the tests): the product name, language
 # names, OpenType, the built-in workspace names and the bracketed perspective grid preset names.
-# Photoshop-style raster effects (Effect menu, their dialogs).
+# Raster effects (Effect menu, their dialogs).
 	Sketch	Эскиз
 	Bas Relief…	Барельеф…
 	Bas Relief	Барельеф
@@ -1633,7 +1633,6 @@
 	Mixed Appearances	Смешанное оформление
 	Mixed Objects	Смешанные объекты
 	Mode:	Режим:
-	Model	Модель
 	Modified	Изменено
 	Modified since it was read: {path}	Изменено с момента чтения: {path}
 	Modified:	Изменено:
@@ -3323,10 +3322,9 @@
 	Burasagari	Burasagari
 	Force	Принудительно
 
-# About › Contributors / Models (credits.rs)
+# About › Contributors (credits.rs)
 	About	О программе
 	Contributors	Участники
-	Models	Модели
 	Username	Имя пользователя
 	Display name	Отображаемое имя
 	Real name	Настоящее имя
@@ -3348,11 +3346,6 @@
 	Last	Последний
 	{people} contributors · {commits} commits	{people} участников · {commits} коммитов
 	No contributor data was built into this copy.	В эту копию не включены данные об участниках.
-	No model credits were built into this copy.	В эту копию не включены сведения о моделях.
-	Company	Компания
-	Version	Версия
-	% of all commits	% от всех коммитов
-	Lines +/−	Строки +/−
 	Joins	Соединения
 	Miter	Митра
 	Bevel	Скос

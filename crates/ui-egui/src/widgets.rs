@@ -1,4 +1,4 @@
-//! Shared widgets in Illustrator's panel style. Colours come from theme tokens.
+//! Shared widgets in the reference editor's panel style. Colours come from theme tokens.
 
 use egui::{Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2, pos2, vec2};
 use vectorcraft_color::{BlendMode, Color, Paint};
@@ -243,7 +243,7 @@ const STEPS: [(egui::Modifiers, f64); 3] = [(egui::Modifiers::SHIFT, 10.0), (egu
 
 /// ↑/↓ in focused numeric field `resp`, or the mouse wheel turned over it, step the number `buf`
 /// shows (`read` parses it, `show` formats it) by one per press or wheel notch ([`STEPS`]: Shift
-/// ten, Ctrl/Cmd a tenth), applied at once as in Illustrator's panels and dialogs. The new text
+/// ten, Ctrl/Cmd a tenth), applied at once as in the reference editor's panels and dialogs. The new text
 /// replaces `buf`, all selected so typing replaces it. Returns the new number when a step was
 /// taken. While the pointer is over the focused field the wheel is the field's (the panel under it
 /// doesn't scroll); an unfocused field leaves the wheel to the panel and the canvas.
@@ -949,7 +949,7 @@ pub fn subheader(ui: &mut Ui, text: &str) {
     ui.label(egui::RichText::new(tl!(text)).size(12.5).color(t.text));
 }
 
-/// A label drawn with a dotted underline (Illustrator's link labels: "Stroke:", "Opacity:").
+/// A label drawn with a dotted underline (the reference editor's link labels: "Stroke:", "Opacity:").
 pub fn link_label(ui: &mut Ui, text: &str) -> Response {
     let t = Tokens::get(ui.ctx());
     let galley = ui.painter().layout_no_wrap(tl!(text).to_string(), egui::FontId::proportional(12.5), t.text_strong);
@@ -1188,7 +1188,7 @@ pub enum Live {
 }
 
 /// A colour slider with a gradient track (`track(t)` gives the colour at 0..1) and a triangular
-/// thumb below it, like Illustrator's Color panel. Returns the new normalized value and the phase.
+/// thumb below it, like the reference editor's Color panel. Returns the new normalized value and the phase.
 pub fn color_slider(
     ui: &mut Ui,
     id: impl std::hash::Hash + std::fmt::Debug,
@@ -1345,7 +1345,7 @@ pub fn hex_field(ui: &mut Ui, id: impl std::hash::Hash + std::fmt::Debug, hex: &
     commit.then_some(buf)
 }
 
-/// One swatch tile (Illustrator: 1 px dark frame, white inset on hover/selection).
+/// One swatch tile (the reference editor: 1 px dark frame, white inset on hover/selection).
 pub fn swatch_tile(ui: &Ui, rect: Rect, paint: &Paint, selected: bool, hovered: bool) {
     let t = Tokens::get(ui.ctx());
     paint_chip(ui, rect, paint);

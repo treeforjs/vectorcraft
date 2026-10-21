@@ -1,4 +1,4 @@
-//! Photoshop-style raster effects (Effect › Rasterize, Artistic › Colored Pencil, Cutout, Dry Brush, Film
+//! raster effects (Effect › Rasterize, Artistic › Colored Pencil, Cutout, Dry Brush, Film
 //! Grain, Fresco, Neon Glow, Paint Daubs, Palette Knife, Plastic Wrap, Poster Edges, Rough Pastels,
 //! Smudge Stick, Sponge, Underpainting and Watercolor, Blur › Radial Blur and Smart Blur, Brush Strokes ›
 //! Accented Edges, Angled Strokes, Crosshatch, Dark Strokes, Ink Outlines, Spatter, Sprayed Strokes
@@ -44,7 +44,7 @@ use vectorcraft_geom::{Affine, Point, Rect};
 
 use crate::util::{num, text};
 
-/// The Photoshop-style effect ids (all raster effects, see [`crate::is_raster`]).
+/// The raster effect ids (all raster effects, see [`crate::is_raster`]).
 pub const PIXEL_EFFECTS: [&str; 57] = [
     "artistic.coloredPencil",
     "artistic.cutout",
@@ -105,7 +105,7 @@ pub const PIXEL_EFFECTS: [&str; 57] = [
     "video.ntscColors",
 ];
 
-/// A Photoshop-style raster effect with its parameters read and clamped to their ranges. Lengths
+/// A raster effect with its parameters read and clamped to their ranges. Lengths
 /// are in document units.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PixelFx {

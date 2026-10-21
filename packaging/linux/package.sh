@@ -19,7 +19,8 @@ umask 022
 # shellcheck source=../env.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../env.sh"
 HERE="$ROOT/packaging/linux"
-APP_ID=ai.storyteller.vectorcraft
+APP_ID=io.github.treeforjs.vectorcraft
+LEGACY_APP_ID=ai.storyteller.vectorcraft
 
 SKIP_BUILD=0
 FORMATS="appimage deb rpm tar"
@@ -38,7 +39,7 @@ case "$ARCH" in
   aarch64 | arm64) ARCH=aarch64; DEB_ARCH=arm64 ;;
   *) echo "unsupported architecture $ARCH" >&2; exit 2 ;;
 esac
-export VECTORCRAFT_MAINTAINER="${VECTORCRAFT_MAINTAINER:-VectorCraft maintainers <vectorcraft@storyteller.ai>}"
+export VECTORCRAFT_MAINTAINER="${VECTORCRAFT_MAINTAINER:-Craft contributors}"
 BASENAME="vectorcraft-$VERSION-linux-$ARCH"
 
 echo "==> VectorCraft $VERSION for Linux $ARCH ($FORMATS)"
@@ -56,12 +57,19 @@ install -Dm755 "$BIN/vectorcraft" "$STAGE/usr/bin/vectorcraft"
 install -Dm755 "$BIN/vectorcraft-cli" "$STAGE/usr/bin/vectorcraft-cli"
 strip "$STAGE/usr/bin/vectorcraft" "$STAGE/usr/bin/vectorcraft-cli" 2>/dev/null || true
 install -Dm644 "$HERE/$APP_ID.desktop" "$STAGE/usr/share/applications/$APP_ID.desktop"
+# Older launchers and saved associations still resolve without a duplicate application-menu entry.
+sed -e "s/^StartupWMClass=.*/StartupWMClass=$LEGACY_APP_ID/" \
+  -e '$a\NoDisplay=true' "$HERE/$APP_ID.desktop" >"$STAGE/usr/share/applications/$LEGACY_APP_ID.desktop"
 install -Dm644 "$HERE/$APP_ID.mime.xml" "$STAGE/usr/share/mime/packages/$APP_ID.xml"
 mkdir -p "$STAGE/usr/share/metainfo"
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$VECTORCRAFT_BUILD_DATE/g" \
   "$HERE/$APP_ID.metainfo.xml.in" >"$STAGE/usr/share/metainfo/$APP_ID.metainfo.xml"
 mkdir -p "$STAGE/usr/share/icons"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/usr/share/icons/"
+for icon in "$STAGE/usr/share/icons/hicolor"/*/apps/"$APP_ID.png"; do
+  [ -f "$icon" ] || continue
+  cp "$icon" "${icon%/"$APP_ID".png}/$LEGACY_APP_ID.png"
+done
 mkdir -p "$STAGE/usr/share/doc/vectorcraft"
 copy_docs "$STAGE/usr/share/doc/vectorcraft"
 # Packaging must work with a private build umask too: installed launchers, MIME data, icons
@@ -109,6 +117,8 @@ if has appimage; then
   APPDIR="$WORK/VectorCraft.AppDir"
   cp -R "$STAGE" "$APPDIR"
   mv "$APPDIR/usr/share/doc" "$WORK/doc-unused"
+  install -Dm644 "$ROOT/assets/fonts/OFL-Cantarell.txt" "$APPDIR/usr/share/licenses/vectorcraft/OFL-Cantarell.txt"
+  install -Dm644 "$ROOT/NOTICE" "$APPDIR/usr/share/licenses/vectorcraft/NOTICE"
   ln -s usr/bin/vectorcraft "$APPDIR/AppRun"
   install -m644 "$HERE/$APP_ID.desktop" "$APPDIR/$APP_ID.desktop"
   install -m644 "$ROOT/assets/app-icon/hicolor/256x256/apps/$APP_ID.png" "$APPDIR/$APP_ID.png"

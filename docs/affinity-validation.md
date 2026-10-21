@@ -11,9 +11,9 @@ are separate claims. None demonstrates compatibility with every Affinity feature
 
 The inputs for this work are public documentation, fixture licensing/provenance
 notices and public document data. No Affinity executable, installation resources,
-private API or third-party Affinity parser implementation was read. No Adobe
+private API or third-party Affinity parser implementation was read. No proprietary
 application was run or used as an oracle. Existing project restrictions still
-apply to Adobe-authored assets and software.
+apply to proprietary assets and software.
 
 The additional Patchy files below were fetched as individual document blobs.
 Only its fixture directory listing, MIT license and third-party notice were read;
@@ -88,7 +88,7 @@ For a future paired oracle, record the original author, license for all embedded
 art, Affinity version, platform, import settings, profile, resolution, fonts,
 export preset and each expected semantic loss. Keep an original `.af`, a native
 Affinity-rendered PNG per board at full resolution, an Affinity-exported PSD and
-a human-readable object/layout inventory. Do not run Photoshop or another Adobe
+a human-readable object/layout inventory. Do not run the reference raster editor or another proprietary
 application to generate or validate the comparison. A PSD written by VectorCraft
 after import tests our writer/round trip; it is not an independent Affinity oracle.
 

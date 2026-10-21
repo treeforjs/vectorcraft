@@ -1,4 +1,4 @@
-//! The text of an Illustrator editing copy.
+//! The text of a reference editor editing copy.
 //!
 //! The editing copy of a file keeps the characters of its text objects, with their fonts, sizes,
 //! colours and where they sit, in one text document of its own: between `%AI11_BeginTextDocument`

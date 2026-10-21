@@ -1491,7 +1491,7 @@ impl Writer<'_> {
 
     /// Raster effects (drop shadow, glows, Gaussian blur, feather) as SVG filters: one `<g filter>`
     /// per effect, the first effect innermost (the reference app's stacking order). SVG Filters
-    /// effects are written as they are. Photoshop-style filters have no SVG equivalent: they are left out with a warning (exports from the app turn
+    /// effects are written as they are. raster filters have no SVG equivalent: they are left out with a warning (exports from the app turn
     /// such objects into images first).
     fn filtered(&mut self, n: &Node) {
         let mut inner = n.clone();

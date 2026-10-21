@@ -4,6 +4,6 @@
     <comment>VectorCraft document</comment>
     <glob pattern="*.vectorcraft"/>
     <glob pattern="*.drawcraft"/>
-    <icon name="ai.storyteller.vectorcraft"/>
+    <icon name="io.github.treeforjs.vectorcraft"/>
   </mime-type>
 </mime-info>

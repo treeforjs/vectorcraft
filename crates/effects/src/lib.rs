@@ -1,4 +1,4 @@
-//! VectorCraft live effects (Illustrator's Effect menu).
+//! VectorCraft live effects (the reference editor's Effect menu).
 //!
 //! Effects live in appearance stacks as [`Effect`] `{id, params, visible}` records. This crate
 //! interprets them:
@@ -6,13 +6,13 @@
 //! - **Geometry effects** (Distort & Transform, Path, Convert to Shape, Round Corners, Scribble,
 //!   Warp) rewrite a path: [`apply_geometry`] evaluates them in stack order.
 //! - **Raster effects** (Drop Shadow, Inner/Outer Glow, Feather, Gaussian Blur, and the
-//!   Photoshop-style filters of [`pixel`]: Radial Blur, Smart Blur, Brush Strokes, Distort, Pixelate, Unsharp Mask, Glowing Edges, Sketch, Texture and Video) are described by
+//!   raster filters of [`pixel`]: Radial Blur, Smart Blur, Brush Strokes, Distort, Pixelate, Unsharp Mask, Glowing Edges, Sketch, Texture and Video) are described by
 //!   [`raster_effects`] and painted by the renderer; [`outset`] says how far they reach beyond
 //!   the geometry.
 //! - **Stroke geometry** ([`stroke`]): arrowheads, dash patterns and width profiles, shared by the
 //!   renderer, the exporters and Outline Stroke.
 //! - [`effect_catalog`] lists every effect with its menu path, parameter documentation and the
-//!   defaults of Illustrator's dialogs. Missing parameters always fall back to those defaults.
+//!   defaults of the reference editor's dialogs. Missing parameters always fall back to those defaults.
 //! - [`reshape`] applies geometry effects to type, images, symbol instances and live objects
 //!   through their outlines.
 //! - [`evaluate_container`] turns a group's or layer's own fills, strokes and geometry effects into
@@ -167,7 +167,7 @@ const ADJUST: &[&str] = &["Effect", "Color Adjustments"];
 const THREE_D: &[&str] = &["Effect", "3D and Materials"];
 const SVG_FILTERS: &[&str] = &["Effect", "SVG Filters"];
 
-/// The warp styles in Illustrator's Style menu order: (id suffix, label).
+/// The warp styles in the reference editor's Style menu order: (id suffix, label).
 pub const WARP_STYLES: [(&str, &str); 15] = [
     ("arc", "Arc…"),
     ("arcLower", "Arc Lower…"),

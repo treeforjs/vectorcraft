@@ -2,7 +2,7 @@
 //!
 //! Drag draws (Shift constrains to square/circle/45°, Alt draws from the centre, Space held moves
 //! the shape being drawn); a click without a drag asks the UI for the size dialog (like
-//! Illustrator). ↑/↓ during a polygon/star drag change the side/point count. The start point and
+//! the reference editor). ↑/↓ during a polygon/star drag change the side/point count. The start point and
 //! the dragged corner snap to Smart Guides ([`DrawSnap`]), hovering before the press too.
 
 use serde_json::{Value, json};

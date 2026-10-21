@@ -10,8 +10,21 @@ nothing sent after it on that connection runs. That covers text that isn't JSON,
 an object without `method`, invalid UTF-8, and a line longer than 4 MiB. An HTTP request (for example a
 web page's cross-origin `fetch` to `127.0.0.1:<port>`) therefore can't smuggle a command in its body:
 its request line is rejected first. At most 16 connections are served at once; further ones get an error
-line and are closed. Clients that get an error reply should reconnect. The port has no authentication,
-so only enable it while you use it. Transport: `apps/vectorcraft/src/control_server.rs`.
+line and are closed. Idle connections and incomplete request lines close after 30 seconds, even if
+the peer keeps sending partial input or blank lines. Each completed request renews that deadline;
+writing a reply has a five-second limit. Clients that get a framing error should reconnect.
+The bundled MCP client renews an idle connection before sending the next request and checks reply
+IDs; it never resends an edit to recover from a missing or mismatched reply.
+
+A request waiting for UI dispatch expires after 60 seconds. Cancellation and dispatch compete for
+one atomic decision: `outcome: "cancelled", executed: false` guarantees it will not run later. If
+dispatch has started, a missing reply instead says `outcome: "unknown"`; inspect the document before
+retrying an edit because its effects may already have happened. Transport errors must never trigger
+an automatic replay of a mutating command. Ordinary success and command-error replies keep their
+existing shape.
+
+The port has no authentication, so only enable it while you use it.
+Transport: `apps/vectorcraft/src/control_server.rs`.
 
 | Method | Params | |
 |---|---|---|
@@ -36,7 +49,7 @@ so only enable it while you use it. Transport: `apps/vectorcraft/src/control_ser
 | `engine.execute` `ui.savePdfDialog` | `{path?, preset?, range?, …document.exportPdf options}` | opens the Save PDF dialog (`file.export.pdf` with no params opens it too). Its fields are the `document.exportPdf` options: set `compatibility` with `ui.dialog.set {field: "compatibility", value: "1.5"}`, a whole section with `{field: "compression", value: {…}}`, the artboards with `__allArtboards: false` and `range`, the visible section with `__section` (General, Compression, Marks and Bleeds, Output, Advanced, Security, Summary). `ui.dialog.confirm` writes `path` (else asks for one), returns `{path, bytes, warnings}` and opens the file when `viewAfterSaving` is set |
 | `file.save` / `file.saveAs` / `file.saveCopy` / `file.saveAsTemplate` (via `engine.execute`) | `{path?, format?, options?, svg?}` | Save writes the document's own file in its own format (a document opened from or saved as SVG/PDF saves as that again; the result's `warnings` say what the format loses). With `path` the file is written at once (Save As or a Copy to an SVG path without SVG options first opens SVG Options, below). Without one (never saved, a converted older file, Save As, a Copy, a Template) the app shows a save panel with one file type per save format (`vectorcraft`, `template`, `pdf`, `svg`, `svgz`), then the format's options: SVG opens the `svgOptions` dialog (below; returns `{"pending": "svgOptions", "path"}`), PDF the `savePdf` dialog (its `__save` field names the save command); `ui.dialog.confirm` finishes the save. On the web a `saveOptions` dialog (fields `path`, `format`) first names the file and picks the format. `file.formatOptions {format?}` reads the options a save would use. `file.revert` opens a `confirm` dialog (`{"pending": "confirm"}`); `ui.dialog.confirm` reloads the saved file in the same tab |
 | SVG Options (`engine.execute` of `file.export.svg`, `file.saveAs`, `file.saveCopy`) | `{}` / `{path?, svg?: {…}}` | `file.export.svg` without params, and Save As or Save a Copy to an `.svg`/`.svgz` path without SVG options, open the `svgOptions` dialog (`ui.dialog.set` its fields: `styling`, `outlineText`, `images`, `objectIds`, `decimals`, `minify`, `responsive`, `fewerTspans`, `metadata`, `preserveEditing`, `useArtboards`, `allArtboards`, `range`, `showCode`, `profile` (`svg11`/`tiny12`), `encoding` (`utf8`/`utf16`/`latin1`), `embedFonts`; `ui.dialog.confirm` exports or saves and remembers the choices). With `svg: {…}` (the `document.formats` SVG options) they run directly. `app.save {path?, svg?}` takes the same options; a document saved as SVG saves as SVG again with the same options |
-| `engine.execute` `file.place` | `{paths?}` / `{path \| name+dataBase64, …file.place params}` | with no file, picks files and opens the `place` dialog; with `paths`, opens it for them (fields `files`, `link`, `template`, `replace`; `__replace` says whether Replace applies, `__info` describes each file). `ui.dialog.confirm` places one file centred in the view (or in place of the selected object) and loads the place cursor with several (`file.place.queue`). With a file, it runs `file.place` centred in the view. Files dropped on the window with no document open open. On the web, files dropped on the canvas are placed at the drop point (linked; Shift embeds) and files dropped off it (the tab bar) open, as in Illustrator; desktop drops carry no pointer position, so documents (native, SVG, PDF, `.ai`, EPS, DXF, EMF/WMF) open as tabs of their own and pictures and text are placed in the middle of the view. With the cursor loaded (`ui.inspect` → `tool: "place"`, `toolOptions: {count, current, name, names}`), `ui.pointer` clicks and drags place files and `ui.key` ←/→/↑/↓ and Escape cycle and discard them |
+| `engine.execute` `file.place` | `{paths?}` / `{path \| name+dataBase64, …file.place params}` | with no file, picks files and opens the `place` dialog; with `paths`, opens it for them (fields `files`, `link`, `template`, `replace`; `__replace` says whether Replace applies, `__info` describes each file). `ui.dialog.confirm` places one file centred in the view (or in place of the selected object) and loads the place cursor with several (`file.place.queue`). With a file, it runs `file.place` centred in the view. Files dropped on the window with no document open open. On the web, files dropped on the canvas are placed at the drop point (linked; Shift embeds) and files dropped off it (the tab bar) open, as in the reference editor; desktop drops carry no pointer position, so documents (native, SVG, PDF, `.ai`, EPS, DXF, EMF/WMF) open as tabs of their own and pictures and text are placed in the middle of the view. With the cursor loaded (`ui.inspect` → `tool: "place"`, `toolOptions: {count, current, name, names}`), `ui.pointer` clicks and drags place files and `ui.key` ←/→/↑/↓ and Escape cycle and discard them |
 | `app.export` raster options | `{path?, format: png \| jpg \| webp, ppi?, background?, antiAlias?, interlaced?, quality?}` | `ppi` sets the pixel size (72 = one pixel per point) and is stored in the file; `background` is `transparent`, `white`, `black` or `"#rrggbb"`; `antiAlias` is `none`, `art` or `type` (text snapped to pixels); `interlaced` writes an Adam7 PNG. The PNG Options dialog (`pngOptions`; `jpgOptions` / `webpOptions` for the other raster formats) has the same fields: fill them with `ui.dialog.set` and press OK with `ui.dialog.confirm` |
 | `app.export` JPEG options | `{path?, format: jpg, quality?: 0–100, colorModel?: rgb \| cmyk \| gray, method?: baseline \| optimized \| progressive, scans?: 3–5, embedIcc?, imageMap?: none \| client \| server}` | `cmyk` writes ink amounts in the working CMYK space (CMYK colours keep their inks; RGB ones are separated with the colour settings); `embedIcc` (default true) embeds sRGB, the working CMYK profile or a grey profile, generated by the CMS; `imageMap` also writes `<stem>.html` (client-side `<map>`) or `<stem>.map` (NCSA) beside the image for the objects with a URL and an Image Map shape (`attributes.set`), returned in `linked`. The `jpgOptions` dialog has these fields too (`quality` is shown 0–10; a CMYK document defaults to `cmyk`) |
 | `app.export` PNG-8 and GIF | `{path?, format: png8 \| gif, colors?: 2–256, reduction?: perceptual \| selective \| adaptive \| web \| blackWhite \| gray, dither?: none \| diffusion \| pattern \| noise, ditherAmount?: 0–100, transparency?, matte?, interlaced?, …raster options}` | a palette of at most `colors` entries (art with that many colours or fewer keeps them exactly); pixels under half opacity become one transparent entry unless `transparency` is false, partly transparent edges are blended over `matte` (`none` keeps their colour). `png8` writes an indexed `.png` (1–8 bits per pixel); Export for Screens rows take both. The `png8Options` / `gifOptions` dialogs have these fields |
@@ -184,11 +197,12 @@ Tile Edge Color: Object → Pattern → Tile Edge Color… (`ui.tileEdgeColor`) 
 `color`: `#rrggbb` or a preset name such as "Light Blue"); `ui.dialog.confirm` sets the preference
 `patternTileEdgeColor` (`prefs.set`), the colour pattern editing mode draws the tile edge and the swatch bounds in.
 
-Window title bar: on Windows and Linux the window has no OS decorations and the app bar is the title bar. Its
-caption buttons (Minimize, Maximize/Restore, Close) sit at the bar's right end, 46 pt each; they are window chrome,
-not commands, so drive them with `ui.click` if needed. Close runs `app.quit` (the same `saveChanges` questions for
-modified documents), and empty bar space and the 5 pt window edges move and resize the window. macOS and the web
-build are unchanged.
+Window title bar: Windows and Linux use standard window controls for Minimize, Maximize/Restore and Close,
+with native moving and resizing. Wayland compositors without server decorations use the Adwaita frame supplied
+by winit. These controls belong to the window system and cannot be driven by `ui.click`; use `app.quit` to
+request a close through the control channel. Both the native Close button and `app.quit` ask the same
+`saveChanges` questions for modified documents. The in-window app bar keeps its Home, menus and workspace tools.
+macOS and the web build are unchanged.
 
 Fill/Stroke chips and panel shortcuts: the Control bar's and Properties' Fill and Stroke chips bring their proxy
 forward (`paint.toggleActive {fill}`) and open a popover with the Swatches panel (Shift-click: the Color panel's mixer);
@@ -233,7 +247,7 @@ another document becomes active. Its More Options (…) menu has Hide Bar (`wind
 (`window.taskBar.pin {pinned?}`, omitted toggles, checked while pinned), which holds the bar where it is across
 selection changes (the handle still moves it) and, turned off, lets it follow the selection again from there; Reset
 Bar Position (`window.taskBar.reset`), which unpins it and puts it back under the selection; and Show Properties
-Panel. As in Illustrator, neither the position nor the pin is saved: each launch starts with the bar under the
+Panel. As in the reference editor, neither the position nor the pin is saved: each launch starts with the bar under the
 selection.
 
 The Free Transform widget: while the Free Transform tool (E) is active, a small box at the canvas's top left holds
@@ -372,7 +386,7 @@ Remembers Layers (`layer.pasteRemembersLayers`, checked when on) and Panel Optio
 dialog (`ui.layersPanelOptions`), and `ui.layersExpand {ids?, open?}` opens or closes rows; see the Layers panel
 section of `docs/mcp.md` for the row commands (`layer.setCurrent`, `layer.highlight`, `layer.move`…).
 
-File Info: File → File Info… (`file.info` from the menu or Cmd+Alt+Shift+I; `ui.fileInfoDialog` for agents) opens the
+File Info: File → File Info… (`file.info` from the menu or Cmd+Alt+Shift+I; `ui.fileInfoDialog` for clients) opens the
 `fileInfo` dialog. Its fields are what `file.info` reports (`title`, `author`, `authorTitle`, `description`,
 `keywords` (a list: the chips), `rating`, `copyrightStatus`, `copyrightNotice`, `copyrightUrl`; `created` and
 `modified` are shown read-only) plus `__keyword`, keywords typed but not added yet (comma-separated; OK adds them).
@@ -380,7 +394,7 @@ File Info: File → File Info… (`file.info` from the menu or Cmd+Alt+Shift+I; 
 stays open.
 
 Document Raster Effects Settings: Effect → Document Raster Effects Settings… (`ui.rasterEffectsSettingsDialog` for
-agents) opens the `rasterEffectsSettings` dialog. Its fields are what `document.rasterEffectsSettings` reports
+clients) opens the `rasterEffectsSettings` dialog. Its fields are what `document.rasterEffectsSettings` reports
 (`resolution`, `colorModel`, `background`, `antiAlias`, `clippingMask`, `addAround` in pt, `preserveSpotColors`);
 `ui.dialog.confirm` runs it with them as one undo step; a bad value keeps the dialog open. Object → Rasterize… opens a
 `command` dialog for `object.rasterize` whose fields (`ppi`, `colorModel`, `background`, `antiAlias`, `clippingMask`,
@@ -436,7 +450,7 @@ in the Templates folder (preference `templatesFolder`). Older native files open 
 with.
 
 DXF Options: Export As… with the DXF format (`file.exportAs {format: "dxf"}`, then the save dialog), or
-`ui.dxfOptionsDialog {path?, …document.exportDxf options}` for agents, opens the `dxfOptions` dialog. Its fields are
+`ui.dxfOptionsDialog {path?, …document.exportDxf options}` for clients, opens the `dxfOptions` dialog. Its fields are
 `document.export` params: `version`, `unit` (a unit name such as `Millimeters`), `scale`, `scaleLineweights`, `colors`
 (`8`, `16`, `256`, `true`), `rasterFormat` (`png`, `jpeg`), `preserve` (`appearance`, `editability`), `selectedOnly`,
 `alterPaths`, `outlineText`, plus `path` and the artboard choice. `ui.dialog.confirm` checks them (a bad value, or
@@ -453,7 +467,7 @@ dialog (`mode`: `open` or `place`; `layouts`, `units` and `version` describe the
 remembers `fit`, `scaleLineweights`, `center` and `mergeLayers` for the next drawing; an error (an unknown layout,
 art too large at that scale) keeps the dialog open.
 
-Placement Options: the Links panel's flyout (or `ui.placementOptionsDialog {ids?}` for agents) opens the
+Placement Options: the Links panel's flyout (or `ui.placementOptionsDialog {ids?}` for clients) opens the
 `placementOptions` dialog for the selected images (fields `ids`, `preserve`: `transforms`/`bounds`/`fileDimensions`/
 `fit`/`fill`, `align`: `topLeft` … `bottomRight`, `clip`). `ui.dialog.confirm` runs `links.placementOptions` with them as
 one undo step. The Links panel (`window.panel {panel: "links"}`) shows `links.list` and the first selected image's
@@ -479,7 +493,7 @@ a selected user slice's handle resizes it, a double click opens `sliceOptions` a
 selected slices. Hidden or locked slices (`view.slices.hide`, `view.slices.lock`) can't be picked.
 
 EPS Options: Export As… with the EPS format (`file.exportAs {format: "eps"}`, then the save dialog), or
-`ui.epsOptionsDialog {path?, …document.exportEps options}` for agents, opens the `epsOptions` dialog. Its fields are
+`ui.epsOptionsDialog {path?, …document.exportEps options}` for clients, opens the `epsOptions` dialog. Its fields are
 `document.export` params: `previewFormat` (`none`, `tiffBw`, `tiffColor`), `transparentPreview`, `overprints`
 (`preserve`, `discard`), `flattenerPreset` (a built-in or saved preset's name), `includeLinkedFiles`, `thumbnails`,
 `cmykPostScript`, `compatibleGradients`, `level` (`2`, `3`), plus `path` and the artboard choice (`useArtboards`,
@@ -560,7 +574,7 @@ Layers selection square adds to the selection); the keyboard's own modifiers app
 Cutting tools: Mirror & Cut (`mirrorCut`), Line Cut (`lineCut`) and Rectangle Cut (`rectCut`) cut the selected paths
 and compound paths. `ui.tool.select` one, then drag with `ui.pointer`: the cut previews live and the release keeps it
 as one undo step (`ui.key` Escape cancels). They run `path.mirrorCut`, `path.lineCut` and `path.rectCut`, which an
-agent can call directly. Mirror & Cut's tool options (`tool.setOption`, shown in the Control bar) are `axis`
+client can call directly. Mirror & Cut's tool options (`tool.setOption`, shown in the Control bar) are `axis`
 (`free` | `vertical` | `horizontal`; a constrained axis follows the pointer and a click places it) and `keep`
 (`left` | `right` | `top` | `bottom`); Alt on release keeps the other side.
 

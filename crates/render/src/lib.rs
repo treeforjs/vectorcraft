@@ -329,7 +329,7 @@ pub struct Renderer {
     live: live::LiveCache,
     /// Blurred, tinted drop shadow / outer glow rasters per object and effect (see `fx`).
     shadows: PtrMap<(usize, usize, Ink), fx::ShadowEntry>,
-    /// Objects' content run through Photoshop-style effects, per object and content slot (see
+    /// Objects' content run through raster effects, per object and content slot (see
     /// `fx`): kept only while drawn.
     pixel_fx: PtrMap<(usize, usize, Ink), fx::PixelEntry>,
     /// Whether the group being drawn is a knockout group (what its neutral children inherit).

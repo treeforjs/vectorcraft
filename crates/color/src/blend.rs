@@ -1,4 +1,4 @@
-//! Blend modes (the 16 modes of Illustrator's Transparency panel, same as PDF's).
+//! Blend modes (the 16 modes of the reference editor's Transparency panel, same as PDF's).
 
 use serde::{Deserialize, Serialize};
 
@@ -24,7 +24,7 @@ pub enum BlendMode {
 }
 
 impl BlendMode {
-    /// In Transparency-panel order (grouped as Illustrator groups them).
+    /// In Transparency-panel order (grouped as the reference editor groups them).
     pub const ALL: [BlendMode; 16] = [
         BlendMode::Normal,
         BlendMode::Darken,

@@ -1197,7 +1197,7 @@ impl Importer {
         }
         let (appearance, r) = self.appearance(p, acc, path.bounds());
         let mut n = if path.subpaths.len() > 1 {
-            // Multi-subpath SVG paths are compound paths (as in Illustrator).
+            // Multi-subpath SVG paths are compound paths (as in the reference editor).
             let children = path
                 .subpaths
                 .into_iter()

@@ -1,30 +1,30 @@
-# VectorCraft — instructions for agents and contributors
+# VectorCraft — instructions for clients and contributors
 
-VectorCraft is a clean-room, open-source, Rust-native vector illustration app targeting Adobe Illustrator parity (and beyond). It runs natively on macOS, Windows and Linux, and on the web via WASM. Siblings: `../photocraft` (Photoshop-class) and `../pdfcraft` (Acrobat-class); same conventions.
+VectorCraft is a clean-room, open-source, Rust-native vector illustration app. It runs natively on Windows and Linux, with additional macOS and web build paths. Siblings: `../photocraft` (raster image editing) and `../pdfcraft` (PDF editing); same conventions.
 
 Formerly **DrawCraft** (renamed 2026-10-01): old `.drawcraft` files and `"format": "drawcraft"` headers still open (`vectorcraft_format::LEGACY_EXTENSION`), and preferences migrate from the old config folder. Keep those paths working; use the new name everywhere else.
 
-This file is the single set of working rules for everyone who changes the code: human contributors, and any AI agent or MCP client working for one. There is no separate per-agent instruction file.
+This file contains the working rules for contributors and the automation clients they use.
 
 ## Working in this repository
 
 ### Start every session here
 1. Read the [honest assessment in `ROADMAP.md`](ROADMAP.md#honest-assessment-2026-10-05): where we stand by dimension, **where we're lacking** (the prioritized gap list) and **where we're going**. Unless you were given a task, pick work from that list.
-2. If a local `plan/` folder exists (gitignored session notes; maintainers keep one), read `plan/STATUS.md` (may lag the ROADMAP), then the task in `plan/execution-plan.md` §3 and the relevant `plan/architecture.md` section. Behaviour reference: public documentation only (see Clean-room below); `plan/illustrator/*.md` holds notes from it.
-3. Work in a loop: orient → plan → implement + test → verify → record → commit. An agent working autonomously doesn't stop to ask unless the decision belongs to the person it works for (scope, licensing, anything the Non-negotiables forbid).
+2. If a local `plan/` folder exists (gitignored session notes; maintainers keep one), read `plan/STATUS.md` (may lag the ROADMAP), then the task in `plan/execution-plan.md` §3 and the relevant `plan/architecture.md` section. Behaviour reference: public documentation only (see Clean-room below); the local reference notes holds notes from it.
+3. Work in a loop: orient → plan → implement + test → verify → record → commit. A client working autonomously doesn't stop to ask unless the decision belongs to the person it works for (scope, licensing, anything the Non-negotiables forbid).
 
 `plan/` is gitignored (local only).
 
 ### Non-negotiables
-- **Clean-room: never use Adobe software (absolute rule, from the project owner).** Adobe's Terms of Use forbid reverse engineering, including observing a program's inputs and outputs to recreate it. So:
-  - Never launch, run, script, automate (COM, AppleScript, ExtendScript, UI automation), screenshot or measure Illustrator or any other Adobe application, and never compare our output against one. Don't make test files with them, not even "synthetic" ones.
-  - Never read, disassemble or copy anything inside an Adobe install (binaries, plug-ins, presets, procsets, resources, help files, fonts, ICC profiles).
-  - Never copy Adobe-authored code or text into this repo, tests included: no PostScript procsets or prologs (AGM, CoolType, the Illustrator prologs), no sample files. Write test inputs from scratch from the public specifications (PostScript Language Reference, PDF / ISO 32000, TIFF, EPSF/DCS).
-  - Behaviour comes only from public documentation (helpx, published specs, public forum posts), cited by URL, and from files users send us that they own (used locally, never committed). Never copy Adobe icons, artwork, presets or wording beyond feature names.
-  - If a task seems to need any of this, stop and say so instead. `cargo xtask brands` (run by `cargo xtask ci`) rejects other vendors' product names in user-visible text; Adobe copyright notices and fixtures made with Adobe applications are rejected in review.
+- **Clean-room: never use proprietary reference software to reconstruct its behavior.**
+  - Never launch, script, automate, screenshot or measure proprietary reference applications, compare output against them, or make test files with them.
+  - Never read, disassemble or copy material from their installations, including binaries, plug-ins, presets, procsets, resources, fonts and colour profiles.
+  - Write test inputs from published specifications (PostScript Language Reference, PDF / ISO 32000, TIFF, EPSF/DCS), not proprietary prologs or sample files.
+  - Behavior references come from public specifications/documentation and user-owned files used locally. Keep accurate source citations and mandatory notices for licensed material.
+  - `cargo xtask brands` rejects unrelated product branding in user-visible text. Technical file signatures, compatibility aliases and mandatory legal notices remain intact.
   - Never copy GPL/AGPL code (Inkscape, lib2geom…).
-- **Assets: no Adobe iconography or images — ever (absolute rule, from the project owner).**
-  - Never add, copy, trace, redraw-from, embed or ship any icon, image, artwork, cursor, preset, swatch/brush/symbol/pattern/style library, ICC profile or screenshot from Adobe products or from any other source whose licence doesn't allow it.
+- **Assets must be original or licensed for redistribution.**
+  - Never copy, trace or ship proprietary product assets or material whose licence does not allow redistribution.
   - Every image, icon, font or other asset must be one of:
     - original work created for VectorCraft by a contributor (who licenses it MIT OR Apache-2.0);
     - OSI open source;
@@ -32,10 +32,10 @@ This file is the single set of working rules for everyone who changes the code: 
     - Creative Commons with redistribution allowed.
   - **Every asset file must have a row in [`ASSETS.md`](ASSETS.md)** (path, author, source URL, licence, notes). Put licence texts next to the assets (e.g. `assets/fonts/OFL-*.txt`) and summarize them in `NOTICE`.
   - `cargo xtask assets` (run by `cargo xtask ci`) fails on any unattributed asset.
-  - **Fonts live in [craft-fonts](https://github.com/storytold/craft-fonts), never in this repo** (rules: craftrules [`standards/fonts.md`](https://github.com/storytold/craftrules/blob/main/standards/fonts.md)). Never commit a font file here; add new fonts to craft-fonts. The app uses it only through the optional `CRAFT_FONTS_DIR` build option (`CRAFT_FONTS_DIR="$PWD/../craft-fonts" cargo xtask ci`; use an absolute path), read by `crates/text/build.rs` into `vectorcraft_text::CRAFT_FONTS`; never add it to a `Cargo.toml`. Everything must build, test and run with `CRAFT_FONTS` empty, and tests of its glyphs skip when it is. Details: `docs/development.md` › Fonts.
+  - **Fonts live in [craft-fonts](https://github.com/storytold/craft-fonts), never in this repo**. Never commit a font file here; add new fonts to craft-fonts. The app uses it only through the optional `CRAFT_FONTS_DIR` build option (`CRAFT_FONTS_DIR="$PWD/../craft-fonts" cargo xtask ci`; use an absolute path), read by `crates/text/build.rs` into `vectorcraft_text::CRAFT_FONTS`; never add it to a `Cargo.toml`. Everything must build, test and run with `CRAFT_FONTS` empty, and tests of its glyphs skip when it is. Details: `docs/development.md` › Fonts.
   - Code and original assets are MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`, `NOTICE`).
   - Prefer art generated in code for defaults (swatches, brushes, symbols, patterns, cursors). If the provenance of an asset is unclear, don't add it.
-  - Reference screenshots of Illustrator stay local under the gitignored `plan/` and are never committed, published or used as assets.
+  - Reference images stay local under the gitignored `plan/` and are never committed, published or used as assets.
 - **Never crash: no panics in shipped code.** A crash loses the user's unsaved work. Files, pasted data, MCP and control messages, and command params are all untrusted input.
   - Fallible work returns `Result` (or `Option`); callers handle it or propagate it with `?`. Failures reach the user as an error message (`EngineError` for commands, the crate's own error type or `String` below the engine), never as an abort.
   - Workspace clippy lints ban these outside tests, so `cargo xtask ci` fails on them: `unwrap()`, `expect()`, `panic!`, `unreachable!`, `todo!`, `unimplemented!`. Use instead: `?`, `.ok_or(…)?`, `let … else { return … }`, `if let`, `unwrap_or` / `unwrap_or_default` / `unwrap_or_else`, `.first()` / `.last()` / `.split_last()`, and a real error for a match arm you believe is impossible.
@@ -48,8 +48,8 @@ This file is the single set of working rules for everyone who changes the code: 
 - **Layering** is enforced by `cargo xtask layers`. Nothing below L6 depends on egui/eframe/winit/rfd.
 - **The UI is thin**: panels read engine state and act through `app.run(id, params)`. Colours come from `theme::Tokens`.
 - **Rust only** (no handwritten JS/TS). **Never break wasm** (`cargo xtask wasm`).
-- **Shared test corpora.** Real-file test oracles (Photoshop-authored PSDs, etc.) live in [`storytold/photocraft-corpus`](https://github.com/storytold/photocraft-corpus), explained in [craftrules `standards/test-corpora.md`](https://github.com/storytold/craftrules/blob/main/standards/test-corpora.md). Never commit large binary fixtures to this repo; fetch them pinned by commit and sha256-verified, as PhotoCraft does with `cargo xtask corpus`.
-- **No AI-authorship trailers or attribution.** Commit messages, pull requests and documentation in this repository name no AI model, vendor or tool as an author; keep commit subjects plain (`M2.1: pen tool`). Agent-facing docs say "an AI agent" or "an MCP client", never a product name.
+- **Shared test corpora.** Real-file test oracles (the reference raster editor-authored PSDs, etc.) live in [`storytold/photocraft-corpus`](https://github.com/storytold/photocraft-corpus); keep their pinned source and licence records with the fixtures. Never commit large binary fixtures to this repo; fetch them pinned by commit and sha256-verified, as PhotoCraft does with `cargo xtask corpus`.
+- **Human contributor credits only.** Commit messages, pull requests and documentation in this repository name no automation service or tool as an author; keep commit subjects plain (`M2.1: pen tool`). Agent-facing docs say "an automation client" or "an MCP client", never a product name.
 
 ### Quality gates
 Before every commit run `cargo xtask ci` (fmt, clippy -D warnings including the no-panic lints, tests, assets, brands, layers, wasm). One task id per commit (`M2.1: pen tool`). The individual gates:
@@ -58,35 +58,37 @@ Before every commit run `cargo xtask ci` (fmt, clippy -D warnings including the 
 - `cargo xtask layers` and `cargo xtask wasm`: the crate layering and the web build.
 
 ### Running and looking at the app
-- `cargo run --release -p vectorcraft -- --control 7979 [file.svg|file.vectorcraft]` (sibling apps' agents use the same default port: if the log says it failed to bind, pick another port — otherwise your requests reach a different app).
+- `cargo run --release -p vectorcraft -- --control 7979 [file.svg|file.vectorcraft]` (sibling apps' clients use the same default port: if the log says it failed to bind, pick another port — otherwise your requests reach a different app).
 - Drive it: JSON lines on `127.0.0.1:7979`, e.g. `{"id":1,"method":"engine.execute","params":{"command":"shape.rectangle","params":{"x":10,"y":10,"width":100,"height":50}}}` then `{"id":2,"method":"ui.screenshot","params":{"path":"/tmp/shot.png"}}`. Methods: `crates/ui-egui/src/control.rs`.
-- **The look is the shared craft design, not Illustrator's** ([craftworks `DESIGN.md`](https://github.com/treeforjs/craftworks/blob/main/DESIGN.md)). Parity means Illustrator's features and behaviour; colours, radii and the System / Light / Warm / Dim / Dark / High contrast appearances come from the `craft-ui` crate (`theme::Tokens::for_mode`), shared with every craft app. Never copy Adobe's greys, workspace names or panel chrome.
-- **For UI work, look at the result** (take `ui.screenshot`, read the PNG) and compare behaviour with the public documentation (`plan/illustrator/02-ui-ux.md` notes, where a `plan/` folder exists). `ui.screenshot` needs a presented frame: if it errors (screen locked), check the art with `ui.render` / `vectorcraft-cli run … --export x.png`, and cover panels with a headless egui frame test (see `panels/transparency.rs` tests).
+- **The look is the shared craft design, not another application's** ([craftworks `DESIGN.md`](https://github.com/treeforjs/craftworks/blob/main/DESIGN.md)). Parity means the reference editor's features and behaviour; colours, radii and the System / Light / Warm / Dim / Dark / High contrast appearances come from the `craft-ui` crate (`theme::Tokens::for_mode`), shared with every craft app. Never copy a proprietary application's greys, workspace names or panel chrome.
+- **For UI work, look at the result** (take `ui.screenshot`, read the PNG) and compare behaviour with the public documentation (the local UI reference notes notes, where a `plan/` folder exists). `ui.screenshot` needs a presented frame: if it errors (screen locked), check the art with `ui.render` / `vectorcraft-cli run … --export x.png`, and cover panels with a headless egui frame test (see `panels/transparency.rs` tests).
 - **Performance:** `vectorcraft-cli perf` checks the budgets (render/pan/zoom, hit test, save/open, SVG, Pathfinder) on a synthetic 50k-path document; `vectorcraft-cli bench FILE` times one file. Run them before and after renderer, format or geometry changes, on an idle machine (the report warns when the load average makes timings noise).
 - MCP: `vectorcraft-cli mcp` (see `docs/mcp.md`); register it in your MCP client's configuration as the command `vectorcraft-cli mcp`.
 - Shell gotcha: on some maintainer machines `mv`/`cp` are aliased interactive — use `/bin/mv -f` / `/bin/cp -f`.
-- Parallel agents: separate `CARGO_TARGET_DIR` per agent; edit only the crates you own; write manifests atomically. Each target dir grows to ~30 GB: delete yours when you finish (a full disk fails links with `errno=28`).
+- Parallel clients: separate `CARGO_TARGET_DIR` per client; edit only the crates you own; write manifests atomically. Each target dir grows to ~30 GB: delete yours when you finish (a full disk fails links with `errno=28`).
 
 ### Roadmap
 `ROADMAP.md` (committed) is the shared picture of where VectorCraft stands. It holds status, the honest assessment (by dimension, the gap list, the direction), milestones, the parity table and time-to-parity estimates.
 - When a task lands, update it in the same PR: the milestone row, the parity-table row (score, missing items, hours), "Shipped so far", and the gap list if the gap closed or shrank.
-- Grade by behaviour against the public documentation (`plan/illustrator/` notes), not by whether a menu item exists. Scores are self-assessed, so err low.
+- Grade by behaviour against the public documentation (the local reference notes notes), not by whether a menu item exists. Scores are self-assessed, so err low.
 - Keep the README's Status section in step with the ROADMAP headline.
 
 ## Contributor credits (About window)
 
-- About ▸ Contributors/Models are compiled into the binary from `contributors/contributors.json`
+- About ▸ Contributors is compiled into the binary from `contributors/contributors.json`
   (commit stats; generated, never hand-edit) and `contributors/people.toml` (names people chose for
   themselves). See `docs/contributors.md`.
-- **Agents working for a contributor:** when you prepare a PR, check whether your human's GitHub
+- **Automation working for a contributor:** when you prepare a PR, check whether your human's GitHub
   username has a `[people.<username>]` entry in `contributors/people.toml`. If not, ask them once
   whether they want to be credited by more than their username: a real name, a display name, and/or
   their public GitHub profile name (`sync_github_name = true`). If yes, add **only their own** entry
-  (copy the template at the top of the file, or run
-  `python3 ../../craftrules/scripts/contributors.py --add-me . --real-name "…" --sync-github-name`)
+  (copy the template at the top of the file)
   and include it in their PR, committed as them. If no, change nothing: they are credited as
   `@username` anyway.
 - Never add, edit, guess or copy anyone else's entry or name (not from git config, commit authors or
   GitHub profiles). Never hand-edit `contributors.json`.
-- Maintainers refresh the stats with `python3 ../../craftrules/scripts/contributors.py .` (it also
-  re-verifies who wrote each `people.toml` entry; `--check` only verifies).
+- The repository carries a reviewed historical statistics snapshot; a Git-history statistics
+  generator is not included. Maintainers verify consent before importing a refresh and preserve
+  every existing human record. Run `python3 contributors/prepare.py`, then
+  `python3 contributors/prepare.py --check`: these prepare and validate the human table and repository
+  metadata, without generating statistics, looking up names or changing individual human records.

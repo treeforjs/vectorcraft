@@ -74,7 +74,7 @@ jobs:
           # and README so the unprivileged readability check covers a normal desktop install.
           printf 'path-include=/usr/share/doc/vectorcraft/*\n' >/etc/dpkg/dpkg.cfg.d/zz-vectorcraft-docs
           apt-get install -y ./dist/release/vectorcraft-*-linux-x86_64.deb
-          desktop-file-validate /usr/share/applications/ai.storyteller.vectorcraft.desktop
+          desktop-file-validate /usr/share/applications/io.github.treeforjs.vectorcraft.desktop
           mkdir -p /tmp/vectorcraft-mime
           printf '{}\n' >/tmp/vectorcraft-mime/document.vectorcraft
           printf '{}\n' >/tmp/vectorcraft-mime/legacy.drawcraft
@@ -94,10 +94,10 @@ jobs:
         run: |
           useradd --create-home vectorcraft-smoke
           for resource in \
-            /usr/share/applications/ai.storyteller.vectorcraft.desktop \
-            /usr/share/mime/packages/ai.storyteller.vectorcraft.xml \
-            /usr/share/metainfo/ai.storyteller.vectorcraft.metainfo.xml \
-            /usr/share/icons/hicolor/256x256/apps/ai.storyteller.vectorcraft.png \
+            /usr/share/applications/io.github.treeforjs.vectorcraft.desktop \
+            /usr/share/mime/packages/io.github.treeforjs.vectorcraft.xml \
+            /usr/share/metainfo/io.github.treeforjs.vectorcraft.metainfo.xml \
+            /usr/share/icons/hicolor/256x256/apps/io.github.treeforjs.vectorcraft.png \
             /usr/share/doc/vectorcraft/README.md \
             /usr/share/doc/vectorcraft/NOTICE; do
             runuser -u vectorcraft-smoke -- test -r "$resource"

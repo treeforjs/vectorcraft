@@ -2,7 +2,7 @@
 //!
 //! A track is one flattened subpath. `frame(s)` gives the point and unit tangent at arc length
 //! `s`; tangents are blended across the gentle vertices of flattened curves (so warped art bends
-//! smoothly) but stay discontinuous at real corners (so art folds there, like Illustrator).
+//! smoothly) but stay discontinuous at real corners (so art folds there, like the reference editor).
 
 use vectorcraft_geom::{BezPath, PathEl, Point, Vec2};
 

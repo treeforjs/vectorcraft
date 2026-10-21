@@ -400,7 +400,7 @@ fn objects(d: &Document) -> Vec<Node> {
 
 #[test]
 fn an_object_written_as_a_fill_and_a_closed_stroke_stays_one_path_with_a_live_stroke() {
-    // As Illustrator writes an object: the fill of the outline left open, then the stroke of it
+    // As the reference editor writes an object: the fill of the outline left open, then the stroke of it
     // closed, each in its own transform. Two subpaths: one ending on its start, one not.
     let outline = "0 0 m -20 1 l -30 -12 l -30 30 l 0 0 l 5 5 m 10 5 l 10 10 l";
     let content = format!(

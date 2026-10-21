@@ -9,9 +9,9 @@
 # Wayland, xkbcommon and Vulkan at runtime; the freedesktop runtime has all of them, and the
 # GPU driver comes from its org.freedesktop.Platform.GL extension.
 #
-# ai.storyteller.vectorcraft.yml (same directory) is the from-source manifest for Flathub. Keep
+# io.github.treeforjs.vectorcraft.yml (same directory) is the from-source manifest for Flathub. Keep
 # runtime, runtime-version, sdk and finish-args identical in both (packaging-lint checks this).
-id: ai.storyteller.vectorcraft
+id: io.github.treeforjs.vectorcraft
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
@@ -29,7 +29,7 @@ finish-args:
   # path from the command line.
   - --filesystem=xdg-pictures
   # Deliberately not granted: network (the optional --control server listens on 127.0.0.1 in
-  # the sandbox; `flatpak override --user --share=network ai.storyteller.vectorcraft` exposes it
+  # the sandbox; `flatpak override --user --share=network io.github.treeforjs.vectorcraft` exposes it
   # to host agents) and home/host filesystem access.
 modules:
   - name: vectorcraft
@@ -37,10 +37,10 @@ modules:
     build-commands:
       - install -Dm755 bin/vectorcraft /app/bin/vectorcraft
       - install -Dm755 bin/vectorcraft-cli /app/bin/vectorcraft-cli
-      - install -Dm644 share/applications/ai.storyteller.vectorcraft.desktop /app/share/applications/ai.storyteller.vectorcraft.desktop
-      - install -Dm644 share/mime/packages/ai.storyteller.vectorcraft.xml /app/share/mime/packages/ai.storyteller.vectorcraft.xml
+      - install -Dm644 share/applications/io.github.treeforjs.vectorcraft.desktop /app/share/applications/io.github.treeforjs.vectorcraft.desktop
+      - install -Dm644 share/mime/packages/io.github.treeforjs.vectorcraft.xml /app/share/mime/packages/io.github.treeforjs.vectorcraft.xml
       # Already has the release's version and date substituted by package.sh.
-      - install -Dm644 share/metainfo/ai.storyteller.vectorcraft.metainfo.xml /app/share/metainfo/ai.storyteller.vectorcraft.metainfo.xml
+      - install -Dm644 share/metainfo/io.github.treeforjs.vectorcraft.metainfo.xml /app/share/metainfo/io.github.treeforjs.vectorcraft.metainfo.xml
       - mkdir -p /app/share/icons /app/share/doc && cp -R share/icons/hicolor /app/share/icons/ && cp -R share/doc/vectorcraft /app/share/doc/
     sources:
       - type: dir

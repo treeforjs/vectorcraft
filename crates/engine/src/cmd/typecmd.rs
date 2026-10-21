@@ -477,7 +477,7 @@ pub(crate) fn reshape_area_with(t: &mut TextObject, f: impl FnOnce(&mut TextObje
         t.kind = before;
         return false;
     }
-    // Setting the height by hand turns Auto Size off (as in Illustrator); a new width keeps it.
+    // Setting the height by hand turns Auto Size off (as in the reference editor); a new width keeps it.
     if let (Some(a), Some(b)) = (was, height(t))
         && (a - b).abs() > 1e-6
     {
@@ -610,7 +610,7 @@ fn area_options(s: &mut Session, p: &Value) -> Result<Value> {
     opts.first_baseline_min = finite(opts.first_baseline_min).clamp(0.0, 10_000.0);
     opts.fit = fit.unwrap_or(cur.fit);
     if opts.fit == AreaFit::AutoHeight {
-        // Auto Size sets the height (Illustrator's dialog turns the Height field off).
+        // Auto Size sets the height (the reference editor's dialog turns the Height field off).
         h = None;
     }
     s.edit("Area Type Options", |d, _| {

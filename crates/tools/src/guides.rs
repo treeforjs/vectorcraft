@@ -1,5 +1,5 @@
 //! Smart Guides: snapping to anchors, path segments (for dragged anchors and drawn points), object
-//! bounds (edges/centres), artboards, with the magenta construction lines and labels Illustrator
+//! bounds (edges/centres), artboards, with the magenta construction lines and labels the reference editor
 //! users expect. Preferences › Smart Guides sets their colour, which of them show ([`GuideStyle`]),
 //! how near a target pulls (`ToolContext::snapping_tolerance`) and the angles of the construction
 //! guides drawn points land on (`ToolContext::construction_angles`).

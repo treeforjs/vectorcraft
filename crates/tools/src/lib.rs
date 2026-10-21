@@ -119,7 +119,7 @@ pub enum ToolKey {
     Down,
     Left,
     Right,
-    /// Illustrator: ↑/↓ while drawing a polygon/star change sides/points; `[`/`]` change sizes.
+    /// the reference editor: ↑/↓ while drawing a polygon/star change sides/points; `[`/`]` change sizes.
     BracketLeft,
     BracketRight,
     Tab,

@@ -9,7 +9,7 @@
 use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard, OnceLock};
 
-/// Only words at least this long are hyphenated (Illustrator's default: longer than 5 letters).
+/// Only words at least this long are hyphenated (the reference editor's default: longer than 5 letters).
 pub const MIN_WORD: usize = 6;
 pub const MIN_BEFORE: usize = 3;
 pub const MIN_AFTER: usize = 3;
@@ -61,7 +61,7 @@ pub fn hyphenation_exceptions() -> String {
 }
 
 fn parse_exception(entry: &str) -> (String, Exception) {
-    // Illustrator: bare word = never break; hyphens mark the only allowed breaks. No other syntax.
+    // the reference editor: bare word = never break; hyphens mark the only allowed breaks. No other syntax.
     if !entry.contains('-') {
         return (normalize_word(entry), Exception::Never);
     }
