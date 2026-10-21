@@ -7,21 +7,28 @@
 //! bounded ([`MAX_LINE`]) and so is the number of open connections ([`MAX_CONNECTIONS`]); junk
 //! never reaches the UI thread. See `docs/control-protocol.md`.
 
-use std::io::{BufRead, BufReader, Read, Write};
+use std::cell::Cell;
+use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use serde_json::{Value, json};
-use vectorcraft_ui_egui::ControlRequest;
+use vectorcraft_ui_egui::{ControlRequest, ControlTicket};
 
 /// Longest accepted request line (bytes, without the newline). Requests are small JSON objects;
 /// anything longer is refused and the connection closed.
 pub const MAX_LINE: usize = 4 * 1024 * 1024;
 /// Connections served at once; further ones get an error line and are closed.
 pub const MAX_CONNECTIONS: usize = 16;
+/// Time to finish the next request line after connecting or producing a reply. Partial input
+/// and blank lines do not extend this deadline, so an idle or slowly dripping peer loses its slot.
+pub const IDLE_TIMEOUT: Duration = Duration::from_secs(30);
+const WRITE_TIMEOUT: Duration = Duration::from_secs(5);
+const RESPONSE_TIMEOUT: Duration = Duration::from_secs(60);
 
 pub fn start(port: u16, ctx: egui::Context) -> Receiver<ControlRequest> {
     let (tx, rx) = channel::<ControlRequest>();
@@ -38,8 +45,15 @@ pub fn start(port: u16, ctx: egui::Context) -> Receiver<ControlRequest> {
 }
 
 fn accept_loop(listener: TcpListener, tx: Sender<ControlRequest>, ctx: egui::Context) {
+    accept_loop_with_timeout(listener, tx, ctx, IDLE_TIMEOUT);
+}
+
+fn accept_loop_with_timeout(listener: TcpListener, tx: Sender<ControlRequest>, ctx: egui::Context, idle_timeout: Duration) {
     let open = Arc::new(AtomicUsize::new(0));
     for mut stream in listener.incoming().flatten() {
+        if stream.set_write_timeout(Some(WRITE_TIMEOUT)).is_err() {
+            continue;
+        }
         if open.fetch_add(1, Ordering::SeqCst) >= MAX_CONNECTIONS {
             open.fetch_sub(1, Ordering::SeqCst);
             // Best effort: the connection is dropped either way, and a peer that can't read the reason loses nothing.
@@ -50,19 +64,74 @@ fn accept_loop(listener: TcpListener, tx: Sender<ControlRequest>, ctx: egui::Con
         let ctx = ctx.clone();
         let open = Arc::clone(&open);
         std::thread::spawn(move || {
-            serve(stream, &tx, &ctx);
+            serve(stream, &tx, &ctx, idle_timeout, RESPONSE_TIMEOUT);
             open.fetch_sub(1, Ordering::SeqCst);
         });
     }
 }
 
-fn serve(stream: TcpStream, tx: &Sender<ControlRequest>, ctx: &egui::Context) {
+/// Socket timeouts bound each blocking read by the remaining whole-line deadline, including
+/// when a peer sends one byte just before every timeout.
+struct DeadlineRead {
+    stream: TcpStream,
+    deadline: Rc<Cell<Instant>>,
+}
+
+impl Read for DeadlineRead {
+    fn read(&mut self, bytes: &mut [u8]) -> io::Result<usize> {
+        if bytes.is_empty() {
+            return Ok(0);
+        }
+        let remaining = self
+            .deadline
+            .get()
+            .checked_duration_since(Instant::now())
+            .filter(|d| !d.is_zero())
+            .ok_or_else(|| io::Error::new(io::ErrorKind::TimedOut, "control request line deadline expired; closing the connection"))?;
+        self.stream.set_read_timeout(Some(remaining))?;
+        self.stream.read(bytes).map_err(|error| {
+            if matches!(error.kind(), io::ErrorKind::WouldBlock | io::ErrorKind::TimedOut) {
+                io::Error::new(io::ErrorKind::TimedOut, "control request line deadline expired; closing the connection")
+            } else {
+                error
+            }
+        })
+    }
+}
+
+fn response_or_timeout(reply: Receiver<Value>, ticket: &ControlTicket, timeout: Duration) -> Value {
+    match reply.recv_timeout(timeout) {
+        Ok(value) => value,
+        Err(_) => {
+            // A reply may have arrived at the deadline. Prefer it to a timeout classification.
+            if let Ok(value) = reply.try_recv() {
+                return value;
+            }
+            if ticket.cancel_before_start() {
+                json!({"ok": false, "error": "request expired before dispatch; it was cancelled and did not execute", "outcome": "cancelled", "executed": false})
+            } else {
+                json!({"ok": false, "error": "request reply unavailable after dispatch started; outcome is unknown. Inspect the document before retrying an edit.", "outcome": "unknown"})
+            }
+        }
+    }
+}
+
+fn serve(stream: TcpStream, tx: &Sender<ControlRequest>, ctx: &egui::Context, idle_timeout: Duration, response_timeout: Duration) {
     let Ok(read) = stream.try_clone() else { return };
+    if stream.set_write_timeout(Some(WRITE_TIMEOUT)).is_err() {
+        return;
+    }
+    let next_deadline = || Instant::now().checked_add(idle_timeout).unwrap_or_else(Instant::now);
+    let deadline = Rc::new(Cell::new(next_deadline()));
+    let read = DeadlineRead { stream: read, deadline: Rc::clone(&deadline) };
     serve_lines(read, stream, |method, params| {
         let (req, rrx) = ControlRequest::new(method, params);
+        let ticket = req.cancellation();
         tx.send(req).ok()?;
         ctx.request_repaint();
-        Some(rrx.recv_timeout(Duration::from_secs(60)).unwrap_or_else(|_| json!({"ok": false, "error": "timeout"})))
+        let response = response_or_timeout(rrx, &ticket, response_timeout);
+        deadline.set(next_deadline());
+        Some(response)
     });
 }
 
@@ -106,25 +175,7 @@ fn parse_line(bytes: &[u8]) -> Line {
 /// Read one `\n`-terminated line of at most `max` bytes into `buf` (newline stripped).
 /// `Ok(false)` at end of stream; `Err` when the line is too long or the read fails.
 fn read_bounded_line(reader: &mut impl BufRead, buf: &mut Vec<u8>, max: usize) -> Result<bool, String> {
-    buf.clear();
-    // `take` bounds the bytes buffered for one line: a peer can't make us allocate more than `max`.
-    let limit = u64::try_from(max).unwrap_or(u64::MAX).saturating_add(1);
-    let n = reader.take(limit).read_until(b'\n', buf).map_err(|e| e.to_string())?;
-    if n == 0 {
-        return Ok(false);
-    }
-    if buf.last() == Some(&b'\n') {
-        buf.pop();
-        if buf.last() == Some(&b'\r') {
-            buf.pop();
-        }
-        return Ok(true);
-    }
-    if buf.len() > max {
-        return Err(format!("request line longer than {max} bytes; closing the connection"));
-    }
-    // Last line without a newline, then end of stream.
-    Ok(true)
+    vectorcraft_format::read_bounded_line(reader, buf, max).map_err(|e| e.to_string())
 }
 
 /// Serve requests from `read`, answering on `out`, until the peer closes, sends something that is
@@ -277,5 +328,121 @@ mod tests {
         BufReader::new(&mut extra).read_line(&mut line).unwrap();
         assert!(line.contains("too many control connections"), "{line}");
         drop(held);
+    }
+
+    #[test]
+    fn idle_connections_expire_and_free_slots_for_valid_requests() {
+        let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (tx, rx) = channel::<ControlRequest>();
+        std::thread::spawn(move || accept_loop_with_timeout(listener, tx, egui::Context::default(), Duration::from_millis(150)));
+        let held: Vec<_> = (0..MAX_CONNECTIONS).map(|_| TcpStream::connect(addr).unwrap()).collect();
+        for mut peer in held {
+            peer.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+            let mut reply = String::new();
+            peer.read_to_string(&mut reply).unwrap();
+            assert!(reply.contains("deadline expired"), "{reply}");
+        }
+        // EOF precedes the worker's slot decrement by a few instructions. Wait for admission,
+        // not an arbitrary sleep, while preserving the same public admission response.
+        let until = Instant::now() + Duration::from_secs(5);
+        loop {
+            let mut peer = TcpStream::connect(addr).unwrap();
+            peer.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+            peer.write_all(b"{\"id\":1,\"method\":\"document.inspect\"}\n").unwrap();
+            if let Ok(request) = rx.recv_timeout(Duration::from_millis(50)) {
+                assert!(request.start());
+                request.reply.send(json!({"ok": true, "result": "fresh"})).unwrap();
+                let mut reply = String::new();
+                BufReader::new(peer).read_line(&mut reply).unwrap();
+                assert!(reply.contains("fresh"), "{reply}");
+                break;
+            }
+            assert!(Instant::now() < until, "idle peers kept all connection slots occupied");
+        }
+    }
+
+    #[test]
+    fn partial_input_cannot_extend_the_whole_line_deadline() {
+        let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (tx, rx) = channel::<ControlRequest>();
+        let server = std::thread::spawn(move || {
+            let (stream, _) = listener.accept().unwrap();
+            serve(stream, &tx, &egui::Context::default(), Duration::from_millis(150), RESPONSE_TIMEOUT);
+        });
+        let mut peer = TcpStream::connect(addr).unwrap();
+        peer.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+        let mut writer = peer.try_clone().unwrap();
+        let drip = std::thread::spawn(move || {
+            for _ in 0..12 {
+                if writer.write_all(b" ").is_err() {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(40));
+            }
+        });
+        let mut reply = String::new();
+        peer.read_to_string(&mut reply).unwrap();
+        assert!(reply.contains("deadline expired"), "{reply}");
+        assert!(rx.try_recv().is_err(), "partial input must never dispatch");
+        server.join().unwrap();
+        drip.join().unwrap();
+    }
+
+    #[test]
+    fn completed_requests_renew_the_idle_deadline() {
+        let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (tx, rx) = channel::<ControlRequest>();
+        let server = std::thread::spawn(move || {
+            let (stream, _) = listener.accept().unwrap();
+            serve(stream, &tx, &egui::Context::default(), Duration::from_millis(400), RESPONSE_TIMEOUT);
+        });
+        let ui = std::thread::spawn(move || {
+            for _ in 0..3 {
+                let request = rx.recv_timeout(Duration::from_secs(5)).unwrap();
+                assert!(request.start());
+                request.reply.send(json!({"ok": true})).unwrap();
+            }
+        });
+        let mut peer = TcpStream::connect(addr).unwrap();
+        peer.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+        let mut replies = BufReader::new(peer.try_clone().unwrap());
+        for _ in 0..3 {
+            peer.write_all(b"{\"method\":\"document.inspect\"}\n").unwrap();
+            let mut reply = String::new();
+            replies.read_line(&mut reply).unwrap();
+            assert!(reply.contains("true"), "{reply}");
+            std::thread::sleep(Duration::from_millis(220));
+        }
+        drop(replies);
+        drop(peer);
+        ui.join().unwrap();
+        server.join().unwrap();
+    }
+
+    #[test]
+    fn timeout_cancels_queued_requests_but_never_claims_started_edits_did_not_run() {
+        let (queued, reply) = ControlRequest::new("edit", Value::Null);
+        let result = response_or_timeout(reply, &queued.cancellation(), Duration::ZERO);
+        assert_eq!(result["outcome"], "cancelled");
+        assert_eq!(result["executed"], false);
+        assert!(!queued.start(), "the UI must skip the expired request even after recovering");
+
+        let (started, reply) = ControlRequest::new("edit", Value::Null);
+        assert!(started.start());
+        let result = response_or_timeout(reply, &started.cancellation(), Duration::ZERO);
+        assert_eq!(result["outcome"], "unknown");
+        assert!(result.get("executed").is_none(), "started edits cannot be certified as unexecuted");
+        assert!(result["error"].as_str().unwrap().contains("before retrying"));
+    }
+
+    #[test]
+    fn an_available_reply_wins_over_timeout_classification() {
+        let (request, reply) = ControlRequest::new("edit", Value::Null);
+        assert!(request.start());
+        request.reply.send(json!({"ok": true, "result": 7})).unwrap();
+        assert_eq!(response_or_timeout(reply, &request.cancellation(), Duration::ZERO)["result"], 7);
     }
 }

@@ -46,6 +46,13 @@ accepted too. Clients requesting `2026-07-28` through `initialize`, or through a
 List TTL is 600000 ms; live reads use zero. Older clients keep the original response shapes.
 This does not add streaming or input requests — see [Not implemented](#not-implemented).
 
+The stdio reader accepts at most 64 MiB per request, excluding LF or CRLF (a final line at EOF is
+also accepted). Oversized or invalid UTF-8 input receives one JSON-RPC error and closes the input;
+bytes after that line cannot execute as another request. Embedding hosts can choose a different
+bound with `Server::serve_with_limit`. This is an input bound, not a total process-memory budget.
+Remote edit timeouts distinguish cancellation before dispatch from an unknown outcome after
+dispatch starts; see [control protocol](control-protocol.md) before retrying an edit.
+
 `initialize` advertises:
 
 | Capability | What it covers |

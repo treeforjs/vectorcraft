@@ -22,28 +22,13 @@
 //! - `app.export {path?, format?, …document.export options}`: encoded by the engine, written through
 //!   the host; the document keeps its path. No path → `{dataBase64, format, bytes}` (as headless)
 
-use std::sync::mpsc::Sender;
-
 use serde_json::{Value, json};
 use vectorcraft_tools::{Mods, PointerEvent, PointerKind};
 
 use crate::VectorcraftApp;
 use crate::canvas::Xf;
 
-pub type ControlResponse = Value;
-
-pub struct ControlRequest {
-    pub method: String,
-    pub params: Value,
-    pub reply: Sender<ControlResponse>,
-}
-
-impl ControlRequest {
-    pub fn new(method: impl Into<String>, params: Value) -> (Self, std::sync::mpsc::Receiver<ControlResponse>) {
-        let (tx, rx) = std::sync::mpsc::channel();
-        (Self { method: method.into(), params, reply: tx }, rx)
-    }
-}
+pub use crate::control_request::{ControlRequest, ControlResponse};
 
 pub enum Outcome {
     Done(Value),

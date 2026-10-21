@@ -2,7 +2,7 @@
 
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpStream, ToSocketAddrs};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use serde_json::{Value, json};
 
@@ -22,12 +22,13 @@ pub struct Remote {
     addr: String,
     conn: Option<(BufReader<TcpStream>, TcpStream)>,
     next_id: u64,
+    last_activity: Instant,
 }
 
 impl Remote {
     /// Connect to `addr` (e.g. `127.0.0.1:7979`), failing fast when nothing is listening.
     pub fn connect(addr: &str) -> std::io::Result<Self> {
-        let mut r = Self { addr: addr.to_string(), conn: None, next_id: 1 };
+        let mut r = Self { addr: addr.to_string(), conn: None, next_id: 1, last_activity: Instant::now() };
         r.reconnect()?;
         Ok(r)
     }
@@ -47,6 +48,7 @@ impl Remote {
                     s.set_read_timeout(Some(Duration::from_secs(90))).ok();
                     let read = s.try_clone()?;
                     self.conn = Some((BufReader::new(read), s));
+                    self.last_activity = Instant::now();
                     return Ok(());
                 }
                 Err(e) => last = e,
@@ -72,7 +74,9 @@ impl Remote {
 
 impl Backend for Remote {
     fn call(&mut self, method: &str, params: Value) -> Result<Value, String> {
-        if self.conn.is_none() {
+        // The app expires idle sockets after30s. Renew before sending a new request, with
+        // headroom for reply writes, so an ordinary pause never requires replaying an edit.
+        if self.conn.is_none() || self.last_activity.elapsed() >= Duration::from_secs(20) {
             self.reconnect().map_err(|e| format!("VectorCraft app at {} is not reachable: {e}", self.addr))?;
         }
         let id = self.next_id;
@@ -84,12 +88,17 @@ impl Backend for Remote {
             self.conn = None;
             format!("VectorCraft command outcome is unknown: {e}. It was not retried; inspect the document before retrying an edit.")
         })?;
+        self.last_activity = Instant::now();
         let v: Value = serde_json::from_str(reply.trim()).map_err(|e| {
             self.conn = None;
             format!(
                 "Bad reply from VectorCraft: {e}. The command outcome is unknown; it was not retried. Inspect the document before retrying an edit."
             )
         })?;
+        if v.get("id") != Some(&json!(id)) {
+            self.conn = None;
+            return Err("Mismatched reply from VectorCraft. The command outcome is unknown; it was not retried. Inspect the document before retrying an edit.".into());
+        }
         if v.get("ok").and_then(Value::as_bool) == Some(true) {
             Ok(v.get("result").cloned().unwrap_or(Value::Null))
         } else {
@@ -158,5 +167,37 @@ mod tests {
     #[test]
     fn malformed_reply_drops_connection_without_replaying_an_edit() {
         uncertain_reply_does_not_replay(Some("not a JSON reply"));
+    }
+
+    #[test]
+    fn mismatched_reply_never_certifies_or_replays_an_edit() {
+        uncertain_reply_does_not_replay(Some(r#"{"id":999,"ok":true,"result":{}}"#));
+    }
+
+    #[test]
+    fn idle_connection_is_replaced_before_sending_the_next_edit() {
+        let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let addr = listener.local_addr().unwrap().to_string();
+        let server = std::thread::spawn(move || {
+            let (mut idle, _) = listener.accept().unwrap();
+            idle.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+            let mut bytes = Vec::new();
+            std::io::Read::read_to_end(&mut idle, &mut bytes).unwrap();
+            assert!(bytes.is_empty(), "a stale socket must be closed before the edit is sent");
+            let (stream, _) = listener.accept().unwrap();
+            stream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+            let mut reader = BufReader::new(stream);
+            let mut line = String::new();
+            reader.read_line(&mut line).unwrap();
+            let request: Value = serde_json::from_str(&line).unwrap();
+            assert_eq!(request["method"], "engine.execute");
+            writeln!(reader.get_mut(), "{}", json!({"id":request["id"],"ok":true,"result":{"objects":1}})).unwrap();
+            request
+        });
+        let mut remote = Remote::connect(&addr).unwrap();
+        // Inject elapsed idle time instead of sleeping20s in the regression suite.
+        remote.last_activity = Instant::now() - Duration::from_secs(21);
+        assert_eq!(remote.call("engine.execute", json!({"command":"shape.rectangle"})).unwrap(), json!({"objects":1}));
+        assert_eq!(server.join().unwrap()["id"], 1, "the edit is sent once on the replacement socket");
     }
 }

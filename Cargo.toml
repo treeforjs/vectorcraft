@@ -78,7 +78,7 @@ egui = "0.36"
 craft-ui = { git = "https://github.com/treeforjs/craftworks", rev = "389c91ce90340b1e448bf7f8162bd58778253b6a", version = "0.1.0" }
 # In-app updates (Help › Check for Updates…). Without default features (no network code): the
 # desktop app turns on `github` and hands its `GitHub` source to the UI.
-craft-update = { git = "https://github.com/treeforjs/craftworks", rev = "6f9541c5d2228881048998f2f42ffed6528f791a", version = "0.1.3", default-features = false }
+craft-update = { git = "https://github.com/treeforjs/craftworks", rev = "5be884ea9973989501d9e25c25ea75268f136c9b", version = "0.2.0", default-features = false }
 egui_extras = { version = "0.36", default-features = false, features = ["svg"] }
 eframe = { version = "0.36", default-features = false }
 egui_kittest = "0.36"

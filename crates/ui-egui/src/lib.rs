@@ -20,6 +20,7 @@ pub mod chrome;
 mod clipboard_probe;
 pub mod community;
 pub mod control;
+mod control_request;
 pub mod credits;
 pub mod cursors;
 pub mod dialogs;
@@ -69,6 +70,8 @@ mod tests_background;
 mod tests_clipboard;
 #[cfg(test)]
 mod tests_contextmenu;
+#[cfg(test)]
+mod tests_control_dispatch;
 #[cfg(test)]
 mod tests_cut;
 #[cfg(test)]
@@ -156,6 +159,7 @@ use vectorcraft_engine::cmd::fileio;
 use vectorcraft_engine::{Session, ViewInfo};
 
 pub use control::{ControlRequest, ControlResponse};
+pub use control_request::ControlTicket;
 pub use state::{UiState, View};
 pub use sysclip::{ClipboardProbeFactory, SystemClipboard};
 
@@ -632,6 +636,9 @@ impl VectorcraftApp {
     fn drain_control(&mut self, ctx: &egui::Context) {
         let Some(rx) = self.control_rx.take() else { return };
         while let Ok(req) = rx.try_recv() {
+            if !req.start() {
+                continue;
+            }
             let reply = req.reply.clone();
             // Guarded per request: a panic must not drop the channel (taken out of `self` above).
             let outcome = vectorcraft_engine::guard::catch_panic(|| control::handle(self, ctx, &req))

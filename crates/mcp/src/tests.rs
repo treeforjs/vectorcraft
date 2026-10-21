@@ -94,6 +94,37 @@ fn initialize_negotiates_version() {
     assert_eq!(v["result"]["protocolVersion"], PROTOCOL_VERSION);
 }
 
+#[test]
+fn stdio_accepts_exact_limit_with_lf_crlf_and_eof() {
+    let request = json!({"jsonrpc": "2.0", "id": 7, "method": "ping"}).to_string();
+    for ending in ["\n", "\r\n", ""] {
+        let mut s = server();
+        let mut output = Vec::new();
+        s.serve_with_limit(format!("{request}{ending}").as_bytes(), &mut output, request.len()).unwrap();
+        let reply: Value = serde_json::from_slice(&output).unwrap();
+        assert_eq!(reply["id"], 7);
+        assert_eq!(reply["result"], json!({}));
+    }
+}
+
+#[test]
+fn stdio_oversized_or_invalid_utf8_line_never_runs_its_tail() {
+    for prefix in [vec![b'x'; 129], vec![0xff]] {
+        let mut s = server();
+        let before = s.backend().call("document.inspect", json!({})).unwrap();
+        let mut input = prefix;
+        input.extend_from_slice(b"\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"tools/call\",\"params\":{\"name\":\"draw_shape\",\"arguments\":{\"shape\":\"rectangle\"}}}\n");
+        let mut output = Vec::new();
+        assert_eq!(s.serve_with_limit(input.as_slice(), &mut output, 128).unwrap_err().kind(), std::io::ErrorKind::InvalidData);
+        let text = String::from_utf8(output).unwrap();
+        assert_eq!(text.lines().count(), 1, "one framing error, no reply to the edit after it");
+        let reply: Value = serde_json::from_str(text.trim()).unwrap();
+        assert!(reply["error"].is_object());
+        assert!(reply["id"].is_null());
+        assert_eq!(s.backend().call("document.inspect", json!({})).unwrap(), before);
+    }
+}
+
 // ---------- tools/list ----------
 
 #[test]

@@ -11,6 +11,9 @@ use crate::tools::{call_tool, tool_definitions};
 
 /// The MCP revision we implement.
 pub const PROTOCOL_VERSION: &str = "2025-06-18";
+/// Maximum stdio request bytes, excluding LF or CRLF. Hosts needing larger embedded inputs
+/// can choose their own bound with [`Server::serve_with_limit`].
+pub const MAX_REQUEST_BYTES: usize = 64 * 1024 * 1024;
 const MODERN_VERSION: &str = "2026-07-28";
 const SUPPORTED_VERSIONS: &[&str] = &[MODERN_VERSION, PROTOCOL_VERSION, "2025-03-26", "2024-11-05"];
 
@@ -79,10 +82,33 @@ impl Server {
 
     /// Serve newline-delimited JSON-RPC until `input` closes. Logs go to stderr only (stdout is
     /// the protocol stream).
-    pub fn serve(&mut self, input: impl BufRead, mut output: impl Write) -> std::io::Result<()> {
-        for line in input.lines() {
-            let line = line?;
-            let reply = self.handle_line(&line);
+    pub fn serve(&mut self, input: impl BufRead, output: impl Write) -> std::io::Result<()> {
+        self.serve_with_limit(input, output, MAX_REQUEST_BYTES)
+    }
+
+    /// Serve with an explicit request bound. Oversized or invalid UTF-8 input gets one error,
+    /// then the input closes: its tail must never be interpreted as another command.
+    pub fn serve_with_limit(&mut self, mut input: impl BufRead, mut output: impl Write, max: usize) -> std::io::Result<()> {
+        let mut bytes = Vec::new();
+        loop {
+            match vectorcraft_format::read_bounded_line(&mut input, &mut bytes, max) {
+                Ok(false) => return Ok(()),
+                Ok(true) => {}
+                Err(cause) => {
+                    writeln!(output, "{}", error(Value::Null, INVALID_REQUEST, cause.to_string()))?;
+                    output.flush()?;
+                    return Err(cause);
+                }
+            }
+            let line = match std::str::from_utf8(&bytes) {
+                Ok(line) => line,
+                Err(cause) => {
+                    writeln!(output, "{}", error(Value::Null, PARSE_ERROR, "request is not UTF-8; closing the input"))?;
+                    output.flush()?;
+                    return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, cause));
+                }
+            };
+            let reply = self.handle_line(line);
             let notes = self.take_notifications();
             for line in reply.iter().chain(notes.iter()) {
                 output.write_all(line.as_bytes())?;
@@ -90,7 +116,6 @@ impl Server {
             }
             output.flush()?;
         }
-        Ok(())
     }
 
     /// Handle one line; returns the reply line (None for notifications and blank lines).

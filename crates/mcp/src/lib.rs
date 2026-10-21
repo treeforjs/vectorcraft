@@ -26,7 +26,7 @@ pub use backend::{Backend, Remote};
 pub use headless::Headless;
 pub use prompts::{PROMPTS, PromptArg, PromptDef};
 pub use resources::{DOC_JSON_URI, DOC_URI, TEMPLATES};
-pub use server::{PROTOCOL_VERSION, Server};
+pub use server::{MAX_REQUEST_BYTES, PROTOCOL_VERSION, Server};
 pub use tools::{ToolResult, call_tool, tool_definitions};
 
 /// Default control-channel address of the desktop app.

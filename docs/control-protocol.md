@@ -10,8 +10,21 @@ nothing sent after it on that connection runs. That covers text that isn't JSON,
 an object without `method`, invalid UTF-8, and a line longer than 4 MiB. An HTTP request (for example a
 web page's cross-origin `fetch` to `127.0.0.1:<port>`) therefore can't smuggle a command in its body:
 its request line is rejected first. At most 16 connections are served at once; further ones get an error
-line and are closed. Clients that get an error reply should reconnect. The port has no authentication,
-so only enable it while you use it. Transport: `apps/vectorcraft/src/control_server.rs`.
+line and are closed. Idle connections and incomplete request lines close after 30 seconds, even if
+the peer keeps sending partial input or blank lines. Each completed request renews that deadline;
+writing a reply has a five-second limit. Clients that get a framing error should reconnect.
+The bundled MCP client renews an idle connection before sending the next request and checks reply
+IDs; it never resends an edit to recover from a missing or mismatched reply.
+
+A request waiting for UI dispatch expires after 60 seconds. Cancellation and dispatch compete for
+one atomic decision: `outcome: "cancelled", executed: false` guarantees it will not run later. If
+dispatch has started, a missing reply instead says `outcome: "unknown"`; inspect the document before
+retrying an edit because its effects may already have happened. Transport errors must never trigger
+an automatic replay of a mutating command. Ordinary success and command-error replies keep their
+existing shape.
+
+The port has no authentication, so only enable it while you use it.
+Transport: `apps/vectorcraft/src/control_server.rs`.
 
 | Method | Params | |
 |---|---|---|

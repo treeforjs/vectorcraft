@@ -3322,7 +3322,6 @@
 	Last	最後
 	{people} contributors · {commits} commits	コントリビューター {people} 人 · コミット {commits} 件
 	No contributor data was built into this copy.	このビルドには貢献者のデータが含まれていません。
-	Version	バージョン
 	Joins	角の形状
 	Miter	マイター
 	Bevel	ベベル
