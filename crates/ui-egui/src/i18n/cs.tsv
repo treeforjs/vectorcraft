@@ -520,10 +520,6 @@
 	Tile	Vedle sebe
 	Float in Window	Uvolnit do samostatného okna
 	Consolidate All Windows	Sloučit všechna okna
-	Workspace	Pracovní prostor
-	Reset Essentials	Obnovit Essentials
-	New Workspace…	Nový pracovní prostor…
-	Manage Workspaces…	Spravovat pracovní prostory…
 	Control	Ovládací panel
 	Contextual Task Bar	Kontextový panel úloh
 	Pin Bar Position	Připnout polohu panelu
@@ -826,7 +822,7 @@
 	Berry	Bobule
 	Slate	Břidlice
 	Citrus	Citrus
-	Theme:	Motiv:
+	Theme	Motiv
 	Color theme: recolors quick-styled art	Barevný motiv: přebarví grafiku s rychlými styly
 	Style	Styl
 	Quick styles: one-click looks in the document's colors	Rychlé styly: vzhled jedním kliknutím v barvách dokumentu
@@ -875,3 +871,62 @@
 	Copied a {w} × {h} px PNG	Zkopírováno PNG {w} × {h} px
 	Exported {path}	Exportováno: {path}
 	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	Lišta dole radí, jak nakreslit první tvar. Tvary, text, ikony a obrázky můžete přidat také z Panelu vkládání nahoře nebo vložit pomocí {key}.
+# Layouts, the Panels button and the inspector's plain words.
+	Layout	Rozvržení
+	Layouts	Rozvržení
+	Reset Layout	Obnovit rozvržení
+	New Layout…	Nové rozvržení…
+	Manage Layouts…	Spravovat rozvržení…
+	Delete Layout	Odstranit rozvržení
+	Rename Layout	Přejmenovat rozvržení
+	List Layouts	Seznam rozvržení
+	Panel Icons	Ikony panelů
+	Order	Pořadí
+	Combine Shapes	Kombinovat tvary
+	Default	Výchozí
+	Focus	Soustředění
+	Drawing	Kreslení
+	Print & Export	Tisk a export
+	Web	Web
+	Classic	Klasické
+	Manage Layouts	Spravovat rozvržení
+	New Layout	Nové rozvržení
+	Switch layout	Přepnout rozvržení
+	Panels	Panely
+	Open another panel: color, type, align and more	Otevřít další panel: barva, text, zarovnání a další
+	More	Další
+	Make a new file or open one to start.	Začněte vytvořením nového souboru nebo otevřením existujícího.
+	Size and position	Velikost a poloha
+	Combine shapes	Kombinovat tvary
+	Cut out front	Vyříznout přední
+	Keep overlap	Ponechat překryv
+	Remove overlap	Odstranit překryv
+	More ways to combine shapes	Další způsoby kombinace tvarů
+	Points	Body
+	Quick actions	Rychlé akce
+	Clip to top shape	Oříznout horním tvarem
+	Edit group alone	Upravit jen skupinu
+	Bring to front	Přenést dopředu
+	Convert to path	Převést na cestu
+	Fewer options	Méně možností
+	More options	Další možnosti
+	Preset	Předvolba
+	Sides	Strany
+	Nothing selected	Nic není vybráno
+	Click something to change it, or draw with a tool on the left.	Klepnutím na objekt ho upravíte, nebo kreslete nástrojem vlevo.
+	Start here	Začněte zde
+	Colors for new shapes	Barvy nových tvarů
+	Page size	Velikost stránky
+	Background	Pozadí
+	Transparent	Průhledné
+	White	Bílé
+	Rulers, grids and guides	Pravítka, mřížky a vodítka
+	Snapping	Přichytávání
+	Pie start angle	Počáteční úhel výseče
+	Pie end angle	Koncový úhel výseče
+	Corner radius	Poloměr rohu
+@msg	layout name can't be empty	název rozvržení nesmí být prázdný
+@msg	`{name}` is a built-in layout; choose another name	`{name}` je vestavěné rozvržení; zvolte jiný název
+@msg	no layout `{name}`	rozvržení `{name}` neexistuje
+@msg	no user layout `{from}`	uživatelské rozvržení `{from}` neexistuje
+@msg	unknown layout (one of {_1})	neznámé rozvržení (jedno z {_1})

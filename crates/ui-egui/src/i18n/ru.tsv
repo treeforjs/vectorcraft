@@ -4516,7 +4516,7 @@ axis	Both	Оба
 	Berry	Ягоды
 	Slate	Сланец
 	Citrus	Цитрус
-	Theme:	Тема:
+	Theme	Тема
 	Color theme: recolors quick-styled art	Цветовая тема: перекрашивает объекты с быстрыми стилями
 	Quick styles: one-click looks in the document's colors	Быстрые стили: оформление в один щелчок в цветах документа
 	Triangle	Треугольник
@@ -4554,3 +4554,58 @@ axis	Both	Оба
 	Copying pictures needs the desktop app: use Export PNG	Для копирования изображений нужно настольное приложение: используйте «Экспорт PNG»
 	Copied a {w} × {h} px PNG	Скопирован PNG {w} × {h} пикс.
 	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	Строка внизу подскажет, как нарисовать первую фигуру. Также можно добавить фигуры, текст, значки и изображения с панели вставки сверху или вставить с помощью {key}.
+# Layouts, the Panels button and the inspector's plain words.
+	Layout	Макет
+	Layouts	Макеты
+	Reset Layout	Сбросить макет
+	New Layout…	Новый макет…
+	Manage Layouts…	Управление макетами…
+	Delete Layout	Удалить макет
+	Rename Layout	Переименовать макет
+	List Layouts	Список макетов
+	Panel Icons	Значки панелей
+	Order	Порядок
+	Combine Shapes	Объединение фигур
+	Focus	Фокус
+	Drawing	Рисование
+	Print & Export	Печать и экспорт
+	Web	Веб
+	Classic	Классический
+	Manage Layouts	Управление макетами
+	New Layout	Новый макет
+	Switch layout	Сменить макет
+	Open another panel: color, type, align and more	Открыть другую панель: цвет, текст, выравнивание и другие
+	Color and paint	Цвет и заливка
+	Shape and position	Форма и положение
+	Images and output	Изображения и вывод
+	Make a new file or open one to start.	Создайте файл или откройте существующий, чтобы начать.
+	Size and position	Размер и положение
+	Combine shapes	Объединение фигур
+	Cut out front	Вырезать передней
+	Keep overlap	Оставить пересечение
+	Remove overlap	Убрать пересечение
+	More ways to combine shapes	Другие способы объединения фигур
+	Quick actions	Быстрые действия
+	Clip to top shape	Обрезать верхней фигурой
+	Edit group alone	Изменить только группу
+	Bring to front	На передний план
+	Convert to path	Преобразовать в контур
+	Fewer options	Меньше параметров
+	More options	Больше параметров
+	Preset	Набор
+	Sides	Стороны
+	Nothing selected	Ничего не выбрано
+	Click something to change it, or draw with a tool on the left.	Щёлкните объект, чтобы изменить его, или рисуйте инструментом слева.
+	Start here	С чего начать
+	Colors for new shapes	Цвета новых фигур
+	Page size	Размер страницы
+	Rulers, grids and guides	Линейки, сетки и направляющие
+	Snapping	Привязка
+	Pie start angle	Начальный угол сектора
+	Pie end angle	Конечный угол сектора
+	Corner radius	Радиус угла
+@msg	layout name can't be empty	имя макета не может быть пустым
+@msg	`{name}` is a built-in layout; choose another name	`{name}` — встроенный макет; выберите другое имя
+@msg	no layout `{name}`	нет макета `{name}`
+@msg	no user layout `{from}`	нет пользовательского макета `{from}`
+@msg	unknown layout (one of {_1})	неизвестный макет (один из {_1})

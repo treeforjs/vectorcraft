@@ -4518,7 +4518,7 @@ axis	Both	Ambos
 	Berry	Bayas
 	Slate	Pizarra
 	Citrus	Cítrico
-	Theme:	Tema:
+	Theme	Tema
 	Color theme: recolors quick-styled art	Tema de color: cambia el color del arte con estilos rápidos
 	Quick styles: one-click looks in the document's colors	Estilos rápidos: aspectos con un clic en los colores del documento
 	Triangle	Triángulo
@@ -4556,3 +4556,58 @@ axis	Both	Ambos
 	Copying pictures needs the desktop app: use Export PNG	Copiar imágenes requiere la aplicación de escritorio: use Exportar PNG
 	Copied a {w} × {h} px PNG	PNG de {w} × {h} px copiado
 	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	La barra de abajo indica cómo dibujar su primera forma. También puede añadir formas, texto, iconos e imágenes desde la Barra Insertar de arriba, o pegar con {key}.
+# Layouts, the Panels button and the inspector's plain words.
+	Layout	Diseño
+	Layouts	Diseños
+	Reset Layout	Restablecer diseño
+	New Layout…	Nuevo diseño…
+	Manage Layouts…	Administrar diseños…
+	Delete Layout	Eliminar diseño
+	Rename Layout	Cambiar nombre del diseño
+	List Layouts	Lista de diseños
+	Panel Icons	Iconos de paneles
+	Order	Orden
+	Combine Shapes	Combinar formas
+	Focus	Concentración
+	Drawing	Dibujo
+	Print & Export	Imprimir y exportar
+	Web	Web
+	Classic	Clásico
+	Manage Layouts	Administrar diseños
+	New Layout	Nuevo diseño
+	Switch layout	Cambiar de diseño
+	Open another panel: color, type, align and more	Abrir otro panel: color, texto, alinear y más
+	Color and paint	Color y pintura
+	Shape and position	Forma y posición
+	Images and output	Imágenes y salida
+	Make a new file or open one to start.	Cree un archivo nuevo o abra uno para empezar.
+	Size and position	Tamaño y posición
+	Combine shapes	Combinar formas
+	Cut out front	Recortar la delantera
+	Keep overlap	Conservar la superposición
+	Remove overlap	Quitar la superposición
+	More ways to combine shapes	Más formas de combinar
+	Quick actions	Acciones rápidas
+	Clip to top shape	Recortar con la forma superior
+	Edit group alone	Editar solo el grupo
+	Bring to front	Traer al frente
+	Convert to path	Convertir en trazado
+	Fewer options	Menos opciones
+	More options	Más opciones
+	Preset	Ajuste preestablecido
+	Sides	Lados
+	Nothing selected	Nada seleccionado
+	Click something to change it, or draw with a tool on the left.	Haga clic en algo para cambiarlo, o dibuje con una herramienta de la izquierda.
+	Start here	Empiece aquí
+	Colors for new shapes	Colores de las formas nuevas
+	Page size	Tamaño de página
+	Rulers, grids and guides	Reglas, cuadrículas y guías
+	Snapping	Ajuste
+	Pie start angle	Ángulo inicial del sector
+	Pie end angle	Ángulo final del sector
+	Corner radius	Radio de esquina
+@msg	layout name can't be empty	el nombre del diseño no puede estar vacío
+@msg	`{name}` is a built-in layout; choose another name	`{name}` es un diseño integrado; elija otro nombre
+@msg	no layout `{name}`	no existe el diseño `{name}`
+@msg	no user layout `{from}`	no existe el diseño de usuario `{from}`
+@msg	unknown layout (one of {_1})	diseño desconocido (uno de {_1})

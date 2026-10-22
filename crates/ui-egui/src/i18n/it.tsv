@@ -4518,7 +4518,7 @@ axis	Both	Entrambi
 	Berry	Frutti di bosco
 	Slate	Ardesia
 	Citrus	Agrumi
-	Theme:	Tema:
+	Theme	Tema
 	Color theme: recolors quick-styled art	Tema colori: ricolora la grafica con stili rapidi
 	Quick styles: one-click looks in the document's colors	Stili rapidi: aspetti con un clic nei colori del documento
 	Triangle	Triangolo
@@ -4556,3 +4556,58 @@ axis	Both	Entrambi
 	Copying pictures needs the desktop app: use Export PNG	Per copiare immagini serve l'app desktop: usa Esporta PNG
 	Copied a {w} × {h} px PNG	PNG di {w} × {h} px copiato
 	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	La barra in basso spiega come disegnare la prima forma. Puoi anche aggiungere forme, testo, icone e immagini dalla Barra Inserisci in alto, o incollare con {key}.
+# Layouts, the Panels button and the inspector's plain words.
+	Layout	Layout
+	Layouts	Layout
+	Reset Layout	Reimposta layout
+	New Layout…	Nuovo layout…
+	Manage Layouts…	Gestisci layout…
+	Delete Layout	Elimina layout
+	Rename Layout	Rinomina layout
+	List Layouts	Elenco layout
+	Panel Icons	Icone dei pannelli
+	Order	Ordine
+	Combine Shapes	Combina forme
+	Focus	Concentrazione
+	Drawing	Disegno
+	Print & Export	Stampa ed esporta
+	Web	Web
+	Classic	Classico
+	Manage Layouts	Gestisci layout
+	New Layout	Nuovo layout
+	Switch layout	Cambia layout
+	Open another panel: color, type, align and more	Apri un altro pannello: colore, testo, allineamento e altro
+	Color and paint	Colore e pittura
+	Shape and position	Forma e posizione
+	Images and output	Immagini e output
+	Make a new file or open one to start.	Crea un nuovo file o aprine uno per iniziare.
+	Size and position	Dimensioni e posizione
+	Combine shapes	Combina forme
+	Cut out front	Ritaglia con la forma davanti
+	Keep overlap	Mantieni la sovrapposizione
+	Remove overlap	Rimuovi la sovrapposizione
+	More ways to combine shapes	Altri modi per combinare le forme
+	Quick actions	Azioni rapide
+	Clip to top shape	Ritaglia con la forma in alto
+	Edit group alone	Modifica solo il gruppo
+	Bring to front	Porta in primo piano
+	Convert to path	Converti in tracciato
+	Fewer options	Meno opzioni
+	More options	Altre opzioni
+	Preset	Predefinito
+	Sides	Lati
+	Nothing selected	Nessuna selezione
+	Click something to change it, or draw with a tool on the left.	Fai clic su un oggetto per modificarlo, oppure disegna con uno strumento a sinistra.
+	Start here	Inizia da qui
+	Colors for new shapes	Colori delle nuove forme
+	Page size	Dimensioni pagina
+	Rulers, grids and guides	Righelli, griglie e guide
+	Snapping	Aggancio
+	Pie start angle	Angolo iniziale settore
+	Pie end angle	Angolo finale settore
+	Corner radius	Raggio angolo
+@msg	layout name can't be empty	il nome del layout non può essere vuoto
+@msg	`{name}` is a built-in layout; choose another name	`{name}` è un layout integrato; scegli un altro nome
+@msg	no layout `{name}`	nessun layout `{name}`
+@msg	no user layout `{from}`	nessun layout utente `{from}`
+@msg	unknown layout (one of {_1})	layout sconosciuto (uno tra {_1})

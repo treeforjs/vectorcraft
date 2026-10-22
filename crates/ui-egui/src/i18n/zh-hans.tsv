@@ -4144,7 +4144,7 @@ axis	Both	两者
 	Berry	莓果
 	Slate	石板
 	Citrus	柑橘
-	Theme:	主题:
+	Theme	主题
 	Color theme: recolors quick-styled art	颜色主题：为快速样式的图稿重新着色
 	Quick styles: one-click looks in the document's colors	快速样式：一键应用文档配色的外观
 	Triangle	三角形
@@ -4182,3 +4182,55 @@ axis	Both	两者
 	Copying pictures needs the desktop app: use Export PNG	复制图片需要桌面应用：请使用“导出 PNG”
 	Copied a {w} × {h} px PNG	已复制 {w} × {h} 像素的 PNG
 	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	下方的提示栏会告诉你如何绘制第一个形状。你也可以从上方的插入栏添加形状、文字、图标和图像，或用 {key} 粘贴。
+# Layouts, the Panels button and the inspector's plain words.
+	Layouts	布局
+	New Layout…	新建布局…
+	Manage Layouts…	管理布局…
+	Delete Layout	删除布局
+	Rename Layout	重命名布局
+	List Layouts	列出布局
+	Panel Icons	面板图标
+	Order	顺序
+	Combine Shapes	组合形状
+	Focus	专注
+	Drawing	绘图
+	Print & Export	打印和导出
+	Classic	经典
+	Manage Layouts	管理布局
+	New Layout	新建布局
+	Switch layout	切换布局
+	Open another panel: color, type, align and more	打开其他面板：颜色、文字、对齐等
+	Color and paint	颜色和上色
+	Shape and position	形状和位置
+	Images and output	图像和输出
+	Make a new file or open one to start.	新建文件或打开一个文件即可开始。
+	Size and position	大小和位置
+	Combine shapes	组合形状
+	Cut out front	用顶层剪去
+	Keep overlap	保留重叠
+	Remove overlap	去除重叠
+	More ways to combine shapes	更多组合形状的方式
+	Quick actions	快速操作
+	Clip to top shape	按顶层形状剪切
+	Edit group alone	单独编辑组
+	Bring to front	置于顶层
+	Convert to path	转换为路径
+	Fewer options	较少选项
+	More options	更多选项
+	Preset	预设
+	Sides	边数
+	Nothing selected	未选择任何内容
+	Click something to change it, or draw with a tool on the left.	点击对象即可更改，或用左侧的工具绘制。
+	Start here	从这里开始
+	Colors for new shapes	新形状的颜色
+	Page size	页面大小
+	Rulers, grids and guides	标尺、网格和参考线
+	Snapping	对齐吸附
+	Pie start angle	饼图起始角度
+	Pie end angle	饼图结束角度
+	Corner radius	圆角半径
+@msg	layout name can't be empty	布局名称不能为空
+@msg	`{name}` is a built-in layout; choose another name	`{name}` 是内置布局；请换一个名称
+@msg	no layout `{name}`	没有布局 `{name}`
+@msg	no user layout `{from}`	没有用户布局 `{from}`
+@msg	unknown layout (one of {_1})	未知布局（可选：{_1}）

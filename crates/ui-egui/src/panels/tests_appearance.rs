@@ -20,7 +20,7 @@ pub(super) fn run(app: &mut VectorcraftApp, id: &str, p: Value) -> Value {
 
 /// Every text drawn while `f` runs one headless frame.
 fn frame_texts(app: &mut VectorcraftApp, f: impl FnMut(&mut VectorcraftApp, &mut egui::Ui)) -> Vec<String> {
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     frame_in(&ctx, app, f)
 }
 
@@ -83,7 +83,7 @@ fn stroke_panel_shows_the_active_rows_weight() {
     let texts = frame_texts(&mut app, stroke::show);
     assert!(!texts.contains(&six), "top stroke shown: {texts:?}");
     // Clicking the lower stroke row in the Appearance panel targets it.
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     frame_in(&ctx, &mut app, appearance::show);
     appearance::select_row(&mut app, &ctx, appearance::Sel::Item(1));
     assert_eq!(app.session.appearance_item(), Some(1));
@@ -116,7 +116,7 @@ fn transparency_panel_reads_the_active_item() {
 fn item_effect_rows_toggle_their_eye() {
     let mut app = app_with_rect();
     run(&mut app, "effect.apply", json!({"effect": "distort.roughen", "item": 1}));
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     // The stroke row's disclosure is open: its Opacity sub-row and its effect show under it.
     super::set_pstate(&ctx, "ap-open-1", true);
     let texts = frame_events(&ctx, &mut app, vec![], appearance::show);
@@ -149,7 +149,7 @@ fn blend_separators_follow_the_groups() {
 #[test]
 fn item_opacity_popup_sets_the_items_opacity() {
     let mut app = app_with_rect();
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     super::set_pstate(&ctx, "ap-open-1", true);
     let texts = frame_events(&ctx, &mut app, vec![], appearance::show);
     // The stroke's Opacity sub-row (listed first; the object's own Opacity row is last).
@@ -171,7 +171,7 @@ fn item_opacity_popup_sets_the_items_opacity() {
 #[test]
 fn opacity_popup_blend_dropdown_sets_the_blend_mode() {
     let mut app = app_with_rect();
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     let texts = frame_events(&ctx, &mut app, vec![], appearance::show);
     // The object's own Opacity row (the last one).
     let link = texts.iter().rev().find(|(t, _)| t == "Opacity:").expect("object opacity row").1;
@@ -195,7 +195,7 @@ fn opacity_popup_blend_dropdown_sets_the_blend_mode() {
 fn object_row_names_the_selection_like_the_control_bar() {
     let mut app = app_with_rect();
     let a = first_selected(&app).unwrap().id.0;
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     assert!(frame_in(&ctx, &mut app, appearance::show).contains(&"Rectangle".to_string()));
     let b = run(&mut app, "shape.rectangle", json!({"x": 120, "y": 10, "width": 50, "height": 50}))["id"].clone();
     // Objects with one appearance list it under "Mixed Objects".
@@ -213,7 +213,7 @@ fn object_row_names_the_selection_like_the_control_bar() {
     run(&mut app, "select.set", json!({ "ids": [t] }));
     assert_eq!(appearance::object_label(&app), "Type");
     assert!(frame_in(&ctx, &mut app, appearance::show).contains(&"Type".to_string()));
-    let fonts = egui::Context::default();
+    let fonts = crate::theme::test_context();
     crate::theme::install_fonts(&fonts);
     assert!(frame_in(&fonts, &mut app, crate::chrome::control_bar).contains(&"Type".to_string()));
 }

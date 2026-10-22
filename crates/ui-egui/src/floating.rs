@@ -512,6 +512,8 @@ mod tests {
         fn new() -> Self {
             let mut app = VectorcraftApp::new(Session::new(), Default::default());
             app.run("file.new", json!({"width": 300, "height": 300})).unwrap();
+            // Panels dragged out of and back into the Classic column of panel icons.
+            app.ui.panel_icons = true;
             let mut h = Self { app, ctx: egui::Context::default(), time: 0.0 };
             h.settle();
             h

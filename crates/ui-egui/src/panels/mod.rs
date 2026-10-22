@@ -81,7 +81,7 @@ pub(crate) fn corner_radius_row(app: &mut VectorcraftApp, ui: &mut Ui, n: &Node,
     let units = app.session.general_unit();
     let fw = field_width(ui);
     ui.horizontal(|ui| {
-        dim_label(ui, tl!("Corner Radius:"));
+        dim_label(ui, tl!("Corner radius"));
         if let Some(r) = crate::widgets::num_field(ui, id, corner_radius(app, n), units, fw) {
             app.run("object.setLiveShape", json!({"radius": r})).ok();
         }

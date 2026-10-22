@@ -425,21 +425,11 @@ fn cs() -> Lang {
 /// Languages whose catalogs leave [`MENU_KEEP_AS_IS`] in English.
 const KEEPS_MENU_NAMES: [&str; 8] = ["cs", "es", "fr", "it", "ja", "pt-br", "ru", "uk"];
 
-/// Menu labels the menu-complete catalogs (Czech, Spanish, Italian, Japanese, Brazilian Portuguese) show as they are: the product name, a format name, the built-in workspace
-/// names and the perspective grid presets (names, shown untranslated wherever else they appear).
+/// Menu labels the menu-complete catalogs (Czech, Spanish, Italian, Japanese, Brazilian Portuguese) show as they are: the product name, a format name and the perspective grid presets (names, shown untranslated wherever else they appear).
 /// Each language's own name in the Language menu is left alone too.
 const MENU_KEEP_AS_IS: &[&str] = &[
     "VectorCraft",
     "OpenType",
-    "Essentials",
-    "Essentials Classic",
-    "Automation",
-    "Layout",
-    "Painting",
-    "Printing and Proofing",
-    "Tracing",
-    "Typography",
-    "Web",
     "[1P-Normal View]",
     "[1P-Low View]",
     "[1P-High View]",

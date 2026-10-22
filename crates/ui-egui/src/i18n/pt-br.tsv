@@ -259,7 +259,6 @@
 	Area Type Tool	Ferramenta Texto de Área
 	Around Object	Ao Redor do Objeto
 	Arrange	Organizar
-	Arrange: Bring to Front	Organizar: Trazer para Frente
 	Arrowheads:	Pontas de Seta:
 	Art using a deleted global swatch keeps its colour.	A arte que usa uma amostra global excluída mantém sua cor.
 	Artboard Options	Opções de Mesa de Trabalho
@@ -520,7 +519,6 @@
 	Copyright Status:	Status de Direitos Autorais:
 	Copyright Symbol	Símbolo de Direitos Autorais
 	Corner Radius	Raio do Canto
-	Corner Radius:	Raio do Canto:
 	Corner:	Canto:
 	Corners	Cantos
 	Corners…	Cantos…
@@ -615,7 +613,6 @@
 	Delete Theme	Excluir Tema
 	Delete Transparency Flattener Preset	Excluir Predefinido de Achatamento de Transparência
 	Delete Width Point	Excluir Ponto de Largura
-	Delete Workspace	Excluir Espaço de Trabalho
 	Delete the graphic style “{name}”?	Excluir o estilo gráfico “{name}”?
 	Delete theme	Excluir tema
 	Delete these {count} swatches and groups?	Excluir estas {count} amostras e grupos?
@@ -1150,9 +1147,7 @@
 	Invert Colors	Inverter Cores
 	Invert Mask	Inverter Máscara
 	Inverted Round	Arredondado Invertido
-	Isolate	Isolar
 	Isolate Blending	Isolar Mesclagem
-	Isolate Group	Isolar Grupo
 	Isolate Selected Group	Isolar Grupo Selecionado
 	Italian	Italiano
 	Join	Unir
@@ -1238,7 +1233,6 @@
 	List Preferences	Listar Preferências
 	List Slices	Listar Fatias
 	List View	Exibição de Lista
-	List Workspaces	Listar Espaços de Trabalho
 	Live Paint	Pintura ao Vivo
 	Live Paint Bucket	Balde de Pintura ao Vivo
 	Live Paint Bucket (Stroke)	Balde de Pintura ao Vivo (Traçado)
@@ -1288,8 +1282,6 @@
 	Make with Top Object	Criar com Objeto Superior
 	Make with Warp…	Criar com Distorção…
 	Make/Release Clipping Mask	Criar/Liberar Máscara de Recorte
-	Manage Workspaces	Gerenciar Espaços de Trabalho
-	Manage Workspaces…	Gerenciar Espaços de Trabalho…
 	Manually	Manualmente
 	Mark Older Files as [Converted] When Opened	Marcar Arquivos Antigos como [Convertido] Ao Abrir
 	Mark as trapped	Marcar como sobreimpresso
@@ -1340,7 +1332,6 @@
 	Mono	Mono
 	Monochrome images	Imagens monocromáticas
 	More	Mais
-	More Pathfinder options	Mais opções de Localizador de Caminhos
 	More Align options	Mais opções de alinhamento
 	More Paragraph options	Mais opções de parágrafo
 	More Settings	Mais Configurações
@@ -1403,8 +1394,6 @@
 	New Symbol…	Novo Símbolo…
 	New View…	Nova Visualização…
 	New Window	Nova Janela
-	New Workspace	Novo Espaço de Trabalho
-	New Workspace…	Novo Espaço de Trabalho…
 	New file	Novo arquivo
 	New from Template	Novo a partir de Modelo
 	New from Template…	Novo a partir de Modelo…
@@ -1899,7 +1888,6 @@
 	Rename Character Style	Renomear Estilo de Caractere
 	Rename Graphic Style	Renomear Estilo Gráfico
 	Rename Paragraph Style	Renomear Estilo de Parágrafo
-	Rename Workspace	Renomear Espaço de Trabalho
 	Render Threads (-1 = Automatic)	Threads de Renderização (-1 = Automático)
 	Rendering intent:	Intenção de renderização:
 	Reorder	Reordenar
@@ -1922,7 +1910,6 @@
 	Reset Bounding Box	Redefinir Caixa Delimitadora
 	Reset Envelope Mesh	Redefinir Malha do Envelope
 	Reset Envelope Shape	Redefinir Forma do Envelope
-	Reset Essentials	Redefinir Essentials
 	Reset Keyboard Shortcuts	Redefinir Atalhos de Teclado
 	Reset OpenType Features	Redefinir Recursos OpenType
 	Reset Panel	Redefinir Painel
@@ -1981,7 +1968,6 @@
 	Rows:	Linhas:
 	Rule:	Regra:
 	Rulers	Réguas
-	Rulers & Grids	Réguas e Grades
 	Run Plug-in	Executar Plug-in
 	SAVED	SALVO
 	SVG Filters	Filtros SVG
@@ -2264,7 +2250,6 @@
 	Smooth	Suavizar
 	Smooth Tool	Ferramenta Suavizar
 	Snap Curves To Lines	Ajustar Curvas às Linhas
-	Snap Options	Opções de Ajuste
 	Snap to Glyph	Ajustar ao Glifo
 	Snap to Grid	Ajustar à Grade
 	Snap to Pixel	Ajustar ao Pixel
@@ -2347,7 +2332,6 @@
 	Swatch Tiles	Blocos de Amostra
 	Swatch exchange files keep solid colors only.	Arquivos de intercâmbio de amostras mantêm apenas cores sólidas.
 	Swatches	Amostras
-	Switch workspace	Trocar espaço de trabalho
 	Symbol Instance	Instância de Símbolo
 	Symbol Libraries	Bibliotecas de Símbolos
 	Add to Symbols	Adicionar aos Símbolos
@@ -2624,7 +2608,6 @@
 	Width:	Largura:
 	Window	Janela
 	Working CMYK	CMYK de Trabalho
-	Workspace	Espaço de Trabalho
 	Wrinkle Tool	Ferramenta Rugas
 	Write Layers	Escrever Camadas
 	XML ID	ID XML
@@ -2890,7 +2873,7 @@
 	Berry	Frutas vermelhas
 	Slate	Ardósia
 	Citrus	Cítrico
-	Theme:	Tema:
+	Theme	Tema
 	Color theme: recolors quick-styled art	Tema de cores: recolore a arte com estilos rápidos
 	Quick styles: one-click looks in the document's colors	Estilos rápidos: aparências com um clique nas cores do documento
 	Triangle	Triângulo
@@ -2931,3 +2914,56 @@
 	Copied a {w} × {h} px PNG	PNG de {w} × {h} px copiado
 	Exported {path}	Exportado: {path}
 	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	A barra abaixo mostra como desenhar sua primeira forma. Você também pode adicionar formas, texto, ícones e imagens pela Barra Inserir acima, ou colar com {key}.
+# Layouts, the Panels button and the inspector's plain words.
+	Layout	Layout
+	Layouts	Layouts
+	Reset Layout	Redefinir Layout
+	New Layout…	Novo Layout…
+	Manage Layouts…	Gerenciar Layouts…
+	Delete Layout	Excluir Layout
+	Rename Layout	Renomear Layout
+	List Layouts	Listar Layouts
+	Panel Icons	Ícones dos Painéis
+	Order	Ordem
+	Combine Shapes	Combinar Formas
+	Focus	Foco
+	Drawing	Desenho
+	Print & Export	Imprimir e Exportar
+	Web	Web
+	Classic	Clássico
+	Manage Layouts	Gerenciar Layouts
+	New Layout	Novo Layout
+	Switch layout	Trocar layout
+	Open another panel: color, type, align and more	Abrir outro painel: cor, texto, alinhar e mais
+	Make a new file or open one to start.	Crie um arquivo novo ou abra um para começar.
+	Size and position	Tamanho e posição
+	Combine shapes	Combinar formas
+	Cut out front	Recortar com a da frente
+	Keep overlap	Manter sobreposição
+	Remove overlap	Remover sobreposição
+	More ways to combine shapes	Mais maneiras de combinar formas
+	Quick actions	Ações rápidas
+	Clip to top shape	Recortar pela forma do topo
+	Edit group alone	Editar só o grupo
+	Bring to front	Trazer para a frente
+	Convert to path	Converter em caminho
+	Fewer options	Menos opções
+	More options	Mais opções
+	Preset	Predefinição
+	Sides	Lados
+	Nothing selected	Nada selecionado
+	Click something to change it, or draw with a tool on the left.	Clique em algo para alterá-lo ou desenhe com uma ferramenta à esquerda.
+	Start here	Comece aqui
+	Colors for new shapes	Cores das novas formas
+	Page size	Tamanho da página
+	Background	Plano de fundo
+	Rulers, grids and guides	Réguas, grades e guias
+	Snapping	Encaixe
+	Pie start angle	Ângulo inicial da fatia
+	Pie end angle	Ângulo final da fatia
+	Corner radius	Raio do canto
+@msg	layout name can't be empty	o nome do layout não pode ficar vazio
+@msg	`{name}` is a built-in layout; choose another name	`{name}` é um layout integrado; escolha outro nome
+@msg	no layout `{name}`	não há layout `{name}`
+@msg	no user layout `{from}`	não há layout do usuário `{from}`
+@msg	unknown layout (one of {_1})	layout desconhecido (um de {_1})

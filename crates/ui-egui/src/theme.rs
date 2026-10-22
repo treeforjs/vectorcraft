@@ -201,6 +201,14 @@ pub fn mono(size: f32) -> FontId {
     FontId::new(size, FontFamily::Name(FONT_MONO.into()))
 }
 
+/// A test context with the app's fonts (panels draw headers in the semibold face).
+#[cfg(test)]
+pub fn test_context() -> egui::Context {
+    let ctx = egui::Context::default();
+    install_fonts(&ctx);
+    ctx
+}
+
 pub fn install_fonts(ctx: &egui::Context) {
     let mut fonts = FontDefinitions::default();
     let add = |f: &mut FontDefinitions, name: &str, bytes: &'static [u8]| {

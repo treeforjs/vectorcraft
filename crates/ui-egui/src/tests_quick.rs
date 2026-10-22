@@ -105,7 +105,7 @@ fn the_insert_bar_has_its_items_with_automation_ids_and_layouts_can_hide_it() {
     app.run("window.insertBar", json!({"show": true})).unwrap();
     // The classic layout hides it; the default one shows it.
     let layouts = crate::workspaces::builtins();
-    let classic = layouts.iter().find(|w| w.name == "Essentials Classic").unwrap();
+    let classic = layouts.iter().find(|w| w.name == "Classic").unwrap();
     crate::workspaces::apply(&mut app.ui, classic);
     assert!(!app.ui.insert_bar);
     crate::workspaces::apply(&mut app.ui, &layouts[0]);

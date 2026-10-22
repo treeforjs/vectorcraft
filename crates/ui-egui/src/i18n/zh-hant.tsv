@@ -3928,7 +3928,7 @@ axis	Both	兩者
 	Berry	莓果
 	Slate	石板
 	Citrus	柑橘
-	Theme:	主題:
+	Theme	主題
 	Color theme: recolors quick-styled art	色彩主題：為快速樣式的圖稿重新上色
 	Quick styles: one-click looks in the document's colors	快速樣式：一鍵套用文件配色的外觀
 	Triangle	三角形
@@ -3966,3 +3966,56 @@ axis	Both	兩者
 	Copying pictures needs the desktop app: use Export PNG	複製圖片需要桌面應用程式：請使用「轉存 PNG」
 	Copied a {w} × {h} px PNG	已複製 {w} × {h} 像素的 PNG
 	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	下方的提示列會告訴你如何繪製第一個形狀。你也可以從上方的插入列加入形狀、文字、圖示和影像，或用 {key} 貼上。
+# Layouts, the Panels button and the inspector's plain words.
+	Layouts	版面配置
+	Reset Layout	重設版面配置
+	New Layout…	新增版面配置…
+	Manage Layouts…	管理版面配置…
+	Delete Layout	刪除版面配置
+	Rename Layout	重新命名版面配置
+	List Layouts	列出版面配置
+	Panel Icons	面板圖示
+	Order	順序
+	Combine Shapes	組合形狀
+	Focus	專注
+	Drawing	繪圖
+	Print & Export	列印與轉存
+	Classic	經典
+	Manage Layouts	管理版面配置
+	New Layout	新增版面配置
+	Switch layout	切換版面配置
+	Open another panel: color, type, align and more	開啟其他面板：顏色、文字、對齊等
+	Color and paint	顏色與上色
+	Shape and position	形狀與位置
+	Images and output	影像與輸出
+	Make a new file or open one to start.	新增檔案或開啟檔案即可開始。
+	Size and position	大小與位置
+	Combine shapes	組合形狀
+	Cut out front	用頂層剪去
+	Keep overlap	保留重疊
+	Remove overlap	去除重疊
+	More ways to combine shapes	更多組合形狀的方式
+	Quick actions	快速動作
+	Clip to top shape	依頂層形狀剪裁
+	Edit group alone	單獨編輯群組
+	Bring to front	移至最前
+	Convert to path	轉換為路徑
+	Fewer options	較少選項
+	More options	更多選項
+	Preset	預設集
+	Sides	邊數
+	Nothing selected	未選取任何內容
+	Click something to change it, or draw with a tool on the left.	按一下物件即可變更，或用左側的工具繪製。
+	Start here	從這裡開始
+	Colors for new shapes	新形狀的顏色
+	Page size	頁面大小
+	Rulers, grids and guides	尺標、格點與參考線
+	Snapping	靠齊
+	Pie start angle	圓餅起始角度
+	Pie end angle	圓餅結束角度
+	Corner radius	圓角半徑
+@msg	layout name can't be empty	版面配置名稱不能空白
+@msg	`{name}` is a built-in layout; choose another name	`{name}` 是內建版面配置；請換一個名稱
+@msg	no layout `{name}`	沒有版面配置 `{name}`
+@msg	no user layout `{from}`	沒有使用者版面配置 `{from}`
+@msg	unknown layout (one of {_1})	未知的版面配置（可選：{_1}）

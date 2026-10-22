@@ -69,11 +69,11 @@ fn right_click_selects_the_object_and_lists_its_commands() {
     let id = rect(&mut app, 50.0, 50.0);
     app.run("select.none", json!({})).unwrap();
     let ctx = egui::Context::default();
-    assert!(!has(&frame(&mut app, &ctx, vec![]), "Arrange"));
+    assert!(!has(&frame(&mut app, &ctx, vec![]), "Order"));
     let p = screen(&app, 100.0, 100.0);
     let texts = click(&mut app, &ctx, p, PointerButton::Secondary);
     assert_eq!(app.session.active().unwrap().selection.objects, [id], "the object right-clicked is selected");
-    for label in ["Undo Rectangle", "Cut", "Copy", "Make Guides", "Transform", "Arrange", "Select", "Export Selection…"] {
+    for label in ["Undo Rectangle", "Cut", "Copy", "Make Guides", "Transform", "Order", "Select", "Export Selection…"] {
         assert!(has(&texts, label), "{label} in {texts:?}");
     }
     // Nothing that needs several objects, a group or nothing selected.
@@ -84,7 +84,7 @@ fn right_click_selects_the_object_and_lists_its_commands() {
     let texts = click(&mut app, &ctx, at(&texts, "Make Guides"), PointerButton::Primary);
     let n = app.session.active().unwrap().doc.node(id).cloned().unwrap();
     assert!(matches!(n.kind, NodeKind::Path { guide: true, .. }));
-    assert!(!has(&texts, "Arrange"));
+    assert!(!has(&texts, "Order"));
 }
 
 #[test]
@@ -98,7 +98,7 @@ fn right_click_on_empty_canvas_offers_the_view_and_a_dismissing_click_does_nothi
     for label in ["Zoom In", "Zoom Out", "Fit Artboard in Window", "Show Rulers", "Select All"] {
         assert!(has(&texts, label), "{label} in {texts:?}");
     }
-    assert!(!has(&texts, "Cut") && !has(&texts, "Arrange"));
+    assert!(!has(&texts, "Cut") && !has(&texts, "Order"));
     // A click on the canvas away from the menu only closes it: the Rectangle tool draws nothing.
     let away = pos2(100.0, 500.0);
     frame(&mut app, &ctx, vec![Event::PointerMoved(away)]);
@@ -170,7 +170,7 @@ fn the_menu_follows_the_selection() {
     app.run("select.set", json!({"ids": [a.0]})).unwrap();
     let entries = menus::context_entries(&app);
     let front = entries.iter().find(|e| e.command.as_deref() == Some("object.arrange.bringToFront")).unwrap();
-    assert_eq!(front.path, ["Arrange"]);
+    assert_eq!(front.path, ["Order"]);
     // No separator leads, trails or doubles up.
     let items = menus::context_items(&app);
     assert!(!matches!(items.first(), Some(Item::Sep)) && !matches!(items.last(), Some(Item::Sep)));
