@@ -4494,3 +4494,63 @@ axis	Both	Оба
 @plural	Combined {n} object|Combined {n} objects	Объединён {n} объект|Объединено {n} объекта|Объединено {n} объектов
 @msg	no example `{name}` (examples: {_1})	нет примера `{name}` (примеры: {_1})
 @msg	action must be start, back, skip or end (not `{other}`)	action должно быть start, back, skip или end (а не `{other}`)
+# Quick graphics: the insert bar, quick styles and colour themes (UX5).
+	Quick Graphics	Быстрая графика
+	Insert Shape	Вставить фигуру
+	Insert Text Box	Вставить текстовое поле
+	Insert Icon	Вставить значок
+	Add Text to Shape	Добавить текст в фигуру
+	Quick Style	Быстрый стиль
+	Picture as PNG	Изображение в PNG
+	Insert Bar	Панель вставки
+	Add Text	Добавить текст
+	Copy as PNG	Копировать как PNG
+	Export PNG…	Экспорт PNG…
+	Export PNG	Экспорт PNG
+	Accent	Акцент
+	Shadow	Тень
+	Alternate	Второй цвет
+	Ocean	Океан
+	Sunset	Закат
+	Forest	Лес
+	Berry	Ягоды
+	Slate	Сланец
+	Citrus	Цитрус
+	Theme:	Тема:
+	Color theme: recolors quick-styled art	Цветовая тема: перекрашивает объекты с быстрыми стилями
+	Quick styles: one-click looks in the document's colors	Быстрые стили: оформление в один щелчок в цветах документа
+	Triangle	Треугольник
+	Arrow	Стрелка
+	Double Arrow	Двойная стрелка
+	Chevron	Шеврон
+	Line Arrow	Линия со стрелкой
+	Speech Bubble	Выноска-облачко
+	Callout	Выноска
+	Check	Галочка
+	Heart	Сердце
+	Person	Человек
+	Sparkles	Искры
+	Sun	Солнце
+	Cloud	Облако
+	Globe	Глобус
+	House	Дом
+	Map	Карта
+	Message	Сообщение
+	Monitor	Монитор
+	Chart	Диаграмма
+	Pin	Булавка
+	Share	Поделиться
+	Picture	Изображение
+	Click to add, or drag onto the page	Щёлкните, чтобы добавить, или перетащите на страницу
+	Add a shape: rectangles, circles, arrows, lines, speech bubbles	Добавить фигуру: прямоугольники, круги, стрелки, линии, выноски
+	Text	Текст
+	Add a text box in the middle of the page	Добавить текстовое поле в центр страницы
+	Your text here	Ваш текст
+	Icons	Значки
+	Add an icon	Добавить значок
+	Place a picture from a file	Поместить изображение из файла
+	Save the selection, or the page, as a PNG file	Сохранить выделение или страницу как файл PNG
+	Copy the selection, or the page, as a picture to paste into slides and chats	Скопировать выделение или страницу как изображение для вставки в слайды и чаты
+	Copying pictures needs the desktop app: use Export PNG	Для копирования изображений нужно настольное приложение: используйте «Экспорт PNG»
+	Copied a {w} × {h} px PNG	Скопирован PNG {w} × {h} пикс.
+	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	Строка внизу подскажет, как нарисовать первую фигуру. Также можно добавить фигуры, текст, значки и изображения с панели вставки сверху или вставить с помощью {key}.

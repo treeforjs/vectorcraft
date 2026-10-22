@@ -1613,6 +1613,8 @@ mod tests_proxyitems;
 #[cfg(test)]
 mod tests_puppetwarp;
 #[cfg(test)]
+mod tests_quick;
+#[cfg(test)]
 mod tests_rasterfilters;
 #[cfg(test)]
 mod tests_rastersettings;

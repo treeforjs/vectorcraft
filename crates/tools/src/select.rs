@@ -232,11 +232,20 @@ impl Tool for SelectionTool {
                 }
                 if let Some(h) = hit_test(cx.doc, p, cx.hit_options()) {
                     let top = h.top_object(cx.isolation);
+                    // A shape with type inside: edit the type (the canvas puts the Type tool's
+                    // caret in it).
+                    if let Some((_, text)) = shape_text_parts(cx.doc, top).or_else(|| shape_text_parts(cx.doc, h.leaf)) {
+                        return vec![Action::Exec("select.set".into(), json!({ "ids": [text.0] })), Action::SwitchTool("type".into())];
+                    }
                     if cx.double_click_isolate && cx.doc.node(top).is_some_and(|n| matches!(n.kind, vectorcraft_doc::NodeKind::Group { .. })) {
                         return vec![Action::Exec("object.isolate".into(), json!({ "id": top.0 }))];
                     }
                     if cx.doc.node(top).is_some_and(|n| matches!(n.kind, vectorcraft_doc::NodeKind::Text(_))) {
                         return vec![Action::SwitchTool("type".into())];
+                    }
+                    // A closed shape: type goes inside it.
+                    if cx.doc.node(top).is_some_and(takes_text) {
+                        return vec![Action::Exec("insert.textInShape".into(), json!({ "id": top.0 })), Action::SwitchTool("type".into())];
                     }
                 } else if cx.isolation.is_some() {
                     return vec![Action::Exec("object.exitIsolation".into(), json!({}))];
@@ -514,6 +523,29 @@ fn handle_cursor(h: Handle, angle: f64) -> Cursor {
         Handle::TopLeft | Handle::BottomRight => Cursor::ResizeNwSe,
         Handle::TopRight | Handle::BottomLeft => Cursor::ResizeNeSw,
     }
+}
+
+/// Can type go inside `n`: a closed path with an area (not a guide or a clipping path)?
+pub fn takes_text(n: &vectorcraft_doc::Node) -> bool {
+    match &n.kind {
+        vectorcraft_doc::NodeKind::Path { path, guide: false, clipping: false, .. } => {
+            path.is_closed() && path.bounds().is_some_and(|b| b.width() >= 4.0 && b.height() >= 4.0)
+        }
+        _ => false,
+    }
+}
+
+/// A shape with type inside (`insert.textInShape`): a group of a closed path and the area type
+/// flowed in it. `id` is the group or one of the two → (group, type).
+pub fn shape_text_parts(d: &vectorcraft_doc::Document, id: NodeId) -> Option<(NodeId, NodeId)> {
+    use vectorcraft_doc::{NodeKind, TextKind};
+    let parts = |g: NodeId| {
+        let NodeKind::Group { children, clip: false } = &d.node(g)?.kind else { return None };
+        let [shape, text] = children.as_slice() else { return None };
+        let NodeKind::Text(t) = &text.kind else { return None };
+        (takes_text(shape) && matches!(t.kind, TextKind::Area { .. })).then_some((g, text.id))
+    };
+    parts(id).or_else(|| d.parent_of(id).and_then(parts))
 }
 
 #[cfg(test)]

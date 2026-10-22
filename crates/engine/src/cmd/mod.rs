@@ -61,6 +61,7 @@ pub mod print;
 pub(crate) mod printadvanced;
 pub mod printpresets;
 pub mod printtiling;
+pub mod quick;
 pub mod rasterfx;
 mod recolor;
 pub mod recovery;
@@ -286,6 +287,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(cut::specs());
         v.extend(halftone::specs());
         v.extend(perspgrid::specs());
+        v.extend(quick::specs());
         v
     })
 }

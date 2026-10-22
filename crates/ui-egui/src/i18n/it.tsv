@@ -4496,3 +4496,63 @@ axis	Both	Entrambi
 @plural	Combined {n} object|Combined {n} objects	{n} oggetto combinato|{n} oggetti combinati
 @msg	no example `{name}` (examples: {_1})	nessun esempio `{name}` (esempi: {_1})
 @msg	action must be start, back, skip or end (not `{other}`)	action deve essere start, back, skip o end (non `{other}`)
+# Quick graphics: the insert bar, quick styles and colour themes (UX5).
+	Quick Graphics	Grafica rapida
+	Insert Shape	Inserisci forma
+	Insert Text Box	Inserisci casella di testo
+	Insert Icon	Inserisci icona
+	Add Text to Shape	Aggiungi testo alla forma
+	Quick Style	Stile rapido
+	Picture as PNG	Immagine come PNG
+	Insert Bar	Barra Inserisci
+	Add Text	Aggiungi testo
+	Copy as PNG	Copia come PNG
+	Export PNG…	Esporta PNG…
+	Export PNG	Esporta PNG
+	Accent	Accento
+	Shadow	Ombra
+	Alternate	Alternativo
+	Ocean	Oceano
+	Sunset	Tramonto
+	Forest	Foresta
+	Berry	Frutti di bosco
+	Slate	Ardesia
+	Citrus	Agrumi
+	Theme:	Tema:
+	Color theme: recolors quick-styled art	Tema colori: ricolora la grafica con stili rapidi
+	Quick styles: one-click looks in the document's colors	Stili rapidi: aspetti con un clic nei colori del documento
+	Triangle	Triangolo
+	Arrow	Freccia
+	Double Arrow	Freccia doppia
+	Chevron	Chevron
+	Line Arrow	Linea con freccia
+	Speech Bubble	Fumetto
+	Callout	Didascalia
+	Check	Spunta
+	Heart	Cuore
+	Person	Persona
+	Sparkles	Scintille
+	Sun	Sole
+	Cloud	Nuvola
+	Globe	Globo
+	House	Casa
+	Map	Mappa
+	Message	Messaggio
+	Monitor	Monitor
+	Chart	Grafico
+	Pin	Puntina
+	Share	Condividi
+	Picture	Immagine
+	Click to add, or drag onto the page	Fai clic per aggiungere o trascina sulla pagina
+	Add a shape: rectangles, circles, arrows, lines, speech bubbles	Aggiungi una forma: rettangoli, cerchi, frecce, linee, fumetti
+	Text	Testo
+	Add a text box in the middle of the page	Aggiungi una casella di testo al centro della pagina
+	Your text here	Il tuo testo qui
+	Icons	Icone
+	Add an icon	Aggiungi un'icona
+	Place a picture from a file	Inserisci un'immagine da un file
+	Save the selection, or the page, as a PNG file	Salva la selezione o la pagina come file PNG
+	Copy the selection, or the page, as a picture to paste into slides and chats	Copia la selezione o la pagina come immagine da incollare in slide e chat
+	Copying pictures needs the desktop app: use Export PNG	Per copiare immagini serve l'app desktop: usa Esporta PNG
+	Copied a {w} × {h} px PNG	PNG di {w} × {h} px copiato
+	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	La barra in basso spiega come disegnare la prima forma. Puoi anche aggiungere forme, testo, icone e immagini dalla Barra Inserisci in alto, o incollare con {key}.

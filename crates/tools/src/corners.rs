@@ -474,7 +474,9 @@ mod tests {
         let cx2 = cx(&d, &whole, &p);
         let a = crate::create("selection").pointer(&cx2, &PointerEvent::new(PointerKind::DoubleClick, 190.0, 110.0));
         assert_eq!(a, vec![Action::Dialog(DIALOG.into(), json!({"id": id.0, "corners": [0, 1, 2, 3]}))]);
-        assert!(crate::create("selection").pointer(&cx2, &PointerEvent::new(PointerKind::DoubleClick, 150.0, 150.0)).is_empty());
+        // Elsewhere on the shape, it puts type inside it.
+        let a = crate::create("selection").pointer(&cx2, &PointerEvent::new(PointerKind::DoubleClick, 150.0, 150.0));
+        assert!(!a.iter().any(|a| matches!(a, Action::Dialog(..))), "{a:?}");
     }
 
     /// Hide Corner Widget for angles greater than (#394): a rectangle's right angles hide below

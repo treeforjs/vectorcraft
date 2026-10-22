@@ -4122,3 +4122,63 @@ axis	Both	两者
 @plural	Combined {n} object|Combined {n} objects	已组合 {n} 个对象
 @msg	no example `{name}` (examples: {_1})	没有示例 `{name}`（示例：{_1}）
 @msg	action must be start, back, skip or end (not `{other}`)	action 必须是 start、back、skip 或 end（不是 `{other}`）
+# Quick graphics: the insert bar, quick styles and colour themes (UX5).
+	Quick Graphics	快速图形
+	Insert Shape	插入形状
+	Insert Text Box	插入文本框
+	Insert Icon	插入图标
+	Add Text to Shape	向形状添加文字
+	Quick Style	快速样式
+	Picture as PNG	PNG 图片
+	Insert Bar	插入栏
+	Add Text	添加文字
+	Copy as PNG	复制为 PNG
+	Export PNG…	导出 PNG…
+	Export PNG	导出 PNG
+	Accent	强调
+	Shadow	阴影
+	Alternate	辅色
+	Ocean	海洋
+	Sunset	日落
+	Forest	森林
+	Berry	莓果
+	Slate	石板
+	Citrus	柑橘
+	Theme:	主题:
+	Color theme: recolors quick-styled art	颜色主题：为快速样式的图稿重新着色
+	Quick styles: one-click looks in the document's colors	快速样式：一键应用文档配色的外观
+	Triangle	三角形
+	Arrow	箭头
+	Double Arrow	双箭头
+	Chevron	V 形箭头
+	Line Arrow	箭头线
+	Speech Bubble	对话气泡
+	Callout	标注
+	Check	对勾
+	Heart	心形
+	Person	人物
+	Sparkles	闪光
+	Sun	太阳
+	Cloud	云
+	Globe	地球
+	House	房屋
+	Map	地图
+	Message	消息
+	Monitor	显示器
+	Chart	图表
+	Pin	图钉
+	Share	分享
+	Picture	图片
+	Click to add, or drag onto the page	单击添加，或拖到页面上
+	Add a shape: rectangles, circles, arrows, lines, speech bubbles	添加形状：矩形、圆形、箭头、直线、对话气泡
+	Text	文字
+	Add a text box in the middle of the page	在页面中央添加文本框
+	Your text here	在此输入文字
+	Icons	图标
+	Add an icon	添加图标
+	Place a picture from a file	从文件置入图片
+	Save the selection, or the page, as a PNG file	将所选内容或页面存储为 PNG 文件
+	Copy the selection, or the page, as a picture to paste into slides and chats	将所选内容或页面复制为图片，粘贴到幻灯片和聊天中
+	Copying pictures needs the desktop app: use Export PNG	复制图片需要桌面应用：请使用“导出 PNG”
+	Copied a {w} × {h} px PNG	已复制 {w} × {h} 像素的 PNG
+	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	下方的提示栏会告诉你如何绘制第一个形状。你也可以从上方的插入栏添加形状、文字、图标和图像，或用 {key} 粘贴。

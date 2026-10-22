@@ -325,6 +325,13 @@ impl Session {
         self.apply_actions(acts)
     }
 
+    /// Tell the active tool that `what` happened: `text.editNew` has the Type tool edit the
+    /// selected type, the caret at its end (text just put inside a shape).
+    pub fn tool_notify(&mut self, what: &str, view: ViewInfo) -> Result<()> {
+        self.with_tool_cx(view, |t, cx| t.notify(cx, what));
+        self.take_tool_panic()
+    }
+
     /// Typed text for the active tool (Type tool).
     pub fn tool_text(&mut self, text: &str, view: ViewInfo) -> Result<Vec<UiRequest>> {
         let acts = self.with_tool_cx(view, |t, cx| t.text_input(cx, text));

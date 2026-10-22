@@ -85,6 +85,8 @@ pub fn inspect(app: &VectorcraftApp, ctx: &egui::Context) -> Value {
             "rect": crate::canvas::task_bar_rect(ctx).map(|r| json!([r.left(), r.top(), r.width(), r.height()])),
         },
         // The Free Transform tool's widget, where it shows.
+        // The insert bar's items by automation id, where they show (null: hidden).
+        "insertBar": crate::insert_bar::inspect(app, ctx),
         "freeTransformWidget": crate::free_transform::rect(ctx).map(|r| json!([r.left(), r.top(), r.width(), r.height()])),
         "view": app.view().map(|v| serde_json::to_value(v).unwrap_or_default()),
         "canvasRect": app.canvas_rect.map(|c| json!([c.left(), c.top(), c.width(), c.height()])),
