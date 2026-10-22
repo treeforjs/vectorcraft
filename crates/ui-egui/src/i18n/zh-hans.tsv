@@ -2098,7 +2098,6 @@
 	Quality:	质量：
 	Quarter Space	四分之一空格
 	Quick Actions	快速操作
-	Quickly start a new file	快速新建文件
 	Quit VectorCraft	退出 VectorCraft
 	Radar Graph Tool	雷达图工具
 	Radial	径向
@@ -4234,3 +4233,41 @@ axis	Both	两者
 @msg	no layout `{name}`	没有布局 `{name}`
 @msg	no user layout `{from}`	没有用户布局 `{from}`
 @msg	unknown layout (one of {_1})	未知布局（可选：{_1}）
+# Home › Start from a template
+	Social post	社交媒体帖子
+	Story	快拍
+	Slide graphic	幻灯片图形
+	Banner	横幅
+	Flyer	传单
+	Logo / icon	标志 / 图标
+	Diagram	示意图
+	Your headline	在此输入标题
+	Add a short line that says why it matters.	用一句话说明它为什么重要。
+	Learn more	了解更多
+	Your picture here	在此放置图片
+	A line or two about it.	用一两行介绍一下。
+	Swipe up	向上滑动
+	Your main point, in one short sentence	用一句短话说出你的要点
+	First point	第一点
+	Second point	第二点
+	Third point	第三点
+	A short tagline goes here	在此写一句简短标语
+	yourwebsite.com	yourwebsite.com
+	Date · Time · Place	日期 · 时间 · 地点
+	Say what is happening and why people should come. Replace this text with your own.	说明活动内容以及大家为什么应该来。把这段文字换成你自己的。
+	Your call to action	你的行动号召
+	your@email.com · yourwebsite.com	your@email.com · yourwebsite.com
+	Your name	你的名称
+	Your process	你的流程
+	Start	开始
+	First step	第一步
+	Yes or no?	是还是否？
+	Next step	下一步
+	Try again	重试
+	Yes	是
+	No	否
+	Start from a template	从模板开始
+	A page at the right size with a layout to edit: replace the words, then change colors with the theme.	尺寸合适、带可编辑版式的页面：先替换文字，再用主题更改颜色。
+	Or a blank page:	或空白页面：
+	A blank page in this size	此尺寸的空白页面
+	Start a new document from this template	用此模板新建文档

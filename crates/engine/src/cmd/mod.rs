@@ -77,6 +77,7 @@ mod swatch;
 pub mod swatchlib;
 pub mod symbollib;
 pub(crate) mod tabs;
+pub mod templates;
 mod textedit;
 pub mod textstyles;
 pub(crate) mod textwrap;
@@ -288,6 +289,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(halftone::specs());
         v.extend(perspgrid::specs());
         v.extend(quick::specs());
+        v.extend(templates::specs());
         v
     })
 }

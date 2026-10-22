@@ -930,3 +930,41 @@
 @msg	no layout `{name}`	rozvržení `{name}` neexistuje
 @msg	no user layout `{from}`	uživatelské rozvržení `{from}` neexistuje
 @msg	unknown layout (one of {_1})	neznámé rozvržení (jedno z {_1})
+# Home › Start from a template
+	Social post	Příspěvek na sociální sítě
+	Story	Příběh
+	Slide graphic	Obrázek do prezentace
+	Banner	Banner
+	Flyer	Leták
+	Logo / icon	Logo / ikona
+	Diagram	Diagram
+	Your headline	Váš nadpis
+	Add a short line that says why it matters.	Přidejte krátký řádek o tom, proč na tom záleží.
+	Learn more	Více informací
+	Your picture here	Sem patří váš obrázek
+	A line or two about it.	Řádek nebo dva o tom.
+	Swipe up	Přejeďte nahoru
+	Your main point, in one short sentence	Vaše hlavní myšlenka v jedné krátké větě
+	First point	První bod
+	Second point	Druhý bod
+	Third point	Třetí bod
+	A short tagline goes here	Sem patří krátký slogan
+	yourwebsite.com	vasweb.cz
+	Date · Time · Place	Datum · Čas · Místo
+	Say what is happening and why people should come. Replace this text with your own.	Napište, co se děje a proč by lidé měli přijít. Nahraďte tento text vlastním.
+	Your call to action	Vaše výzva k akci
+	your@email.com · yourwebsite.com	vas@email.cz · vasweb.cz
+	Your name	Vaše jméno
+	Your process	Váš postup
+	Start	Začátek
+	First step	První krok
+	Yes or no?	Ano, nebo ne?
+	Next step	Další krok
+	Try again	Zkusit znovu
+	Yes	Ano
+	No	Ne
+	Start from a template	Začít ze šablony
+	A page at the right size with a layout to edit: replace the words, then change colors with the theme.	Stránka ve správné velikosti s rozvržením k úpravě: nahraďte texty a pak změňte barvy motivem.
+	Or a blank page:	Nebo prázdná stránka:
+	A blank page in this size	Prázdná stránka v této velikosti
+	Start a new document from this template	Začít nový dokument z této šablony

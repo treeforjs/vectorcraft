@@ -344,6 +344,10 @@ pub(super) fn open(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 pub(super) fn new_from_template(s: &mut Session, p: &Value) -> Result<Value> {
+    // A built-in starter template (Home's "Start from a template").
+    if p.get("id").is_some() {
+        return crate::cmd::templates::open(s, p);
+    }
     let src = source(p, "file.newFromTemplate")?;
     open_template(s, src.name, &src.bytes, src.path)
 }

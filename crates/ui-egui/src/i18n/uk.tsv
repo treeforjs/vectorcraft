@@ -2136,7 +2136,6 @@
 	Quality:	Якість:
 	Quarter Space	Четверта шпація
 	Quick Actions	Швидкі дії
-	Quickly start a new file	Швидко створити новий файл
 	Quit VectorCraft	Вийти з VectorCraft
 	Radar Graph Tool	Інструмент «Пелюсткова діаграма»
 	Radial	Радіальний
@@ -4594,3 +4593,41 @@ axis	Both	Обидві
 @msg	no layout `{name}`	немає макета `{name}`
 @msg	no user layout `{from}`	немає користувацького макета `{from}`
 @msg	unknown layout (one of {_1})	невідомий макет (один із {_1})
+# Home › Start from a template
+	Social post	Допис для соцмереж
+	Story	Історія
+	Slide graphic	Графіка для слайда
+	Banner	Банер
+	Flyer	Флаєр
+	Logo / icon	Логотип / значок
+	Diagram	Схема
+	Your headline	Ваш заголовок
+	Add a short line that says why it matters.	Додайте короткий рядок про те, чому це важливо.
+	Learn more	Докладніше
+	Your picture here	Тут ваше зображення
+	A line or two about it.	Рядок-другий про це.
+	Swipe up	Проведіть угору
+	Your main point, in one short sentence	Головна думка в одному короткому реченні
+	First point	Перший пункт
+	Second point	Другий пункт
+	Third point	Третій пункт
+	A short tagline goes here	Тут короткий слоган
+	yourwebsite.com	vashsait.com
+	Date · Time · Place	Дата · Час · Місце
+	Say what is happening and why people should come. Replace this text with your own.	Розкажіть, що відбувається і чому варто прийти. Замініть цей текст своїм.
+	Your call to action	Ваш заклик до дії
+	your@email.com · yourwebsite.com	vy@email.com · vashsait.com
+	Your name	Ваше ім’я
+	Your process	Ваш процес
+	Start	Початок
+	First step	Перший крок
+	Yes or no?	Так чи ні?
+	Next step	Наступний крок
+	Try again	Спробувати ще
+	Yes	Так
+	No	Ні
+	Start from a template	Почати із шаблону
+	A page at the right size with a layout to edit: replace the words, then change colors with the theme.	Сторінка потрібного розміру з макетом для редагування: замініть текст, потім змініть кольори темою.
+	Or a blank page:	Або порожня сторінка:
+	A blank page in this size	Порожня сторінка цього розміру
+	Start a new document from this template	Створити документ за цим шаблоном

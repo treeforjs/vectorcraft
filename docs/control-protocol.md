@@ -441,7 +441,9 @@ pasteboard's PNG or TIFF, Linux `image/png`, and the web the picture the browser
 File menu details: `file.openRecent1`…`file.openRecent30` open the recent files the `recentFilesCount` preference
 lists (0 hides them all; `file.recentFiles` returns the listed paths), `file.reveal` shows the document's file in the
 system file manager (desktop only; answers `{path}`), and `file.newFromTemplate` without params opens a file picker
-in the Templates folder (preference `templatesFolder`). Older native files open as "<name> [Converted]" (preference
+in the Templates folder (preference `templatesFolder`); with `{id}` it opens one of the built-in starter templates
+(`file.templates` lists them; Home's "Start from a template" cards run it, and `ui.inspect` answers where those cards
+are as `homeTemplates: [{id, rect}]`). Older native files open as "<name> [Converted]" (preference
 `appendConverted`), so their Save asks for a new `.vectorcraft` name. Native files reopen at the view they were saved
 with.
 

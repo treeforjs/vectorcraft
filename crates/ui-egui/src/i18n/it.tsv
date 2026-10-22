@@ -2144,7 +2144,6 @@
 	Quality:	Qualità:
 	Quarter Space	Quarto di spazio
 	Quick Actions	Azioni rapide
-	Quickly start a new file	Inizia rapidamente un nuovo file
 	Quit VectorCraft	Esci da VectorCraft
 	Radar Graph Tool	Strumento Grafico radar
 	Radial	Radiale
@@ -4611,3 +4610,41 @@ axis	Both	Entrambi
 @msg	no layout `{name}`	nessun layout `{name}`
 @msg	no user layout `{from}`	nessun layout utente `{from}`
 @msg	unknown layout (one of {_1})	layout sconosciuto (uno tra {_1})
+# Home › Start from a template
+	Social post	Post per i social
+	Story	Storia
+	Slide graphic	Grafica per slide
+	Banner	Banner
+	Flyer	Volantino
+	Logo / icon	Logo / icona
+	Diagram	Diagramma
+	Your headline	Il tuo titolo
+	Add a short line that says why it matters.	Aggiungi una breve frase che dica perché è importante.
+	Learn more	Scopri di più
+	Your picture here	La tua immagine qui
+	A line or two about it.	Una o due righe sull’argomento.
+	Swipe up	Scorri in alto
+	Your main point, in one short sentence	Il tuo punto principale, in una breve frase
+	First point	Primo punto
+	Second point	Secondo punto
+	Third point	Terzo punto
+	A short tagline goes here	Qui va un breve slogan
+	yourwebsite.com	tuosito.it
+	Date · Time · Place	Data · Ora · Luogo
+	Say what is happening and why people should come. Replace this text with your own.	Racconta cosa succede e perché venire. Sostituisci questo testo con il tuo.
+	Your call to action	Il tuo invito all’azione
+	your@email.com · yourwebsite.com	tu@email.it · tuosito.it
+	Your name	Il tuo nome
+	Your process	Il tuo processo
+	Start	Inizio
+	First step	Primo passo
+	Yes or no?	Sì o no?
+	Next step	Passo successivo
+	Try again	Riprova
+	Yes	Sì
+	No	No
+	Start from a template	Inizia da un modello
+	A page at the right size with a layout to edit: replace the words, then change colors with the theme.	Una pagina della dimensione giusta con un layout da modificare: sostituisci i testi, poi cambia i colori con il tema.
+	Or a blank page:	Oppure una pagina vuota:
+	A blank page in this size	Una pagina vuota di questa dimensione
+	Start a new document from this template	Crea un nuovo documento da questo modello

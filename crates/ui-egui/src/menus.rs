@@ -1088,7 +1088,7 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             io::save_command_output(app, id, "png", if p.is_object() { p.clone() } else { json!({}) }).map(|p| json!({"path": p}))
         }
         // Bytes sent by an agent go straight to the engine; a path or nothing opens it here.
-        "file.newFromTemplate" if p.get("dataBase64").is_none() => io::new_from_template(app, s("path")),
+        "file.newFromTemplate" if p.get("dataBase64").is_none() && p.get("id").is_none() => io::new_from_template(app, s("path")),
         "file.revert" if p.get("confirmed").and_then(Value::as_bool) != Some(true) => io::ask_revert(app),
         "file.reveal" => io::reveal(app),
         id if id.starts_with("file.openRecent") => match recent_slot(app, id).cloned() {

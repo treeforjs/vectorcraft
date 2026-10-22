@@ -632,7 +632,7 @@ pub(super) fn specs() -> Vec<CommandSpec> {
             "New from Template…",
             ["File"],
             Some("Cmd+Shift+N"),
-            "{path} or {name, dataBase64}: open a template (or any readable file) as a new untitled document → {index, title, format, warnings}",
+            "{path} or {name, dataBase64}: open a template (or any readable file) as a new untitled document → {index, title, format, warnings}; or {id, title?, texts?}: a built-in starter template (see file.templates) at its page size with an editable layout, titled `title` (default: its name), its placeholder texts replaced by `texts` {English: shown} → {index, id, title}",
             always,
             super::load::new_from_template
         ),
