@@ -2141,7 +2141,6 @@
 	Quality:	Qualité :
 	Quarter Space	Quart d’espace
 	Quick Actions	Actions rapides
-	Quickly start a new file	Commencer rapidement un nouveau fichier
 	Quit VectorCraft	Quitter VectorCraft
 	Radar Graph Tool	Outil Graphe radar
 	Radial	Radial
@@ -4622,3 +4621,41 @@ axis	Both	Les deux
 @msg	no layout `{name}`	aucune disposition `{name}`
 @msg	no user layout `{from}`	aucune disposition utilisateur `{from}`
 @msg	unknown layout (one of {_1})	disposition inconnue (l’une de {_1})
+# Home › Start from a template
+	Social post	Publication pour réseaux sociaux
+	Story	Story
+	Slide graphic	Visuel de diapositive
+	Banner	Bannière
+	Flyer	Flyer
+	Logo / icon	Logo / icône
+	Diagram	Diagramme
+	Your headline	Votre titre
+	Add a short line that says why it matters.	Ajoutez une courte phrase qui dit pourquoi c’est important.
+	Learn more	En savoir plus
+	Your picture here	Votre image ici
+	A line or two about it.	Une ligne ou deux à ce sujet.
+	Swipe up	Balayez vers le haut
+	Your main point, in one short sentence	Votre idée principale, en une courte phrase
+	First point	Premier point
+	Second point	Deuxième point
+	Third point	Troisième point
+	A short tagline goes here	Un court slogan ici
+	yourwebsite.com	votresite.fr
+	Date · Time · Place	Date · Heure · Lieu
+	Say what is happening and why people should come. Replace this text with your own.	Dites ce qui se passe et pourquoi venir. Remplacez ce texte par le vôtre.
+	Your call to action	Votre appel à l’action
+	your@email.com · yourwebsite.com	vous@email.fr · votresite.fr
+	Your name	Votre nom
+	Your process	Votre processus
+	Start	Début
+	First step	Première étape
+	Yes or no?	Oui ou non ?
+	Next step	Étape suivante
+	Try again	Réessayer
+	Yes	Oui
+	No	Non
+	Start from a template	Partir d’un modèle
+	A page at the right size with a layout to edit: replace the words, then change colors with the theme.	Une page à la bonne taille avec une mise en page à modifier : remplacez les textes, puis changez les couleurs avec le thème.
+	Or a blank page:	Ou une page vierge :
+	A blank page in this size	Une page vierge de cette taille
+	Start a new document from this template	Créer un document à partir de ce modèle

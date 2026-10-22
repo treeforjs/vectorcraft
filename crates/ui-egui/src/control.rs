@@ -103,6 +103,8 @@ pub fn inspect(app: &VectorcraftApp, ctx: &egui::Context) -> Value {
         "updates": crate::updates::state_json(app),
         // Undo toasts showing ({message, action}); the tour's state is `ui.tour`.
         "toasts": crate::onboarding::toasts_json(app),
+        // Home's template cards and blank-page buttons, where they show ({id, rect}).
+        "homeTemplates": crate::templates::inspect(app, ctx),
     })
 }
 

@@ -2144,7 +2144,6 @@
 	Quality:	Calidad:
 	Quarter Space	Cuarto de espacio
 	Quick Actions	Acciones rápidas
-	Quickly start a new file	Empieza rápidamente un archivo nuevo
 	Quit VectorCraft	Salir de VectorCraft
 	Radar Graph Tool	Herramienta Gráfico de radar
 	Radial	Radial
@@ -4611,3 +4610,41 @@ axis	Both	Ambos
 @msg	no layout `{name}`	no existe el diseño `{name}`
 @msg	no user layout `{from}`	no existe el diseño de usuario `{from}`
 @msg	unknown layout (one of {_1})	diseño desconocido (uno de {_1})
+# Home › Start from a template
+	Social post	Publicación para redes
+	Story	Historia
+	Slide graphic	Gráfico para diapositiva
+	Banner	Banner
+	Flyer	Folleto
+	Logo / icon	Logotipo / icono
+	Diagram	Diagrama
+	Your headline	Tu titular
+	Add a short line that says why it matters.	Añade una frase corta que diga por qué importa.
+	Learn more	Más información
+	Your picture here	Tu imagen aquí
+	A line or two about it.	Una o dos líneas sobre el tema.
+	Swipe up	Desliza hacia arriba
+	Your main point, in one short sentence	Tu idea principal, en una frase corta
+	First point	Primer punto
+	Second point	Segundo punto
+	Third point	Tercer punto
+	A short tagline goes here	Aquí va un eslogan corto
+	yourwebsite.com	tusitio.com
+	Date · Time · Place	Fecha · Hora · Lugar
+	Say what is happening and why people should come. Replace this text with your own.	Cuenta qué va a pasar y por qué la gente debería venir. Sustituye este texto por el tuyo.
+	Your call to action	Tu llamada a la acción
+	your@email.com · yourwebsite.com	tu@correo.com · tusitio.com
+	Your name	Tu nombre
+	Your process	Tu proceso
+	Start	Inicio
+	First step	Primer paso
+	Yes or no?	¿Sí o no?
+	Next step	Siguiente paso
+	Try again	Reintentar
+	Yes	Sí
+	No	No
+	Start from a template	Empezar con una plantilla
+	A page at the right size with a layout to edit: replace the words, then change colors with the theme.	Una página del tamaño adecuado con un diseño para editar: cambia los textos y luego los colores con el tema.
+	Or a blank page:	O una página en blanco:
+	A blank page in this size	Una página en blanco de este tamaño
+	Start a new document from this template	Crear un documento nuevo con esta plantilla

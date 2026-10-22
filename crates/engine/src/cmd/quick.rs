@@ -801,6 +801,11 @@ fn list(s: &mut Session, _: &Value) -> Result<Value> {
     }))
 }
 
+/// The colour type set inside a shape filled with `fill` gets in theme `t` (for previews).
+pub fn text_color_on(fill: Option<Color>, t: &Theme) -> Color {
+    text_on(fill, &Palette::of(t))
+}
+
 /// A theme's colours (main, second, accent, dark, light) for swatches in the UI.
 pub fn theme_colors(t: &Theme) -> [Color; 5] {
     let p = Palette::of(t);

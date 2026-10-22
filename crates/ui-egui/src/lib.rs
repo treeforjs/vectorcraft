@@ -51,6 +51,7 @@ pub mod shortcut_editor;
 pub mod shortcuts;
 pub mod state;
 pub mod sysclip;
+pub mod templates;
 pub mod theme;
 pub mod titlebar;
 pub mod toolbar;

@@ -1746,7 +1746,6 @@
 	Quality:	Qualidade:
 	Quarter Space	Espaço de Quarto
 	Quick Actions	Ações Rápidas
-	Quickly start a new file	Começar rapidamente um novo arquivo
 	Quit VectorCraft	Sair do VectorCraft
 	RECENT	RECENTES
 	RGB Color	Cor RGB
@@ -2967,3 +2966,41 @@
 @msg	no layout `{name}`	não há layout `{name}`
 @msg	no user layout `{from}`	não há layout do usuário `{from}`
 @msg	unknown layout (one of {_1})	layout desconhecido (um de {_1})
+# Home › Start from a template
+	Social post	Post para redes sociais
+	Story	Story
+	Slide graphic	Gráfico para slide
+	Banner	Banner
+	Flyer	Panfleto
+	Logo / icon	Logotipo / ícone
+	Diagram	Diagrama
+	Your headline	Seu título
+	Add a short line that says why it matters.	Adicione uma frase curta dizendo por que isso importa.
+	Learn more	Saiba mais
+	Your picture here	Sua imagem aqui
+	A line or two about it.	Uma ou duas linhas sobre o assunto.
+	Swipe up	Deslize para cima
+	Your main point, in one short sentence	Sua ideia principal, em uma frase curta
+	First point	Primeiro ponto
+	Second point	Segundo ponto
+	Third point	Terceiro ponto
+	A short tagline goes here	Um slogan curto aqui
+	yourwebsite.com	seusite.com.br
+	Date · Time · Place	Data · Hora · Local
+	Say what is happening and why people should come. Replace this text with your own.	Conte o que vai acontecer e por que as pessoas devem vir. Substitua este texto pelo seu.
+	Your call to action	Sua chamada para ação
+	your@email.com · yourwebsite.com	seu@email.com · seusite.com.br
+	Your name	Seu nome
+	Your process	Seu processo
+	Start	Início
+	First step	Primeiro passo
+	Yes or no?	Sim ou não?
+	Next step	Próximo passo
+	Try again	Tentar de novo
+	Yes	Sim
+	No	Não
+	Start from a template	Começar com um modelo
+	A page at the right size with a layout to edit: replace the words, then change colors with the theme.	Uma página no tamanho certo com um layout para editar: troque os textos e depois mude as cores com o tema.
+	Or a blank page:	Ou uma página em branco:
+	A blank page in this size	Uma página em branco neste tamanho
+	Start a new document from this template	Criar um novo documento com este modelo

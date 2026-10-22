@@ -2140,7 +2140,6 @@
 	Quality:	Качество:
 	Quarter Space	Четвертная шпация
 	Quick Actions	Быстрые действия
-	Quickly start a new file	Быстро создать новый файл
 	Quit VectorCraft	Выйти из VectorCraft
 	Radar Graph Tool	Инструмент «Лепестковая диаграмма»
 	Radial	Радиальный
@@ -4609,3 +4608,41 @@ axis	Both	Оба
 @msg	no layout `{name}`	нет макета `{name}`
 @msg	no user layout `{from}`	нет пользовательского макета `{from}`
 @msg	unknown layout (one of {_1})	неизвестный макет (один из {_1})
+# Home › Start from a template
+	Social post	Пост для соцсетей
+	Story	История
+	Slide graphic	Графика для слайда
+	Banner	Баннер
+	Flyer	Флаер
+	Logo / icon	Логотип / значок
+	Diagram	Схема
+	Your headline	Ваш заголовок
+	Add a short line that says why it matters.	Добавьте короткую строку о том, почему это важно.
+	Learn more	Подробнее
+	Your picture here	Здесь ваше изображение
+	A line or two about it.	Пара строк об этом.
+	Swipe up	Смахните вверх
+	Your main point, in one short sentence	Главная мысль в одном коротком предложении
+	First point	Первый пункт
+	Second point	Второй пункт
+	Third point	Третий пункт
+	A short tagline goes here	Здесь короткий слоган
+	yourwebsite.com	vashsait.ru
+	Date · Time · Place	Дата · Время · Место
+	Say what is happening and why people should come. Replace this text with your own.	Расскажите, что происходит и почему стоит прийти. Замените этот текст своим.
+	Your call to action	Ваш призыв к действию
+	your@email.com · yourwebsite.com	vy@pochta.ru · vashsait.ru
+	Your name	Ваше имя
+	Your process	Ваш процесс
+	Start	Начало
+	First step	Первый шаг
+	Yes or no?	Да или нет?
+	Next step	Следующий шаг
+	Try again	Повторить
+	Yes	Да
+	No	Нет
+	Start from a template	Начать с шаблона
+	A page at the right size with a layout to edit: replace the words, then change colors with the theme.	Страница нужного размера с макетом для правки: замените текст, затем смените цвета темой.
+	Or a blank page:	Или пустая страница:
+	A blank page in this size	Пустая страница этого размера
+	Start a new document from this template	Создать документ по этому шаблону
