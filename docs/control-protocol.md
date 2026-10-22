@@ -209,6 +209,16 @@ pop the panel out next to the column like the other icon panels (`ui.dock_collap
 `ui.inspect`); expanding with one popped out shows its tab. The state is saved with the preferences and in user
 workspaces; the built-in workspaces expand the dock.
 
+Layouts and the Panels button: the default layout shows only the Properties | Layers | Libraries tabs and a Panels
+button (the dock's tab strip; in the collapsed column, under the tab icons) whose menu opens any other panel as the
+one popped-out panel (`window.panel`). `window.panelIcons {on?: bool}` shows every panel as an icon in the column
+instead (the Classic layout; `ui.panel_icons`); settings and user layouts saved before it existed keep their column.
+`window.workspace {name}` takes the built-in layouts Default, Focus, Drawing, Type, Color, Print & Export, Web and
+Classic, and the older names (Essentials, Essentials Classic, Automation, Layout, Painting, Printing and Proofing,
+Tracing, Typography) as aliases. `ui.inspector` (`{closed: [section], more: [section]}`, settable with `ui.set
+{inspector}`) holds the Properties sections folded (`transform`, `appearance`, `align`, `combine`, `points`,
+`actions`, `text`, `image`, `trace`, `start`, `newShapes`) and those whose More shows their expert fields.
+
 Toolbar layouts: `window.toolbarLayout {layout?: "starter" | "basic" | "advanced"}` (Window › Toolbars) picks the
 Tools panel's layout and returns `{layout}` (omitted: the current one). Starter, the default for new users, shows ten
 slots under Select, Draw, Edit and View (Selection; Direct and Group Selection; the shapes; the Pen and anchor tools;

@@ -1,6 +1,7 @@
-//! Window → Workspace: saved panel/bar layouts (Essentials, Essentials Classic, Painting, …),
-//! Reset, New Workspace…, Manage Workspaces…. A workspace is a snapshot of `UiState` layout
-//! flags; UI brightness and everything else is untouched when switching.
+//! Window → Layouts: saved panel/bar arrangements (Default, Focus, Drawing, … Classic), Reset,
+//! New Layout…, Manage Layouts…. A layout (a "workspace" in the code and the command ids) is a
+//! snapshot of `UiState` layout flags; UI brightness and everything else is untouched when
+//! switching. The built-in layouts have plain names; their old names still load ([`ALIASES`]).
 
 use std::sync::atomic::Ordering;
 
@@ -28,6 +29,10 @@ pub struct Workspace {
     /// The dock's tabbed group is collapsed to icons (built-in workspaces: expanded).
     pub dock_collapsed: bool,
     pub open_panel: Option<String>,
+    /// The dock's column of panel icons (built-in layouts: Classic only). A layout saved before
+    /// it existed had one, and keeps it.
+    #[serde(default = "yes")]
+    pub panel_icons: bool,
     pub status_bar: bool,
     /// Tool groups torn off the toolbar into floating strips (built-in workspaces: none).
     pub floating_flyouts: Vec<FloatingFlyout>,
@@ -40,13 +45,40 @@ pub struct Workspace {
 impl Default for Workspace {
     fn default() -> Self {
         let ui = UiState::default();
-        capture(&ui, "Essentials")
+        capture(&ui, DEFAULT)
     }
 }
 
-pub const ESSENTIALS: &str = "Essentials";
+fn yes() -> bool {
+    true
+}
 
-/// Built-in workspaces, in Illustrator's menu order (Essentials first).
+/// The layout new users start in.
+pub const DEFAULT: &str = "Default";
+
+/// The built-in layouts, in menu order: plain names for what each is for.
+pub const BUILTIN_NAMES: [&str; 8] = [DEFAULT, "Focus", "Drawing", "Type", "Color", "Print & Export", "Web", "Classic"];
+
+/// Names older versions gave the built-in layouts → the layout each is now. Settings, saved
+/// layouts, scripts and agents that name one still get it (case-insensitive, as names are).
+pub const ALIASES: &[(&str, &str)] = &[
+    ("Essentials", DEFAULT),
+    ("Essentials Classic", "Classic"),
+    ("Automation", "Classic"),
+    ("Layout", DEFAULT),
+    ("Painting", "Drawing"),
+    ("Printing and Proofing", "Print & Export"),
+    ("Tracing", "Drawing"),
+    ("Typography", "Type"),
+];
+
+/// A built-in layout's current name for `name` (an old name maps to its new one); any other
+/// name as it is.
+pub fn canonical(name: &str) -> &str {
+    ALIASES.iter().find(|(old, _)| old.eq_ignore_ascii_case(name)).map_or(name, |(_, new)| new)
+}
+
+/// Built-in layouts, in menu order (Default first).
 pub fn builtins() -> Vec<Workspace> {
     let base = Workspace::default();
     let w = |name: &str, f: &dyn Fn(&mut Workspace)| {
@@ -55,63 +87,45 @@ pub fn builtins() -> Vec<Workspace> {
         x
     };
     vec![
-        w(ESSENTIALS, &|_| {}),
-        w("Essentials Classic", &|x| {
+        w(DEFAULT, &|_| {}),
+        // The canvas first: the panels collapse to icons.
+        w("Focus", &|x| x.dock_collapsed = true),
+        w("Drawing", &|x| x.open_panel = Some("brushes".into())),
+        w("Type", &|x| {
+            x.rulers = true;
+            x.open_panel = Some("character".into());
+        }),
+        w("Color", &|x| x.open_panel = Some("swatches".into())),
+        w("Print & Export", &|x| {
+            x.rulers = true;
+            x.open_panel = Some("separations".into());
+        }),
+        w("Web", &|x| {
+            x.rulers = true;
+            x.open_panel = Some(crate::panels::asset_export::ID.into());
+        }),
+        // Every bar and the whole panel column, for people used to them.
+        w("Classic", &|x| {
             x.control_bar = true;
             x.rulers = true;
             x.toolbar_advanced = true;
             x.task_bar = false;
             x.insert_bar = false;
+            x.panel_icons = true;
             x.open_panel = Some("color".into());
-        }),
-        w("Automation", &|x| {
-            x.control_bar = true;
-            x.toolbar_advanced = true;
-            x.dock_tab = DockTab::Layers;
-            x.open_panel = Some("actions".into());
-        }),
-        w("Layout", &|x| {
-            x.control_bar = true;
-            x.rulers = true;
-            x.toolbar_advanced = true;
-            x.dock_tab = DockTab::Layers;
-            x.open_panel = Some("align".into());
-        }),
-        w("Painting", &|x| {
-            x.control_bar = true;
-            x.toolbar_advanced = true;
-            x.toolbar_double = true;
-            x.open_panel = Some("brushes".into());
-        }),
-        w("Printing and Proofing", &|x| {
-            x.control_bar = true;
-            x.rulers = true;
-            x.toolbar_advanced = true;
-            x.open_panel = Some("info".into());
-        }),
-        w("Tracing", &|x| {
-            x.control_bar = true;
-            x.toolbar_advanced = true;
-            x.dock_tab = DockTab::Layers;
-            x.task_bar = false;
-        }),
-        w("Typography", &|x| {
-            x.control_bar = true;
-            x.rulers = true;
-            x.toolbar_advanced = true;
-            x.open_panel = Some("character".into());
-        }),
-        w("Web", &|x| {
-            x.control_bar = true;
-            x.rulers = true;
-            x.toolbar_advanced = true;
-            x.open_panel = Some("symbols".into());
         }),
     ]
 }
 
+/// A built-in layout's name, current or old. Allocation-free: the app bar asks every frame.
 pub fn is_builtin(name: &str) -> bool {
-    builtins().iter().any(|w| w.name == name)
+    BUILTIN_NAMES.contains(&name) || ALIASES.iter().any(|(old, _)| *old == name)
+}
+
+/// A name a user layout can't take: a built-in one, current or old, in any case.
+fn reserved(name: &str) -> bool {
+    let name = canonical(name);
+    BUILTIN_NAMES.iter().any(|b| b.eq_ignore_ascii_case(name))
 }
 
 /// Snapshot the layout flags of `ui` as a workspace called `name`.
@@ -129,6 +143,7 @@ pub fn capture(ui: &UiState, name: &str) -> Workspace {
         dock_tab: ui.dock_tab,
         dock_collapsed: ui.dock_collapsed,
         open_panel: ui.open_panel.clone(),
+        panel_icons: ui.panel_icons,
         status_bar: ui.status_bar,
         floating_flyouts: ui.floating_flyouts.clone(),
         floating_panels: ui.floating_panels.clone(),
@@ -149,6 +164,7 @@ pub fn apply(ui: &mut UiState, w: &Workspace) {
     ui.dock_tab = w.dock_tab;
     ui.dock_collapsed = w.dock_collapsed;
     ui.open_panel = w.open_panel.clone();
+    ui.panel_icons = w.panel_icons;
     ui.status_bar = w.status_bar;
     ui.floating_flyouts = w.floating_flyouts.clone();
     ui.floating_panels = w.floating_panels.clone();
@@ -160,6 +176,7 @@ pub fn apply(ui: &mut UiState, w: &Workspace) {
 
 /// A workspace by name (user workspaces shadow nothing: names are unique across both lists).
 pub fn find(ui: &UiState, name: &str) -> Option<Workspace> {
+    let name = canonical(name);
     ui.custom_workspaces
         .iter()
         .find(|w| w.name.eq_ignore_ascii_case(name))
@@ -176,10 +193,10 @@ pub fn names(ui: &UiState) -> Vec<String> {
 pub fn save_as(ui: &mut UiState, name: &str) -> Result<(), String> {
     let name = name.trim();
     if name.is_empty() {
-        return Err("workspace name can't be empty".into());
+        return Err("layout name can't be empty".into());
     }
-    if is_builtin(name) {
-        return Err(format!("`{name}` is a built-in workspace; choose another name"));
+    if reserved(name) {
+        return Err(format!("`{name}` is a built-in layout; choose another name"));
     }
     let w = capture(ui, name);
     match ui.custom_workspaces.iter_mut().find(|x| x.name == name) {
@@ -194,20 +211,20 @@ pub fn delete(ui: &mut UiState, name: &str) -> Result<(), String> {
     let before = ui.custom_workspaces.len();
     ui.custom_workspaces.retain(|w| w.name != name);
     if ui.custom_workspaces.len() == before {
-        return Err(if is_builtin(name) { format!("`{name}` is built in and can't be deleted") } else { format!("no workspace `{name}`") });
+        return Err(if is_builtin(name) { format!("`{name}` is built in and can't be deleted") } else { format!("no layout `{name}`") });
     }
     if ui.workspace == name {
-        ui.workspace = ESSENTIALS.into();
+        ui.workspace = DEFAULT.into();
     }
     Ok(())
 }
 
 pub fn rename(ui: &mut UiState, from: &str, to: &str) -> Result<(), String> {
     let to = to.trim();
-    if to.is_empty() || is_builtin(to) || ui.custom_workspaces.iter().any(|w| w.name == to) {
+    if to.is_empty() || reserved(to) || ui.custom_workspaces.iter().any(|w| w.name == to) {
         return Err(format!("`{to}` is not an available name"));
     }
-    let w = ui.custom_workspaces.iter_mut().find(|w| w.name == from).ok_or_else(|| format!("no user workspace `{from}`"))?;
+    let w = ui.custom_workspaces.iter_mut().find(|w| w.name == from).ok_or_else(|| format!("no user layout `{from}`"))?;
     w.name = to.into();
     if ui.workspace == from {
         ui.workspace = to.into();
@@ -244,9 +261,9 @@ pub fn menu_items() -> Vec<crate::menus::Item> {
         v.extend(custom.into_iter().map(|n| Item::Cmd(n, "window.workspace", json!({"name": n}))));
     }
     v.push(Item::Sep);
-    v.push(Item::Cmd("Reset Essentials", "window.workspace.reset", Value::Null));
-    v.push(Item::Cmd("New Workspace…", "window.workspace.new", Value::Null));
-    v.push(Item::Cmd("Manage Workspaces…", "window.workspace.manage", Value::Null));
+    v.push(Item::Cmd("Reset Layout", "window.workspace.reset", Value::Null));
+    v.push(Item::Cmd("New Layout…", "window.workspace.new", Value::Null));
+    v.push(Item::Cmd("Manage Layouts…", "window.workspace.manage", Value::Null));
     v
 }
 
@@ -291,7 +308,7 @@ pub fn run_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<Resu
                 apply(&mut app.ui, &w);
                 Ok(json!({"workspace": w.name}))
             }
-            None => Err(format!("unknown workspace (one of {})", names(&app.ui).join(", "))),
+            None => Err(format!("unknown layout (one of {})", names(&app.ui).join(", "))),
         },
         "window.workspace.reset" => {
             let w = find(&app.ui, &app.ui.workspace.clone()).unwrap_or_default();
@@ -301,7 +318,7 @@ pub fn run_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<Resu
         "window.workspace.new" => match s("name") {
             Some(n) => save_as(&mut app.ui, &n).map(|_| json!({"workspace": n})),
             None => {
-                let n = (1..).map(|i| format!("Workspace {i}")).find(|n| find(&app.ui, n).is_none()).unwrap_or_default();
+                let n = (1..).map(|i| format!("Layout {i}")).find(|n| find(&app.ui, n).is_none()).unwrap_or_default();
                 app.ui.dialog = Some(Dialog::new("newWorkspace", json!({"name": n})));
                 Ok(Value::Null)
             }
@@ -337,9 +354,9 @@ pub fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
     let (mut ok, mut cancel) = (false, false);
     let mut action: Option<(&str, Value)> = None;
     let manage = d.kind == "manageWorkspaces";
-    crate::dialogs::modal::show(ctx, "Workspace", egui::Id::new("dialog-workspace"), -40.0, 22, |ui| {
+    crate::dialogs::modal::show(ctx, "Layout", egui::Id::new("dialog-workspace"), -40.0, 22, |ui| {
         ui.set_width(340.0);
-        crate::dialogs::modal::heading(ui, if manage { tl!("Manage Workspaces") } else { tl!("New Workspace") });
+        crate::dialogs::modal::heading(ui, if manage { tl!("Manage Layouts") } else { tl!("New Layout") });
         ui.add_space(12.0);
         if manage {
             egui::Frame::NONE.fill(t.input).stroke(egui::Stroke::new(1.0, t.input_border)).inner_margin(egui::Margin::same(4)).show(ui, |ui| {
@@ -422,10 +439,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn essentials_is_the_default_layout() {
+    fn default_is_the_default_layout() {
         let ui = UiState::default();
-        assert_eq!(capture(&ui, ESSENTIALS), builtins()[0]);
-        assert_eq!(ui.workspace, ESSENTIALS);
+        assert_eq!(capture(&ui, DEFAULT), builtins()[0]);
+        assert_eq!(ui.workspace, DEFAULT);
+        assert!(!ui.panel_icons, "new users get the inspector and one Panels button, not the icon column");
     }
 
     #[test]
@@ -433,12 +451,13 @@ mod tests {
         let mut ui = UiState { brightness: crate::theme::Brightness::Light, ..Default::default() };
         let w = find(&ui, "Essentials Classic").unwrap();
         apply(&mut ui, &w);
-        assert!(ui.control_bar && ui.view.rulers && ui.toolbar_advanced);
+        assert!(ui.control_bar && ui.view.rulers && ui.toolbar_advanced && ui.panel_icons);
         assert_eq!(ui.open_panel.as_deref(), Some("color"));
-        assert_eq!(ui.workspace, "Essentials Classic");
+        assert_eq!(ui.workspace, "Classic", "the old name loads the layout under its new name");
         let w = find(&ui, "essentials").unwrap();
         apply(&mut ui, &w);
-        assert!(!ui.control_bar && !ui.view.rulers);
+        assert!(!ui.control_bar && !ui.view.rulers && !ui.panel_icons);
+        assert_eq!(ui.workspace, DEFAULT);
         assert_eq!(ui.brightness, crate::theme::Brightness::Light);
     }
 
@@ -446,7 +465,7 @@ mod tests {
     fn save_apply_round_trip() {
         let mut ui = UiState { control_bar: true, dock_tab: DockTab::Layers, open_panel: Some("stroke".into()), ..Default::default() };
         save_as(&mut ui, "Mine").unwrap();
-        let w = find(&ui, ESSENTIALS).unwrap();
+        let w = find(&ui, DEFAULT).unwrap();
         apply(&mut ui, &w);
         assert!(!ui.control_bar);
         let w = find(&ui, "Mine").unwrap();
@@ -462,6 +481,7 @@ mod tests {
     fn builtin_names_are_protected() {
         let mut ui = UiState::default();
         assert!(save_as(&mut ui, "Painting").is_err());
+        assert!(save_as(&mut ui, "drawing").is_err(), "names are case-insensitive");
         assert!(save_as(&mut ui, "  ").is_err());
         assert!(delete(&mut ui, "Essentials").is_err());
         save_as(&mut ui, "A").unwrap();
@@ -469,14 +489,39 @@ mod tests {
         rename(&mut ui, "A", "B").unwrap();
         assert_eq!(ui.workspace, "B");
         delete(&mut ui, "B").unwrap();
-        assert_eq!(ui.workspace, ESSENTIALS);
+        assert_eq!(ui.workspace, DEFAULT);
     }
 
     #[test]
-    fn all_requested_workspaces_exist() {
+    fn every_layout_and_every_old_name_loads() {
         let ui = UiState::default();
-        for n in ["Essentials", "Essentials Classic", "Painting", "Typography", "Layout", "Tracing", "Web", "Automation"] {
-            assert!(find(&ui, n).is_some(), "{n}");
+        for n in BUILTIN_NAMES {
+            assert_eq!(find(&ui, n).map(|w| w.name), Some(n.to_string()), "{n}");
         }
+        for (old, new) in ALIASES {
+            assert_eq!(find(&ui, old).map(|w| w.name).as_deref(), Some(*new), "{old}");
+            assert!(is_builtin(old) && !BUILTIN_NAMES.contains(old), "{old} is only an alias");
+        }
+        assert_eq!(names(&ui), BUILTIN_NAMES.map(String::from).to_vec(), "the menu lists the new names only");
+    }
+
+    /// Settings and user layouts saved by older versions: their layout name and panel column
+    /// carry over (the old built-in name is its new one; a saved column stays).
+    #[test]
+    fn layouts_saved_by_older_versions_keep_their_panels() {
+        let old = json!({"workspace": "Essentials", "custom_workspaces": [{"name": "Mine", "openPanel": "stroke"}]});
+        let ui: UiState = serde_json::from_value(old).unwrap();
+        let ui = ui.sanitized();
+        assert_eq!(ui.workspace, DEFAULT);
+        assert!(ui.panel_icons, "a settings file from before keeps its icon column");
+        assert!(ui.custom_workspaces[0].panel_icons, "so does a layout saved before");
+        let mut fresh = UiState::default();
+        let w = find(&ui, "Mine").unwrap();
+        apply(&mut fresh, &w);
+        assert!(fresh.panel_icons);
+        let back: UiState = serde_json::from_value(serde_json::to_value(&fresh).unwrap()).unwrap();
+        assert!(back.panel_icons);
+        let fresh_back: UiState = serde_json::from_value(serde_json::to_value(UiState::default()).unwrap()).unwrap();
+        assert!(!fresh_back.panel_icons, "a new user's choice survives a save");
     }
 }

@@ -243,7 +243,7 @@ fn undo_len(app: &VectorcraftApp) -> usize {
 fn drag_w(app: &mut VectorcraftApp, ctx: &egui::Context, dx: f32, escape: bool) {
     let mut w = None;
     for _ in 0..4 {
-        w = app_frame(app, ctx, vec![], "W:");
+        w = app_frame(app, ctx, vec![], "W");
     }
     let at = w.expect("the W label is shown").center();
     let button = |pos, pressed| Event::PointerButton { pos, button: PointerButton::Primary, pressed, modifiers: Modifiers::NONE };

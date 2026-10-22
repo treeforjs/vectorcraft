@@ -291,13 +291,24 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "{collapsed?: bool} collapse the dock's Properties | Layers | Libraries group to icons (true), expand it (false) or toggle (omitted), as the double arrow at the top of the dock does; returns the new state",
     ),
     ("window.brightness", "Appearance", "", "{brightness: system|light|warm|dim|dark|highContrast}"),
-    ("window.workspace", "Workspace", "", "{name} switch workspace (Essentials, Essentials Classic, Painting, …)"),
-    ("window.workspace.reset", "Reset Essentials", "", "{} reset the current workspace"),
-    ("window.workspace.new", "New Workspace…", "", "{name?} save the current layout"),
-    ("window.workspace.manage", "Manage Workspaces…", "", "{}"),
-    ("window.workspace.delete", "Delete Workspace", "", "{name}"),
-    ("window.workspace.rename", "Rename Workspace", "", "{name, to}"),
-    ("window.workspace.list", "List Workspaces", "", "{}"),
+    (
+        "window.workspace",
+        "Layout",
+        "",
+        "{name} switch layout (Default, Focus, Drawing, Type, Color, Print & Export, Web, Classic, or a saved one; the old names Essentials, Essentials Classic, Painting, Typography… still work)",
+    ),
+    ("window.workspace.reset", "Reset Layout", "", "{} reset the current layout"),
+    ("window.workspace.new", "New Layout…", "", "{name?} save the current layout"),
+    ("window.workspace.manage", "Manage Layouts…", "", "{}"),
+    ("window.workspace.delete", "Delete Layout", "", "{name}"),
+    ("window.workspace.rename", "Rename Layout", "", "{name, to}"),
+    ("window.workspace.list", "List Layouts", "", "{}"),
+    (
+        "window.panelIcons",
+        "Panel Icons",
+        "",
+        "{on?: bool} show every panel as an icon in the dock's column (true), or only the inspector and one Panels button (false); omitted toggles; returns the new state",
+    ),
     (
         "actions.list",
         "List Actions",
@@ -1310,6 +1321,11 @@ pub fn run_ui_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<R
             app.ui.control_bar = on;
             Ok(json!(on))
         }
+        "window.panelIcons" => opt_bool(p, "on").map(|on| {
+            app.ui.panel_icons = on.unwrap_or(!app.ui.panel_icons);
+            app.ui.dock = true;
+            json!(app.ui.panel_icons)
+        }),
         "window.collapseDock" => opt_bool(p, "collapsed").map(|collapsed| {
             let collapsed = collapsed.unwrap_or(!app.ui.dock_collapsed);
             crate::dock::set_collapsed(app, collapsed);
@@ -1697,6 +1713,7 @@ pub fn checked(app: &VectorcraftApp, id: &str, p: &Value) -> Option<bool> {
             }
         }
         "window.collapseDock" => app.ui.dock_collapsed,
+        "window.panelIcons" => app.ui.panel_icons,
         "window.workspace" => p.get("name").and_then(Value::as_str) == Some(app.ui.workspace.as_str()),
         "window.brightness" => p.get("brightness").and_then(Value::as_str).and_then(Brightness::parse) == Some(app.ui.brightness),
         "view.slices.lock" => app.session.slices_locked(),
@@ -2364,7 +2381,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
             "Object",
             vec![
                 sub("Transform", transform_items()),
-                sub("Arrange", arrange_items()),
+                sub("Order", arrange_items()),
                 sub(
                     "Align",
                     vec![
@@ -2791,10 +2808,11 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
             vec![
                 c("New Window", "window.newWindow"),
                 sub("Arrange", vec![todo("Cascade"), todo("Tile"), todo("Float in Window"), todo("Consolidate All Windows")]),
-                sub("Workspace", crate::workspaces::menu_items()),
+                sub("Layouts", crate::workspaces::menu_items()),
                 Sep,
                 c("Control", "window.control"),
                 c("Contextual Task Bar", "window.taskBar"),
+                c("Panel Icons", "window.panelIcons"),
                 c("Tools", "window.toolbar"),
                 sub(
                     "Toolbars",
@@ -2818,6 +2836,7 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 panel("Color", "color"),
                 panel("Color Guide", "colorGuide"),
                 panel("Color Themes", "colorThemes"),
+                panel("Combine Shapes", "pathfinder"),
                 panel("CSS Properties", crate::panels::css_properties::ID),
                 panel("Document Info", "docInfo"),
                 panel("Flattener Preview", crate::panels::flattener_preview::ID),
@@ -2831,7 +2850,6 @@ pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
                 panel("Links", crate::panels::links::ID),
                 panel("Magic Wand", "magicWand"),
                 panel("Navigator", "navigator"),
-                panel("Pathfinder", "pathfinder"),
                 panel("Pattern Options", "patternOptions"),
                 panel("Properties", "properties"),
                 panel("Separations Preview", "separations"),
@@ -2969,7 +2987,7 @@ pub fn context_items(app: &VectorcraftApp) -> Vec<Item> {
             c("Make Guides", "view.guides.make"),
             Sep,
             sub("Transform", transform_items()),
-            sub("Arrange", arrange_items()),
+            sub("Order", arrange_items()),
             sub(
                 "Select",
                 vec![c("Next Object Above", "select.nextAbove"), c("Next Object Below", "select.nextBelow"), Sep, c("Deselect", "select.none")],
@@ -3929,7 +3947,9 @@ mod tests {
         ] {
             assert!(shows_a_name(id, label), "{id} {label}");
         }
-        for (id, label) in [("object.group", "Group"), ("window.workspace", "Essentials"), ("effect.apply", "Drop Shadow")] {
+        for (id, label) in
+            [("object.group", "Group"), ("window.workspace", "Default"), ("window.workspace", "Essentials"), ("effect.apply", "Drop Shadow")]
+        {
             assert!(!shows_a_name(id, label), "{id} {label}");
         }
     }

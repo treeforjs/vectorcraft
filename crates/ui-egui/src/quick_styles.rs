@@ -9,7 +9,7 @@ use vectorcraft_engine::cmd::quick::{self, STYLES, THEMES, Theme};
 
 use crate::VectorcraftApp;
 use crate::theme::Tokens;
-use crate::widgets::{self, section_header};
+use crate::widgets;
 
 /// A quick style's name in the UI language.
 pub fn style_label(id: &str) -> &'static str {
@@ -149,9 +149,8 @@ pub fn theme_list(app: &VectorcraftApp, ui: &mut Ui) -> Option<&'static str> {
     chosen
 }
 
-/// Properties' Quick Style section: the eight looks and the document's theme.
+/// The body of Properties' Quick Style section: the eight looks and the document's theme.
 pub fn inspector_section(app: &mut VectorcraftApp, ui: &mut Ui) {
-    section_header(ui, tl!("Quick Style"));
     let w = ((ui.available_width() - 12.0) / 4.0).clamp(30.0, 60.0);
     if let Some(s) = style_grid(app, ui, 4, vec2(w, 30.0)) {
         apply_style(app, s);
@@ -159,7 +158,7 @@ pub fn inspector_section(app: &mut VectorcraftApp, ui: &mut Ui) {
     let (theme, _) = current(app);
     ui.add_space(2.0);
     ui.horizontal(|ui| {
-        widgets::dim_label(ui, tl!("Theme:"));
+        widgets::dim_label(ui, tl!("Theme"));
         let resp = theme_button(ui, theme, 150.0);
         egui::Popup::menu(&resp).show(|ui| {
             if let Some(id) = theme_list(app, ui) {

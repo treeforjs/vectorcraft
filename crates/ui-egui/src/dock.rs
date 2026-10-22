@@ -1,5 +1,6 @@
-//! The right dock: Properties | Layers | Libraries tabs, plus the collapsed icon-panel column
-//! whose panels pop out to the left. The double arrow at the top of the dock collapses the tabbed
+//! The right dock: Properties | Layers | Libraries tabs and one Panels button that opens any other
+//! panel as the one secondary panel, popped out to the left (DESIGN.md: one inspector + one panel).
+//! The Classic layout (`window.panelIcons`) shows every panel as an icon in a column instead. The double arrow at the top of the dock collapses the tabbed
 //! group to icons at the top of the icon column (`window.collapseDock`); the arrow above the column
 //! then expands it again.
 
@@ -17,6 +18,93 @@ const HEADER: f32 = 14.0;
 const DOCK_WIDTH: f32 = 300.0;
 /// Top of a popped-out panel.
 const FLYOUT_TOP: f32 = 110.0;
+
+/// The Panels menu: every icon panel once, under a plain heading for what it is for.
+pub const PANEL_MENU: &[(&str, &[&str])] = &[
+    (
+        "Color and paint",
+        &[
+            "color",
+            "swatches",
+            "gradient",
+            "stroke",
+            "transparency",
+            "appearance",
+            "graphicStyles",
+            "brushes",
+            "symbols",
+            "patternOptions",
+            "colorGuide",
+            "colorThemes",
+        ],
+    ),
+    ("Shape and position", &["align", "transform", "pathfinder", "artboards"]),
+    ("Text", &["character", "paragraph", "charStyles", "paraStyles", "glyphs", "openType", "tabs"]),
+    (
+        "Images and output",
+        &[
+            "imageTrace",
+            crate::panels::links::ID,
+            crate::panels::asset_export::ID,
+            crate::panels::css_properties::ID,
+            "separations",
+            crate::panels::flattener_preview::ID,
+        ],
+    ),
+    ("More", &["history", "actions", "info", "docInfo", "navigator", "magicWand", "attributes"]),
+];
+
+/// The Panels menu's contents: each panel (a click opens it as the one popped-out panel, or puts
+/// it away), then the Panel Icons switch. Static lists only: nothing is built per frame.
+pub fn panels_menu(app: &mut VectorcraftApp, ui: &mut Ui) {
+    let t = Tokens::get(ui.ctx());
+    ui.set_min_width(200.0);
+    let mut run: Option<(&str, serde_json::Value)> = None;
+    widgets::menu_scroll(ui, |ui| {
+        for (i, (heading, ids)) in PANEL_MENU.iter().enumerate() {
+            if i > 0 {
+                ui.separator();
+            }
+            ui.label(egui::RichText::new(tl!(heading)).size(11.0).color(t.text_dim));
+            for id in ids.iter() {
+                let Some((_, label, _)) = ICON_PANELS.iter().find(|p| p.0 == *id) else { continue };
+                let open = app.ui.open_panel.as_deref() == Some(*id) || floating::group_of(&app.ui, id).is_some();
+                if widgets::menu_item(ui, label, true, open) {
+                    run = Some(("window.panel", json!({ "panel": id })));
+                    ui.close();
+                }
+            }
+        }
+        ui.separator();
+        if widgets::menu_item(ui, "Panel Icons", true, app.ui.panel_icons) {
+            run = Some(("window.panelIcons", json!({})));
+            ui.close();
+        }
+    });
+    if let Some((id, p)) = run {
+        crate::menus::invoke(app, id, p);
+    }
+}
+
+/// The Panels button (an icon, with its word when there is room for `word`): opens
+/// [`panels_menu`].
+fn panels_button(app: &mut VectorcraftApp, ui: &mut Ui, rect: Rect, word: Option<std::sync::Arc<egui::Galley>>) {
+    let label = word.is_some();
+    let t = Tokens::get(ui.ctx());
+    let resp = ui.interact(rect, ui.id().with("dock-panels-button"), Sense::click());
+    let open = app.ui.open_panel.as_deref().is_some_and(|p| DockTab::from_id(p).is_none());
+    if resp.hovered() || open {
+        ui.painter().rect_filled(rect, CornerRadius::same(4), if open { t.tool_active } else { t.hover });
+    }
+    let icon = Rect::from_center_size(egui::pos2(if label { rect.left() + 13.0 } else { rect.center().x }, rect.center().y), vec2(14.0, 14.0));
+    icons::paint(ui, "layout-grid", icon, if resp.hovered() { t.text_strong } else { t.icon });
+    if let Some(word) = word {
+        let h = word.size().y;
+        ui.painter().galley(icon.right_center() + vec2(5.0, -h / 2.0), word, t.text);
+    }
+    let resp = resp.on_hover_text(tl!("Open another panel: color, type, align and more"));
+    egui::Popup::menu(&resp).show(|ui| panels_menu(app, ui));
+}
 
 /// Where the icon column's left edge was drawn last (egui temp memory, one frame old).
 fn column_left_id() -> egui::Id {
@@ -105,6 +193,19 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     // collapsed group's panels head it, under the « that expands them again. Floating panels leave
     // it.
     let collapsed = app.ui.dock_collapsed && shown.is_some();
+    // Without the icon column the tab strip holds the Panels button; with every tab collapsed or
+    // floating, a slim column holds them (and the button).
+    if !app.ui.panel_icons
+        && let Some(g) = group
+    {
+        ui.ctx().data_mut(|d| {
+            d.insert_temp(column_left_id(), g.left());
+            d.insert_temp(floating::dock_rect_id(), g);
+            d.insert_temp(floating::icons_rect_id(), g);
+        });
+        return;
+    }
+    let all_icons = app.ui.panel_icons;
     let column = egui::Panel::right("icon_column")
         .resizable(false)
         .exact_size(ICON_COL)
@@ -125,6 +226,11 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
                                 panel_icon(app, ui, id, label, icon, bounds);
                             }
                         }
+                    }
+                    if !all_icons {
+                        let (_, r) = ui.allocate_space(vec2(30.0, 30.0));
+                        panels_button(app, ui, r, None);
+                        return;
                     }
                     // A divider above each group with icons left, but the first.
                     let mut divider = collapsed;
@@ -167,6 +273,8 @@ fn tab_strip(app: &mut VectorcraftApp, ui: &mut Ui, active: DockTab) -> bool {
     // What a drag out of the strip floats: the panels, the one shown, where its tab began.
     let mut tear: Option<(Vec<&'static str>, &'static str, f32)> = None;
     let mut x = strip.left();
+    // Tighter tabs leave the Panels button room for its word.
+    let pad = if app.ui.panel_icons { 12.0 } else { 10.0 };
     for tab in DockTab::ALL {
         let (id, label, _) = tab.info();
         if floating::group_of(&app.ui, id).is_some() {
@@ -174,12 +282,12 @@ fn tab_strip(app: &mut VectorcraftApp, ui: &mut Ui, active: DockTab) -> bool {
         }
         let galley =
             ui.painter().layout_no_wrap(tl!(label).to_string(), theme::semibold(12.5), if tab == active { t.text_strong } else { t.text_dim });
-        let r = Rect::from_min_size(egui::pos2(x, strip.top()), vec2(galley.size().x + 24.0, strip.height() - 1.0));
+        let r = Rect::from_min_size(egui::pos2(x, strip.top()), vec2(galley.size().x + 2.0 * pad, strip.height() - 1.0));
         let resp = ui.interact(r, ui.id().with(("docktab", label)), Sense::click_and_drag());
         if tab == active {
             ui.painter().rect_filled(r, 0.0, t.panel);
         }
-        ui.painter().galley(egui::pos2(r.left() + 12.0, r.center().y - galley.size().y / 2.0), galley, t.text);
+        ui.painter().galley(egui::pos2(r.left() + pad, r.center().y - galley.size().y / 2.0), galley, t.text);
         ui.painter().line_segment([r.right_top(), r.right_bottom()], Stroke::new(1.0, t.border));
         if resp.clicked() {
             app.ui.dock_tab = tab;
@@ -189,7 +297,16 @@ fn tab_strip(app: &mut VectorcraftApp, ui: &mut Ui, active: DockTab) -> bool {
         x = r.right();
     }
     let menu = Rect::from_center_size(strip.right_center() - vec2(14.0, 0.0), vec2(16.0, 16.0));
-    let rest = Rect::from_min_max(egui::pos2(x, strip.top()), egui::pos2(menu.left() - 4.0, strip.bottom()));
+    let mut rest = Rect::from_min_max(egui::pos2(x, strip.top()), egui::pos2(menu.left() - 4.0, strip.bottom()));
+    // The Panels button, right of the tabs: with its word when there is room.
+    if !app.ui.panel_icons {
+        let word = ui.painter().layout_no_wrap(tl!("Panels").to_string(), theme::semibold(12.0), t.text);
+        let full = word.size().x + 30.0;
+        let (w, word) = if rest.width() >= full + 2.0 { (full, Some(word)) } else { (26.0, None) };
+        let r = Rect::from_min_size(egui::pos2(rest.right() - w, strip.top() + 4.0), vec2(w, strip.height() - 9.0));
+        panels_button(app, ui, r, word);
+        rest.max.x = r.left() - 2.0;
+    }
     if rest.width() > 0.0 {
         let resp = ui.interact(rest, ui.id().with("dock-group-bar"), Sense::drag());
         if resp.dragged() && out {
@@ -356,6 +473,7 @@ mod tests {
     fn the_icon_column_scrolls_in_a_short_window() {
         let mut app = VectorcraftApp::new(Session::new(), Default::default());
         app.run("file.new", json!({"width": 300, "height": 300})).unwrap();
+        app.ui.panel_icons = true;
         let ctx = egui::Context::default();
         theme::install_fonts(&ctx);
         let mut frame = |time: f64, events| {
@@ -388,6 +506,8 @@ mod tests {
             let mut app = VectorcraftApp::new(Session::new(), Default::default());
             app.run("file.new", json!({"width": 300, "height": 300})).unwrap();
             app.run("shape.rectangle", json!({"x": 10, "y": 10, "width": 50, "height": 40})).unwrap();
+            // The Classic column of panel icons (the default layout's dock is tested on its own).
+            app.ui.panel_icons = true;
             let ctx = egui::Context::default();
             theme::install_fonts(&ctx);
             let mut h = Self { app, ctx, time: 0.0 };
@@ -570,8 +690,53 @@ mod tests {
         assert!(saved.sanitized().dock_collapsed);
         app.run("window.workspace.new", json!({"name": "Icons"})).unwrap();
         app.run("window.workspace", json!({"name": "Essentials"})).unwrap();
-        assert!(!app.ui.dock_collapsed, "Essentials shows the panels");
+        assert!(!app.ui.dock_collapsed, "Default (by its old name) shows the panels");
         app.run("window.workspace", json!({"name": "Icons"})).unwrap();
         assert!(app.ui.dock_collapsed, "the user workspace keeps them collapsed");
+    }
+
+    /// The default layout: the inspector with its three tabs and one Panels button, no column of
+    /// panel icons. The Panels menu lists every other panel once; one opens as the one popped-out
+    /// panel, left of the dock, and the next replaces it.
+    #[test]
+    fn the_default_dock_is_the_inspector_and_one_panels_button() {
+        let mut h = Harness::new();
+        h.app.ui = crate::UiState::default();
+        h.settle();
+        assert!(h.icons().is_empty(), "no panel icons: {:?}", h.icons());
+        assert!(DockTab::ALL.len() <= 3, "at most three tabs beside the inspector");
+        let button = h.ctx.viewport(|vp| {
+            vp.prev_pass
+                .widgets
+                .layers()
+                .flat_map(|(_, w)| w.iter())
+                .find(|w| w.rect.height() == 24.0 && w.rect.width() >= 26.0 && w.rect.top() > HEADER && w.rect.top() < HEADER + 33.0)
+                .map(|w| w.rect)
+        });
+        let button = button.expect("the Panels button in the tab strip");
+        assert!(button.left() > SCREEN.x - DOCK_WIDTH - 10.0, "it sits in the dock's tab strip: {button:?}");
+        // Every icon panel is in the Panels menu exactly once.
+        let mut listed: Vec<&str> = PANEL_MENU.iter().flat_map(|(_, ids)| ids.iter().copied()).collect();
+        listed.sort_unstable();
+        let mut all: Vec<&str> = ICON_PANELS.iter().map(|p| p.0).collect();
+        all.sort_unstable();
+        assert_eq!(listed, all);
+        // One secondary panel at a time, popped out left of the dock.
+        h.app.run("window.panel", json!({"panel": "swatches"})).unwrap();
+        h.settle();
+        let rect = h.ctx.memory(|m| m.area_rect(egui::Id::new("icon-panel"))).unwrap();
+        assert!(rect.right() <= SCREEN.x - 230.0 + 1.0, "left of the dock: {rect:?}");
+        h.app.run("window.panel", json!({"panel": "stroke"})).unwrap();
+        assert_eq!(h.app.ui.open_panel.as_deref(), Some("stroke"));
+        // Collapsed, a slim column holds the tabs' icons and the Panels button only.
+        h.app.run("window.collapseDock", json!({"collapsed": true})).unwrap();
+        h.settle();
+        assert_eq!(h.icons().len(), 4, "Properties, Layers, Libraries and Panels");
+        // Panel Icons brings the whole column back.
+        h.app.run("window.panelIcons", json!({"on": true})).unwrap();
+        h.app.run("window.collapseDock", json!({"collapsed": false})).unwrap();
+        h.settle();
+        assert_eq!(h.icons().len(), icon_panel_count());
+        assert_eq!(crate::menus::checked(&h.app, "window.panelIcons", &json!({})), Some(true));
     }
 }

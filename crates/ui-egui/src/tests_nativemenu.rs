@@ -189,7 +189,7 @@ fn every_in_window_item_is_in_the_mac_menu_bar_once() {
     assert!(help.contains(&"help.github".to_string()) && !help.contains(&"help.about".to_string()), "{help:?}");
     let edit = ids(menu(&mac, "Edit"));
     assert!(!edit.contains(&"edit.preferences".to_string()) && edit.contains(&"edit.keyboardShortcuts".to_string()), "{edit:?}");
-    assert!(ids(menu(&mac, "Window")).contains(&"[Workspace]".to_string()));
+    assert!(ids(menu(&mac, "Window")).contains(&"[Layouts]".to_string()));
 }
 
 #[test]

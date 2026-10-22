@@ -1958,10 +1958,10 @@ fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
     }
     if n > 1 {
         items.push((tl!("Group"), "group", "object.group"));
-        items.push((tl!("Unite"), "squares-unite", "object.pathfinder.unite"));
+        items.push((tl!("Merge"), "squares-unite", "object.pathfinder.unite"));
     } else if is_group {
         items.push((tl!("Ungroup"), "ungroup", "object.ungroup"));
-        items.push((tl!("Isolate"), "square-dashed", "object.isolate"));
+        items.push((tl!("Edit group alone"), "square-dashed", "object.isolate"));
     } else if is_text {
         items.push((tl!("Create Outlines"), "type", "type.createOutlines"));
     } else if !anchors {

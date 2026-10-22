@@ -218,7 +218,7 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
 /// An ellipse's Pie Start and End Angle (degrees, counterclockwise from 3 o'clock; 0 to 360 is the
 /// whole ellipse) and Invert Pie, which shows the other part of it (Transform and Properties panels).
 pub(crate) fn pie_rows(app: &mut VectorcraftApp, ui: &mut Ui, pie: (f64, f64), id: &str) {
-    for (label, key, v) in [(tl!("Pie Start Angle:"), "pieStart", pie.0), (tl!("Pie End Angle:"), "pieEnd", pie.1)] {
+    for (label, key, v) in [(tl!("Pie start angle"), "pieStart", pie.0), (tl!("Pie end angle"), "pieEnd", pie.1)] {
         ui.horizontal(|ui| {
             widgets::dim_label(ui, label);
             if let Some(a) = widgets::plain_field(ui, (id, key), v, "°", 1, 60.0) {

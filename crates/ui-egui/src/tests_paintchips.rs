@@ -134,7 +134,7 @@ fn the_properties_panel_has_the_control_bars_fill_and_stroke() {
     let mut app = app();
     let props = panels::properties::show;
     let text = crate::tests_labels::painted_text(&mut app, props);
-    for s in ["Document", "Appearance", "Fill", "Stroke", "1 pt"] {
+    for s in ["Document", "Colors for new shapes", "Fill", "Stroke", "1 pt"] {
         assert!(text.lines().any(|l| l == s), "{s}: {text}");
     }
     let ctx = context();

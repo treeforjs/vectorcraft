@@ -281,6 +281,13 @@ pub fn handle(app: &mut VectorcraftApp, ctx: &egui::Context, req: &ControlReques
             if p.get("closePanel").is_some() {
                 app.ui.open_panel = None;
             }
+            // The inspector's folded sections and open More disclosures: {closed: [..], more: [..]}.
+            if let Some(v) = p.get("inspector") {
+                match serde_json::from_value::<crate::state::Inspector>(v.clone()) {
+                    Ok(i) => app.ui.inspector = i,
+                    Err(e) => r = Err(e.to_string()),
+                }
+            }
             wrap(r)
         }
         "ui.dialog.set" => match app.ui.dialog.as_mut() {

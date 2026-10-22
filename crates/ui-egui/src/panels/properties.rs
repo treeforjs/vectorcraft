@@ -1,4 +1,5 @@
-//! The Properties panel: context-sensitive sections like Illustrator's.
+//! The Properties inspector: the selection's settings in foldable sections with plain names, the
+//! expert fields under each section's More; with nothing selected, a short Start here.
 
 use egui::Ui;
 use serde_json::json;
@@ -13,7 +14,7 @@ use crate::{VectorcraftApp, icons};
 pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let Some(st) = app.session.active() else {
-        dim_label(ui, tl!("No document open"));
+        super::empty_state(ui, "file-plus", tl!("No document open"), tl!("Make a new file or open one to start."));
         return;
     };
     let n_sel = st.selection.len();
@@ -38,85 +39,88 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
         document_sections(app, ui);
         return;
     }
-    transform_section(app, ui);
-    divider(ui);
+    section(app, ui, "transform", tl!("Size and position"), transform_section);
     let is_image = n_sel == 1 && matches!(first.as_ref().map(|n| &n.kind), Some(NodeKind::Image(_)));
     if is_image {
-        image_section(app, ui);
-        divider(ui);
+        section(app, ui, "image", tl!("Image"), image_section);
     }
     if let Some((preset, view)) = crate::panels::image_trace::selected_trace(app) {
-        trace_section(app, ui, &preset, view);
-        divider(ui);
+        section(app, ui, "trace", tl!("Image Trace"), |app, ui| trace_section(app, ui, &preset, view));
     }
     if matches!(first.as_ref().map(|n| &n.kind), Some(NodeKind::Text(_))) {
-        type_sections(app, ui);
-        divider(ui);
+        section(app, ui, "text", tl!("Text"), type_sections);
     }
-    crate::quick_styles::inspector_section(app, ui);
-    divider(ui);
-    appearance_section(app, ui);
-    divider(ui);
-    section_header(ui, tl!("Align"));
-    ui.horizontal(|ui| {
-        super::align::align_buttons(app, ui, 26.0);
-        // The rest (Distribute Objects, Distribute Spacing, Align To) is the Align panel's.
-        if widgets::icon_button(ui, "ellipsis", tl!("More Align options"), false, 26.0).clicked() {
-            app.ui.open_panel = Some("align".into());
-        }
+    section(app, ui, "quickStyle", tl!("Quick Style"), crate::quick_styles::inspector_section);
+    section(app, ui, "appearance", tl!("Appearance"), appearance_section);
+    section(app, ui, "align", tl!("Align"), |app, ui| {
+        ui.horizontal(|ui| {
+            super::align::align_buttons(app, ui, 26.0);
+            // The rest (Distribute Objects, Distribute Spacing, Align To) is the Align panel's.
+            if widgets::icon_button(ui, "ellipsis", tl!("More Align options"), false, 26.0).clicked() {
+                app.ui.open_panel = Some("align".into());
+            }
+        });
     });
     if n_sel > 1 {
-        divider(ui);
-        section_header(ui, tl!("Pathfinder"));
-        ui.horizontal(|ui| {
-            for (icon, tip, op) in [
-                ("squares-unite", tl!("Unite"), "unite"),
-                ("squares-subtract", tl!("Minus Front"), "minusFront"),
-                ("squares-intersect", tl!("Intersect"), "intersect"),
-                ("squares-exclude", tl!("Exclude"), "exclude"),
-            ] {
-                if widgets::icon_button(ui, icon, tip, false, 28.0).clicked() {
-                    app.run(&format!("object.pathfinder.{op}"), json!({})).ok();
+        section(app, ui, "combine", tl!("Combine shapes"), |app, ui| {
+            ui.horizontal(|ui| {
+                for (icon, tip, op) in [
+                    ("squares-unite", tl!("Merge"), "unite"),
+                    ("squares-subtract", tl!("Cut out front"), "minusFront"),
+                    ("squares-intersect", tl!("Keep overlap"), "intersect"),
+                    ("squares-exclude", tl!("Remove overlap"), "exclude"),
+                ] {
+                    if widgets::icon_button(ui, icon, tip, false, 28.0).clicked() {
+                        app.run(&format!("object.pathfinder.{op}"), json!({})).ok();
+                    }
                 }
-            }
-            if widgets::icon_button(ui, "ellipsis", tl!("More Pathfinder options"), false, 28.0).clicked() {
-                app.ui.open_panel = Some("pathfinder".into());
-            }
+                if widgets::icon_button(ui, "ellipsis", tl!("More ways to combine shapes"), false, 28.0).clicked() {
+                    app.ui.open_panel = Some("pathfinder".into());
+                }
+            });
         });
     }
     if anchors != crate::chrome::AnchorControls::None {
-        divider(ui);
-        section_header(ui, tl!("Anchor Point"));
-        crate::chrome::anchor_buttons(app, ui, anchors);
+        section(app, ui, "points", tl!("Points"), |app, ui| crate::chrome::anchor_buttons(app, ui, anchors));
     }
-    divider(ui);
-    section_header(ui, tl!("Quick Actions"));
     let is_group = matches!(first.as_ref().map(|n| &n.kind), Some(NodeKind::Group { .. }));
     let is_live = matches!(first.as_ref().map(|n| &n.kind), Some(NodeKind::Path { live: Some(l), .. }) if !matches!(l, LiveShape::Path { .. }));
-    let mut actions: Vec<(&str, &str)> = vec![];
-    if n_sel > 1 {
-        actions.push((tl!("Group"), "object.group"));
-        actions.push((tl!("Make Clipping Mask"), "object.clippingMask.make"));
-    }
-    if is_group {
-        actions.push((tl!("Ungroup"), "object.ungroup"));
-        actions.push((tl!("Isolate Group"), "object.isolate"));
-    }
-    if is_live {
-        actions.push((tl!("Expand Shape"), "object.expandShape"));
-    }
-    if multi_color(app, ui.ctx()) {
-        actions.push((tl!("Recolor"), "ui.recolorDialog"));
-    }
-    if is_image {
-        crate::panels::image_trace::trace_button(app, ui, ui.available_width());
-        actions.push((tl!("Crop Image"), "ui.cropImage"));
-        actions.push((tl!("Mask"), "object.maskImage"));
-    }
-    actions.push((tl!("Offset Path"), "object.path.offsetPath"));
-    actions.push((tl!("Simplify"), "object.path.simplify"));
-    actions.push((tl!("Arrange: Bring to Front"), "object.arrange.bringToFront"));
-    actions.push((tl!("Lock"), "object.lock"));
+    section(app, ui, "actions", tl!("Quick actions"), |app, ui| {
+        let mut actions: Vec<(&str, &str)> = vec![];
+        if n_sel > 1 {
+            actions.push((tl!("Group"), "object.group"));
+            actions.push((tl!("Clip to top shape"), "object.clippingMask.make"));
+        }
+        if is_group {
+            actions.push((tl!("Ungroup"), "object.ungroup"));
+            actions.push((tl!("Edit group alone"), "object.isolate"));
+        }
+        if multi_color(app, ui.ctx()) {
+            actions.push((tl!("Recolor"), "ui.recolorDialog"));
+        }
+        if is_image {
+            crate::panels::image_trace::trace_button(app, ui, ui.available_width());
+            actions.push((tl!("Crop Image"), "ui.cropImage"));
+            actions.push((tl!("Mask"), "object.maskImage"));
+        }
+        actions.push((tl!("Bring to front"), "object.arrange.bringToFront"));
+        actions.push((tl!("Lock"), "object.lock"));
+        action_buttons(app, ui, &actions);
+        // Path surgery that changes the shape for good.
+        more(app, ui, "actions", |app, ui| {
+            let mut expert: Vec<(&str, &str)> = vec![];
+            if is_live {
+                expert.push((tl!("Convert to path"), "object.expandShape"));
+            }
+            expert.push((tl!("Offset Path"), "object.path.offsetPath"));
+            expert.push((tl!("Simplify"), "object.path.simplify"));
+            action_buttons(app, ui, &expert);
+        });
+    });
+}
+
+/// Two buttons a row, each running its command.
+fn action_buttons(app: &mut VectorcraftApp, ui: &mut Ui, actions: &[(&str, &str)]) {
     let w = (ui.available_width() - 6.0) / 2.0;
     for pair in actions.chunks(2) {
         ui.horizontal(|ui| {
@@ -129,6 +133,48 @@ pub fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     }
 }
 
+/// A foldable inspector section: its header (a click folds or unfolds it, kept in
+/// `ui.inspector.closed` under `key`), then `body` while it is open, then a divider.
+fn section(app: &mut VectorcraftApp, ui: &mut Ui, key: &str, title: &str, body: impl FnOnce(&mut VectorcraftApp, &mut Ui)) {
+    let open = !app.ui.inspector.closed.contains(key);
+    if widgets::section_toggle(ui, title, open) {
+        if open {
+            app.ui.inspector.closed.insert(key.to_string());
+        } else {
+            app.ui.inspector.closed.remove(key);
+        }
+    }
+    if open {
+        ui.add_space(2.0);
+        body(app, ui);
+    }
+    divider(ui);
+}
+
+/// The More disclosure at the end of a section: the section's expert fields, folded until asked
+/// for (kept in `ui.inspector.more` under `key`).
+fn more(app: &mut VectorcraftApp, ui: &mut Ui, key: &str, body: impl FnOnce(&mut VectorcraftApp, &mut Ui)) {
+    let t = Tokens::get(ui.ctx());
+    let open = app.ui.inspector.more.contains(key);
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 22.0), egui::Sense::click());
+    let color = if resp.hovered() { t.text_strong } else { t.text_dim };
+    let chevron = egui::Rect::from_center_size(egui::pos2(rect.left() + 6.0, rect.center().y), egui::vec2(11.0, 11.0));
+    icons::paint(ui, if open { "chevron-down" } else { "chevron-right" }, chevron, color);
+    let text = if open { tl!("Fewer options") } else { tl!("More options") };
+    ui.painter().text(egui::pos2(rect.left() + 15.0, rect.center().y), egui::Align2::LEFT_CENTER, text, egui::FontId::proportional(12.0), color);
+    resp.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::CollapsingHeader, true, open, text));
+    if resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+        if open {
+            app.ui.inspector.more.remove(key);
+        } else {
+            app.ui.inspector.more.insert(key.to_string());
+        }
+    }
+    if open {
+        body(app, ui);
+    }
+}
+
 /// The one selected image: its file (or Embedded), colour mode and resolution, and the Links
 /// panel's actions for it.
 fn image_section(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -136,7 +182,7 @@ fn image_section(app: &mut VectorcraftApp, ui: &mut Ui) {
     let Some(i) = crate::place::selected_image_info(app) else { return };
     let (name, details) = crate::place::image_summary(i);
     let (Some(id), linked) = (i["id"].as_u64(), i["linked"] == true) else { return };
-    section_header(ui, if linked { tl!("Linked File") } else { tl!("Embedded Image") });
+    dim_label(ui, if linked { tl!("Linked File") } else { tl!("Embedded Image") });
     ui.add(egui::Label::new(egui::RichText::new(&name).size(12.0).color(t.text_strong)).truncate());
     dim_label(ui, &details);
     ui.add_space(4.0);
@@ -156,9 +202,8 @@ fn image_section(app: &mut VectorcraftApp, ui: &mut Ui) {
 /// The one selected Image Trace object: its preset (choosing another traces it again with that
 /// one), view, Expand and Release.
 fn trace_section(app: &mut VectorcraftApp, ui: &mut Ui, preset: &str, view: vectorcraft_doc::TraceView) {
-    section_header(ui, tl!("Image Trace"));
     ui.horizontal(|ui| {
-        dim_label(ui, tl!("Preset:"));
+        dim_label(ui, tl!("Preset"));
         crate::panels::image_trace::preset_dropdown(app, ui, preset, ui.available_width());
     });
     ui.horizontal(|ui| crate::panels::image_trace::view_row(app, ui, view, ui.available_width()));
@@ -204,7 +249,7 @@ fn artboard_sections(app: &mut VectorcraftApp, ui: &mut Ui) {
         egui::Grid::new("ab-grid").num_columns(4).spacing([4.0, 6.0]).min_col_width(0.0).show(ui, |ui| {
             let r = ab.rect;
             for (row, [(l1, k1, v1), (l2, k2, v2)]) in
-                [[("X:", "x", r.x0), ("W:", "width", r.width())], [("Y:", "y", r.y0), ("H:", "height", r.height())]].into_iter().enumerate()
+                [[("X", "x", r.x0), ("W", "width", r.width())], [("Y", "y", r.y0), ("H", "height", r.height())]].into_iter().enumerate()
             {
                 for (label, key, v) in [(l1, k1, v1), (l2, k2, v2)] {
                     dim_label(ui, label);
@@ -215,7 +260,7 @@ fn artboard_sections(app: &mut VectorcraftApp, ui: &mut Ui) {
                 ui.end_row();
             }
         });
-        artboard_size_row(app, ui, i, ab.rect.width(), ab.rect.height());
+        artboard_size_row(app, ui, i, ab.rect.width(), ab.rect.height(), tl!("Size"));
         ui.add_space(2.0);
         super::artboards::art_options(app, ui);
     }
@@ -250,7 +295,7 @@ fn rearrange_button(app: &mut VectorcraftApp, ui: &mut Ui, artboards: usize, w: 
 /// round; Custom when its `w` × `h` points match none) and its orientation. A preset sizes it in its
 /// current orientation; the other orientation swaps its width and height. Its top-left corner stays
 /// put either way.
-fn artboard_size_row(app: &mut VectorcraftApp, ui: &mut Ui, i: usize, w: f64, h: f64) {
+fn artboard_size_row(app: &mut VectorcraftApp, ui: &mut Ui, i: usize, w: f64, h: f64, label: &str) {
     let landscape = w > h;
     // A preset `pw` × `ph` turned to the artboard's orientation.
     let turned = |pw: f64, ph: f64| if (pw > ph) == landscape || pw == ph { (pw, ph) } else { (ph, pw) };
@@ -267,7 +312,7 @@ fn artboard_size_row(app: &mut VectorcraftApp, ui: &mut Ui, i: usize, w: f64, h:
     let current = cats.iter().flat_map(|(_, l)| l).find(|s| same(s)).map_or(tl!("Custom"), |s| crate::dialogs::preset_name(&s.name)).to_string();
     let mut size = None;
     ui.horizontal(|ui| {
-        dim_label(ui, tl!("Preset:"));
+        dim_label(ui, label);
         size = widgets::combo(ui, "ab-preset", &current, 140.0, false, |ui| {
             let mut chosen = None;
             for (cat, list) in &cats {
@@ -296,9 +341,33 @@ fn artboard_size_row(app: &mut VectorcraftApp, ui: &mut Ui, i: usize, w: f64, h:
     }
 }
 
+/// Nothing selected: what to do first, then "Start here" (the page's size, its background and
+/// the units), the colours the next shape gets, and the rest (rulers, guides, snapping,
+/// Document Setup) under More.
 fn document_sections(app: &mut VectorcraftApp, ui: &mut Ui) {
+    super::empty_state(ui, "spline-pointer", tl!("Nothing selected"), tl!("Click something to change it, or draw with a tool on the left."));
+    section(app, ui, "start", tl!("Start here"), start_here);
+    section(app, ui, "newShapes", tl!("Colors for new shapes"), fill_stroke_rows);
+    more(app, ui, "document", more_document);
+}
+
+/// The page's size (its preset and orientation), its background and the units, and Edit
+/// Artboards.
+fn start_here(app: &mut VectorcraftApp, ui: &mut Ui) {
     let units = app.session.general_unit();
-    section_header(ui, tl!("Document"));
+    let page = app.session.active().and_then(|d| d.doc.artboards.first().map(|a| (a.rect.width(), a.rect.height(), d.doc.setup.background)));
+    if let Some((w, h, background)) = page {
+        artboard_size_row(app, ui, 0, w, h, tl!("Page size"));
+        ui.horizontal(|ui| {
+            dim_label(ui, tl!("Background"));
+            let labels = [tl!("Transparent"), tl!("White")];
+            let shown = if background == vectorcraft_doc::Background::White { labels[1] } else { labels[0] };
+            if let Some(i) = widgets::dropdown(ui, "doc-background", shown, &labels, 140.0) {
+                let id = vectorcraft_doc::Background::ALL.get(i).map_or("transparent", |b| b.id());
+                app.run("document.setup", json!({"backgroundContents": id})).ok();
+            }
+        });
+    }
     ui.horizontal(|ui| {
         dim_label(ui, tl!("Units"));
         let labels: Vec<&str> = Unit::ALL.iter().map(|u| u.label()).collect();
@@ -308,22 +377,20 @@ fn document_sections(app: &mut VectorcraftApp, ui: &mut Ui) {
     });
     let w = (ui.available_width() - 6.0) / 2.0;
     ui.horizontal(|ui| {
-        if widgets::flat_button(ui, tl!("Document Setup"), w).clicked() {
-            app.run("file.documentSetup", json!({})).ok();
-        }
         if widgets::flat_button(ui, tl!("Edit Artboards"), w).clicked() {
             app.select_tool("artboard");
         }
+        let artboards = app.session.active().map_or(0, |d| d.doc.artboards.len());
+        if artboards > 1 {
+            rearrange_button(app, ui, artboards, w);
+        }
     });
-    let artboards = app.session.active().map_or(0, |d| d.doc.artboards.len());
-    if artboards > 1 {
-        rearrange_button(app, ui, artboards, w);
-    }
-    divider(ui);
-    section_header(ui, tl!("Appearance"));
-    fill_stroke_rows(app, ui);
-    divider(ui);
-    section_header(ui, tl!("Rulers & Grids"));
+}
+
+/// Rulers, grids, guides, snapping, the keyboard increment, and Document Setup and Preferences.
+fn more_document(app: &mut VectorcraftApp, ui: &mut Ui) {
+    let units = app.session.general_unit();
+    section_header(ui, tl!("Rulers, grids and guides"));
     ui.horizontal(|ui| {
         let v = app.ui.view.clone();
         if widgets::icon_button(ui, "ruler", tl!("Show Rulers (⌘R)"), v.rulers, 26.0).clicked() {
@@ -336,11 +403,6 @@ fn document_sections(app: &mut VectorcraftApp, ui: &mut Ui) {
         if widgets::icon_button(ui, "square-dashed", tl!("Show Transparency Grid"), transparency_grid, 26.0).clicked() {
             app.run("view.transparencyGrid", json!({})).ok();
         }
-    });
-    divider(ui);
-    section_header(ui, tl!("Guides"));
-    ui.horizontal(|ui| {
-        let v = app.ui.view.clone();
         if widgets::icon_button(ui, "layout-grid", tl!("Show Guides"), v.guides, 26.0).clicked() {
             app.run("view.guides", json!({})).ok();
         }
@@ -348,8 +410,7 @@ fn document_sections(app: &mut VectorcraftApp, ui: &mut Ui) {
             app.run("view.smartGuides", json!({})).ok();
         }
     });
-    divider(ui);
-    section_header(ui, tl!("Snap Options"));
+    section_header(ui, tl!("Snapping"));
     let mut sp = app.ui.view.snap_to_point;
     if ui.checkbox(&mut sp, tl!("Snap to Point")).changed() {
         app.ui.view.snap_to_point = sp;
@@ -358,8 +419,6 @@ fn document_sections(app: &mut VectorcraftApp, ui: &mut Ui) {
     if ui.checkbox(&mut sg, tl!("Snap to Grid")).changed() {
         app.ui.view.snap_to_grid = sg;
     }
-    divider(ui);
-    section_header(ui, tl!("Preferences"));
     let fw = super::field_width(ui);
     ui.horizontal(|ui| {
         dim_label(ui, tl!("Keyboard Increment"));
@@ -371,8 +430,7 @@ fn document_sections(app: &mut VectorcraftApp, ui: &mut Ui) {
     if ui.checkbox(&mut ss, tl!("Scale Strokes & Effects")).changed() {
         super::transform::set_pref(app, "scaleStrokes", ss);
     }
-    divider(ui);
-    section_header(ui, tl!("Quick Actions"));
+    ui.add_space(4.0);
     let w = (ui.available_width() - 6.0) / 2.0;
     ui.horizontal(|ui| {
         if widgets::flat_button(ui, tl!("Document Setup"), w).clicked() {
@@ -397,7 +455,6 @@ pub fn transform_section(app: &mut VectorcraftApp, ui: &mut Ui) {
     let b = bx.rect;
     let refi: usize = ui.data(|d| d.get_temp(egui::Id::new("refpt"))).unwrap_or(4);
     let rp = bx.reference_point(refi);
-    section_header(ui, tl!("Transform"));
     let fw = super::field_width(ui);
     ui.horizontal(|ui| {
         if let Some(i) = widgets::reference_point(ui, refi) {
@@ -406,20 +463,20 @@ pub fn transform_section(app: &mut VectorcraftApp, ui: &mut Ui) {
         ui.add_space(6.0);
         let link = app.session.prefs.constrain_proportions;
         egui::Grid::new("xf-grid").num_columns(4).spacing([4.0, 6.0]).min_col_width(0.0).show(ui, |ui| {
-            dim_label(ui, "X:");
+            dim_label(ui, "X");
             if let Some(v) = widgets::num_field(ui, "tx", Some(rp.x), units, fw) {
                 app.run("object.setBounds", json!({"x": v, "reference": refi})).ok();
             }
-            dim_label(ui, "W:");
+            dim_label(ui, "W");
             if let Some(v) = widgets::num_field(ui, "tw", Some(b.width()), units, fw) {
                 app.run("object.setBounds", json!({"width": v, "reference": refi, "proportional": link})).ok();
             }
             ui.end_row();
-            dim_label(ui, "Y:");
+            dim_label(ui, "Y");
             if let Some(v) = widgets::num_field(ui, "ty", Some(rp.y), units, fw) {
                 app.run("object.setBounds", json!({"y": v, "reference": refi})).ok();
             }
-            dim_label(ui, "H:");
+            dim_label(ui, "H");
             if let Some(v) = widgets::num_field(ui, "th", Some(b.height()), units, fw) {
                 app.run("object.setBounds", json!({"height": v, "reference": refi, "proportional": link})).ok();
             }
@@ -452,14 +509,18 @@ pub fn transform_section(app: &mut VectorcraftApp, ui: &mut Ui) {
             vectorcraft_doc::LiveShape::Polygon { sides, .. } => {
                 let fw = super::field_width(ui);
                 ui.horizontal(|ui| {
-                    dim_label(ui, tl!("Sides:"));
+                    dim_label(ui, tl!("Sides"));
                     if let Some(s) = widgets::plain_field(ui, "sides", *sides as f64, "", 0, fw) {
                         app.run("object.setLiveShape", json!({"sides": s as u32})).ok();
                     }
                 });
                 corner_radius_row(app, ui, &n, "radius");
             }
-            vectorcraft_doc::LiveShape::Ellipse { pie, .. } => super::transform::pie_rows(app, ui, *pie, "props-pie"),
+            // A pie slice is rarely what a circle is for: its angles wait under More.
+            vectorcraft_doc::LiveShape::Ellipse { pie, .. } => {
+                let pie = *pie;
+                more(app, ui, "transform", |app, ui| super::transform::pie_rows(app, ui, pie, "props-pie"));
+            }
             _ => {}
         }
     }
@@ -467,7 +528,6 @@ pub fn transform_section(app: &mut VectorcraftApp, ui: &mut Ui) {
 
 fn appearance_section(app: &mut VectorcraftApp, ui: &mut Ui) {
     let Some(n) = first_selected(app) else { return };
-    section_header(ui, tl!("Appearance"));
     fill_stroke_rows(app, ui);
     let fw = super::field_width(ui);
     ui.horizontal(|ui| {
@@ -480,13 +540,16 @@ fn appearance_section(app: &mut VectorcraftApp, ui: &mut Ui) {
             app.ui.open_panel = Some("transparency".into());
         }
     });
-    ui.horizontal(|ui| {
-        // The fx button opens the effect menu, as the Appearance panel's does.
-        let r = widgets::flat_button(ui, "fx", 34.0).on_hover_text(tl!("Add New Effect"));
-        egui::Popup::menu(&r).show(|ui| super::appearance::fx_menu(app, ui));
-        if widgets::icon_button(ui, "ellipsis", tl!("Appearance panel"), false, 22.0).clicked() {
-            app.ui.open_panel = Some("appearance".into());
-        }
+    // Effects (shadows, glows…) and the Appearance panel's stack.
+    more(app, ui, "appearance", |app, ui| {
+        ui.horizontal(|ui| {
+            // The fx button opens the effect menu, as the Appearance panel's does.
+            let r = widgets::flat_button(ui, "fx", 34.0).on_hover_text(tl!("Add New Effect"));
+            egui::Popup::menu(&r).show(|ui| super::appearance::fx_menu(app, ui));
+            if widgets::icon_button(ui, "ellipsis", tl!("Appearance panel"), false, 22.0).clicked() {
+                app.ui.open_panel = Some("appearance".into());
+            }
+        });
     });
 }
 
@@ -547,7 +610,11 @@ mod tests {
 
     /// One frame of the panel with `events` → the texts painted, with their rects.
     fn frame(app: &mut VectorcraftApp, ctx: &egui::Context, events: Vec<Event>) -> Vec<(String, Rect)> {
-        let raw = egui::RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(300.0, 700.0))), events, ..Default::default() };
+        if ctx.data(|d| d.get_temp::<bool>(egui::Id::new("test-fonts"))).is_none() {
+            crate::theme::install_fonts(ctx);
+            ctx.data_mut(|d| d.insert_temp(egui::Id::new("test-fonts"), true));
+        }
+        let raw = egui::RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(300.0, 1400.0))), events, ..Default::default() };
         let mut out = ctx.run_ui(raw, |ui| show(app, ui));
         out.textures_delta.clear();
         out.shapes
@@ -664,9 +731,9 @@ mod tests {
         app.select_tool("artboard");
         let ctx = egui::Context::default();
         let texts = frame(&mut app, &ctx, vec![]);
-        assert!(texts.iter().any(|(t, _)| t == "Preset:") && texts.iter().any(|(t, _)| t == "Letter"), "{texts:?}");
+        assert!(texts.iter().any(|(t, _)| t == "Size") && texts.iter().any(|(t, _)| t == "Letter"), "{texts:?}");
         // The row's clickable widgets, left to right: the preset combo, Portrait, Landscape.
-        let row = texts.iter().find(|(t, _)| t == "Preset:").map(|(_, r)| *r).unwrap();
+        let row = texts.iter().find(|(t, _)| t == "Size").map(|(_, r)| *r).unwrap();
         let buttons: Vec<Rect> = ctx.viewport(|vp| {
             let mut r: Vec<Rect> = vp
                 .prev_pass
@@ -707,7 +774,7 @@ mod tests {
         assert_eq!(app.session.tool_options()["scaleArt"], true);
         // Portrait: 100 × 200, the art scaled by ½ across and 2 down.
         let texts = frame(&mut app, &ctx, vec![]);
-        let row = texts.iter().find(|(t, _)| t == "Preset:").map(|(_, r)| *r).unwrap();
+        let row = texts.iter().find(|(t, _)| t == "Size").map(|(_, r)| *r).unwrap();
         let portrait = ctx.viewport(|vp| {
             let mut r: Vec<Rect> = vp
                 .prev_pass
@@ -728,5 +795,58 @@ mod tests {
         assert_eq!((ab.width(), ab.height()), (100.0, 200.0));
         let b = d.node(vectorcraft_doc::NodeId(r)).unwrap().geometric_bounds().unwrap();
         assert_eq!((b.x0, b.y0, b.width(), b.height()), (10.0, 40.0, 20.0, 80.0));
+    }
+
+    /// A circle shows its size and colours; a pie's angles, Offset Path and Simplify and the
+    /// effects wait under More. No label ends in a colon.
+    #[test]
+    fn expert_fields_fold_under_more() {
+        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        app.run("file.new", json!({"width": 200, "height": 100})).unwrap();
+        app.run("shape.ellipse", json!({"x": 10, "y": 10, "width": 50, "height": 50})).unwrap();
+        let ctx = egui::Context::default();
+        frame(&mut app, &ctx, vec![]);
+        let texts = frame(&mut app, &ctx, vec![]);
+        let has = |texts: &[(String, Rect)], s: &str| texts.iter().any(|(t, _)| t == s);
+        for shown in ["Size and position", "Appearance", "Align", "Quick actions", "Bring to front", "More options"] {
+            assert!(has(&texts, shown), "{shown}: {texts:?}");
+        }
+        for folded in ["Pie start angle", "Invert Pie", "Offset Path", "Simplify", "Convert to path", "fx"] {
+            assert!(!has(&texts, folded), "{folded} is folded away");
+        }
+        assert!(!texts.iter().any(|(t, _)| t.ends_with(':')), "no trailing colons: {texts:?}");
+        // The first More is the shape's: its pie angles.
+        click(&mut app, &ctx, &texts, "More options");
+        assert!(app.ui.inspector.more.contains("transform"));
+        let texts = frame(&mut app, &ctx, vec![]);
+        assert!(has(&texts, "Pie start angle") && has(&texts, "Invert Pie") && has(&texts, "Fewer options"), "{texts:?}");
+        // A section folds by its header, and stays folded.
+        click(&mut app, &ctx, &texts, "Appearance");
+        assert!(app.ui.inspector.closed.contains("appearance"));
+        let texts = frame(&mut app, &ctx, vec![]);
+        assert!(has(&texts, "Appearance") && !has(&texts, "Opacity"), "{texts:?}");
+    }
+
+    /// Nothing selected: what to do, then Start here (page size, background, units), not two
+    /// Document Setup buttons; Document Setup is one More away.
+    #[test]
+    fn nothing_selected_shows_start_here() {
+        let mut app = VectorcraftApp::new(Session::new(), Default::default());
+        app.run("file.new", json!({"preset": "Letter"})).unwrap();
+        let ctx = egui::Context::default();
+        frame(&mut app, &ctx, vec![]);
+        let texts = frame(&mut app, &ctx, vec![]);
+        let count = |texts: &[(String, Rect)], s: &str| texts.iter().filter(|(t, _)| t == s).count();
+        for shown in ["Nothing selected", "Start here", "Page size", "Letter", "Background", "Transparent", "Units", "Colors for new shapes"] {
+            assert_eq!(count(&texts, shown), 1, "{shown}: {texts:?}");
+        }
+        assert_eq!(count(&texts, "Document Setup"), 0, "Document Setup waits under More");
+        click(&mut app, &ctx, &texts, "More options");
+        let texts = frame(&mut app, &ctx, vec![]);
+        assert_eq!(count(&texts, "Document Setup"), 1, "{texts:?}");
+        // The background is the document's.
+        app.run("document.setup", json!({"backgroundContents": "white"})).unwrap();
+        let texts = frame(&mut app, &ctx, vec![]);
+        assert_eq!(count(&texts, "White"), 1, "{texts:?}");
     }
 }

@@ -54,7 +54,7 @@ fn effects(app: &VectorcraftApp, item: Option<usize>) -> Vec<vectorcraft_doc::Ef
 fn an_effect_name_opens_its_dialog_prefilled_and_ok_edits_it_in_place() {
     let mut app = app_with_rect();
     run(&mut app, "effect.apply", json!({"effect": "distort.roughen", "params": {"size": 9}}));
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     crate::theme::install_fonts(&ctx);
     let texts = frame_events(&ctx, &mut app, vec![], appearance::show);
     click(&ctx, &mut app, text_rect(&texts, "Roughen").center(), appearance::show);
@@ -102,7 +102,7 @@ fn effect_rows_drag_to_reorder_and_into_an_item() {
     let mut app = app_with_rect();
     run(&mut app, "effect.apply", json!({"effect": "distort.twist"}));
     run(&mut app, "effect.apply", json!({"effect": "distort.roughen"}));
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     let texts = panel_frame(&ctx, &mut app, vec![], egui::Modifiers::NONE);
     // Twist below Roughen.
     let below = text_rect(&texts, "Roughen").center() + egui::vec2(60.0, 9.0);
@@ -123,7 +123,7 @@ fn effect_rows_drag_to_reorder_and_into_an_item() {
 #[test]
 fn alt_dragging_an_item_duplicates_it_and_several_items_delete_together() {
     let mut app = app_with_rect(); // [Fill, Stroke]
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     let texts = panel_frame(&ctx, &mut app, vec![], egui::Modifiers::NONE);
     drag(&ctx, &mut app, row_of(&texts, "Fill:"), row_of(&texts, "Stroke:"), egui::Modifiers::ALT);
     let kinds = |app: &VectorcraftApp| first_selected(app).unwrap().appearance.items.iter().map(|i| i.kind_name()).collect::<Vec<_>>();
@@ -143,7 +143,7 @@ fn alt_dragging_an_item_duplicates_it_and_several_items_delete_together() {
 #[test]
 fn stroke_rows_note_dashes_brushes_and_show_all_hidden_attributes() {
     let mut app = app_with_rect();
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     assert!(!frame_events(&ctx, &mut app, vec![], appearance::show).iter().any(|(t, _)| t == "Dashed"));
     run(&mut app, "stroke.set", json!({"dash": [4, 2], "profile": "lens"}));
     let brush = run(&mut app, "brush.list", json!({}))["brushes"][0]["name"].as_str().unwrap().to_string();
@@ -164,7 +164,7 @@ fn stroke_rows_note_dashes_brushes_and_show_all_hidden_attributes() {
 #[test]
 fn shift_clicking_a_chip_opens_the_mixer_on_that_row() {
     let mut app = app_with_rect();
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     let texts = panel_frame(&ctx, &mut app, vec![], egui::Modifiers::NONE);
     // The chip sits 52 pt right of the label's start (label at EYE_W + 24, chip at EYE_W + 76).
     let label = text_rect(&texts, "Fill:");
@@ -176,7 +176,7 @@ fn shift_clicking_a_chip_opens_the_mixer_on_that_row() {
 #[test]
 fn the_thumbnail_drags_the_appearance_and_the_properties_fx_button_opens_the_effects() {
     let mut app = app_with_rect();
-    let ctx = egui::Context::default();
+    let ctx = crate::theme::test_context();
     let texts = panel_frame(&ctx, &mut app, vec![], egui::Modifiers::NONE);
     // The thumbnail is left of the object row's label.
     let label = text_rect(&texts, "Rectangle");
@@ -187,8 +187,9 @@ fn the_thumbnail_drags_the_appearance_and_the_properties_fx_button_opens_the_eff
     }
     let id = first_selected(&app).unwrap().id;
     assert_eq!(egui::DragAndDrop::payload::<crate::widgets::PanelDrag>(&ctx).as_deref(), Some(&crate::widgets::PanelDrag::Appearance(id)));
-    // Properties: the fx button lists the effect groups.
-    let props = egui::Context::default();
+    // Properties: the fx button (under Appearance's More) lists the effect groups.
+    app.ui.inspector.more.insert("appearance".into());
+    let props = crate::theme::test_context();
     let texts = frame_raw(&props, &mut app, Default::default(), properties::show);
     click(&props, &mut app, text_rect(&texts, "fx").center(), properties::show);
     let texts = frame_raw(&props, &mut app, Default::default(), properties::show);

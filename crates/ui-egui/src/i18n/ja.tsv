@@ -4510,7 +4510,7 @@ theme	Appearance	外観
 	Berry	ベリー
 	Slate	スレート
 	Citrus	シトラス
-	Theme:	テーマ:
+	Theme	テーマ
 	Color theme: recolors quick-styled art	カラーテーマ: クイックスタイルのアートの色を変更
 	Quick styles: one-click looks in the document's colors	クイックスタイル: ドキュメントの色でワンクリックの見た目
 	Triangle	三角形
@@ -4548,3 +4548,58 @@ theme	Appearance	外観
 	Copying pictures needs the desktop app: use Export PNG	画像のコピーにはデスクトップアプリが必要です: PNG を書き出しを使用してください
 	Copied a {w} × {h} px PNG	{w} × {h} px の PNG をコピーしました
 	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	最初の図形の描き方は下のバーに表示されます。上の挿入バーから図形、テキスト、アイコン、画像を追加したり、{key} でペーストしたりすることもできます。
+# Layouts, the Panels button and the inspector's plain words.
+	Layout	レイアウト
+	Layouts	レイアウト
+	Reset Layout	レイアウトをリセット
+	New Layout…	新規レイアウト…
+	Manage Layouts…	レイアウトを管理…
+	Delete Layout	レイアウトを削除
+	Rename Layout	レイアウト名を変更
+	List Layouts	レイアウトの一覧
+	Panel Icons	パネルアイコン
+	Order	重ね順
+	Combine Shapes	シェイプを結合
+	Focus	集中
+	Drawing	描画
+	Print & Export	印刷と書き出し
+	Web	Web
+	Classic	クラシック
+	Manage Layouts	レイアウトを管理
+	New Layout	新規レイアウト
+	Switch layout	レイアウトを切り替え
+	Open another panel: color, type, align and more	ほかのパネルを開く：カラー、文字、整列など
+	Color and paint	カラーとペイント
+	Shape and position	形と位置
+	Images and output	画像と出力
+	Make a new file or open one to start.	新しいファイルを作成するか、ファイルを開いて始めましょう。
+	Size and position	サイズと位置
+	Combine shapes	シェイプを結合
+	Cut out front	前面で型抜き
+	Keep overlap	重なりを残す
+	Remove overlap	重なりを削除
+	More ways to combine shapes	そのほかの結合方法
+	Quick actions	クイック操作
+	Clip to top shape	最前面の形でクリップ
+	Edit group alone	グループだけを編集
+	Bring to front	最前面へ
+	Convert to path	パスに変換
+	Fewer options	オプションを減らす
+	More options	その他のオプション
+	Preset	プリセット
+	Sides	辺の数
+	Nothing selected	何も選択されていません
+	Click something to change it, or draw with a tool on the left.	変更したいものをクリックするか、左のツールで描画します。
+	Start here	まずはここから
+	Colors for new shapes	新しい形のカラー
+	Page size	ページサイズ
+	Rulers, grids and guides	定規、グリッド、ガイド
+	Snapping	スナップ
+	Pie start angle	扇形の開始角度
+	Pie end angle	扇形の終了角度
+	Corner radius	角の半径
+@msg	layout name can't be empty	レイアウト名を入力してください
+@msg	`{name}` is a built-in layout; choose another name	`{name}` は組み込みのレイアウトなので、別の名前を指定してください
+@msg	no layout `{name}`	レイアウト `{name}` が見つかりません
+@msg	no user layout `{from}`	ユーザーレイアウト `{from}` が見つかりません
+@msg	unknown layout (one of {_1})	不明なレイアウトです ({_1} のいずれかを指定してください)

@@ -4529,7 +4529,7 @@ axis	Both	Les deux
 	Berry	Baies
 	Slate	Ardoise
 	Citrus	Agrumes
-	Theme:	Thème :
+	Theme	Thème
 	Color theme: recolors quick-styled art	Thème de couleurs : recolore les illustrations en style rapide
 	Quick styles: one-click looks in the document's colors	Styles rapides : un aspect en un clic, dans les couleurs du document
 	Triangle	Triangle
@@ -4567,3 +4567,58 @@ axis	Both	Les deux
 	Copying pictures needs the desktop app: use Export PNG	La copie d'images nécessite l'application de bureau : utilisez Exporter en PNG
 	Copied a {w} × {h} px PNG	PNG de {w} × {h} px copié
 	The bar below says how to draw your first shape. Or add shapes, text, icons and images from the Insert bar above, or paste with {key}.	La barre du bas indique comment dessiner votre première forme. Vous pouvez aussi ajouter des formes, du texte, des icônes et des images depuis la Barre Insérer en haut, ou coller avec {key}.
+# Layouts, the Panels button and the inspector's plain words.
+	Layout	Disposition
+	Layouts	Dispositions
+	Reset Layout	Réinitialiser la disposition
+	New Layout…	Nouvelle disposition…
+	Manage Layouts…	Gérer les dispositions…
+	Delete Layout	Supprimer la disposition
+	Rename Layout	Renommer la disposition
+	List Layouts	Liste des dispositions
+	Panel Icons	Icônes des panneaux
+	Order	Ordre
+	Combine Shapes	Combiner les formes
+	Focus	Concentration
+	Drawing	Dessin
+	Print & Export	Impression et export
+	Web	Web
+	Classic	Classique
+	Manage Layouts	Gérer les dispositions
+	New Layout	Nouvelle disposition
+	Switch layout	Changer de disposition
+	Open another panel: color, type, align and more	Ouvrir un autre panneau : couleur, texte, alignement et plus
+	Color and paint	Couleur et peinture
+	Shape and position	Forme et position
+	Images and output	Images et sortie
+	Make a new file or open one to start.	Créez un fichier ou ouvrez-en un pour commencer.
+	Size and position	Taille et position
+	Combine shapes	Combiner les formes
+	Cut out front	Découper par l’avant
+	Keep overlap	Garder le chevauchement
+	Remove overlap	Supprimer le chevauchement
+	More ways to combine shapes	Autres façons de combiner les formes
+	Quick actions	Actions rapides
+	Clip to top shape	Rogner selon la forme du dessus
+	Edit group alone	Modifier le groupe seul
+	Bring to front	Mettre au premier plan
+	Convert to path	Convertir en tracé
+	Fewer options	Moins d’options
+	More options	Plus d’options
+	Preset	Paramètre prédéfini
+	Sides	Côtés
+	Nothing selected	Aucune sélection
+	Click something to change it, or draw with a tool on the left.	Cliquez sur un objet pour le modifier, ou dessinez avec un outil à gauche.
+	Start here	Commencer ici
+	Colors for new shapes	Couleurs des nouvelles formes
+	Page size	Format de page
+	Rulers, grids and guides	Règles, grilles et repères
+	Snapping	Magnétisme
+	Pie start angle	Angle de début du secteur
+	Pie end angle	Angle de fin du secteur
+	Corner radius	Rayon de l’angle
+@msg	layout name can't be empty	le nom de la disposition ne peut pas être vide
+@msg	`{name}` is a built-in layout; choose another name	`{name}` est une disposition intégrée ; choisissez un autre nom
+@msg	no layout `{name}`	aucune disposition `{name}`
+@msg	no user layout `{from}`	aucune disposition utilisateur `{from}`
+@msg	unknown layout (one of {_1})	disposition inconnue (l’une de {_1})

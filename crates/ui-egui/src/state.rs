@@ -100,7 +100,8 @@ pub fn all_panels() -> impl Iterator<Item = (&'static str, &'static str)> {
     tabs.chain(ICON_PANELS.iter().map(|&(id, label, _)| (id, label)))
 }
 
-/// Panels that live as collapsed icons in the dock (Essentials Classic).
+/// Panels that live as icons in the dock's column (the Classic layout; otherwise the one Panels
+/// button lists them).
 pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("color", "Color", "palette"),
     ("colorGuide", "Color Guide", "dc-color-guide"),
@@ -116,7 +117,7 @@ pub const ICON_PANELS: &[(&str, &str, &str)] = &[
     ("artboards", "Artboards", "dc-artboards"),
     ("transform", "Transform", "dc-transform-panel"),
     ("align", "Align", "dc-align"),
-    ("pathfinder", "Pathfinder", "dc-pathfinder"),
+    ("pathfinder", "Combine Shapes", "dc-pathfinder"),
     ("character", "Character", "type"),
     ("paragraph", "Paragraph", "pilcrow"),
     ("glyphs", "Glyphs", "text-cursor-input"),
@@ -286,6 +287,14 @@ pub struct UiState {
     pub toolbar_pos: Option<[f32; 2]>,
     pub status_bar: bool,
     pub dock: bool,
+    /// The dock's column of panel icons (Color, Swatches, Brushes… all at once). New users start
+    /// without it: the inspector, its tabs and one Panels button (`window.panelIcons`). A settings
+    /// file saved before it existed reads `true`, so its column stays as it was.
+    #[serde(default = "yes")]
+    pub panel_icons: bool,
+    /// Inspector (Properties) sections the person folded, and those whose More is open.
+    #[serde(default)]
+    pub inspector: Inspector,
     pub view: ViewFlags,
     pub dialog: Option<Dialog>,
     /// Toolbar group whose flyout is open.
@@ -416,6 +425,15 @@ pub struct UiState {
     pub window: Option<WindowGeometry>,
 }
 
+/// What the Properties inspector keeps folded: sections by key (`transform`, `appearance`…) and
+/// the sections whose More disclosure (their expert fields) is open. Agents set it with `ui.set`.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Inspector {
+    pub closed: std::collections::BTreeSet<String>,
+    pub more: std::collections::BTreeSet<String>,
+}
+
 /// The desktop window's geometry, kept across launches.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct WindowGeometry {
@@ -499,6 +517,8 @@ impl UiState {
         self.status.clear();
         self.about = false;
         self.open_panel = None;
+        // A built-in layout saved under its old name ("Essentials") is that layout's new name.
+        self.workspace = crate::workspaces::canonical(&self.workspace).to_string();
         if self.group_tool.len() != vectorcraft_tools::TOOL_GROUPS.len() {
             self.group_tool = UiState::default().group_tool;
         }
@@ -538,6 +558,8 @@ impl Default for UiState {
             toolbar_pos: None,
             status_bar: true,
             dock: true,
+            panel_icons: false,
+            inspector: Inspector::default(),
             view: ViewFlags::default(),
             dialog: None,
             flyout: None,
@@ -594,7 +616,7 @@ fn default_shortcut_set() -> String {
 }
 
 fn default_workspace() -> String {
-    crate::workspaces::ESSENTIALS.to_string()
+    crate::workspaces::DEFAULT.to_string()
 }
 
 #[cfg(test)]

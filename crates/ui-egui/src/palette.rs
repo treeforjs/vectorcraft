@@ -61,6 +61,8 @@ pub const SYNONYMS: &[(&[&str], &[&str])] = &[
         &["combine shapes", "combine", "merge", "merge shapes", "join shapes", "unite", "union", "weld"],
         &["object.pathfinder.unite", "panel:pathfinder", "tool:shapeBuilder"],
     ),
+    // The classic name of the Combine Shapes panel.
+    (&["pathfinder"], &["panel:pathfinder"]),
     (&["cut out", "subtract", "punch out", "remove shape", "minus"], &["object.pathfinder.minusFront", "panel:pathfinder"]),
     (&["outline", "border", "stroke"], &["panel:stroke", "object.path.outlineStroke"]),
     (&["line thickness", "line width", "thickness", "stroke weight", "thicker", "thinner"], &["panel:stroke"]),
@@ -75,6 +77,28 @@ pub const SYNONYMS: &[(&[&str], &[&str])] = &[
     (&["bigger", "smaller", "resize", "enlarge", "shrink", "make bigger", "make smaller"], &["object.scale", "tool:scale"]),
     (&["undo", "go back", "oops"], &["edit.undo", "panel:history"]),
 ];
+
+/// The names classic users know for commands and panels the default screen now calls by plain
+/// words, and those plain words where a menu still shows the classic label (palette key → names):
+/// typing either finds them.
+pub const OLD_NAMES: &[(&str, &[&str])] = &[
+    ("panel:pathfinder", &["pathfinder"]),
+    ("object.pathfinder.unite", &["unite", "pathfinder unite", "merge"]),
+    ("object.pathfinder.minusFront", &["minus front", "pathfinder minus front", "cut out front"]),
+    ("object.pathfinder.intersect", &["intersect", "pathfinder intersect", "keep overlap"]),
+    ("object.pathfinder.exclude", &["exclude", "pathfinder exclude", "remove overlap"]),
+    ("object.expandShape", &["expand shape", "convert to path"]),
+    ("object.clippingMask.make", &["make clipping mask", "clipping mask", "clip to top shape"]),
+    ("object.arrange.bringToFront", &["arrange", "bring to front"]),
+    ("window.workspace.new", &["new workspace"]),
+    ("window.workspace.manage", &["manage workspaces"]),
+    ("window.workspace.reset", &["reset workspace", "reset essentials"]),
+];
+
+/// The old names that find `key`.
+fn old_names(key: &str) -> &'static [&'static str] {
+    OLD_NAMES.iter().find(|(k, _)| *k == key).map_or(&[], |(_, names)| names)
+}
 
 /// What the palette offers while nothing is typed, after the recently used ones.
 pub const POPULAR: &[&str] =
@@ -170,7 +194,7 @@ fn build(lang: crate::i18n::Lang) -> Vec<Entry> {
         let path_en = path.join(" › ");
         out.push(Entry {
             hay_label: [label.to_lowercase(), label_en.to_lowercase()],
-            hay_keywords: format!("{} | {}", synonym_words(&key), key).to_lowercase(),
+            hay_keywords: format!("{} | {} | {}", synonym_words(&key), old_names(&key).join(" | "), key).to_lowercase(),
             hay_detail: format!("{} | {}", detail.to_lowercase(), path_en.to_lowercase()),
             key,
             label,
@@ -637,6 +661,27 @@ mod tests {
         assert_eq!(ranked("outline stroke").first().map(String::as_str), Some("object.path.outlineStroke"));
         assert!(ranked("zzqxj").is_empty(), "nothing matches gibberish");
         assert!(ranked("change xyzzy").is_empty(), "every word has to match");
+    }
+
+    #[test]
+    fn renamed_commands_still_find_by_their_old_names() {
+        let e = build(Lang::EN);
+        for (key, names) in OLD_NAMES {
+            assert!(e.iter().any(|e| e.key == *key), "{key} is an entry");
+            for name in names.iter() {
+                let found = ranked(name);
+                assert!(found.iter().take(5).any(|k| k == key), "{name:?} → {key} in {found:?}");
+            }
+        }
+        // The plain names find them too.
+        for (q, key) in [
+            ("combine shapes", "panel:pathfinder"),
+            ("convert to path", "object.expandShape"),
+            ("clip to top shape", "object.clippingMask.make"),
+            ("manage layouts", "window.workspace.manage"),
+        ] {
+            assert!(ranked(q).iter().take(5).any(|k| k == key), "{q:?} → {key} in {:?}", ranked(q));
+        }
     }
 
     #[test]
